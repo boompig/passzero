@@ -3,8 +3,16 @@ form {
     display: block;
 }
 
+input[type="submit"] {
+    margin-top: 4px;
+}
+
 /* display input on own line */
 input[type="text"], input[type="password"], input[type="submit"] {
     display: block;
     width: 100%;
+}
+
+#show-hide-btn, #gen-pass-btn {
+    margin-top: 5px;
 }

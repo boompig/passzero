@@ -4,6 +4,8 @@
         <meta charset="utf-8" />
         <title>PassZero</title>
 
+        <link rel="stylesheet" href="{{ url_for("static", filename="lib/bootstrap/dist/css/bootstrap.min.css") }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/main.css") }}" />
         {% block css %}
         {% endblock %}
     </head>
@@ -18,11 +20,17 @@
             {% endif %}
         {% endwith %}
 
-        {% block body %}
-        {% endblock %}
+        <div class="container">
+            <div class="inner-container">
+
+                {% block body %}
+                {% endblock %}
+            </div>
+        </div>
 
         <!-- include jQuery on every page -->
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script> 
+        <script src="{{ url_for("static", filename="lib/jquery/dist/jquery.min.js") }}"></script> 
+        <script src="{{ url_for("static", filename="lib/bootstrap/dist/js/bootstrap.min.js") }}"></script>
         {% block js %}
         {% endblock %}
     </body>

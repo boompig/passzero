@@ -1,25 +1,41 @@
 {% extends "layout.html" %}
 
 {% block css %}
+    <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") }}" />
 {% endblock %}
 
 {% block body %}
-    <h1>Login to PassZero</h1>
+    <h1>
+        {% if login %}
+        Login to PassZero
+        {% else %}
+        Create a PassZero account
+        {% endif %}
+    </h1>
 
     {% include "logged_out_nav.html" %}
 
-    <div class="error-container">
+    <div class="error">
         {% if error %}
-            Error:&nbsp;<span class="error">{{ error }}</span>
+            Error:&nbsp;<span class="error-text">{{ error }}</span>
         {% endif %}
     </div>
-    <form method="POST" action="/login">
+    <form method="POST" action="/login" role="form">
         <label for="email">Email</label>
-        <input type="text" name="email" placeholder="email" required="true" />
+        <input type="text" class="form-control" name="email"
+                placeholder="email" required="true" />
 
         <label for="password">Password</label>
-        <input type="password" name="password" placeholder="password" required="true" />
+        <input type="password" class="form-control" name="password"
+                placeholder="password" required="true" />
 
-        <input type="submit" name="submit" value="Log In" />
+        <button class="btn btn-primary form-control" id="submit-btn"
+            type="submit" name="submit">
+            {% if login %}
+                Log In
+            {% else %}
+                Sign Up
+            {% endif %}
+        </button>
     </form>
 {% endblock %}

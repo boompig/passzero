@@ -78,7 +78,7 @@ def login():
                 error = "Either the username or password is incorrect"
         else:
             error = "Either the username or password is incorrect"
-    return render_template("login.html", error=error)
+    return render_template("login.html", login=True, error=error)
 
 @app.route("/logout", methods=["GET"])
 def logout():
@@ -200,7 +200,7 @@ def signup():
                 error = "an account with this email address already exists"
         else:
             error = "must fill in email and password"
-    return render_template("signup.html", error=error)
+    return render_template("login.html", login=False, error=error)
 
 @app.route("/export", methods=["POST"])
 def export_entries():

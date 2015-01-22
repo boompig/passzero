@@ -13,26 +13,34 @@
 
     {% include "logged_in_nav.html" %}
 
-    <div class="error-container">
+    <div class="error">
         {% if error %}
-            Error:&nbsp;<span class="error">{{ error }}</span>
+            Error:&nbsp;<span class="error-text">{{ error }}</span>
         {% endif %}
     </div>
+
     <form method="POST" action="{{ url_for('new_entry') }}">
         <label for="account">Account</label>
-        <input type="text" name="account" required="true" />
+        <input type="text" name="account" required="true" class="form-control" />
 
         <label for="username">Username</label>
-        <input type="text" name="username" autocomplete="off" required="true" />
+        <input type="text" name="username" autocomplete="off" required="true" 
+            class="form-control" />
 
         <label for="password">Password</label>
-        <input type="password" name="password" id="password" autocomplete="off" required="true" />
+        <input type="password" name="password" id="password" autocomplete="off" 
+            required="true" class="form-control" />
 
-        <button type="button" id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
-        <button type="button" onclick="genPassword(10)">Random Password</button>
-        <input type="number" name="passLen" min="1" max="30" value="10" id="passLen"
-                placeholder="len" />
+        <button type="button" class="btn btn-info" id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
+        <button type="button" class="btn btn-info" id="gen-pass-btn" onclick="genPassword(10)"
+            disabled="true">Random Password</button>
 
-        <input type="submit" id="create-btn" name="submit" value="Create" />
+        <div>
+            <label for="passLen">Password Length</label>
+            <input type="number" name="passLen" min="1" max="30" value="10" id="passLen"
+                    placeholder="len" maxwidth="2" class="form-control" />
+        </div>
+
+        <input type="submit" class="btn btn-primary" id="create-btn" name="submit" value="Create" />
     </form>
 {% endblock %}

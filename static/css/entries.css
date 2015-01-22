@@ -1,0 +1,20 @@
+.entry {
+    border: 1px solid #999;
+    border-radius: 3px;
+
+    padding-left: 2em;
+    padding-top: 10px;
+    padding-bottom: 10px;
+
+    margin-top: 5px;
+}
+
+.entry-title {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin: .1em;
+}
+
+input[type='text'], input[type='password'] {
+    margin: 2px;
+}

@@ -26,8 +26,10 @@ function showHidePassword(event) {
     if (t === "password") {
         elem.attr("type", "text");
         $(event.target).text("Hide");
+        elem.parent().find("#gen-pass-btn").prop({"disabled": false});
     } else {
         elem.attr("type", "password");
         $(event.target).text("Show");
+        elem.parent().find("#gen-pass-btn").prop({"disabled": true});
     }
 }
