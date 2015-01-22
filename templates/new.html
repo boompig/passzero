@@ -1,7 +1,11 @@
 {% extends "layout.html" %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/new.css') }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/new.css") }}" />
+{% endblock %}
+
+{% block js %}
+    <script src="{{ url_for("static", filename="js/new.js") }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -19,11 +23,16 @@
         <input type="text" name="account" required="true" />
 
         <label for="username">Username</label>
-        <input type="text" name="username" required="true" />
+        <input type="text" name="username" autocomplete="off" required="true" />
 
         <label for="password">Password</label>
-        <input type="password" name="password" required="true" />
+        <input type="password" name="password" id="password" autocomplete="off" required="true" />
 
-        <input type="submit" name="submit" value="Create" />
+        <button type="button" id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
+        <button type="button" onclick="genPassword(10)">Random Password</button>
+        <input type="number" name="passLen" min="1" max="30" value="10" id="passLen"
+                placeholder="len" />
+
+        <input type="submit" id="create-btn" name="submit" value="Create" />
     </form>
 {% endblock %}

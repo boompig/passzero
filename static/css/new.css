@@ -4,7 +4,7 @@ form {
 }
 
 /* display input on own line */
-input[type="text"], input[type="password"] {
+input[type="text"], input[type="password"], input[type="submit"] {
     display: block;
     width: 100%;
 }

@@ -1,5 +1,9 @@
 {% extends "layout.html" %}
 
+{% block js %}
+    <script src="{{ url_for("static", filename="js/entries.js") }}"></script>
+{% endblock %}
+
 {% block body %}
     <h1>PassZero Entries</h1>
 
@@ -10,7 +14,8 @@
             <div class="entry">
                 <h3 class="entry-title account">{{ row[0] }}</h3>
                 <div class="username">{{ row[1] }}</div>
-                <div class="password">{{ row[2] }}</div>
+                <div><input type="password" class="password" value="{{ row[2] }}" readonly="true" minlength="{{ row[2]|length + 10 }}"/></div>
+                <button type="button" id="show-hide-btn" onclick="showHidePass(event)">Show</button>
             </div>
         {% endfor %}
     </div>

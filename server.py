@@ -107,10 +107,33 @@ def view_entries():
 
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
-    cur.execute("select account, username, password from entries where id=?", [session['user_id']])
+    cur.execute("select account, username, password from entries where user=?", [session['user_id']])
     entries = cur.fetchall()
     conn.close()
     return render_template("entries.html", entries=entries)
+
+def create_account(email, password):
+    sql = "INSERT INTO users (email, password) VALUES (?, ?)";
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute(sql, [email, password])
+    conn.commit()
+    conn.close()
+    return True
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if request.method == "GET":
+        return render_template("signup.html", error=None)
+    else:
+        if 'email' in request.form and 'password' in request.form:
+            if create_account(request.form['email'], request.form['password']):
+                flash("Successfully created account with email %s" % request.form['email'])
+                return redirect(url_for("index"))
+        else:
+            error = "internal error, failed to register"
+            return render_template("signup.html", error=error)
+
 
 if __name__ == "__main__":
     app.debug = True

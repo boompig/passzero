@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<h1>Create new PassZero account</h1>
+
+{% include "logged_out_nav.html" %}
+
+<div class="error-container">
+    {% if error %}
+        Error:&nbsp;<span class="error">{{ error }}</span>
+    {% endif %}
+</div>
+
+<form method="post" action="{{ url_for("signup") }}">
+    <label for="email">Email</label>
+    <input type="email" name="email"/>
+
+    <label for="password">Password</label>
+    <input type="password" name="password" />
+
+    <input type="submit" value="Sign Up" />
+</form>
+{% endblock %}
