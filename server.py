@@ -1,10 +1,13 @@
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash
 import sqlite3
+import random
+import hashlib
 
 app = Flask(__name__, static_url_path="")
 PORT = 5050
 DB_FILE = "passzero.db"
 DB_INIT_SCRIPT = "db_init.sql"
+SALT_SIZE = 32
 
 def db_init():
     with open(DB_INIT_SCRIPT) as f:
@@ -14,14 +17,19 @@ def db_init():
         conn.close()
     return True
 
-def check_login(email, password):
+def get_hashed_password(password, salt):
+    return hashlib.sha512(password + salt).hexdigest()
+
+def check_login(email, password, salt):
+    """Return user ID on success, None on failure"""
+    password_hash = get_hashed_password(password, salt)
     # fetch user_id from database
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
     cur.execute("SELECT id FROM users WHERE email=? AND password=?", 
         [
             email,
-            password
+            password_hash
         ]
     )
 
@@ -35,19 +43,34 @@ def index():
         email=(session['email'] if 'email' in session else None)
     )
 
+def get_user_salt(email):
+    """Return the salt if the email is present, None otherwise"""
+    sql = "SELECT salt FROM users where email=?"
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute(sql, [email])
+    row = cursor.fetchone()
+    conn.close()
+    return (row[0] if row else None)
+
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
     if request.method == "POST":
         email = request.form['email']
         password = request.form['password']
-        user_id = check_login(email, password)
-        if user_id:
-            session['email'] = email
-            session['password'] = password
-            session['user_id'] = user_id
+        salt = get_user_salt(email)
+        if salt is not None:
+            user_id = check_login(email, password, salt)
+            if user_id:
+                session['email'] = email
+                session['password'] = password
+                session['user_id'] = user_id
 
-            return redirect(url_for("index"))
+                return redirect(url_for("index"))
+            else:
+                error = "Either the username or password is incorrect"
         else:
             error = "Either the username or password is incorrect"
     return render_template("login.html", error=error)
@@ -112,28 +135,42 @@ def view_entries():
     conn.close()
     return render_template("entries.html", entries=entries)
 
+def get_salt(size):
+    """Create and return random salt of given size"""
+    alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    chars = []
+    for i in range(size):
+        chars.append(random.choice(alphabet))
+    return "".join(chars)
+
 def create_account(email, password):
-    sql = "INSERT INTO users (email, password) VALUES (?, ?)";
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute(sql, [email, password])
-    conn.commit()
-    conn.close()
-    return True
+    salt = get_salt(SALT_SIZE)
+    password_hash = get_hashed_password(password, salt)
+
+    sql = "INSERT INTO users (email, password, salt) VALUES (?, ?, ?)";
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cur = conn.cursor()
+        cur.execute(sql, [email, password_hash, salt])
+        conn.commit()
+        conn.close()
+        return True
+    except sqlite3.IntegrityError:
+        return False
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
-    if request.method == "GET":
-        return render_template("signup.html", error=None)
-    else:
+    error = None
+    if request.method == "POST":
         if 'email' in request.form and 'password' in request.form:
             if create_account(request.form['email'], request.form['password']):
                 flash("Successfully created account with email %s" % request.form['email'])
                 return redirect(url_for("index"))
+            else:
+                error = "an account with this email address already exists"
         else:
-            error = "internal error, failed to register"
-            return render_template("signup.html", error=error)
-
+            error = "must fill in email and password"
+    return render_template("signup.html", error=error)
 
 if __name__ == "__main__":
     app.debug = True
