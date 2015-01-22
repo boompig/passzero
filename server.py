@@ -3,6 +3,9 @@ import sqlite3
 import random
 import hashlib
 
+# some helpers
+from utils import encrypt_password, decrypt_password, pad_key
+
 app = Flask(__name__, static_url_path="")
 PORT = 5050
 DB_FILE = "passzero.db"
@@ -83,11 +86,16 @@ def logout():
         session.pop("password")
     return redirect(url_for("index"))
 
-def save_entry(user_id, account_name, account_username, account_password):
-    sql = "INSERT INTO entries (user, account, username, password) VALUES (?, ?, ?, ?)"
+def save_entry(user_id, key, account_name, account_username, account_password):
+    padding = pad_key(key)
+    print key + padding
+    print len(key + padding)
+    enc_pass = encrypt_password(key + padding, account_password)
+
+    sql = "INSERT INTO entries (user, account, username, password, padding) VALUES (?, ?, ?, ?, ?)"
     conn = sqlite3.connect(DB_FILE)
     cur = conn.cursor()
-    cur.execute(sql, [user_id, account_name, account_username, account_password])
+    cur.execute(sql, [user_id, account_name, account_username, enc_pass, padding])
     conn.commit()
     conn.close()
     return True
@@ -96,7 +104,7 @@ def save_entry(user_id, account_name, account_username, account_password):
 def new_entry():
     error = None
     if request.method == "POST":
-        if 'user_id' not in session:
+        if 'user_id' not in session or 'password' not in session:
             error = "must be logged in to perform this action"
 
         for field in ['account', 'username', 'password']:
@@ -107,6 +115,7 @@ def new_entry():
         if error is None:
             status = save_entry(
                 session['user_id'],
+                session['password'],
                 request.form['account'],
                 request.form['username'],
                 request.form['password']
@@ -122,18 +131,37 @@ def new_entry():
 
     return render_template("new.html", error=error)
 
+def get_entries(user_id):
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute("select account, username, password, padding from entries where user=?", [user_id])
+    entries = cur.fetchall()
+    conn.close()
+    return entries
+
+def decrypt_entries(entries, key):
+    obj = []
+    for row in entries:
+        hex_ciphertext = row[2]
+        padding = row[3]
+        password = decrypt_password(key + padding, hex_ciphertext)
+        obj.append({
+            "account": row[0],
+            "username": row[1],
+            "password": password
+        })
+    return obj
+
 @app.route("/view", methods=["GET"])
 def view_entries():
     # login-only method
-    if 'user_id' not in session:
+    if 'user_id' not in session or 'password' not in session:
+        #TODO flash some kind of error here
         return redirect(url_for('index'))
 
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("select account, username, password from entries where user=?", [session['user_id']])
-    entries = cur.fetchall()
-    conn.close()
-    return render_template("entries.html", entries=entries)
+    entries = get_entries(session['user_id'])
+    dec_entries = decrypt_entries(entries, session['password'])
+    return render_template("entries.html", entries=dec_entries)
 
 def get_salt(size):
     """Create and return random salt of given size"""

@@ -10,11 +10,18 @@
     {% include "logged_in_nav.html" %}
 
     <div id="entry-container">
+        {% if entries|length == 0 %}
+            <div class="empty-msg">No entries yet</div>
+        {% endif %}
+
         {% for row in entries %}
             <div class="entry">
-                <h3 class="entry-title account">{{ row[0] }}</h3>
-                <div class="username">{{ row[1] }}</div>
-                <div><input type="password" class="password" value="{{ row[2] }}" readonly="true" minlength="{{ row[2]|length + 10 }}"/></div>
+                <h3 class="entry-title account">{{ row["account"] }}</h3>
+                <div class="username">{{ row["username"] }}</div>
+                <div>
+                    <input type="password" class="password" value="{{ row["password"] }}"
+                    readonly="true" minlength="{{ row[2]|length + 10 }}"/>
+                </div>
                 <button type="button" id="show-hide-btn" onclick="showHidePass(event)">Show</button>
             </div>
         {% endfor %}

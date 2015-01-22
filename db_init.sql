@@ -7,4 +7,5 @@ CREATE TABLE IF NOT EXISTS
     entries
     (id INTEGER PRIMARY KEY,
     user INTEGER NOT NULL, account VARCHAR NOT NULL,
-    username VARCHAR NOT NULL, password VARCHAR NOT NULL);
+    username VARCHAR NOT NULL, password VARCHAR NOT NULL,
+    padding VARCHAR NOT NULL);
