@@ -21,7 +21,7 @@
         {% endif %}
 
         {% for row in entries %}
-            <div class="entry">
+            <div class="entry" id="entry-{{ row["id"] }}">
                 <h3 class="entry-title account">{{ row["account"] }}</h3>
                 <div class="username">{{ row["username"] }}</div>
                 <div>
@@ -29,6 +29,7 @@
                     readonly="true" minlength="{{ row["password"]|length }}"/>
                 </div>
                 <button type="button" id="show-hide-btn" onclick="showHidePass(event)">Show</button>
+                <a href="/edit/{{ row["id"] }}">Edit</a>
             </div>
         {% endfor %}
     </div>

@@ -38,6 +38,7 @@ def check_login(email, password, salt):
     )
 
     seq = cur.fetchone()
+    conn.close()
     return (seq[0] if seq else None)
 
 @app.route("/", methods=["GET"])
@@ -89,8 +90,6 @@ def logout():
 
 def save_entry(user_id, key, account_name, account_username, account_password):
     padding = pad_key(key)
-    print key + padding
-    print len(key + padding)
     enc_pass = encrypt_password(key + padding, account_password)
 
     sql = "INSERT INTO entries (user, account, username, password, padding) VALUES (?, ?, ?, ?, ?)"
@@ -134,8 +133,9 @@ def new_entry():
 
 def get_entries(user_id):
     conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    cur.execute("select account, username, password, padding from entries where user=?", [user_id])
+    cur.execute("select id, account, username, password, padding from entries where user=?", [user_id])
     entries = cur.fetchall()
     conn.close()
     return entries
@@ -143,12 +143,13 @@ def get_entries(user_id):
 def decrypt_entries(entries, key):
     obj = []
     for row in entries:
-        hex_ciphertext = row[2]
-        padding = row[3]
+        hex_ciphertext = row["password"]
+        padding = row[4]
         password = decrypt_password(key + padding, hex_ciphertext)
         obj.append({
-            "account": row[0],
-            "username": row[1],
+            "id": row["id"],
+            "account": row["account"],
+            "username": row["username"],
             "password": password
         })
     return obj
@@ -207,9 +208,62 @@ def export_entries():
     with open(DUMP_FILE, "w") as fp:
         for line in conn.iterdump():
             fp.write("%s\n" % line)
+    conn.close()
 
     flash("database successfully dumped to file %s" % DUMP_FILE)
     return redirect("/view")
+
+def save_edit_entry(user_id, key, account_id, account_name, account_username, account_password):
+    padding = pad_key(key)
+    enc_pass = encrypt_password(key + padding, account_password)
+
+    sql = "UPDATE entries SET user=?, account=?, username=?, password=?, padding=? WHERE id=?";
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute(sql, [user_id, account_name, account_username, enc_pass, padding, account_id])
+    conn.commit()
+    conn.close()
+    return True
+
+@app.route("/doedit/<entry_id>", methods=["POST"])
+def do_edit_entry(entry_id):
+    if 'user_id' not in session or 'password' not in session:
+        #TODO something smarter here
+        return redirect(url_for("index"))
+
+    for field in ['account', 'username', 'password']:
+        if field not in request.form:
+            #TODO something smarter here
+            return redirect(url_form("index"))
+
+    save_edit_entry(
+        session['user_id'],
+        session['password'],
+        entry_id,
+        request.form['account'],
+        request.form['username'],
+        request.form['password']
+    )
+    flash("Successfully changed entry for account %s" % request.form['account'])
+    return redirect(url_for("view_entries"))
+
+@app.route("/edit/<entry_id>", methods=["GET"])
+def edit_entry(entry_id):
+    if 'user_id' not in session or 'password' not in session:
+        return redirect(url_for("index"))
+    if not entry_id.isdigit():
+        return "entry ID must be an integer"
+
+    entry_id = int(str(entry_id))
+    entries = get_entries(session['user_id'])
+    dec_entries = decrypt_entries(entries, session['password'])
+
+    fe = [e for e in dec_entries if e["id"] == entry_id]
+    if len(fe) == 0:
+        #TODO flash error msg about invalid ID here
+        return render_template("index.html")
+    else:
+        return render_template("edit.html", e_id=entry_id, entry=fe[0], error=None)
 
 
 if __name__ == "__main__":

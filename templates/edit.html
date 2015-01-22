@@ -1,0 +1,38 @@
+{% extends "layout.html" %}
+
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/new.css") }}" />
+{% endblock %}
+
+{% block js %}
+    <script src="{{ url_for("static", filename="js/new.js") }}"></script>
+{% endblock %}
+
+{% block body %}
+    <h1>Edit a PassZero entry</h1>
+
+    {% include "logged_in_nav.html" %}
+
+    <div class="error-container">
+        {% if error %}
+            Error:&nbsp;<span class="error">{{ error }}</span>
+        {% endif %}
+    </div>
+    <form method="POST" action="/doedit/{{ e_id }}">
+        <label for="account">Account</label>
+        <input type="text" name="account" required="true" value="{{ entry["account"] }}" />
+
+        <label for="username">Username</label>
+        <input type="text" name="username" autocomplete="off" required="true" value="{{ entry["username"] }}"/>
+
+        <label for="password">Password</label>
+        <input type="password" name="password" id="password" autocomplete="off" required="true" value="{{ entry["password"] }}" />
+
+        <button type="button" id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
+        <button type="button" onclick="genPassword(10)">Random Password</button>
+        <input type="number" name="passLen" min="1" max="30" value="10" id="passLen"
+                placeholder="len" />
+
+        <input type="submit" id="create-btn" name="submit" value="Edit" />
+    </form>
+{% endblock %}
