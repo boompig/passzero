@@ -106,9 +106,11 @@ def view_entries():
         return redirect(url_for('index'))
 
     conn = sqlite3.connect(DB_FILE)
-    cur = con.cursor()
-    cur.execute("select account, username, password from entries where id=?", session['user_id'])
-
+    cur = conn.cursor()
+    cur.execute("select account, username, password from entries where id=?", [session['user_id']])
+    entries = cur.fetchall()
+    conn.close()
+    return render_template("entries.html", entries=entries)
 
 if __name__ == "__main__":
     app.debug = True

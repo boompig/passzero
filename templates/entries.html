@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block body %}
+    <h1>PassZero Entries</h1>
+
+    {% include "logged_in_nav.html" %}
+
+    <div id="entry-container">
+        {% for row in entries %}
+            <div class="entry">
+                <h3 class="entry-title account">{{ row[0] }}</h3>
+                <div class="username">{{ row[1] }}</div>
+                <div class="password">{{ row[2] }}</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

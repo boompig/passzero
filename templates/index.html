@@ -12,8 +12,6 @@
     {% if logged_in %}
         {% include "logged_in_nav.html" %}
     {% else %}
-        <ul>
-            <li><a href="/login">Sign In</a></li>
-        </ul>
+        {% include "logged_out_nav.html" %}
     {% endif %}
 {% endblock %}

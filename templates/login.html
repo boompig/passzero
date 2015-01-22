@@ -4,6 +4,10 @@
 {% endblock %}
 
 {% block body %}
+    <h1>Login to PassZero</h1>
+
+    {% include "logged_out_nav.html" %}
+
     <div class="error-container">
         {% if error %}
             Error:&nbsp;<span class="error">{{ error }}</span>
