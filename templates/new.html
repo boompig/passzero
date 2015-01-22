@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/new.css') }}" />
+{% endblock %}
+
+{% block body %}
+    <h1>Create new PassZero entry</h1>
+
+    {% include "logged_in_nav.html" %}
+
+    <div class="error-container">
+        {% if error %}
+            Error:&nbsp;<span class="error">{{ error }}</span>
+        {% endif %}
+    </div>
+    <form method="POST" action="{{ url_for('new_entry') }}">
+        <label for="account">Account</label>
+        <input type="text" name="account" required="true" />
+
+        <label for="username">Username</label>
+        <input type="text" name="username" required="true" />
+
+        <label for="password">Password</label>
+        <input type="password" name="password" required="true" />
+
+        <input type="submit" name="submit" value="Create" />
+    </form>
+{% endblock %}

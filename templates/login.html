@@ -1,0 +1,21 @@
+{% extends "layout.html" %}
+
+{% block css %}
+{% endblock %}
+
+{% block body %}
+    <div class="error-container">
+        {% if error %}
+            Error:&nbsp;<span class="error">{{ error }}</span>
+        {% endif %}
+    </div>
+    <form method="POST" action="/login">
+        <label for="email">Email</label>
+        <input type="text" name="email" placeholder="email" required="true" />
+
+        <label for="password">Password</label>
+        <input type="password" name="password" placeholder="password" required="true" />
+
+        <input type="submit" name="submit" value="Log In" />
+    </form>
+{% endblock %}

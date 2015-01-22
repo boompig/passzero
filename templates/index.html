@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+{% block body %}
+    <h1>PassZero</h1>
+    <h2>
+        {% if logged_in %}
+            You are logged in as {{ email }}
+        {% else %}
+            You are not currently logged in
+        {% endif %}
+    </h2>
+
+    {% if logged_in %}
+        {% include "logged_in_nav.html" %}
+    {% else %}
+        <ul>
+            <li><a href="/login">Sign In</a></li>
+        </ul>
+    {% endif %}
+{% endblock %}

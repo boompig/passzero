@@ -1,0 +1,10 @@
+form {
+    width: 400px;
+    display: block;
+}
+
+/* display input on own line */
+input[type="text"], input[type="password"] {
+    display: block;
+    width: 100%;
+}
