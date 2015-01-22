@@ -20,7 +20,7 @@
                 <div class="username">{{ row["username"] }}</div>
                 <div>
                     <input type="password" class="password" value="{{ row["password"] }}"
-                    readonly="true" minlength="{{ row[2]|length + 10 }}"/>
+                    readonly="true" minlength="{{ row["password"]|length }}"/>
                 </div>
                 <button type="button" id="show-hide-btn" onclick="showHidePass(event)">Show</button>
             </div>
