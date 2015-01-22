@@ -11,6 +11,7 @@ PORT = 5050
 DB_FILE = "passzero.db"
 DB_INIT_SCRIPT = "db_init.sql"
 SALT_SIZE = 32
+DUMP_FILE = "dump.sql"
 
 def db_init():
     with open(DB_INIT_SCRIPT) as f:
@@ -199,6 +200,17 @@ def signup():
         else:
             error = "must fill in email and password"
     return render_template("signup.html", error=error)
+
+@app.route("/export", methods=["POST"])
+def export_entries():
+    conn = sqlite3.connect(DB_FILE)
+    with open(DUMP_FILE, "w") as fp:
+        for line in conn.iterdump():
+            fp.write("%s\n" % line)
+
+    flash("database successfully dumped to file %s" % DUMP_FILE)
+    return redirect("/view")
+
 
 if __name__ == "__main__":
     app.debug = True

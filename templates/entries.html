@@ -9,6 +9,12 @@
 
     {% include "logged_in_nav.html" %}
 
+    <div id="export-container">
+        <form action="{{ url_for("export_entries") }}" method="post">
+            <input type="submit" value="Export Entries" />
+        </form>
+    </div>
+
     <div id="entry-container">
         {% if entries|length == 0 %}
             <div class="empty-msg">No entries yet</div>

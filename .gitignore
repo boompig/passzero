@@ -1,2 +1,6 @@
+# ignore sqlite3 database
 *.db
+# Python binaries are boring
 *.pyc
+# ignore the dump file for database
+dump.sql
