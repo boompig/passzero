@@ -18,3 +18,7 @@ h1.title {
 #logged-in-text {
     text-align: center;
 }
+
+.flashes {
+    margin-top: 20px;
+}

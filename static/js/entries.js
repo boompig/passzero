@@ -3,7 +3,7 @@ var val = 0;
 var maxVal = 4 * 60;
 
 function showHidePass(event) {
-    var elem = $(event.target).parent().find(".password");
+    var elem = $(event.target).parent().parent().find(".password");
     var t = elem.attr("type");
     if (t === "password") {
         elem.attr("type", "text");
