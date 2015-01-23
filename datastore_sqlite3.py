@@ -105,3 +105,16 @@ def export(fname):
         for line in conn.iterdump():
             fp.write("%s\n" % line)
     conn.close()
+
+
+def db_delete_entry(user_id, entry_id):
+    """Return True on success, False on failure"""
+
+    sql = "DELETE FROM entries WHERE id=? AND user=?"
+    conn = sqlite3.connect(DB_FILE)
+    cur = conn.cursor()
+    cur.execute(sql, [entry_id, user_id])
+    conn.commit()
+    result = conn.total_changes
+    conn.close()
+    return result > 0

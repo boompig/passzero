@@ -38,6 +38,22 @@ function startLogoutTimer() {
     setTimeout(startLogoutTimer, 1000);
 }
 
+function deleteEntry(e, entry_id) {
+    console.log("Deleting entry with ID " + entry_id);
+    $.ajax({
+        url: "/entries/" + entry_id,
+        method: "DELETE",
+        success: function (result, textStatus, obj) {
+            console.log("result of deletion:");
+            console.log(result);
+
+            if (result === 1 || result === "1") {
+                window.location.reload()
+            }
+        }
+    });
+}
+
 $(function() {
     startLogoutTimer();
 });

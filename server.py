@@ -4,13 +4,20 @@ import random
 
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password
-from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, export
+from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, export, db_delete_entry
 
 app = Flask(__name__, static_url_path="")
 PORT = 5050
 SALT_SIZE = 32
 DUMP_FILE = "dump.sql"
 DEBUG = True
+
+
+@app.route("/entries/<int:entry_id>", methods=["DELETE"])
+def delete_entry(entry_id):
+    """Print 1 on success and 0 on failure"""
+    result = db_delete_entry(session['user_id'], entry_id)
+    return ("1" if result else "0")
 
 
 @app.route("/", methods=["GET"])
