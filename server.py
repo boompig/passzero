@@ -124,6 +124,12 @@ def new_entry_api():
         mimetype="application/json"
     )
 
+@app.route("/entries/done_edit/<account_name>")
+def post_edit(account_name):
+    flash("Successfully changed entry for account %s" % escape(account_name))
+    return redirect(url_for("view_entries"))
+
+
 @app.route("/entries/done_new/<account_name>")
 def post_create(account_name):
     flash("Successfully created entry for account %s" % escape(account_name))
@@ -180,30 +186,56 @@ def export_entries():
     return redirect("/advanced")
 
 
-@app.route("/doedit/<entry_id>", methods=["POST"])
-def do_edit_entry(entry_id):
+@app.route("/entries/<entry_id>", methods=["POST"])
+def edit_entry_api(entry_id):
+    code = 200
+    data = {}
     if 'user_id' not in session or 'password' not in session:
-        #TODO something smarter here
-        return redirect(url_for("index"))
+        code = 401
+        data = {
+            "status": "error",
+            "msg": "must be logged in to perform this action"
+        }
 
     for field in ['account', 'username', 'password']:
         if field not in request.form:
-            #TODO something smarter here
-            return redirect(url_form("index"))
+            code = 400
+            data = {
+                "status": "error",
+                "msg": "field %s is required" % field
+            }
+            break
 
-    padding = pad_key(session['password'])
-    enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
+    if code == 200:
+        padding = pad_key(session['password'])
+        enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
 
-    save_edit_entry(
-        session['user_id'],
-        entry_id,
-        request.form['account'],
-        request.form['username'],
-        enc_pass,
-        padding
+        status = save_edit_entry(
+            session['user_id'],
+            entry_id,
+            request.form['account'],
+            request.form['username'],
+            enc_pass,
+            padding
+        )
+        if status:
+            code = 200
+            data = {
+                "status": "success",
+                "msg": "successfully edited account %s" % escape(request.form["account"])
+            }
+        else:
+            code = 500
+            data = {
+                "status": "error",
+                "msg": "internal server error"
+            }
+
+    return Response(
+        json.dumps(data),
+        status=code,
+        mimetype="application/json"
     )
-    flash("Successfully changed entry for account %s" % request.form['account'])
-    return redirect(url_for("view_entries"))
 
 @app.route("/edit/<entry_id>", methods=["GET"])
 def edit_entry(entry_id):

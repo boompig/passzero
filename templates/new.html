@@ -24,7 +24,8 @@
     </div>
 
     {% if entry %}
-        <form method="POST" action="/doedit/{{ e_id }}" role="form">
+        <form method="POST" action="/entries/{{ e_id }}" role="form"
+            onsubmit="makeEdit(event)">
     {% else %}
         <form method="POST" action="{{ url_for('new_entry_api') }}" role="form"
             onsubmit="createNew(event)">

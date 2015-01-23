@@ -51,15 +51,29 @@ function parseGet(s) {
 
 function createNew (e) {
     "use strict";
+    e.preventDefault();
+
     var getString = $(e.target).serialize();
     var url = $(e.target).attr("action");
     var data = parseGet(getString);
 
-    e.preventDefault();
-    console.log(data);
-
     $.post(url, data, function(response) {
         window.location.href = "/entries/done_new/" + data.account;
     }, "json");
+    return false;
+}
+
+function makeEdit (e) {
+    "use strict";
+    e.preventDefault();
+
+    var getString = $(e.target).serialize();
+    var url = $(e.target).attr("action");
+    var data = parseGet(getString);
+
+    $.post(url, data, function (response) {
+        window.location.href = "/entries/done_edit/" + data.account;
+    }, "json");
+
     return false;
 }
