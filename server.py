@@ -268,7 +268,7 @@ def edit_entry(entry_id):
         #TODO flash error msg about invalid ID here
         return render_template("index.html")
     else:
-        return render_template("edit.html", e_id=entry_id, entry=fe[0], error=None)
+        return render_template("new.html", e_id=entry_id, entry=fe[0], error=None)
 
 
 if __name__ == "__main__":

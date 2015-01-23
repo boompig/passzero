@@ -9,7 +9,13 @@
 {% endblock %}
 
 {% block body %}
-    <h1 class="title">Create new PassZero entry</h1>
+    <h1 class="title">
+        {% if entry %}
+            Edit PassZero entry for {{ entry["account"] }}
+        {% else %}
+            Create new PassZero entry
+        {% endif %}
+    </h1>
 
     {% include "logged_in_nav.html" %}
 
@@ -19,17 +25,22 @@
         {% endif %}
     </div>
 
-    <form method="POST" action="{{ url_for('new_entry') }}">
+    {% if entry %}
+        <form method="POST" action="/doedit/{{ e_id }}" role="form">
+    {% else %}
+        <form method="POST" action="{{ url_for('new_entry') }}" role="form">
+    {% endif %}
         <label for="account">Account</label>
-        <input type="text" name="account" required="true" class="form-control" />
+        <input type="text" name="account" required="true" class="form-control"
+            value="{{ (entry["account"] if entry) }}" />
 
         <label for="username">Username</label>
         <input type="text" name="username" autocomplete="off" required="true" 
-            class="form-control" />
+            class="form-control" value="{{ (entry["username"] if entry) }}"/>
 
         <label for="password">Password</label>
         <input type="password" name="password" id="password" autocomplete="off" 
-            required="true" class="form-control" />
+            required="true" class="form-control" value="{{ (entry["password"] if entry) }}" />
 
         <button type="button" class="btn btn-info"
             id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
@@ -43,6 +54,6 @@
         </div>
 
         <button type="submit" class="btn btn-primary form-control" 
-            id="create-btn">Create</button>
+            id="create-btn">{{ ("Edit" if entry else "Create" ) }}</button>
     </form>
 {% endblock %}
