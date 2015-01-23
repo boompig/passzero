@@ -135,7 +135,7 @@ def new_entry():
     return render_template("new.html", error=error)
 
 def get_entries(user_id):
-    sql = "select id, account, username, password, padding from entries where user=? order by account"
+    sql = "select id, account, username, password, padding from entries where user=? order by lower(account)"
 
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
