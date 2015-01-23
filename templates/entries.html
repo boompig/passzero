@@ -34,7 +34,8 @@
                         value="{{ row["password"] }}" readonly="true" />
                 </div>
                 <div class="entry-panel">
-                    <a href="/edit/{{ row["id"] }}">Edit</a>
+                    <button type="button" class="btn btn-warning edit-btn"
+                        onclick="window.location.href='/edit/{{ row["id"] }}'">Edit</button>
                     <button type="button" class="btn btn-info show-hide-btn" onclick="showHidePass(event)">Show</button>
                     <button type="button" class="btn btn-danger" class="delete-btn" onclick="deleteEntry(event, {{ row["id"] }})">Delete</button>
                 </div>
