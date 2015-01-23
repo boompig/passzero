@@ -19,7 +19,7 @@
         </form>
     </div>
 
-    <div id="entry-container" onclick="restart=true">
+    <div id="entry-container" onclick="resetLogoutTimer()">
         {% if entries|length == 0 %}
             <div class="empty-msg">No entries yet</div>
         {% endif %}
