@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block body %}
-    <h1>Create new PassZero entry</h1>
+    <h1 class="title">Create new PassZero entry</h1>
 
     {% include "logged_in_nav.html" %}
 
@@ -31,7 +31,8 @@
         <input type="password" name="password" id="password" autocomplete="off" 
             required="true" class="form-control" />
 
-        <button type="button" class="btn btn-info" id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
+        <button type="button" class="btn btn-info"
+            id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
         <button type="button" class="btn btn-info" id="gen-pass-btn" onclick="genPassword(10)"
             disabled="true">Random Password</button>
 
@@ -41,6 +42,7 @@
                     placeholder="len" maxwidth="2" class="form-control" />
         </div>
 
-        <input type="submit" class="btn btn-primary" id="create-btn" name="submit" value="Create" />
+        <button type="submit" class="btn btn-primary form-control" 
+            id="create-btn">Create</button>
     </form>
 {% endblock %}

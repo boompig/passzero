@@ -9,30 +9,41 @@
 {% endblock %}
 
 {% block body %}
-    <h1>Edit a PassZero entry</h1>
+    <h1 class="title">Edit a PassZero entry</h1>
 
     {% include "logged_in_nav.html" %}
 
-    <div class="error-container">
+    <div class="error">
         {% if error %}
-            Error:&nbsp;<span class="error">{{ error }}</span>
+            Error:&nbsp;<span class="error-text">{{ error }}</span>
         {% endif %}
     </div>
-    <form method="POST" action="/doedit/{{ e_id }}">
+
+    <form method="POST" action="/doedit/{{ e_id }}" role="form">
         <label for="account">Account</label>
-        <input type="text" name="account" required="true" value="{{ entry["account"] }}" />
+        <input type="text" name="account" required="true" class="form-control"
+            value="{{ entry["account"] }}" />
 
         <label for="username">Username</label>
-        <input type="text" name="username" autocomplete="off" required="true" value="{{ entry["username"] }}"/>
+        <input type="text" name="username" class="form-control"
+            autocomplete="off" required="true" value="{{ entry["username"] }}"/>
 
         <label for="password">Password</label>
-        <input type="password" name="password" id="password" autocomplete="off" required="true" value="{{ entry["password"] }}" />
+        <input type="password" name="password" id="password" class="form-control"
+            autocomplete="off" required="true" value="{{ entry["password"] }}" />
 
-        <button type="button" id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
-        <button type="button" onclick="genPassword(10)">Random Password</button>
-        <input type="number" name="passLen" min="1" max="30" value="10" id="passLen"
-                placeholder="len" />
+        <button type="button" id="show-hide-btn" class="btn btn-info"
+            onclick="showHidePassword(event)">Show</button>
+        <button type="button" onclick="genPassword(10)" id="gen-pass-btn"
+            class="btn btn-info" disabled="true">Random Password</button>
 
-        <input type="submit" id="create-btn" name="submit" value="Edit" />
+        <div>
+            <label for="passLen">Number</label>
+            <input type="number" name="passLen" min="1" max="30" value="10" id="passLen"
+                    placeholder="len" class="form-control" />
+        </div>
+
+        <button type="submit" id="create-btn"
+            class="btn btn-primary form-control">Edit</button>
     </form>
 {% endblock %}

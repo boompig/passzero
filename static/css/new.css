@@ -14,5 +14,9 @@ input[type="text"], input[type="password"], input[type="submit"] {
 }
 
 #show-hide-btn, #gen-pass-btn {
-    margin-top: 5px;
+    margin-top: 0.5em;
+}
+
+button[type="submit"] {
+    margin-top: 0.5em;
 }

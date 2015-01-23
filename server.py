@@ -43,10 +43,13 @@ def check_login(email, password, salt):
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html",
-        logged_in=('email' in session),
-        email=(session['email'] if 'email' in session else None)
-    )
+    if 'email' in session:
+        return render_template("index.html",
+            logged_in=('email' in session),
+            email=(session['email'] if 'email' in session else None)
+        )
+    else:
+        return redirect(url_for("login"))
 
 def get_user_salt(email):
     """Return the salt if the email is present, None otherwise"""
@@ -132,10 +135,12 @@ def new_entry():
     return render_template("new.html", error=error)
 
 def get_entries(user_id):
+    sql = "select id, account, username, password, padding from entries where user=? order by account"
+
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     cur = conn.cursor()
-    cur.execute("select id, account, username, password, padding from entries where user=?", [user_id])
+    cur.execute(sql, [user_id])
     entries = cur.fetchall()
     conn.close()
     return entries
