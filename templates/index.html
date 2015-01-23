@@ -1,17 +1,11 @@
 {% extends "layout.html" %}
 {% block body %}
     <h1 class="title">PassZero</h1>
-    <h2>
+    <h5>
         {% if logged_in %}
             You are logged in as {{ email }}
         {% else %}
             You are not currently logged in
         {% endif %}
-    </h2>
-
-    {% if logged_in %}
-        {% include "logged_in_nav.html" %}
-    {% else %}
-        {% include "logged_out_nav.html" %}
-    {% endif %}
+    </h5>
 {% endblock %}

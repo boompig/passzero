@@ -12,6 +12,7 @@ DB_FILE = "passzero.db"
 DB_INIT_SCRIPT = "db_init.sql"
 SALT_SIZE = 32
 DUMP_FILE = "dump.sql"
+DEBUG = True
 
 def db_init():
     with open(DB_INIT_SCRIPT) as f:
@@ -89,6 +90,8 @@ def logout():
         session.pop("email")
     if 'password' in session:
         session.pop("password")
+    if 'user_id' in session:
+        session.pop("user_id")
     return redirect(url_for("index"))
 
 def save_entry(user_id, key, account_name, account_username, account_password):
@@ -272,7 +275,11 @@ def edit_entry(entry_id):
 
 
 if __name__ == "__main__":
-    app.debug = True
     app.secret_key = 'A4Zr98j/3yxmR~XHH!jmN]LWX/,!zT'
     db_init()
-    app.run(port=PORT)
+    if DEBUG:
+        app.debug = True
+        app.run(port=PORT)
+    else:
+        app.debug = False
+        app.run(host='0.0.0.0', port=PORT)

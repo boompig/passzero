@@ -17,8 +17,6 @@
         {% endif %}
     </h1>
 
-    {% include "logged_in_nav.html" %}
-
     <div class="error">
         {% if error %}
             Error:&nbsp;<span class="error-text">{{ error }}</span>
@@ -53,7 +51,7 @@
                     placeholder="len" maxwidth="2" class="form-control" />
         </div>
 
-        <button type="submit" class="btn btn-primary form-control" 
+        <button type="submit" class="btn btn-success form-control" 
             id="create-btn">{{ ("Edit" if entry else "Create" ) }}</button>
     </form>
 {% endblock %}

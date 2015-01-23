@@ -1,4 +1,5 @@
 {% extends "layout.html" %}
+{% set active_page = ("login" if login else "signup") %}
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") }}" />
@@ -12,8 +13,6 @@
         Create a PassZero account
         {% endif %}
     </h1>
-
-    {% include "logged_out_nav.html" %}
 
     <div class="error">
         {% if error %}
@@ -29,7 +28,7 @@
         <input type="password" class="form-control" name="password"
                 placeholder="password" required="true" />
 
-        <button class="btn btn-primary form-control" id="submit-btn"
+        <button class="btn btn-success form-control" id="submit-btn"
             type="submit" name="submit">
             {% if login %}
                 Log In

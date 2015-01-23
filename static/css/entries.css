@@ -20,3 +20,18 @@ input[type="password"], input[type="text"] {
     margin-bottom: 2px;
     width: 95%;
 }
+
+#num-entries {
+    font-size: 1.2em;
+    font-weight: bold;
+    text-align: center;
+}
+
+#entry-container, #export-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+#export-container {
+    text-align: center;
+}

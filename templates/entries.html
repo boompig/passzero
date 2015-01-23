@@ -10,12 +10,11 @@
 
 {% block body %}
     <h1 class="title">PassZero Entries</h1>
-
-    {% include "logged_in_nav.html" %}
+    <div id="num-entries">You have {{ entries|length }} entries</div>
 
     <div id="export-container">
         <form action="{{ url_for("export_entries") }}" method="post">
-            <button type="submit" class="btn btn-primary">Export Entries</button>
+            <button type="submit" id="export-btn" class="btn btn-success">Export Entries</button>
         </form>
     </div>
 

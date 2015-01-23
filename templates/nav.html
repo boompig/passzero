@@ -1,0 +1,38 @@
+{% set navbar = (
+        [
+            ("/", "index", "Home"),
+            ("/view", "entries", "View Entries"),
+            ("/new", "new", "New Entry"),
+            ("/logout", "logout", "Sign Out")
+        ] if ("user_id" in session) else [
+            ("/", "index", "Home"),
+            ("/login", "login", "Sign In"),
+            ("/signup", "signup", "Sign Up")
+        ]
+)-%}
+
+{% set active_page = active_page|default("index") -%}
+
+<nav class="navbar navbar-default">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">PassZero</a>
+        </div>
+
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="nav navbar-nav">
+                {% for href, id, caption in navbar %}
+                    <li {% if id == active_page %} class="active" {% endif %}>
+                    <a href="{{ href|e }}">{{ caption|e }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div><!-- /.navbar-collapse -->
+    </div><!-- /.container-fluid -->
+</nav>
