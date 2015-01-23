@@ -1,47 +1,17 @@
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash
 from werkzeug.contrib.fixers import ProxyFix
-import sqlite3
 import random
-import hashlib
 
 # some helpers
-from utils import encrypt_password, decrypt_password, pad_key
+from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password
+from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, export
 
 app = Flask(__name__, static_url_path="")
 PORT = 5050
-DB_FILE = "passzero.db"
-DB_INIT_SCRIPT = "db_init.sql"
 SALT_SIZE = 32
 DUMP_FILE = "dump.sql"
 DEBUG = True
 
-def db_init():
-    with open(DB_INIT_SCRIPT) as f:
-        conn = sqlite3.connect(DB_FILE)
-        conn.executescript(f.read())
-        conn.commit()
-        conn.close()
-    return True
-
-def get_hashed_password(password, salt):
-    return hashlib.sha512(password + salt).hexdigest()
-
-def check_login(email, password, salt):
-    """Return user ID on success, None on failure"""
-    password_hash = get_hashed_password(password, salt)
-    # fetch user_id from database
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute("SELECT id FROM users WHERE email=? AND password=?", 
-        [
-            email,
-            password_hash
-        ]
-    )
-
-    seq = cur.fetchone()
-    conn.close()
-    return (seq[0] if seq else None)
 
 @app.route("/", methods=["GET"])
 def index():
@@ -53,16 +23,6 @@ def index():
     else:
         return redirect(url_for("login"))
 
-def get_user_salt(email):
-    """Return the salt if the email is present, None otherwise"""
-    sql = "SELECT salt FROM users where email=?"
-    conn = sqlite3.connect(DB_FILE)
-    cursor = conn.cursor()
-    cursor.execute(sql, [email])
-    row = cursor.fetchone()
-    conn.close()
-    return (row[0] if row else None)
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -72,7 +32,8 @@ def login():
         password = request.form['password']
         salt = get_user_salt(email)
         if salt is not None:
-            user_id = check_login(email, password, salt)
+            password_hash = get_hashed_password(password, salt)
+            user_id = check_login(email, password_hash, salt)
             if user_id:
                 session['email'] = email
                 session['password'] = password
@@ -95,17 +56,6 @@ def logout():
         session.pop("user_id")
     return redirect(url_for("index"))
 
-def save_entry(user_id, key, account_name, account_username, account_password):
-    padding = pad_key(key)
-    enc_pass = encrypt_password(key + padding, account_password)
-
-    sql = "INSERT INTO entries (user, account, username, password, padding) VALUES (?, ?, ?, ?, ?)"
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute(sql, [user_id, account_name, account_username, enc_pass, padding])
-    conn.commit()
-    conn.close()
-    return True
 
 @app.route("/new", methods=["GET", "POST"])
 def new_entry():
@@ -120,12 +70,15 @@ def new_entry():
                 break
 
         if error is None:
+            padding = pad_key(session['password'])
+            enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
+
             status = save_entry(
                 session['user_id'],
-                session['password'],
                 request.form['account'],
                 request.form['username'],
-                request.form['password']
+                enc_pass,
+                padding
             )
 
             if status:
@@ -138,22 +91,12 @@ def new_entry():
 
     return render_template("new.html", error=error)
 
-def get_entries(user_id):
-    sql = "select id, account, username, password, padding from entries where user=? order by lower(account)"
-
-    conn = sqlite3.connect(DB_FILE)
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-    cur.execute(sql, [user_id])
-    entries = cur.fetchall()
-    conn.close()
-    return entries
-
 def decrypt_entries(entries, key):
+    """Return a list of objects representing the decrypted entries"""
     obj = []
     for row in entries:
         hex_ciphertext = row["password"]
-        padding = row[4]
+        padding = row["padding"]
         password = decrypt_password(key + padding, hex_ciphertext)
         obj.append({
             "id": row["id"],
@@ -174,28 +117,6 @@ def view_entries():
     dec_entries = decrypt_entries(entries, session['password'])
     return render_template("entries.html", entries=dec_entries)
 
-def get_salt(size):
-    """Create and return random salt of given size"""
-    alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    chars = []
-    for i in range(size):
-        chars.append(random.choice(alphabet))
-    return "".join(chars)
-
-def create_account(email, password):
-    salt = get_salt(SALT_SIZE)
-    password_hash = get_hashed_password(password, salt)
-
-    sql = "INSERT INTO users (email, password, salt) VALUES (?, ?, ?)";
-    try:
-        conn = sqlite3.connect(DB_FILE)
-        cur = conn.cursor()
-        cur.execute(sql, [email, password_hash, salt])
-        conn.commit()
-        conn.close()
-        return True
-    except sqlite3.IntegrityError:
-        return False
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -213,26 +134,10 @@ def signup():
 
 @app.route("/export", methods=["POST"])
 def export_entries():
-    conn = sqlite3.connect(DB_FILE)
-    with open(DUMP_FILE, "w") as fp:
-        for line in conn.iterdump():
-            fp.write("%s\n" % line)
-    conn.close()
-
+    export(DUMP_FILE)
     flash("database successfully dumped to file %s" % DUMP_FILE)
     return redirect("/advanced")
 
-def save_edit_entry(user_id, key, account_id, account_name, account_username, account_password):
-    padding = pad_key(key)
-    enc_pass = encrypt_password(key + padding, account_password)
-
-    sql = "UPDATE entries SET user=?, account=?, username=?, password=?, padding=? WHERE id=?";
-    conn = sqlite3.connect(DB_FILE)
-    cur = conn.cursor()
-    cur.execute(sql, [user_id, account_name, account_username, enc_pass, padding, account_id])
-    conn.commit()
-    conn.close()
-    return True
 
 @app.route("/doedit/<entry_id>", methods=["POST"])
 def do_edit_entry(entry_id):
@@ -245,13 +150,16 @@ def do_edit_entry(entry_id):
             #TODO something smarter here
             return redirect(url_form("index"))
 
+    padding = pad_key(session['password'])
+    enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
+
     save_edit_entry(
         session['user_id'],
-        session['password'],
         entry_id,
         request.form['account'],
         request.form['username'],
-        request.form['password']
+        enc_pass,
+        padding
     )
     flash("Successfully changed entry for account %s" % request.form['account'])
     return redirect(url_for("view_entries"))
