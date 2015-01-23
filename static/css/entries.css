@@ -27,13 +27,9 @@ input[type="password"], input[type="text"] {
     text-align: center;
 }
 
-#entry-container, #export-container {
+#entry-container {
     max-width: 600px;
     margin: 0 auto;
-}
-
-#export-container {
-    text-align: center;
 }
 
 .entry-panel {

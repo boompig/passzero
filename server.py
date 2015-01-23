@@ -220,7 +220,7 @@ def export_entries():
     conn.close()
 
     flash("database successfully dumped to file %s" % DUMP_FILE)
-    return redirect("/view")
+    return redirect("/advanced")
 
 def save_edit_entry(user_id, key, account_id, account_name, account_username, account_password):
     padding = pad_key(key)
@@ -273,6 +273,11 @@ def edit_entry(entry_id):
         return render_template("index.html")
     else:
         return render_template("new.html", e_id=entry_id, entry=fe[0], error=None)
+
+@app.route("/advanced")
+def advanced():
+    return render_template("advanced.html")
+
 
 app.wsgi_app = ProxyFix(app.wsgi_app)
 

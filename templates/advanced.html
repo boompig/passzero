@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/advanced.css") }}" />
+{% endblock %}
+
+{% block body %}
+    <h1 class="title">PassZero - Advanced Options</h1>
+    <div id="export-container">
+        <form action="{{ url_for("export_entries") }}" method="post">
+            <button type="submit" id="export-btn" class="btn btn-success">Export Entries</button>
+        </form>
+    </div>
+{% endblock %}
