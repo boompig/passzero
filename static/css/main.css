@@ -1,3 +1,18 @@
+html, body {
+    background-color: #ddd;
+    height: 100%;
+}
+
+.container {
+    margin-top: -20px;
+    background-color: #fff;
+    height: 100%;
+}
+
 h1.title {
+    text-align: center;
+}
+
+#logged-in-text {
     text-align: center;
 }
