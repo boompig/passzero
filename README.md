@@ -6,8 +6,12 @@ PassZero is a secure password manager implemented in Python. It is accessible in
 
 PassZero is powered by the following technologies:
 
-    * Twitter bootstrap
-    * Python flask
+    * Twitter Bootstrap
+    * Python Flask
     * jQuery
-    * sqlite
+    * sqlite3
     * pyCrypto
+
+## Design
+
+PassZero is implemented as a simple web app with results held in a database, the frontend is presented as HTML in the browser, and the server is implemented in Python (Flask). All of the crypto happens server-side.
