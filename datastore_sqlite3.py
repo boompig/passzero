@@ -56,11 +56,8 @@ def save_entry(user_id, account_name, account_username, enc_pass, padding):
     return True
 
 
-#TODO do not import 
-def create_account(email, password, salt):
+def create_account(email, password_hash, salt):
     """Create a new account. Return True on success, False on failure."""
-    salt = get_salt(SALT_SIZE)
-    password_hash = get_hashed_password(password, salt)
 
     sql = "INSERT INTO users (email, password, salt) VALUES (?, ?, ?)";
     try:

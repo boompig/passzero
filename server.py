@@ -3,7 +3,7 @@ from werkzeug.contrib.fixers import ProxyFix
 import random
 
 # some helpers
-from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password
+from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
 from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, export, db_delete_entry
 
 app = Flask(__name__, static_url_path="")
@@ -61,6 +61,8 @@ def logout():
         session.pop("password")
     if 'user_id' in session:
         session.pop("user_id")
+
+    flash("Successfully logged out")
     return redirect(url_for("index"))
 
 
@@ -130,7 +132,9 @@ def signup():
     error = None
     if request.method == "POST":
         if 'email' in request.form and 'password' in request.form:
-            if create_account(request.form['email'], request.form['password']):
+            salt = get_salt(SALT_SIZE)
+            password_hash = get_hashed_password(request.form['password'], salt)
+            if create_account(request.form['email'], password_hash, salt):
                 flash("Successfully created account with email %s" % request.form['email'])
                 return redirect(url_for("index"))
             else:
