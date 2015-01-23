@@ -201,7 +201,7 @@ def advanced():
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
-    app.secret_key = 'A4Zr98j/3yxmR~XHH!jmN]LWX/,!zT'
+    app.secret_key = '64f5abcf8369e362c36a6220128de068'
     db_init()
     if DEBUG:
         app.debug = True
