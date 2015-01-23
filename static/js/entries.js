@@ -1,6 +1,6 @@
 var restart = true;
 var val = 0;
-var maxVal = 5 * 60;
+var maxVal = 4 * 60;
 
 function showHidePass(event) {
     var elem = $(event.target).parent().find(".password");
@@ -20,6 +20,9 @@ function resetLogoutTimer() {
 }
 
 function startLogoutTimer() {
+    // for debugging
+    if (val % 10 === 0) console.log(val);
+
     if (restart) {
         val = maxVal;
         restart = false;
