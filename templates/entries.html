@@ -31,8 +31,10 @@
                     <input type="password" class="password form-control"
                         value="{{ row["password"] }}" readonly="true" />
                 </div>
-                <a href="/edit/{{ row["id"] }}">Edit</a>
-                <button type="button" class="btn btn-info" id="show-hide-btn" onclick="showHidePass(event)">Show</button>
+                <div class="entry-panel">
+                    <a href="/edit/{{ row["id"] }}">Edit</a>
+                    <button type="button" class="btn btn-info" id="show-hide-btn" onclick="showHidePass(event)">Show</button>
+                </div>
             </div>
         {% endfor %}
     </div>

@@ -3,7 +3,7 @@ input[type="submit"] {
 }
 
 /* display input on own line */
-input[type="text"], input[type="password"], input[type="submit"] {
+.form-control {
     display: block;
     width: 80%;
 }

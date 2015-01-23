@@ -6,7 +6,7 @@
     padding-top: 10px;
     padding-bottom: 10px;
 
-    margin-top: 5px;
+    margin-top: .5em;
 }
 
 .entry-title {
@@ -34,4 +34,8 @@ input[type="password"], input[type="text"] {
 
 #export-container {
     text-align: center;
+}
+
+.entry-panel {
+    margin-top: 0.4em;
 }
