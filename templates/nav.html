@@ -11,8 +11,6 @@
         ]
 )-%}
 
-{% set active_page = active_page|default("index") -%}
-
 <nav class="navbar navbar-default">
     <div class="container-fluid">
         <div class="navbar-header">
@@ -28,7 +26,7 @@
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
                 {% for href, id, caption in navbar %}
-                    <li {% if id == active_page %} class="active" {% endif %}>
+                    <li {% if href == request.path %} class="active" {% endif %}>
                     <a href="{{ href|e }}">{{ caption|e }}</a>
                     </li>
                 {% endfor %}

@@ -1,25 +1,25 @@
 {% extends "layout.html" %}
-{% set active_page = ("login" if login else "signup") %}
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") }}" />
 {% endblock %}
 
 {% block body %}
-    <h1>
-        {% if login %}
-        Login to PassZero
-        {% else %}
-        Create a PassZero account
-        {% endif %}
-    </h1>
-
-    <div class="error">
-        {% if error %}
-            Error:&nbsp;<span class="error-text">{{ error }}</span>
-        {% endif %}
-    </div>
     <form method="POST" action="/login" role="form">
+        <h1 class="title">
+            {%- if login -%}
+            Login to PassZero
+            {%- else -%}
+            Sign Up for PassZero
+            {%- endif -%}
+        </h1>
+
+        <div class="error">
+            {%- if error -%}
+                Error:&nbsp;<span class="error-text">{{ error }}</span>
+            {%- endif -%}
+        </div>
+
         <label for="email">Email</label>
         <input type="text" class="form-control" name="email"
                 placeholder="email" required="true" />
@@ -30,11 +30,11 @@
 
         <button class="btn btn-success form-control" id="submit-btn"
             type="submit" name="submit">
-            {% if login %}
+            {%- if login -%}
                 Log In
-            {% else %}
+            {%- else -%}
                 Sign Up
-            {% endif %}
+            {%- endif -%}
         </button>
     </form>
 {% endblock %}
