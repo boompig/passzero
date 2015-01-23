@@ -4,8 +4,5 @@
 *.pyc
 # ignore the dump file for database
 dump.sql
-# ignore libs
-static/lib
-
 # virtualenv
 venv
