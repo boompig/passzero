@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash
+from werkzeug.contrib.fixers import ProxyFix
 import sqlite3
 import random
 import hashlib
@@ -273,6 +274,7 @@ def edit_entry(entry_id):
     else:
         return render_template("new.html", e_id=entry_id, entry=fe[0], error=None)
 
+app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
     app.secret_key = 'A4Zr98j/3yxmR~XHH!jmN]LWX/,!zT'
