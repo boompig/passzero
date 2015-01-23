@@ -38,20 +38,24 @@ function startLogoutTimer() {
     setTimeout(startLogoutTimer, 1000);
 }
 
-function deleteEntry(e, entry_id) {
-    console.log("Deleting entry with ID " + entry_id);
-    $.ajax({
-        url: "/entries/" + entry_id,
-        method: "DELETE",
-        success: function (result, textStatus, obj) {
-            console.log("result of deletion:");
-            console.log(result);
+function deleteEntry(e, entry_id, account_name) {
+    "use strict";
 
-            if (result === 1 || result === "1") {
-                window.location.reload()
+    if (confirm("OK to delete entry for account " + account_name + "?")) {
+        console.log("Deleting entry with ID " + entry_id);
+        $.ajax({
+            url: "/entries/" + entry_id,
+            method: "DELETE",
+            success: function (result, textStatus, obj) {
+                console.log("result of deletion:");
+                console.log(result);
+
+                if (result === 1 || result === "1") {
+                    window.location.reload();
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 $(function() {

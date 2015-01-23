@@ -1,6 +1,6 @@
-from flask import Flask, render_template, redirect, session, request, url_for, escape, flash
+from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response
 from werkzeug.contrib.fixers import ProxyFix
-import random
+import json
 
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
@@ -53,6 +53,7 @@ def login():
             error = "Either the username or password is incorrect"
     return render_template("login.html", login=True, error=error)
 
+
 @app.route("/logout", methods=["GET"])
 def logout():
     if 'email' in session:
@@ -66,39 +67,68 @@ def logout():
     return redirect(url_for("index"))
 
 
-@app.route("/new", methods=["GET", "POST"])
-def new_entry():
-    error = None
-    if request.method == "POST":
-        if 'user_id' not in session or 'password' not in session:
-            error = "must be logged in to perform this action"
+@app.route("/entries/new", methods=["GET"])
+def new_entry_view():
+    if 'email' not in session or 'password' not in session:
+        return redirect(url_for('index'))
+    return render_template("new.html", error=None)
 
-        for field in ['account', 'username', 'password']:
-            if field not in request.form or request.form[field] == "":
-                error = "field %s is required" % field
-                break
 
-        if error is None:
-            padding = pad_key(session['password'])
-            enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
+@app.route("/entries/new", methods=["POST"])
+def new_entry_api():
+    code = 200
+    data = {}
+    if 'user_id' not in session or 'password' not in session:
+        data = {
+            "status": "error",
+            "msg": "must be logged in to perform this action"
+        }
+        code = 401
 
-            status = save_entry(
-                session['user_id'],
-                request.form['account'],
-                request.form['username'],
-                enc_pass,
-                padding
-            )
+    for field in ['account', 'username', 'password']:
+        if field not in request.form or request.form[field] == "":
+            data = {
+                "status": "error",
+                "msg": "field %s is required" % field
+            }
+            code = 400
 
-            if status:
-                flash("successfully added account %s" % request.form['account'])
-            else:
-                error = "internal server error"
-    else:
-        if 'email' not in session or 'password' not in session:
-            return redirect(url_for('index'))
+    if code == 200:
+        padding = pad_key(session['password'])
+        enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
 
-    return render_template("new.html", error=error)
+        status = save_entry(
+            session['user_id'],
+            request.form['account'],
+            request.form['username'],
+            enc_pass,
+            padding
+        )
+
+        if status:
+            code = 200
+            data = {
+                "status": "success",
+                "msg": "successfully added account %s" % escape(request.form['account'])
+            }
+        else:
+            code = 500
+            data = {
+                "status": "error",
+                "msg": "internal server error"
+            }
+
+    return Response(
+        json.dumps(data),
+        status=code,
+        mimetype="application/json"
+    )
+
+@app.route("/entries/done_new/<account_name>")
+def post_create(account_name):
+    flash("Successfully created entry for account %s" % escape(account_name))
+    return redirect(url_for("view_entries"))
+
 
 def decrypt_entries(entries, key):
     """Return a list of objects representing the decrypted entries"""

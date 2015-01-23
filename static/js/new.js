@@ -33,3 +33,33 @@ function showHidePassword(event) {
         //elem.parent().find("#gen-pass-btn").prop({"disabled": true});
     }
 }
+
+/**
+ * Parse a get string
+ */
+function parseGet(s) {
+    "use strict";
+    var pairs = s.split("&");
+    var obj = {};
+    var pair;
+    for (var i = 0; i < pairs.length; i++) {
+        pair = pairs[i].split("=");
+        obj[pair[0]] = pair[1];
+    }
+    return obj;
+}
+
+function createNew (e) {
+    "use strict";
+    var getString = $(e.target).serialize();
+    var url = $(e.target).attr("action");
+    var data = parseGet(getString);
+
+    e.preventDefault();
+    console.log(data);
+
+    $.post(url, data, function(response) {
+        window.location.href = "/entries/done_new/" + data.account;
+    }, "json");
+    return false;
+}

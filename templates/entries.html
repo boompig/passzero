@@ -37,7 +37,8 @@
                     <button type="button" class="btn btn-warning edit-btn"
                         onclick="window.location.href='/edit/{{ row["id"] }}'">Edit</button>
                     <button type="button" class="btn btn-info show-hide-btn" onclick="showHidePass(event)">Show</button>
-                    <button type="button" class="btn btn-danger" class="delete-btn" onclick="deleteEntry(event, {{ row["id"] }})">Delete</button>
+                    <button type="button" class="btn btn-danger" class="delete-btn"
+                    onclick="deleteEntry(event, {{ row["id"] }}, '{{ row["account"] }}')">Delete</button>
                 </div>
             </div>
         {% endfor %}

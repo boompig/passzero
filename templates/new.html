@@ -26,7 +26,8 @@
     {% if entry %}
         <form method="POST" action="/doedit/{{ e_id }}" role="form">
     {% else %}
-        <form method="POST" action="{{ url_for('new_entry') }}" role="form">
+        <form method="POST" action="{{ url_for('new_entry_api') }}" role="form"
+            onsubmit="createNew(event)">
     {% endif %}
         <label for="account">Account</label>
         <input type="text" name="account" required="true" class="form-control"
