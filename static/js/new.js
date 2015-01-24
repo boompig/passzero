@@ -35,16 +35,13 @@ function showHidePassword(event) {
 }
 
 /**
- * Parse a get string
+ * Parse serliazed array into object
  */
-function parseGet(s) {
+function parseArray(arr) {
     "use strict";
-    var pairs = s.split("&");
     var obj = {};
-    var pair;
-    for (var i = 0; i < pairs.length; i++) {
-        pair = pairs[i].split("=");
-        obj[pair[0]] = pair[1];
+    for(var i = 0; i < arr.length; i++) {
+        obj[arr[i].name] = arr[i].value || "";
     }
     return obj;
 }
@@ -53,9 +50,9 @@ function createNew (e) {
     "use strict";
     e.preventDefault();
 
-    var getString = $(e.target).serialize();
+    var dataArray = $(e.target).serializeArray();
     var url = $(e.target).attr("action");
-    var data = parseGet(getString);
+    var data = parseArray(getString);
 
     $.post(url, data, function(response) {
         window.location.href = "/entries/done_new/" + data.account;
@@ -67,9 +64,10 @@ function makeEdit (e) {
     "use strict";
     e.preventDefault();
 
-    var getString = $(e.target).serialize();
-    var url = $(e.target).attr("action");
-    var data = parseGet(getString);
+    var elem = $(e.target);
+    var url = elem.attr("action");
+    var dataArray = elem.serializeArray();
+    var data = parseArray(dataArray);
 
     $.post(url, data, function (response) {
         window.location.href = "/entries/done_edit/" + data.account;

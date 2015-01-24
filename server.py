@@ -13,6 +13,28 @@ DUMP_FILE = "dump.sql"
 DEBUG = True
 
 
+def check_auth():
+    """Return True iff user_id and password are in session."""
+    return 'user_id' in session and 'password' in session
+
+
+def json_noauth():
+    """Return tuple of (code, json object)"""
+    return (401, {
+        "status": "error",
+        "msg": "must be logged in to perform this action"
+    })
+
+
+def write_json(code, data):
+    """Write JSON response. Code is status code."""
+    return Response(
+        json.dumps(data),
+        status=code,
+        mimetype="application/json"
+    )
+
+
 @app.route("/entries/<int:entry_id>", methods=["DELETE"])
 def delete_entry(entry_id):
     """Print 1 on success and 0 on failure"""
@@ -22,10 +44,10 @@ def delete_entry(entry_id):
 
 @app.route("/", methods=["GET"])
 def index():
-    if 'email' in session:
+    if check_auth():
         return render_template("index.html",
-            logged_in=('email' in session),
-            email=(session['email'] if 'email' in session else None)
+            logged_in=True,
+            email=session['email']
         )
     else:
         return redirect(url_for("login"))
@@ -69,7 +91,7 @@ def logout():
 
 @app.route("/entries/new", methods=["GET"])
 def new_entry_view():
-    if 'email' not in session or 'password' not in session:
+    if not check_auth():
         return redirect(url_for('index'))
     return render_template("new.html", error=None)
 
@@ -78,12 +100,8 @@ def new_entry_view():
 def new_entry_api():
     code = 200
     data = {}
-    if 'user_id' not in session or 'password' not in session:
-        data = {
-            "status": "error",
-            "msg": "must be logged in to perform this action"
-        }
-        code = 401
+    if not check_auth():
+        code, data = json_noauth()
 
     for field in ['account', 'username', 'password']:
         if field not in request.form or request.form[field] == "":
@@ -118,11 +136,7 @@ def new_entry_api():
                 "msg": "internal server error"
             }
 
-    return Response(
-        json.dumps(data),
-        status=code,
-        mimetype="application/json"
-    )
+    return write_json(code, data)
 
 @app.route("/entries/done_edit/<account_name>")
 def post_edit(account_name):
@@ -153,8 +167,7 @@ def decrypt_entries(entries, key):
 
 @app.route("/view", methods=["GET"])
 def view_entries():
-    # login-only method
-    if 'user_id' not in session or 'password' not in session:
+    if not check_auth():
         #TODO flash some kind of error here
         return redirect(url_for('index'))
 
@@ -190,12 +203,8 @@ def export_entries():
 def edit_entry_api(entry_id):
     code = 200
     data = {}
-    if 'user_id' not in session or 'password' not in session:
-        code = 401
-        data = {
-            "status": "error",
-            "msg": "must be logged in to perform this action"
-        }
+    if not check_auth():
+        code, data = json_noauth()
 
     for field in ['account', 'username', 'password']:
         if field not in request.form:
@@ -231,15 +240,12 @@ def edit_entry_api(entry_id):
                 "msg": "internal server error"
             }
 
-    return Response(
-        json.dumps(data),
-        status=code,
-        mimetype="application/json"
-    )
+    return write_json(code, data)
+
 
 @app.route("/edit/<entry_id>", methods=["GET"])
 def edit_entry(entry_id):
-    if 'user_id' not in session or 'password' not in session:
+    if not check_auth():
         return redirect(url_for("index"))
     if not entry_id.isdigit():
         return "entry ID must be an integer"
