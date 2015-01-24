@@ -9,20 +9,6 @@
 {% endblock %}
 
 {% block body %}
-    <h1 class="title">
-        {% if entry %}
-            Edit PassZero entry for {{ entry["account"] }}
-        {% else %}
-            Create new PassZero entry
-        {% endif %}
-    </h1>
-
-    <div class="error">
-        {% if error %}
-            Error:&nbsp;<span class="error-text">{{ error }}</span>
-        {% endif %}
-    </div>
-
     {% if entry %}
         <form method="POST" action="/entries/{{ e_id }}" role="form"
             onsubmit="makeEdit(event)">
@@ -30,6 +16,15 @@
         <form method="POST" action="{{ url_for('new_entry_api') }}" role="form"
             onsubmit="createNew(event)">
     {% endif %}
+
+        <h1 class="title">
+            {%- if entry -%}
+                Edit PassZero entry for {{ entry["account"] }}
+            {%- else -%}
+                Create new PassZero entry
+            {%- endif -%}
+        </h1>
+
         <label for="account">Account</label>
         <input type="text" name="account" required="true" class="form-control"
             value="{{ (entry["account"] if entry) }}" />
