@@ -4,8 +4,16 @@
     <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") }}" />
 {% endblock %}
 
+{% block js %}
+    <script src="{{ url_for("static", filename="/js/login.js") }}"></script>
+{% endblock %}
+
 {% block body %}
+    {%- if login -%}
     <form method="POST" action="/login" role="form">
+    {%- else -%}
+    <form method="POST" action="/signup" role="form" onsubmit="createAccount(event)">
+    {%- endif -%}
         <h1 class="title">
             {%- if login -%}
             Login to PassZero
@@ -14,11 +22,7 @@
             {%- endif -%}
         </h1>
 
-        <div class="error">
-            {%- if error -%}
-                Error:&nbsp;<span class="error-text">{{ error }}</span>
-            {%- endif -%}
-        </div>
+        <div class="error"></div>
 
         <label for="email">Email</label>
         <input type="text" class="form-control" name="email"

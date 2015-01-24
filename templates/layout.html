@@ -32,6 +32,9 @@
         <!-- include jQuery on every page -->
         <script src="{{ url_for("static", filename="lib/jquery/dist/jquery.min.js") }}"></script> 
         <script src="{{ url_for("static", filename="lib/bootstrap/dist/js/bootstrap.min.js") }}"></script>
+
+        <!-- include utilities JS file -->
+        <script src="{{ url_for("static", filename="js/utils.js") }}"></script>
         {% block js %}
         {% endblock %}
     </body>

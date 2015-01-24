@@ -4,7 +4,7 @@ import json
 
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
-from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, export, db_delete_entry
+from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, export, db_delete_entry, db_create_account
 
 app = Flask(__name__, static_url_path="")
 PORT = 5050
@@ -18,12 +18,16 @@ def check_auth():
     return 'user_id' in session and 'password' in session
 
 
+def json_error(code, msg):
+    return (code, {
+        "status": "error",
+        "msg": msg
+    })
+
+
 def json_noauth():
     """Return tuple of (code, json object)"""
-    return (401, {
-        "status": "error",
-        "msg": "must be logged in to perform this action"
-    })
+    return json_error(401, "must be logged in to perform this action")
 
 
 def write_json(code, data):
@@ -33,6 +37,32 @@ def write_json(code, data):
         status=code,
         mimetype="application/json"
     )
+
+
+def form_missing_fields(fields):
+    for field in fields:
+        if field not in request.form or request.form[field] == "":
+            return field
+
+    return None
+
+
+def json_missing_field(missing_field):
+    """Return tuple of (code, JSON data)"""
+    return json_error(400, "field %s is required" % missing_field)
+
+
+def json_success(msg):
+    """Return tuple of (code, JSON data)"""
+    return (200, {
+        "status": "success",
+        "msg": msg
+    })
+
+
+def json_internal_error(msg):
+    """Return tuple of (code, JSON data)"""
+    return json_error(500, msg)
 
 
 @app.route("/entries/<int:entry_id>", methods=["DELETE"])
@@ -103,13 +133,9 @@ def new_entry_api():
     if not check_auth():
         code, data = json_noauth()
 
-    for field in ['account', 'username', 'password']:
-        if field not in request.form or request.form[field] == "":
-            data = {
-                "status": "error",
-                "msg": "field %s is required" % field
-            }
-            code = 400
+    missing_field = form_missing_fields(['account', 'username', 'password'])
+    if missing_field:
+        code, data = json_missing_field(missing_field)
 
     if code == 200:
         padding = pad_key(session['password'])
@@ -124,19 +150,18 @@ def new_entry_api():
         )
 
         if status:
-            code = 200
-            data = {
-                "status": "success",
-                "msg": "successfully added account %s" % escape(request.form['account'])
-            }
+            code, data = json_success("successfully added account %s" % escape(request.form['account']))
         else:
-            code = 500
-            data = {
-                "status": "error",
-                "msg": "internal server error"
-            }
+            code, data = json_internal_error("internal server error")
 
     return write_json(code, data)
+
+
+@app.route("/done_signup/<email>")
+def post_signup(email):
+    flash("Successfully created account with email %s" % email)
+    return redirect(url_for("index"))
+
 
 @app.route("/entries/done_edit/<account_name>")
 def post_edit(account_name):
@@ -176,21 +201,31 @@ def view_entries():
     return render_template("entries.html", entries=dec_entries)
 
 
-@app.route("/signup", methods=["GET", "POST"])
+@app.route("/signup", methods=["POST"])
+def signup_api():
+    code = 200
+    data = {}
+    missing_field = form_missing_fields(['email', 'password'])
+    if missing_field is None:
+        salt = get_salt(SALT_SIZE)
+        password_hash = get_hashed_password(request.form['password'], salt)
+        if db_create_account(request.form['email'], password_hash, salt):
+            code, data = json_success(
+                "Successfully created account with email %s" % request.form['email']
+            )
+        else:
+            code, data = json_error(409, "an account with this email address already exists")
+    else:
+        code, data = json_missing_field(missing_field)
+    return write_json(code, data)
+
+
+@app.route("/signup", methods=["GET"])
 def signup():
     error = None
-    if request.method == "POST":
-        if 'email' in request.form and 'password' in request.form:
-            salt = get_salt(SALT_SIZE)
-            password_hash = get_hashed_password(request.form['password'], salt)
-            if create_account(request.form['email'], password_hash, salt):
-                flash("Successfully created account with email %s" % request.form['email'])
-                return redirect(url_for("index"))
-            else:
-                error = "an account with this email address already exists"
-        else:
-            error = "must fill in email and password"
+    #flash("Successfully created account with email %s" % request.form['email'])
     return render_template("login.html", login=False, error=error)
+
 
 @app.route("/export", methods=["POST"])
 def export_entries():
@@ -228,17 +263,11 @@ def edit_entry_api(entry_id):
             padding
         )
         if status:
-            code = 200
-            data = {
-                "status": "success",
-                "msg": "successfully edited account %s" % escape(request.form["account"])
-            }
+            code, data = json_success(
+                "successfully edited account %s" % escape(request.form["account"])
+            )
         else:
-            code = 500
-            data = {
-                "status": "error",
-                "msg": "internal server error"
-            }
+            code, data = json_internal_error("internal server error")
 
     return write_json(code, data)
 

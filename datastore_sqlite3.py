@@ -56,7 +56,7 @@ def save_entry(user_id, account_name, account_username, enc_pass, padding):
     return True
 
 
-def create_account(email, password_hash, salt):
+def db_create_account(email, password_hash, salt):
     """Create a new account. Return True on success, False on failure."""
 
     sql = "INSERT INTO users (email, password, salt) VALUES (?, ?, ?)";
