@@ -1,17 +1,22 @@
 import psycopg2
 import psycopg2.extras
+import os
 
 DB_INIT_SCRIPT = "db_init_postgres.sql"
 DB_NAME = "dbkats"
 DB_USER = "dbkats"
 
+
 def db_connect():
-    return psycopg2.connect(
-        dbname=DB_NAME,
-        user=DB_USER,
-        host="localhost",
-        password=""
-    )
+    if 'DATABASE_URL' in os.environ:
+        return psycopg2.connect(os.environ['DATABASE_URL'])
+    else:
+        return psycopg2.connect(
+            dbname=DB_NAME,
+            user=DB_USER,
+            host="localhost",
+            password=""
+        )
 
 
 def db_get_entries(user_id):
