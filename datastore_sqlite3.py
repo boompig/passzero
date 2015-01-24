@@ -95,13 +95,14 @@ def save_edit_entry(user_id, account_id, account_name, account_username, enc_pas
     return True
 
 
-def export(fname):
+def db_export(fname):
     """Export database dump to file."""
     conn = sqlite3.connect(DB_FILE)
     with open(fname, "w") as fp:
         for line in conn.iterdump():
             fp.write("%s\n" % line)
     conn.close()
+    return True
 
 
 def db_delete_entry(user_id, entry_id):

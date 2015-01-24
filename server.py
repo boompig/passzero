@@ -4,7 +4,7 @@ import json
 
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
-from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, export, db_delete_entry, db_create_account
+from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 
 app = Flask(__name__, static_url_path="")
 PORT = 5050
@@ -112,7 +112,7 @@ def login_api():
 
     return write_json(code, data)
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route("/login", methods=["GET"])
 def login():
     error = None
     return render_template("login.html", login=True, error=error)
@@ -239,9 +239,18 @@ def signup():
     return render_template("login.html", login=False, error=error)
 
 
-@app.route("/export", methods=["POST"])
-def export_entries():
-    export(DUMP_FILE)
+@app.route("/advanced/export", methods=["POST"])
+def export_entries_api():
+    if db_export(DUMP_FILE):
+        code, data = json_success("Successfully dumped to file %s" % DUMP_FILE)
+    else:
+        code, data = json_internal_error("internal error")
+
+    return write_json(code, data)
+
+
+@app.route("/advanced/done_export")
+def post_export():
     flash("database successfully dumped to file %s" % DUMP_FILE)
     return redirect("/advanced")
 
