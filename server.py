@@ -8,6 +8,7 @@ from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed
 from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 
 app = Flask(__name__, static_url_path="")
+app.secret_key = '64f5abcf8369e362c36a6220128de068'
 PORT = 5050
 SALT_SIZE = 32
 DUMP_FILE = "dump.sql"
@@ -170,9 +171,9 @@ def new_entry_api():
     return write_json(code, data)
 
 
-@app.route("/done_signup/<email>")
+@app.route("/done_signup/<email>", methods=["GET"])
 def post_signup(email):
-    flash("Successfully created account with email %s" % email)
+    flash("Successfully created account with email %s" % escape(email))
     return redirect(url_for("index"))
 
 
@@ -320,7 +321,6 @@ def advanced():
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
-    app.secret_key = '64f5abcf8369e362c36a6220128de068'
     db_init()
     if DEBUG:
         app.debug = True
