@@ -12,18 +12,10 @@
     <h1 class="title">PassZero Entries</h1>
     <div id="num-entries">You have {{ entries|length }} entries</div>
 
-    <!--<button class="btn btn-info" id="show-entries-btn" onclick="showAllEntries()">Show All</button>
-    <div id="search-container">
-        <label for="search">Search</label>
-        <input type="text" class="form-control" name="search" />
-        <button type="button" id="search-btn" class="btn btn-info">Search</button>
-    </div> -->
-
     <div id="entry-container" onclick="resetLogoutTimer()">
-    <!--<div id="entry-container" onclick="resetLogoutTimer()" style="display:none;">-->
-        {% if entries|length == 0 %}
-            <div class="empty-msg">No entries yet</div>
-        {% endif %}
+        {%- if entries|length == 0 -%}
+            <div class="empty-msg">No entries yet :(</div>
+        {%- endif -%}
 
         {% for row in entries %}
             <div class="entry" id="entry-{{ row["id"] }}">
