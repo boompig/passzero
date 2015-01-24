@@ -4,7 +4,8 @@ import json
 
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
-from datastore_sqlite3 import db_init, get_user_salt, check_login, get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
+#from datastore_sqlite3 import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
+from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 
 app = Flask(__name__, static_url_path="")
 PORT = 5050
@@ -208,7 +209,7 @@ def view_entries():
         #TODO flash some kind of error here
         return redirect(url_for('index'))
 
-    entries = get_entries(session['user_id'])
+    entries = db_get_entries(session['user_id'])
     dec_entries = decrypt_entries(entries, session['password'])
     return render_template("entries.html", entries=dec_entries)
 
@@ -301,7 +302,7 @@ def edit_entry(entry_id):
         return "entry ID must be an integer"
 
     entry_id = int(str(entry_id))
-    entries = get_entries(session['user_id'])
+    entries = db_get_entries(session['user_id'])
     dec_entries = decrypt_entries(entries, session['password'])
 
     fe = [e for e in dec_entries if e["id"] == entry_id]

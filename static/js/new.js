@@ -40,7 +40,7 @@ function createNew (e) {
 
     var dataArray = $(e.target).serializeArray();
     var url = $(e.target).attr("action");
-    var data = parseArray(getString);
+    var data = parseArray(dataArray);
 
     $.post(url, data, function(response) {
         window.location.href = "/entries/done_new/" + data.account;
