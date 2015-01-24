@@ -14,7 +14,7 @@
 
     <div id="entry-container" onclick="resetLogoutTimer()">
         {%- if entries|length == 0 -%}
-            <div class="empty-msg">No entries yet :(</div>
+        <div class="empty-msg">No entries yet. Try <a href="/entries/new">making some</a>.</div>
         {%- endif -%}
 
         {% for row in entries %}

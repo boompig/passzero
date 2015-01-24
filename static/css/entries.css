@@ -35,8 +35,3 @@ input[type="password"], input[type="text"] {
 .entry-panel {
     margin-top: 0.4em;
 }
-
-.empty-msg {
-    text-align: center;
-    font-size: 1.1em;
-}

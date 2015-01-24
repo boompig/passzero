@@ -16,14 +16,13 @@
         <form method="POST" action="{{ url_for('new_entry_api') }}" role="form"
             onsubmit="createNew(event)">
     {% endif %}
-
-        <h1 class="title">
+        <h3 class="title">
             {%- if entry -%}
                 Edit PassZero entry for {{ entry["account"] }}
             {%- else -%}
                 Create new PassZero entry
             {%- endif -%}
-        </h1>
+        </h3>
 
         <label for="account">Account</label>
         <input type="text" name="account" required="true" class="form-control"
