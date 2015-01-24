@@ -83,26 +83,38 @@ def index():
         return redirect(url_for("login"))
 
 
+@app.route("/done_login", methods=["GET"])
+def post_login():
+    flash("Successfully logged in as %s" % escape(session['email']))
+    return redirect(url_for("index"))
+
+
+@app.route("/login", methods=["POST"])
+def login_api():
+    data = {}
+    code = 200
+    email = request.form['email']
+    password = request.form['password']
+    salt = get_user_salt(email)
+    if salt is not None:
+        password_hash = get_hashed_password(password, salt)
+        user_id = check_login(email, password_hash, salt)
+        if user_id:
+            session['email'] = email
+            session['password'] = password
+            session['user_id'] = user_id
+
+            code, data = json_success("successfully logged in as %s" % escape(session['email']))
+        else:
+            code, data = json_error(401, "Either the username or password is incorrect")
+    else:
+        code, data = json_error(401, "Either the username or password is incorrect")
+
+    return write_json(code, data)
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
-    if request.method == "POST":
-        email = request.form['email']
-        password = request.form['password']
-        salt = get_user_salt(email)
-        if salt is not None:
-            password_hash = get_hashed_password(password, salt)
-            user_id = check_login(email, password_hash, salt)
-            if user_id:
-                session['email'] = email
-                session['password'] = password
-                session['user_id'] = user_id
-
-                return redirect(url_for("index"))
-            else:
-                error = "Either the username or password is incorrect"
-        else:
-            error = "Either the username or password is incorrect"
     return render_template("login.html", login=True, error=error)
 
 

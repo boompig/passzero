@@ -10,7 +10,7 @@
 
 {% block body %}
     {%- if login -%}
-    <form method="POST" action="/login" role="form">
+    <form method="POST" action="/login" role="form" onsubmit="login(event)">
     {%- else -%}
     <form method="POST" action="/signup" role="form" onsubmit="createAccount(event)">
     {%- endif -%}
