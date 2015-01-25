@@ -8,8 +8,11 @@ PassZero is powered by the following technologies:
 
     * Twitter Bootstrap
     * Python Flask
+    * gunicorn
+    * wtforms
     * jQuery
-    * sqlite3
+    * Postgres
+    * ~~sqlite3~~
     * pyCrypto
 
 ## Design
