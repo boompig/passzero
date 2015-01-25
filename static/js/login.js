@@ -13,6 +13,15 @@ function createAccount(e) {
     }, "json").error(function(obj, textStatus, textCode) {
         if (textCode === "CONFLICT") {
             $(".error").text("An account with this email already exists");
+        } else if (textCode === "BAD REQUEST") {
+            var response = JSON.parse(obj.responseText);
+            console.log(response);
+
+            for (var k in response) {
+                if (k !== "status" && k !== "msg") {
+                    $("#form-error-" + k).text(response[k]);
+                }
+            }
         } else {
             console.log(obj);
             console.log(textStatus);

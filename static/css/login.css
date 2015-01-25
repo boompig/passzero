@@ -8,6 +8,12 @@
     text-align: center;
 }
 
+.form-error {
+    color: red;
+    font-size: 0.9em;
+    display: block;
+}
+
 .form-control {
     margin-bottom: 5px;
 }

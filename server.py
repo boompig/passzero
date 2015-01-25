@@ -7,6 +7,9 @@ from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed
 #from datastore_sqlite3 import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 
+from forms import SignupForm
+
+
 app = Flask(__name__, static_url_path="")
 app.secret_key = '64f5abcf8369e362c36a6220128de068'
 PORT = 5050
@@ -39,6 +42,13 @@ def write_json(code, data):
         status=code,
         mimetype="application/json"
     )
+
+
+def json_form_validation_error(errors):
+    code, data = json_error(400, "Failed to validate form")
+    for k, v in dict(errors).iteritems():
+        data[k] = v[0]
+    return (code, data)
 
 
 def form_missing_fields(fields):
@@ -217,10 +227,8 @@ def view_entries():
 
 @app.route("/signup", methods=["POST"])
 def signup_api():
-    code = 200
-    data = {}
-    missing_field = form_missing_fields(['email', 'password'])
-    if missing_field is None:
+    form = SignupForm(request.form)
+    if form.validate():
         salt = get_salt(SALT_SIZE)
         password_hash = get_hashed_password(request.form['password'], salt)
         if db_create_account(request.form['email'], password_hash, salt):
@@ -230,7 +238,7 @@ def signup_api():
         else:
             code, data = json_error(409, "an account with this email address already exists")
     else:
-        code, data = json_missing_field(missing_field)
+        code, data = json_form_validation_error(form.errors)
     return write_json(code, data)
 
 

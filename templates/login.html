@@ -25,12 +25,20 @@
         <div class="error"></div>
 
         <label for="email">Email</label>
-        <input type="text" class="form-control" name="email"
+        <span class="form-error" id="form-error-email"></span>
+        <input type="email" class="form-control" name="email"
                 placeholder="email" required="true" />
 
         <label for="password">Password</label>
+        <span class="form-error" id="form-error-password"></span>
         <input type="password" class="form-control" name="password"
                 placeholder="password" required="true" />
+
+        {%- if not login -%}
+        <label for="confirm-password">Confirm Password</label>
+        <input type="password" class="form-control" name="confirm_password"
+                placeholder="confirm password" required="true" />
+        {%- endif -%}
 
         <button class="btn btn-success form-control" id="submit-btn"
             type="submit" name="submit">
