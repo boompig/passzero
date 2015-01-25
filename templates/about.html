@@ -1,0 +1,19 @@
+{% extends "layout.html" %}
+
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/about.css") }}" />
+{% endblock %}
+
+{% block body %}
+<div class="main-content">
+    <h2>About PassZero</h2>
+
+    <p>Remembering passwords is hard. That's why most people either use the same password for every site, or tend to use extremely insecure password. And how often do you forget your password? For me, it was all the time. That's why I wrote PassZero.</p>
+
+    <p>PassZero is a password manager: you can save the passwords for all your accounts on PassZero, and only need to remember one password. The passwords are securely encrypted with <b>your master password</b> so that they are completely secure, even if someone were to break into the PassZero servers.</p>
+
+    <p>But you shouldn't take my word for it; the code for PassZero is completely open source and available on <a href="https://github.com/boompig/passzero">GitHub</a>.</p>
+
+    <button class="btn btn-primary" onclick="window.location.href='/signup'">Try PassZero today</button>
+</div>
+{% endblock %}

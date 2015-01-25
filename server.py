@@ -353,6 +353,12 @@ def update_password_api():
 
     return write_json(code, data)
 
+
+@app.route("/about")
+def about():
+    return render_template("about.html")
+
+
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
