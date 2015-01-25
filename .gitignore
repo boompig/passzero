@@ -6,3 +6,8 @@
 dump.sql
 # virtualenv
 venv
+
+# self-signed certificate
+server.csr
+server.crt
+server.key

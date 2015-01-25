@@ -369,7 +369,7 @@ if __name__ == "__main__":
     db_init()
     if DEBUG:
         app.debug = True
-        app.run(port=PORT)
+        app.run(port=PORT, ssl_context=("server.crt", "server.key"))
     else:
         app.debug = False
         app.run(host='0.0.0.0', port=PORT)
