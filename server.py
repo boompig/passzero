@@ -80,7 +80,7 @@ def delete_entry_api(entry_id):
     else:
         code, data = json_noauth()
 
-    write_json(code, data)
+    return write_json(code, data)
 
 
 @app.route("/", methods=["GET"])
@@ -92,6 +92,12 @@ def index():
         )
     else:
         return redirect(url_for("login"))
+
+
+@app.route("/entries/post_delete/<account_name>", methods=["GET"])
+def post_delete(account_name):
+    flash("Successfully deleted account %s" % escape(account_name))
+    return redirect(url_for("view_entries"))
 
 
 @app.route("/done_login", methods=["GET"])

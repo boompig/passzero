@@ -47,12 +47,7 @@ function deleteEntry(e, entry_id, account_name) {
             url: "/entries/" + entry_id,
             method: "DELETE",
             success: function (result, textStatus, obj) {
-                console.log("result of deletion:");
-                console.log(result);
-
-                if (result === 1 || result === "1") {
-                    window.location.reload();
-                }
+                window.location.href = "/entries/post_delete/" + account_name;
             }
         }).error(function (obj, textStatus, textCode) {
             console.log(obj);

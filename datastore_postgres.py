@@ -123,8 +123,9 @@ def db_delete_entry(user_id, entry_id):
     conn = db_connect()
     cur = conn.cursor()
     cur.execute(sql, [entry_id, user_id])
+    result = cur.rowcount
+    print result
     conn.commit()
-    result = conn.total_changes
     conn.close()
     return result > 0
 
