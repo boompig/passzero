@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response
+from flask_sslify import SSLify
 from werkzeug.contrib.fixers import ProxyFix
 import json
 import os
@@ -11,15 +12,18 @@ from datastore_postgres import db_init, get_user_salt, check_login, db_get_entri
 from forms import SignupForm, NewEntryForm, UpdatePasswordForm
 
 
+SALT_SIZE = 32
+DUMP_FILE = "dump.sql"
+PORT = 5050
 app = Flask(__name__, static_url_path="")
 if 'FLASK_SECRET_KEY' in os.environ:
     app.secret_key = str(os.getenv("FLASK_SECRET_KEY"))
+    sslify = SSLify(app, permanent=True)
+    DEBUG = False
 else:
+    sslify = SSLify(app, permanent=True)
     app.secret_key = '64f5abcf8369e362c36a6220128de068'
-PORT = 5050
-SALT_SIZE = 32
-DUMP_FILE = "dump.sql"
-DEBUG = True
+    DEBUG = True
 
 
 def check_auth():
