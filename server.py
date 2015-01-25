@@ -1,6 +1,7 @@
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response
 from werkzeug.contrib.fixers import ProxyFix
 import json
+import os
 
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
@@ -11,7 +12,10 @@ from forms import SignupForm, NewEntryForm
 
 
 app = Flask(__name__, static_url_path="")
-app.secret_key = '64f5abcf8369e362c36a6220128de068'
+if 'FLASK_SECRET_KEY' in os.environ:
+    app.secret_key = str(os.getenv("FLASK_SECRET_KEY"))
+else:
+    app.secret_key = '64f5abcf8369e362c36a6220128de068'
 PORT = 5050
 SALT_SIZE = 32
 DUMP_FILE = "dump.sql"
