@@ -3,7 +3,7 @@
  */
 function genPassword() {
     "use strict";
-    var length = $("#passLen").val();
+    var length = $("#passLen").text();
     var passArray = [];
     var bannedChars = ['"', "'", "\\"];
     var charCode;
@@ -16,21 +16,26 @@ function genPassword() {
     }
 
     var pass = passArray.join("");
-    $("#password").val(pass);
+    $("#password").val(pass).keyup();
+
+    if ($("#password").attr("type") == "password") {
+        showHidePassword();
+    }
+
     return 0;
 }
 
-function showHidePassword(event) {
+function showHidePassword(e) {
     var elem = $("#password");
     var t = elem.attr("type");
     if (t === "password") {
         elem.attr("type", "text");
-        $(event.target).text("Hide");
-        //elem.parent().find("#gen-pass-btn").prop({"disabled": false});
+        $("#show-hide-btn").text("Hide");
+        togglePasswordGen(true);
     } else {
         elem.attr("type", "password");
-        $(event.target).text("Show");
-        //elem.parent().find("#gen-pass-btn").prop({"disabled": true});
+        $("#show-hide-btn").text("Show");
+        togglePasswordGen(false);
     }
 }
 
@@ -63,3 +68,41 @@ function makeEdit (e) {
 
     return false;
 }
+
+function changeLen(diff) {
+    "use strict";
+    var elem = $("#passLen");
+    var len = Number(elem.text());
+    elem.text(len + diff);
+}
+
+function togglePasswordGen(on) {
+    if (on) {
+        $("#len-container").show();
+        $("#gen-pass-btn").prop({ disabled: false });
+    } else {
+        $("#len-container").hide();
+        $("#gen-pass-btn").prop({ disabled: true });
+    }
+}
+
+$(function() {
+    "use strict";
+
+    if ($("#password").val().length > 0) {
+        togglePasswordGen(false);
+    } else {
+        $("#show-hide-btn").prop({ disabled: true });
+    }
+
+    $("#password").keyup(function () {
+        if ($(this).val().length > 0) {
+            $("#show-hide-btn").prop({ disabled: false });
+            if ($("#show-hide-btn").text() === "Show") {
+                togglePasswordGen(false);
+            }
+        } else {
+            $("#show-hide-btn").prop({ disabled: true });
+        }
+    });
+});

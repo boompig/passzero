@@ -12,6 +12,10 @@ input[type="submit"] {
     margin-top: 0.5em;
 }
 
+#gen-pass-btn {
+    margin-left: 0.5em;
+}
+
 button[type="submit"] {
     margin-top: 0.5em;
 }
@@ -32,4 +36,24 @@ form {
 
 #create-btn {
     margin-top: 0.5em;
+}
+
+#len-container {
+    /*padding-top: 1em;*/
+    padding-bottom: 0;
+    margin-left: 0.5em;
+    padding-right: 1em;
+    padding-top: 0.8em;
+    padding-bottom: 0.7em;
+    display: table-cell;
+    vertical-align: center;
+}
+
+#len-container button {
+    padding-top: .3em;
+    padding-bottom: .3em;
+}
+
+#len-container .text {
+    font-size: 1.1em;
 }
