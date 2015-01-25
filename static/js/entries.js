@@ -54,6 +54,10 @@ function deleteEntry(e, entry_id, account_name) {
                     window.location.reload();
                 }
             }
+        }).error(function (obj, textStatus, textCode) {
+            console.log(obj);
+            console.log(textStatus);
+            console.log(textCode);
         });
     }
 }

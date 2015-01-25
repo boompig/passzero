@@ -50,16 +50,20 @@ def check_login(email, password_hash, salt):
     return (seq[0] if seq else None)
 
 
-def save_entry(user_id, account_name, account_username, enc_pass, padding):
+def db_save_entry(user_id, account_name, account_username, enc_pass, padding):
     """Save the given entry into the database. Return True on success, False on failure."""
 
     sql = "INSERT INTO entries (user_id, account, username, password, padding) VALUES (%s, %s, %s, %s, %s)"
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute(sql, [user_id, account_name, account_username, enc_pass, padding])
-    conn.commit()
-    conn.close()
-    return True
+    try:
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute(sql, [user_id, account_name, account_username, enc_pass, padding])
+        conn.commit()
+        conn.close()
+        return True
+    except psycopg2.IntegrityError as e:
+        print e
+        return False
 
 
 def db_create_account(email, password_hash, salt):

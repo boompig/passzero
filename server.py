@@ -6,7 +6,7 @@ import os
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
 #from datastore_sqlite3 import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
-from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
+from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account
 
 from forms import SignupForm, NewEntryForm
 
@@ -69,10 +69,18 @@ def json_internal_error(msg):
 
 
 @app.route("/entries/<int:entry_id>", methods=["DELETE"])
-def delete_entry(entry_id):
+def delete_entry_api(entry_id):
     """Print 1 on success and 0 on failure"""
-    result = db_delete_entry(session['user_id'], entry_id)
-    return ("1" if result else "0")
+    if check_auth():
+        result = db_delete_entry(session['user_id'], entry_id)
+        if result:
+            code, data = json_success("successfully deleted entry with ID %d" % entry_id)
+        else:
+            code, data = json_error(500, "failed to delete entry with ID %d" % entry_id)
+    else:
+        code, data = json_noauth()
+
+    write_json(code, data)
 
 
 @app.route("/", methods=["GET"])
@@ -156,7 +164,7 @@ def new_entry_api():
         padding = pad_key(session['password'])
         enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
 
-        status = save_entry(
+        status = db_save_entry(
             session['user_id'],
             request.form['account'],
             request.form['username'],
