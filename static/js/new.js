@@ -49,7 +49,11 @@ function createNew (e) {
 
     $.post(url, data, function(response) {
         window.location.href = "/entries/done_new/" + data.account;
-    }, "json");
+    }, "json").error(function (obj, textStatus, textCode) {
+        console.log(obj);
+        console.log(textStatus);
+        console.log(textCode);
+    });
     return false;
 }
 

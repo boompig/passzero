@@ -13,3 +13,13 @@ class SignupForm(Form):
         validators.Required()
     ])
 
+class NewEntryForm(Form):
+    account = TextField("account", [
+        validators.Required()
+    ])
+    username = TextField("username", [
+        validators.Required()
+    ])
+    password = PasswordField("password", [
+        validators.Required()
+    ])

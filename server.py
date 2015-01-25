@@ -7,7 +7,7 @@ from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed
 #from datastore_sqlite3 import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 
-from forms import SignupForm
+from forms import SignupForm, NewEntryForm
 
 
 app = Flask(__name__, static_url_path="")
@@ -49,19 +49,6 @@ def json_form_validation_error(errors):
     for k, v in dict(errors).iteritems():
         data[k] = v[0]
     return (code, data)
-
-
-def form_missing_fields(fields):
-    for field in fields:
-        if field not in request.form or request.form[field] == "":
-            return field
-
-    return None
-
-
-def json_missing_field(missing_field):
-    """Return tuple of (code, JSON data)"""
-    return json_error(400, "field %s is required" % missing_field)
 
 
 def json_success(msg):
@@ -152,14 +139,14 @@ def new_entry_view():
 
 @app.route("/entries/new", methods=["POST"])
 def new_entry_api():
-    code = 200
-    data = {}
-    if not check_auth():
-        code, data = json_noauth()
-
-    missing_field = form_missing_fields(['account', 'username', 'password'])
-    if missing_field:
-        code, data = json_missing_field(missing_field)
+    form = NewEntryForm(request.form)
+    if form.validate():
+        if check_auth():
+            code = 200
+        else:
+            code, data = json_noauth()
+    else:
+        code, data = json_form_validation_error(form.errors)
 
     if code == 200:
         padding = pad_key(session['password'])
