@@ -1,5 +1,27 @@
-#export-container {
-    max-width: 600px;
-    margin: 0 auto;
-    text-align: center;
+#export-btn {
+    margin-top: 1em;
+}
+
+.alert {
+    margin-top: 1em;
+}
+
+form .error-msg {
+    font-size: 0.9em;
+    color: red;
+    display: block;
+}
+
+form .form-error {
+    font-size: 0.9em;
+    color: red;
+    display: block;
+}
+
+#change-password-form input {
+    margin-top: 0.5em;
+}
+
+#change-password-btn {
+    margin-top: 0.5em;
 }

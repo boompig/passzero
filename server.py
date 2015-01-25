@@ -6,9 +6,9 @@ import os
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
 #from datastore_sqlite3 import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
-from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account
+from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password
 
-from forms import SignupForm, NewEntryForm
+from forms import SignupForm, NewEntryForm, UpdatePasswordForm
 
 
 app = Flask(__name__, static_url_path="")
@@ -330,6 +330,28 @@ def edit_entry(entry_id):
 def advanced():
     return render_template("advanced.html")
 
+
+@app.route("/advanced/password", methods=["UPDATE"])
+def update_password_api():
+    if check_auth():
+        form = UpdatePasswordForm(request.form)
+        if form.validate():
+            status = db_update_password(
+                session['user_id'],
+                session['email'],
+                request.form['old_password'],
+                request.form['new_password']
+            )
+            if status:
+                code, data = json_success("successfully changed password")
+            else:
+                code, data = json_error(401, "old password is incorrect")
+        else:
+            code, data = json_form_validation_error(form.errors)
+    else:
+        code, data = json_noauth()
+
+    return write_json(code, data)
 
 app.wsgi_app = ProxyFix(app.wsgi_app)
 

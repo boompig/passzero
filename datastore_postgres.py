@@ -1,6 +1,7 @@
 import psycopg2
 import psycopg2.extras
 import os
+from crypto_utils import get_hashed_password
 
 DB_INIT_SCRIPT = "db_init_postgres.sql"
 DB_NAME = "dbkats"
@@ -137,6 +138,24 @@ def db_init():
         cursor.execute(sql)
     conn.commit()
     conn.close()
+
+
+def db_update_password(user_id, user_email, old_password, new_password):
+    """Return True on success, False on failure."""
+    salt = get_user_salt(user_email)
+    password_hash = get_hashed_password(old_password, salt)
+    checked_user_id = check_login(user_email, password_hash, salt)
+    if checked_user_id == user_id:
+        password_hash = get_hashed_password(new_password, salt)
+        sql = "UPDATE users SET password=%s WHERE id=%s"
+        conn = db_connect()
+        cur = conn.cursor()
+        cur.execute(sql, [password_hash, user_id])
+        conn.commit()
+        conn.close()
+        return True
+    else:
+        return False
 
 if __name__ == "__main__":
     db_init()

@@ -9,11 +9,50 @@
 {% endblock %}
 
 {% block body %}
-    <h1 class="title">Advanced Options</h1>
-    <div id="export-container">
-        <form action="{{ url_for("export_entries_api") }}" method="post" onsubmit="doExport(event)"
-            id="export-form" role="form">
-            <button type="submit" id="export-btn" class="btn btn-success">Export Entries</button>
-        </form>
+<h1 class="title">Advanced Options</h1>
+<div role="tabpanel">
+    <ul class="nav nav-tabs" role="tablist">
+        <li role="presentation" class="active">
+            <a href="#export" aria-controls="export" role="tab" data-toggle="tab">Export</a>
+        </li>
+        <li role="presentation">
+            <a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Account Settings</a>
+        </li>
+    </ul>
+    <div class="tab-content">
+        <div id="export" class="tab-pane active" role="tabpanel">
+            <form action="{{ url_for("export_entries_api") }}" method="post" onsubmit="doExport(event)"
+                id="export-form" role="form">
+                <button type="submit" id="export-btn" class="btn btn-success">Export Entries</button>
+            </form>
+        </div>
+        <div id="settings" class="tab-pane" role="tabpanel">
+            <div class="alert alert-success" role="alert" style="display: none;"></div>
+
+            <h3>Change Password</h3>
+            <form role="form" id="change-password-form" onsubmit="changePassword(event)"
+                action="/advanced/password" method="UPDATE">
+                <div class="error-msg"></div>
+
+                <label for="old_password">Old Password</label>
+                <span class="form-error" id="form-error-old_password"></span>
+                <input type="password" name="old_password" class="form-control"
+                    placeholder="old password" required="true" />
+
+                <label for="new_password">New Password</label>
+                <span class="form-error" id="form-error-new_password"></span>
+                <input type="password" name="new_password" class="form-control"
+                    placeholder="new password" required="true" />
+
+                <label for="confirm_new_password">Confirm New Password</label>
+                <span class="form-error" id="form-error-confirm_new_password"></span>
+                <input type="password" name="confirm_new_password" class="form-control"
+                    placeholder="confirm new password" required="true" />
+
+                <button type="submit" class="btn btn-success"
+                        id="change-password-btn">Change Password</button>
+            </form>
+        </div>
     </div>
+</div>
 {% endblock %}
