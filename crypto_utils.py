@@ -67,5 +67,11 @@ def get_salt(size):
     return "".join(chars)
 
 
+def random_hex(size):
+    alphabet = "abcdef1234567890"
+    chars = [random.choice(alphabet) for i in range(size)]
+    return "".join(chars)
+
+
 def get_hashed_password(password, salt):
     return hashlib.sha512(password + salt).hexdigest()

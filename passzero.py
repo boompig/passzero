@@ -8,8 +8,8 @@ import os
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
 #from datastore_sqlite3 import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password
-
 from forms import SignupForm, NewEntryForm, UpdatePasswordForm
+from mailgun import send_confirmation_email
 
 
 SALT_SIZE = 32
@@ -192,7 +192,7 @@ def new_entry_api():
 
 @app.route("/done_signup/<email>", methods=["GET"])
 def post_signup(email):
-    flash("Successfully created account with email %s" % escape(email))
+    flash("Successfully created account with email %s. A confirmation email was sent to this account." % escape(email))
     return redirect(url_for("index"))
 
 
@@ -241,6 +241,9 @@ def signup_api():
         salt = get_salt(SALT_SIZE)
         password_hash = get_hashed_password(request.form['password'], salt)
         if db_create_account(request.form['email'], password_hash, salt):
+            # send confirmation email
+            send_confirmation_email(request.form['email'])
+
             code, data = json_success(
                 "Successfully created account with email %s" % request.form['email']
             )
