@@ -8,7 +8,7 @@ def send_confirmation_email(email):
     if "MAILGUN_API_KEY" in os.environ:
         API_KEY = "key-%s" % os.environ["MAILGUN_API_KEY"]
         payload = {
-            "from": MAILGUN_EMAIL,
+            "from": "PassZero <%s>" % MAILGUN_EMAIL,
             "to": email,
             "subject": "Thanks for signing up for PassZero",
             "text": "You're pretty great"
