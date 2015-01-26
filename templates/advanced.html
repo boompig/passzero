@@ -13,20 +13,24 @@
 <div role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active">
-            <a href="#export" aria-controls="export" role="tab" data-toggle="tab">Export</a>
+            <a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Account Settings</a>
         </li>
         <li role="presentation">
-            <a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Account Settings</a>
+            <a href="#export" aria-controls="export" role="tab" data-toggle="tab">Export</a>
         </li>
     </ul>
     <div class="tab-content">
-        <div id="export" class="tab-pane active" role="tabpanel">
-            <form action="{{ url_for("export_entries_api") }}" method="post" onsubmit="doExport(event)"
-                id="export-form" role="form">
-                <button type="submit" id="export-btn" class="btn btn-success">Export Entries</button>
+        <div id="export" class="tab-pane" role="tabpanel">
+            <form action="{{ url_for("export_entries_api") }}" method="post"
+                onsubmit="doExport(event)" id="export-form" role="form">
+
+                <p>This functionality is temporarily disabled</p>
+
+                <button type="submit" id="export-btn" class="btn btn-success"
+                    disabled="true">Export Entries</button>
             </form>
         </div>
-        <div id="settings" class="tab-pane" role="tabpanel">
+        <div id="settings" class="tab-pane active" role="tabpanel">
             <div class="alert alert-success" role="alert" style="display: none;"></div>
 
             <h3>Change Password</h3>
