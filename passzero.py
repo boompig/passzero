@@ -332,7 +332,10 @@ def edit_entry(entry_id):
 
 @app.route("/advanced")
 def advanced():
-    return render_template("advanced.html")
+    if check_auth():
+        return render_template("advanced.html")
+    else:
+        return redirect(url_for("index"))
 
 
 @app.route("/advanced/password", methods=["UPDATE"])
