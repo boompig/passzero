@@ -356,6 +356,7 @@ def update_password_api():
                 dec_entries
             )
             if status:
+                session['password'] = request.form['new_password']
                 code, data = json_success("successfully changed password")
             else:
                 code, data = json_error(401, "old password is incorrect")
