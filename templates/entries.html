@@ -10,7 +10,7 @@
 
 {% block body %}
     <h1 class="title">PassZero Entries</h1>
-    <div id="num-entries">You have {{ entries|length }} entries</div>
+    <div id="num-entries">You have {{ entries|length }} {{ ("entry" if entries|length == 1 else "entries") }}</div>
 
     <div id="entry-container" onclick="resetLogoutTimer()">
         {%- if entries|length == 0 -%}

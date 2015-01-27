@@ -346,11 +346,14 @@ def update_password_api():
     if check_auth():
         form = UpdatePasswordForm(request.form)
         if form.validate():
+            entries = db_get_entries(session['user_id'])
+            dec_entries = decrypt_entries(entries, session['password'])
             status = db_update_password(
                 session['user_id'],
                 session['email'],
                 request.form['old_password'],
-                request.form['new_password']
+                request.form['new_password'],
+                dec_entries
             )
             if status:
                 code, data = json_success("successfully changed password")

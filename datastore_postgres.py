@@ -1,7 +1,7 @@
 import psycopg2
 import psycopg2.extras
 import os
-from crypto_utils import get_hashed_password
+from crypto_utils import get_hashed_password, pad_key, encrypt_password
 
 DB_INIT_SCRIPT = "db_init_postgres.sql"
 DB_NAME = "dbkats"
@@ -95,13 +95,13 @@ def get_user_salt(email):
     return (row[0] if row else None)
 
 
-def save_edit_entry(user_id, account_id, account_name, account_username, enc_password, padding):
+def save_edit_entry(user_id, entry_id, account_name, account_username, enc_password, padding):
     """Save the edited entry in the DB. Return True on success, False on failure"""
 
     sql = "UPDATE entries SET user_id=%s, account=%s, username=%s, password=%s, padding=%s WHERE id=%s";
     conn = db_connect()
     cur = conn.cursor()
-    cur.execute(sql, [user_id, account_name, account_username, enc_password, padding, account_id])
+    cur.execute(sql, [user_id, account_name, account_username, enc_password, padding, entry_id])
     conn.commit()
     conn.close()
     return True
@@ -140,7 +140,7 @@ def db_init():
     conn.close()
 
 
-def db_update_password(user_id, user_email, old_password, new_password):
+def db_update_password(user_id, user_email, old_password, new_password, entries):
     """Return True on success, False on failure."""
     salt = get_user_salt(user_email)
     password_hash = get_hashed_password(old_password, salt)
@@ -150,8 +150,15 @@ def db_update_password(user_id, user_email, old_password, new_password):
         sql = "UPDATE users SET password=%s WHERE id=%s"
         conn = db_connect()
         cur = conn.cursor()
+
+        for entry in entries:
+            padding = pad_key(new_password)
+            enc_password = encrypt_password(new_password + padding, entry["password"])
+            save_edit_entry(user_id, entry["id"], entry["account"], entry["username"], enc_password, padding)
+        # change password last
         cur.execute(sql, [password_hash, user_id])
         conn.commit()
+
         conn.close()
         return True
     else:
