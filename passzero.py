@@ -127,9 +127,9 @@ def login_api():
 
             code, data = json_success("successfully logged in as %s" % escape(session['email']))
         else:
-            code, data = json_error(401, "Either the username or password is incorrect")
+            code, data = json_error(401, "Either the email or password is incorrect")
     else:
-        code, data = json_error(401, "Either the username or password is incorrect")
+        code, data = json_error(401, "There is not account with that email")
 
     return write_json(code, data)
 
