@@ -22,3 +22,34 @@ h1.title, h2.title {
 .flashes {
     margin-top: 20px;
 }
+
+/***** customize navbar ***/
+nav.navbar {
+    background-color: #4FA8E0;
+}
+
+ul.nav.navbar-nav>li>a, ul.nav>li {
+    color: #fff;
+}
+
+.navbar-header>a.navbar-brand {
+    color: #fff;
+}
+
+ul.nav.navbar-nav>li.active>a {
+    color: #fff;
+    background-color: #1681C4;
+}
+
+ul.nav.navbar-nav>li>a>.glyphicon {
+    margin-right: 0.4em;
+}
+
+.navbar-default .navbar-toggle span.icon-bar {
+    color: #fff;
+    background-color: #fff;
+}
+/***************************/
+
+/**** button styling *******/
+/***************************/

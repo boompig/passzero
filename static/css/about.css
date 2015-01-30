@@ -2,3 +2,17 @@
     max-width: 800px;
     margin: 0 auto;
 }
+
+#try-now-btn {
+    font-size: 1.1em;
+
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1em;
+    text-align: center;
+
+    min-width: 60%;
+    padding-top: 0.5em;
+    padding-bottom: 0.5em;
+    display: block;
+}

@@ -6,6 +6,16 @@
     margin-top: 1em;
 }
 
+@media(min-width: 768px) {
+    form {
+        margin-left: 2%;
+    }
+}
+
+form {
+    max-width: 500px;
+}
+
 form .error-msg {
     font-size: 0.9em;
     color: red;

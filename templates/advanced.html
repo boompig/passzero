@@ -33,9 +33,11 @@
         <div id="settings" class="tab-pane active" role="tabpanel">
             <div class="alert alert-success" role="alert" style="display: none;"></div>
 
-            <h3>Change Password</h3>
             <form role="form" id="change-password-form" onsubmit="changePassword(event)"
                 action="/advanced/password" method="UPDATE">
+
+                <h3>Change Password</h3>
+
                 <div class="error-msg"></div>
 
                 <label for="old_password">Old Password</label>

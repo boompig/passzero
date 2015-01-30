@@ -25,11 +25,30 @@
             <a class="navbar-brand" href="#">PassZero</a>
         </div>
 
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <div class="collapse navbar-collapse navbar-right" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
                 {% for href, id, caption in navbar %}
                     <li {% if href == request.path %} class="active" {% endif %}>
-                    <a href="{{ href|e }}">{{ caption|e }}</a>
+                        <a href="{{ href|e }}">
+                            {%- if id == "index" -%}
+                                <span class="glyphicon glyphicon-home"></span>
+                            {%- elif id == "about" -%}
+                                <span class="glyphicon glyphicon-file"></span>
+                            {%- elif id == "login" -%}
+                                <span class="glyphicon glyphicon-log-in"></span>
+                            {%- elif id == "signup" -%}
+                                <span class="glyphicon glyphicon-edit"></span>
+                            {%- elif id == "entries" -%}
+                                <span class="glyphicon glyphicon-th-list"></span>
+                            {%- elif id == "new" -%}
+                                <span class="glyphicon glyphicon-plus"></span>
+                            {%- elif id == "advanced" -%}
+                                <span class="glyphicon glyphicon-wrench"></span>
+                            {%- elif id == "logout" -%}
+                                <span class="glyphicon glyphicon-log-out"></span>
+                            {%- endif -%}
+                            <span class="nav-text">{{ caption|e }}</span>
+                        </a>
                     </li>
                 {% endfor %}
             </ul>
