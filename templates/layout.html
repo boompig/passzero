@@ -1,3 +1,4 @@
+{%- set css_build_id = "beautiful_rhino" -%}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -10,7 +11,7 @@
         <title>PassZero</title>
 
         <link rel="stylesheet" href="{{ url_for("static", filename="lib/bootstrap/dist/css/bootstrap.min.css") }}" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="css/main.css") }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/main.css") + "?build=" + css_build_id }}" />
         {% block css %}
         {% endblock %}
     </head>
