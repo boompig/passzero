@@ -1,0 +1,10 @@
+alligator
+crocodile
+dragon
+elephant
+giraffe
+hippo
+rhino
+tortoise
+turtle
+whale
