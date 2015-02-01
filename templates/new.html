@@ -45,12 +45,12 @@
             <span id="pass-len-text" class="text">Length</span>
             <button type="button" class="glyphicon glyphicon-minus"
                 aria-hidden="true" onclick="changeLen(-1)"></button>
-            <span id="passLen" class="text">10</span>
+            <span id="passLen" class="text">12</span>
             <button type="button" class="glyphicon glyphicon-plus"
                 aria-hidden="true" onclick="changeLen(+1)"></button>
         </div>
 
         <button type="submit" class="btn btn-success form-control" 
-            id="create-btn">{{ ("Edit" if entry else "Create" ) }}</button>
+            id="create-btn">{{ ("Save" if entry else "Create" ) }}</button>
     </form>
 {% endblock %}
