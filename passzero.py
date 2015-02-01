@@ -94,7 +94,7 @@ def index():
             email=session['email']
         )
     else:
-        return redirect(url_for("login"))
+        return redirect(url_for("about"))
 
 
 @app.route("/entries/post_delete/<account_name>", methods=["GET"])
@@ -148,13 +148,13 @@ def logout():
         session.pop("user_id")
 
     flash("Successfully logged out")
-    return redirect(url_for("index"))
+    return redirect(url_for("login"))
 
 
 @app.route("/entries/new", methods=["GET"])
 def new_entry_view():
     if not check_auth():
-        return redirect(url_for('index'))
+        return redirect(url_for("login"))
     return render_template("new.html", error=None)
 
 
@@ -192,7 +192,7 @@ def new_entry_api():
 @app.route("/done_signup/<email>", methods=["GET"])
 def post_signup(email):
     flash("Successfully created account with email %s. A confirmation email was sent to this account." % escape(email))
-    return redirect(url_for("index"))
+    return redirect(url_for("login"))
 
 
 @app.route("/entries/done_edit/<account_name>")
@@ -226,7 +226,7 @@ def decrypt_entries(entries, key):
 def view_entries():
     if not check_auth():
         #TODO flash some kind of error here
-        return redirect(url_for('index'))
+        return redirect(url_for("login"))
 
     entries = db_get_entries(session['user_id'])
     dec_entries = decrypt_entries(entries, session['password'])
@@ -320,7 +320,7 @@ def edit_entry_api(entry_id):
 @app.route("/edit/<entry_id>", methods=["GET"])
 def edit_entry(entry_id):
     if not check_auth():
-        return redirect(url_for("index"))
+        return redirect(url_for("login"))
     if not entry_id.isdigit():
         return "entry ID must be an integer"
 
@@ -331,7 +331,7 @@ def edit_entry(entry_id):
     fe = [e for e in dec_entries if e["id"] == entry_id]
     if len(fe) == 0:
         #TODO flash error msg about invalid ID here
-        return render_template("index.html")
+        return redirect(url_for("login"))
     else:
         return render_template("new.html", e_id=entry_id, entry=fe[0], error=None)
 
@@ -340,7 +340,7 @@ def advanced():
     if check_auth():
         return render_template("advanced.html")
     else:
-        return redirect(url_for("index"))
+        return redirect(url_for("login"))
 
 
 @app.route("/advanced/password", methods=["UPDATE"])

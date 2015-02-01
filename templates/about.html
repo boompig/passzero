@@ -12,7 +12,26 @@
 
     <p>PassZero is a password manager: you can save the passwords for all your accounts on PassZero, and only need to remember one password. The passwords are securely encrypted with <b>your master password</b> so that they are completely secure, even if someone were to break into the PassZero servers.</p>
 
-    <p>But you shouldn't take my word for it; the code for PassZero is completely open source and available on <a href="https://github.com/boompig/passzero">GitHub</a>.</p>
+    <div id="panel-container">
+        <div class="panel panel-primary">
+            <div class="panel-heading">Strong Encryption</div>
+            <div class="panel-body">
+                Your data is encrypted with <a href="http://en.wikipedia.org/wiki/Advanced_Encryption_Standard">AES</a>, using your private key plus randomly generated padding for each entry. This allows for strong, individual encryption of each entry, so even if hackers get our database, your data is still secure.
+            </div>
+        </div>
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">Open Source</div>
+            <div class="panel-body">
+                All the code for PassZero is available for anyone to view on <a href="https://github.com/boompig/passzero">GitHub</a>, so you can make sure we're as secure as we say we are. You can even see the code for this page! And if you want to make PassZero even better, make a pull request.
+            </div>
+        </div>
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">Multi-platform</div>
+            <div class="panel-body">Some password managers only work on some operating systems, or don't have mobile support. Not us; you can access PassZero from any (modern) browser, on any device. That means you can get all your passwords, whenever you need them.</div>
+        </div>
+    </div>
 
     <button id="try-now-btn" class="btn btn-success" onclick="window.location.href='/signup'">Try PassZero Today</button>
 </div>
