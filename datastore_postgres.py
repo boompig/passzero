@@ -1,7 +1,11 @@
 import psycopg2
 import psycopg2.extras
 import os
+import StringIO
+
+# helpers
 from crypto_utils import get_hashed_password, pad_key, encrypt_password
+
 
 DB_INIT_SCRIPT = "db_init_postgres.sql"
 DB_NAME = "dbkats"
@@ -107,14 +111,19 @@ def save_edit_entry(user_id, entry_id, account_name, account_username, enc_passw
     return True
 
 
-def db_export(fname):
+def db_export(user_id):
     """Export database dump to file."""
+    #TODO this is stupidly unsafe
+    sql = "COPY (select * FROM entries WHERE user_id=%s) TO STDOUT WITH (FORMAT CSV, HEADER TRUE)" % user_id
+
     conn = db_connect()
-    with open(fname, "w") as fp:
-        for line in conn.iterdump():
-            fp.write("%s\n" % line)
+    cur = conn.cursor()
+    contents = StringIO.StringIO()
+    cur.copy_expert(sql, contents)
     conn.close()
-    return True
+    val = contents.getvalue()
+    contents.close()
+    return val
 
 
 def db_delete_entry(user_id, entry_id):

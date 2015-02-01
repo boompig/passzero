@@ -10,7 +10,7 @@
 
 {% block body %}
 <h1 class="title">Advanced Options</h1>
-<div role="tabpanel">
+<div id="advanced-tabpanel" role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active">
             <a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Account Settings</a>
@@ -21,14 +21,12 @@
     </ul>
     <div class="tab-content">
         <div id="export" class="tab-pane" role="tabpanel">
-            <form action="{{ url_for("export_entries_api") }}" method="post"
-                onsubmit="doExport(event)" id="export-form" role="form">
-
-                <p>This functionality is temporarily disabled</p>
+            <div id="export-container">
+                <p>Generate a CSV file of all your entries, still encrypted. Read about how your data is encrypted so you can decrypt it locally.</p>
 
                 <button type="submit" id="export-btn" class="btn btn-success"
-                    disabled="true">Export Entries</button>
-            </form>
+                    onclick="window.location.href='/advanced/export'">Export Entries</button>
+            </div>
         </div>
         <div id="settings" class="tab-pane active" role="tabpanel">
             <div class="alert alert-success" role="alert" style="display: none;"></div>

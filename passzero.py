@@ -1,8 +1,8 @@
-from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response
+from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response
 from flask_sslify import SSLify
-from werkzeug.contrib.fixers import ProxyFix
 import json
 import os
+from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
@@ -13,7 +13,6 @@ from mailgun import send_confirmation_email
 
 
 SALT_SIZE = 32
-DUMP_FILE = "dump.sql"
 PORT = 5050
 app = Flask(__name__, static_url_path="")
 if 'FLASK_SECRET_KEY' in os.environ:
@@ -261,14 +260,17 @@ def signup():
     return render_template("login.html", login=False, error=error)
 
 
-@app.route("/advanced/export", methods=["POST"])
-def export_entries_api():
-    if db_export(DUMP_FILE):
-        code, data = json_success("Successfully dumped to file %s" % DUMP_FILE)
-    else:
-        code, data = json_internal_error("internal error")
+@app.route("/advanced/export", methods=["GET"])
+def export_entries():
+    if not check_auth():
+        #TODO
+        return "unauthorized"
 
-    return write_json(code, data)
+    export_contents = db_export(session['user_id'])
+    print export_contents
+    response = make_response(export_contents)
+    response.headers["Content-Disposition"] = "attachment; filename=passzero_dump.csv"
+    return response
 
 
 @app.route("/advanced/done_export")

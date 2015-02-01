@@ -36,6 +36,12 @@ form .form-error {
     margin-top: 0.5em;
 }
 
-#export-form {
-    margin-top: 1em;
+#export-container {
+    margin-left: 2em;
+    margin-top: 2em;
+}
+
+#advanced-tabpanel {
+    max-width: 600px;
+    margin: 0 auto;
 }
