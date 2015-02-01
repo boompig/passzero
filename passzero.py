@@ -5,6 +5,7 @@ import os
 from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
+import config
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
 #from datastore_sqlite3 import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
 from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password
@@ -12,9 +13,8 @@ from forms import SignupForm, NewEntryForm, UpdatePasswordForm
 from mailgun import send_confirmation_email
 
 
-SALT_SIZE = 32
-PORT = 5050
 app = Flask(__name__, static_url_path="")
+app.config.from_object(config)
 if 'FLASK_SECRET_KEY' in os.environ:
     app.secret_key = str(os.getenv("FLASK_SECRET_KEY"))
     sslify = SSLify(app, permanent=True)
@@ -237,7 +237,7 @@ def view_entries():
 def signup_api():
     form = SignupForm(request.form)
     if form.validate():
-        salt = get_salt(SALT_SIZE)
+        salt = get_salt(app.config['SALT_SIZE'])
         password_hash = get_hashed_password(request.form['password'], salt)
         if db_create_account(request.form['email'], password_hash, salt):
             # send confirmation email
@@ -375,13 +375,18 @@ def about():
     return render_template("about.html")
 
 
+@app.route("/version")
+def get_version():
+    return app.config['BUILD_ID']
+
+
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
     db_init()
     if DEBUG:
         app.debug = True
-        app.run(port=PORT, ssl_context=("server.crt", "server.key"))
+        app.run(port=app.config['PORT'], ssl_context=("server.crt", "server.key"))
     else:
         app.debug = False
-        app.run(host='0.0.0.0', port=PORT)
+        app.run(host='0.0.0.0', port=app.config['PORT'])

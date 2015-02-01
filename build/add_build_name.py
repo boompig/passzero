@@ -36,8 +36,8 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         fname = sys.argv[1]
-        line = "{%%- set css_build_id = \"%s\" -%%}" % build_name
+        line = "BUILD_ID = \"%s\"" % build_name
         replace_first_line(fname, line)
-        print "set css_build_id to %s" % build_name
+        print "set build ID to %s" % build_name
     else:
         print "specify file"

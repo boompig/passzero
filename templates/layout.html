@@ -1,4 +1,3 @@
-{%- set css_build_id = "extravagant_alligator" -%}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -11,7 +10,7 @@
         <title>PassZero</title>
 
         <link rel="stylesheet" href="{{ url_for("static", filename="lib/bootstrap/dist/css/bootstrap.min.css") }}" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="css/main.css") + "?build=" + css_build_id }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/main.css") + "?build=" + config['BUILD_ID'] }}" />
         {% block css %}
         {% endblock %}
     </head>
