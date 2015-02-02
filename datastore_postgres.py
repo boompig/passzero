@@ -4,7 +4,7 @@ import os
 import StringIO
 
 # helpers
-from crypto_utils import get_hashed_password, pad_key, encrypt_password
+from crypto_utils import get_hashed_password, pad_key, encrypt_password, random_hex
 
 
 DB_INIT_SCRIPT = "db_init_postgres.sql"
@@ -71,14 +71,17 @@ def db_save_entry(user_id, account_name, account_username, enc_pass, padding):
         return False
 
 
-def db_create_account(email, password_hash, salt):
+def db_create_account(email, password_hash, salt, token):
     """Create a new account. Return True on success, False on failure."""
 
-    sql = "INSERT INTO users (email, password, salt) VALUES (%s, %s, %s)";
+    sql = "INSERT INTO users (email, password, salt) VALUES (%s, %s, %s) RETURNING id"
+    token_sql = "INSERT INTO auth_tokens (user_id, token) VALUES (%s, %s)"
     try:
         conn = db_connect()
         cur = conn.cursor()
         cur.execute(sql, [email, password_hash, salt])
+        user_id = cur.fetchone()[0]
+        cur.execute(token_sql, [user_id, token])
         conn.commit()
         conn.close()
         return True
@@ -134,7 +137,6 @@ def db_delete_entry(user_id, entry_id):
     cur = conn.cursor()
     cur.execute(sql, [entry_id, user_id])
     result = cur.rowcount
-    print result
     conn.commit()
     conn.close()
     return result > 0
@@ -173,7 +175,22 @@ def db_update_password(user_id, user_email, old_password, new_password, entries)
     else:
         return False
 
-if __name__ == "__main__":
-    db_init()
-    rows = db_get_entries(1)
-    print rows
+def db_confirm_signup(token):
+    """Return True on success, False on failure"""
+    conn = db_connect()
+    cur = conn.cursor()
+    sql = "SELECT user_id FROM auth_tokens WHERE token=%s"
+    cur.execute(sql, [token])
+    row = cur.fetchone()
+
+    if row is None:
+        # no such token
+        return False
+
+    user_id = row[0]
+
+    update_sql = "UPDATE users SET active=TRUE where id=%s"
+    cur.execute(update_sql, [user_id])
+    conn.commit()
+    conn.close()
+    return True

@@ -6,9 +6,8 @@ from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
 import config
-from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt
-#from datastore_sqlite3 import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, save_entry, db_export, db_delete_entry, db_create_account
-from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password
+from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex
+from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password, db_confirm_signup
 from forms import SignupForm, NewEntryForm, UpdatePasswordForm
 from mailgun import send_confirmation_email
 
@@ -191,7 +190,7 @@ def new_entry_api():
 
 @app.route("/done_signup/<email>", methods=["GET"])
 def post_signup(email):
-    flash("Successfully created account with email %s. A confirmation email was sent to this account." % escape(email))
+    flash("Successfully created account with email %s. A confirmation email was sent to this address." % escape(email))
     return redirect(url_for("login"))
 
 
@@ -239,15 +238,16 @@ def signup_api():
     if form.validate():
         salt = get_salt(app.config['SALT_SIZE'])
         password_hash = get_hashed_password(request.form['password'], salt)
-        if db_create_account(request.form['email'], password_hash, salt):
-            # send confirmation email
-            send_confirmation_email(request.form['email'])
-
-            code, data = json_success(
-                "Successfully created account with email %s" % request.form['email']
-            )
+        token = random_hex(app.config['TOKEN_SIZE'])
+        if send_confirmation_email(request.form['email'], token):
+            if db_create_account(request.form['email'], password_hash, salt, token):
+                code, data = json_success(
+                    "Successfully created account with email %s" % request.form['email']
+                )
+            else:
+                code, data = json_error(409, "an account with this email address already exists")
         else:
-            code, data = json_error(409, "an account with this email address already exists")
+            code, data = json_internal_error("failed to send email")
     else:
         code, data = json_form_validation_error(form.errors)
     return write_json(code, data)
@@ -260,6 +260,26 @@ def signup():
     return render_template("login.html", login=False, error=error)
 
 
+@app.route("/signup/post_confirm")
+def post_confirm_signup():
+    flash("Successfully signed up! Login with your newly created account")
+    return redirect(url_for("login"))
+
+
+@app.route("/signup/confirm")
+def confirm_signup():
+    if "token" in request.args:
+        token = request.args['token']
+        if db_confirm_signup(token):
+            return redirect(url_for("post_confirm_signup"))
+        else:
+            #TODO invalid request
+            return "invalid token"
+    else:
+        #TODO invalid request
+        return "token required"
+
+
 @app.route("/advanced/export", methods=["GET"])
 def export_entries():
     if not check_auth():
@@ -267,7 +287,6 @@ def export_entries():
         return "unauthorized"
 
     export_contents = db_export(session['user_id'])
-    print export_contents
     response = make_response(export_contents)
     response.headers["Content-Disposition"] = "attachment; filename=passzero_dump.csv"
     return response
@@ -384,6 +403,11 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
     db_init()
+
+    if os.path.exists("my_env.py"):
+        from my_env import setup_env
+        setup_env()
+
     if DEBUG:
         app.debug = True
         app.run(port=app.config['PORT'], ssl_context=("server.crt", "server.key"))
