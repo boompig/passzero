@@ -311,16 +311,10 @@ def edit_entry_api(entry_id):
     if not check_auth():
         code, data = json_noauth()
 
-    for field in ['account', 'username', 'password']:
-        if field not in request.form:
-            code = 400
-            data = {
-                "status": "error",
-                "msg": "field %s is required" % field
-            }
-            break
-
-    if code == 200:
+    form = NewEntryForm()
+    if not form.validate():
+        code, data = json_form_validation_error(form.errors)
+    else:
         padding = pad_key(session['password'])
         enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
 
