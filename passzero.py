@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response
 from flask_sslify import SSLify
+from flask.ext.compress import Compress
 import json
 import os
 from werkzeug.contrib.fixers import ProxyFix
@@ -12,7 +13,9 @@ from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm
 from mailgun import send_confirmation_email
 
 
+compress = Compress()
 app = Flask(__name__, static_url_path="")
+compress.init_app(app)
 app.config.from_object(config)
 if 'FLASK_SECRET_KEY' in os.environ:
     app.secret_key = str(os.getenv("FLASK_SECRET_KEY"))

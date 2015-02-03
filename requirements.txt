@@ -2,6 +2,7 @@ cffi==0.8.6
 cryptography==0.7.2
 enum34==1.0.4
 Flask==0.10.1
+Flask-Compress==1.0.2
 Flask-Login==0.2.11
 Flask-SSLify==0.1.4
 gunicorn==19.1.1
