@@ -8,7 +8,7 @@ from werkzeug.contrib.fixers import ProxyFix
 import config
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex
 from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password, db_confirm_signup, db_get_account
-from forms import SignupForm, NewEntryForm, UpdatePasswordForm
+from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm
 from mailgun import send_confirmation_email
 
 
@@ -110,24 +110,28 @@ def post_login():
 
 @app.route("/login", methods=["POST"])
 def login_api():
-    data = {}
-    code = 200
-    email = request.form['email']
-    password = request.form['password']
-    salt = get_user_salt(email)
-    if salt is not None:
-        password_hash = get_hashed_password(password, salt)
-        user_id = check_login(email, password_hash, salt)
-        if user_id:
-            session['email'] = email
-            session['password'] = password
-            session['user_id'] = user_id
+    form = LoginForm(request.form)
+    if form.validate():
+        data = {}
+        code = 200
+        email = request.form['email']
+        password = request.form['password']
+        salt = get_user_salt(email)
+        if salt is not None:
+            password_hash = get_hashed_password(password, salt)
+            user_id = check_login(email, password_hash, salt)
+            if user_id:
+                session['email'] = email
+                session['password'] = password
+                session['user_id'] = user_id
 
-            code, data = json_success("successfully logged in as %s" % escape(session['email']))
+                code, data = json_success("successfully logged in as %s" % escape(session['email']))
+            else:
+                code, data = json_error(401, "Either the email or password is incorrect")
         else:
-            code, data = json_error(401, "Either the email or password is incorrect")
+            code, data = json_error(401, "There is not account with that email")
     else:
-        code, data = json_error(401, "There is not account with that email")
+        code, data = json_form_validation_error(form.errors)
 
     return write_json(code, data)
 
@@ -311,7 +315,7 @@ def edit_entry_api(entry_id):
     if not check_auth():
         code, data = json_noauth()
 
-    form = NewEntryForm()
+    form = NewEntryForm(request.form)
     if not form.validate():
         code, data = json_form_validation_error(form.errors)
     else:
