@@ -141,6 +141,7 @@ def db_delete_entry(user_id, entry_id):
     conn.close()
     return result > 0
 
+
 def db_init():
     conn = db_connect()
     with open(DB_INIT_SCRIPT) as fp:
@@ -149,6 +150,18 @@ def db_init():
         cursor.execute(sql)
     conn.commit()
     conn.close()
+
+
+def db_get_account(email):
+    """Return info about the account."""
+
+    conn = db_connect()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    sql = "SELECT * FROM users WHERE email=%s"
+    cur.execute(sql, [email])
+    row = cur.fetchone()
+    conn.close()
+    return row
 
 
 def db_update_password(user_id, user_email, old_password, new_password, entries):

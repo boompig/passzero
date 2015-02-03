@@ -7,7 +7,7 @@ from werkzeug.contrib.fixers import ProxyFix
 # some helpers
 import config
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex
-from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password, db_confirm_signup
+from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password, db_confirm_signup, db_get_account
 from forms import SignupForm, NewEntryForm, UpdatePasswordForm
 from mailgun import send_confirmation_email
 
@@ -236,18 +236,24 @@ def view_entries():
 def signup_api():
     form = SignupForm(request.form)
     if form.validate():
-        salt = get_salt(app.config['SALT_SIZE'])
-        password_hash = get_hashed_password(request.form['password'], salt)
-        token = random_hex(app.config['TOKEN_SIZE'])
-        if send_confirmation_email(request.form['email'], token):
-            if db_create_account(request.form['email'], password_hash, salt, token):
-                code, data = json_success(
-                    "Successfully created account with email %s" % request.form['email']
-                )
+        account = db_get_account(request.form['email'])
+        if account is None:
+            salt = get_salt(app.config['SALT_SIZE'])
+            password_hash = get_hashed_password(request.form['password'], salt)
+            token = random_hex(app.config['TOKEN_SIZE'])
+            if send_confirmation_email(request.form['email'], token):
+                if db_create_account(request.form['email'], password_hash, salt, token):
+                    code, data = json_success(
+                        "Successfully created account with email %s" % request.form['email']
+                    )
+                else:
+                    code, data = json_error(409, "an account with this email address already exists")
             else:
-                code, data = json_error(409, "an account with this email address already exists")
+                code, data = json_internal_error("failed to send email")
+        elif account['active'] == True:
+            code, data = json_error(400, "an account with this email address already exists")
         else:
-            code, data = json_internal_error("failed to send email")
+            code, data = json_error(400, "This account has already been created. Check your inbox for a confirmation email.")
     else:
         code, data = json_form_validation_error(form.errors)
     return write_json(code, data)

@@ -12,10 +12,13 @@ function createAccount(e) {
         window.location.href = "/done_signup/" + data.email;
     }, "json").error(function(obj, textStatus, textCode) {
         if (textCode === "CONFLICT") {
-            $(".error").text("An account with this email already exists");
+            $("#error-msg").text("An account with this email already exists");
         } else if (textCode === "BAD REQUEST") {
             var response = JSON.parse(obj.responseText);
             console.log(response);
+            $("#error-msg").text(response.msg);
+
+            $(".form-error").text("");
 
             for (var k in response) {
                 if (k !== "status" && k !== "msg") {
