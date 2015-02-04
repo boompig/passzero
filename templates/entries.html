@@ -1,6 +1,7 @@
 {% extends "layout.html" -%}
 
 {% block js %}
+    <script src="{{ url_for("static", filename="js/logoutTimer.js") }}"></script>
     <script src="{{ url_for("static", filename="js/entries.js") }}"></script>
 {% endblock %}
 
@@ -12,7 +13,7 @@
     <h1 class="title">PassZero Entries</h1>
     <div id="num-entries">You have {{ entries|length }} {{ ("entry" if entries|length == 1 else "entries") }}</div>
 
-    <div id="entry-container" onclick="resetLogoutTimer()">
+    <div id="entry-container">
         {%- if entries|length == 0 -%}
         <div class="empty-msg">No entries yet. Try <a href="/entries/new">making some</a>.</div>
         {%- endif -%}

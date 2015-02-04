@@ -1,7 +1,3 @@
-var restart = true;
-var val = 0;
-var maxVal = 4 * 60;
-
 function showHidePass(event) {
     var elem = $(event.target).parent().parent().find(".password");
     var t = elem.attr("type");
@@ -12,30 +8,6 @@ function showHidePass(event) {
         elem.attr("type", "password");
         $(event.target).text("Show");
     }
-}
-
-function resetLogoutTimer() {
-    restart = true;
-    console.log("restart");
-}
-
-function startLogoutTimer() {
-    // for debugging
-    if (val % 10 === 0) console.log(val);
-
-    if (restart) {
-        val = maxVal;
-        restart = false;
-    } else {
-        if (val <= 0) {
-            // logout
-            window.location.href = "/logout";
-        } else {
-            val--;
-        }
-    }
-
-    setTimeout(startLogoutTimer, 1000);
 }
 
 function deleteEntry(e, entry_id, account_name) {
@@ -58,5 +30,11 @@ function deleteEntry(e, entry_id, account_name) {
 }
 
 $(function() {
-    startLogoutTimer();
+    "use strict";
+    var timer = new LogoutTimer();
+    timer.startLogoutTimer();
+
+    $("#entry-container").click(function() {
+        timer.resetLogoutTimer();
+    });
 });
