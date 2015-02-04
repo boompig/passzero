@@ -48,8 +48,9 @@ function login(e) {
         console.log(response);
         window.location.href = "/done_login";
     }, "json").error(function(obj, textStatus, textCode) {
+        var response = JSON.parse(obj.responseText);
         if (textCode === "UNAUTHORIZED") {
-            $(".error").text("The username or password is incorrect");
+            $("#error-msg").text(response.msg);
         } else {
             console.log(obj);
             console.log(textStatus);

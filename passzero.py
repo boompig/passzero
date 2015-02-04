@@ -1,8 +1,10 @@
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response
 from flask_sslify import SSLify
 from flask.ext.compress import Compress
+from flask.ext.sqlalchemy import SQLAlchemy
 import json
 import os
+from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
@@ -13,18 +15,42 @@ from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm
 from mailgun import send_confirmation_email
 
 
+if os.path.exists("my_env.py"):
+    from my_env import setup_env
+    setup_env()
+
 compress = Compress()
 app = Flask(__name__, static_url_path="")
 compress.init_app(app)
 app.config.from_object(config)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 if 'FLASK_SECRET_KEY' in os.environ:
-    app.secret_key = str(os.getenv("FLASK_SECRET_KEY"))
+    app.secret_key = str(os.environ["FLASK_SECRET_KEY"])
     sslify = SSLify(app, permanent=True)
     DEBUG = False
 else:
     sslify = SSLify(app, permanent=True)
     app.secret_key = '64f5abcf8369e362c36a6220128de068'
     DEBUG = True
+db = SQLAlchemy(app)
+
+
+class User(db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, db.Sequence("users_id_seq"), primary_key=True)
+    email = db.Column(db.String, unique=True)
+    password = db.Column(db.String, nullable=False)
+    salt = db.Column(db.String(32), nullable=False)
+    active = db.Column(db.Boolean, nullable=False, default=False)
+
+    def authenticate(self, form_password):
+        """Return True on success, False on failure."""
+
+        hashed_password = get_hashed_password(form_password, self.salt)
+        return self.password == hashed_password
+
+    def __repr__(self):
+        return "<User(email=%s, password=%s, salt=%s, active=%s)>" % (self.email, self.password, self.salt, str(self.active))
 
 
 def check_auth():
@@ -115,23 +141,17 @@ def post_login():
 def login_api():
     form = LoginForm(request.form)
     if form.validate():
-        data = {}
-        code = 200
-        email = request.form['email']
-        password = request.form['password']
-        salt = get_user_salt(email)
-        if salt is not None:
-            password_hash = get_hashed_password(password, salt)
-            user_id = check_login(email, password_hash, salt)
-            if user_id:
-                session['email'] = email
-                session['password'] = password
-                session['user_id'] = user_id
+        try:
+            user = db.session.query(User).filter_by(email=request.form['email']).one()
+            if user.authenticate(request.form['password']):
+                session['email'] = user.email
+                session['password'] = request.form['password']
+                session['user_id'] = user.id
 
                 code, data = json_success("successfully logged in as %s" % escape(session['email']))
             else:
                 code, data = json_error(401, "Either the email or password is incorrect")
-        else:
+        except NoResultFound:
             code, data = json_error(401, "There is not account with that email")
     else:
         code, data = json_form_validation_error(form.errors)
@@ -140,8 +160,7 @@ def login_api():
 
 @app.route("/login", methods=["GET"])
 def login():
-    error = None
-    return render_template("login.html", login=True, error=error)
+    return render_template("login.html", login=True, error=None)
 
 
 @app.route("/logout", methods=["GET"])
@@ -243,8 +262,9 @@ def view_entries():
 def signup_api():
     form = SignupForm(request.form)
     if form.validate():
-        account = db_get_account(request.form['email'])
-        if account is None:
+        try:
+            user = db.session.query(User).filter_by(email=request.form['email']).one()
+        except NoResultFound:
             salt = get_salt(app.config['SALT_SIZE'])
             password_hash = get_hashed_password(request.form['password'], salt)
             token = random_hex(app.config['TOKEN_SIZE'])
@@ -257,10 +277,11 @@ def signup_api():
                     code, data = json_error(409, "an account with this email address already exists")
             else:
                 code, data = json_internal_error("failed to send email")
-        elif account['active'] == True:
-            code, data = json_error(400, "an account with this email address already exists")
         else:
-            code, data = json_error(400, "This account has already been created. Check your inbox for a confirmation email.")
+            if user.active:
+                code, data = json_error(400, "an account with this email address already exists")
+            else:
+                code, data = json_error(400, "This account has already been created. Check your inbox for a confirmation email.")
     else:
         code, data = json_form_validation_error(form.errors)
     return write_json(code, data)
@@ -410,10 +431,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
     db_init()
-
-    if os.path.exists("my_env.py"):
-        from my_env import setup_env
-        setup_env()
 
     if DEBUG:
         app.debug = True
