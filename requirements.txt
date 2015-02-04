@@ -10,6 +10,7 @@ gunicorn==19.1.1
 itsdangerous==0.24
 Jinja2==2.7.3
 MarkupSafe==0.23
+newrelic==2.42.0.35
 psycopg2==2.5.4
 pyasn1==0.1.7
 pycparser==2.10
