@@ -1,0 +1,163 @@
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    border: 0;
+    outline: 0;
+    font-size: 100%;
+    vertical-align: baseline;
+}
+
+body {
+    line-height: 1;
+    font-family: Helvetica, sans-serif;
+    font-size: 1em;
+}
+
+head {
+    display: none;
+}
+
+#hero {
+    background: linear-gradient(to bottom, #1e5799 0%,#2989d8 15%,#207cca 97%,#7db9e8 100%); /* W3C */
+
+    margin: 0;
+    padding: 0;
+    border: 0;
+    height: 100%;
+    width: 100%;
+    color: #fff;
+
+    z-index: -2;
+}
+
+nav.navbar {
+    text-align: center;
+    max-width: 500px;
+    padding-top: 30px;
+    margin: 0 auto;
+}
+
+ul.nav-items {
+    margin: 0 auto;
+    padding: 0;
+    -webkit-margin-before: 0;
+    -webkit-margin-after: 0;
+    -webkit-margin-start: 0;
+    -webkit-margin-end: 0;
+    -webkit-padding-start: 0;
+    border: 0;
+}
+
+li.nav-item {
+    list-style: none;
+    position: relative;
+    display: inline;
+    line-height: 1.4;
+    border-right: 1px #eee solid;
+}
+
+li.nav-item:last-child {
+    border-right: none;
+}
+
+li.nav-item>a {
+    position: relative;
+    padding: 15px;
+    font-size: 1em;
+    color: #fff;
+    text-decoration: none;
+}
+
+nav:after {
+    clear: both;
+}
+
+#beta-sticker {
+    display: inline;
+    text-align: center;
+    margin: 0;
+    font-size: 1.1em;
+
+    padding: 5px 10px;
+
+    border: 1px solid #fff;
+    border-radius: 15px;
+    vertical-align: baseline;
+}
+
+#title-text {
+    font-size: 3.2em;
+    font-weight: normal;
+    display: inline;
+    margin: 0;
+    text-align: center;
+    vertical-align: baseline;
+}
+
+#btn-container {
+    display: block;
+    margin: 15% auto;
+    padding: 0;
+    text-align: center;
+}
+
+.btn {
+    font-size: 1.3em;
+    display: inline-block;
+    padding: 15px 20px;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+    border: 0;
+
+    z-index: 10;
+}
+
+#try-now-btn {
+    background-color: #34B526;
+    border: 1px solid #16700C;
+}
+
+#learn-more-btn {
+    background-color: #A259DE;
+    border: 1px solid #7830B3;
+}
+
+#hero-text-container {
+    display: block;
+    clear: both;
+    margin-top: 100px;
+}
+
+#title-text-container {
+    text-align: center;
+    z-index: 10;
+}
+
+#explain-stub {
+    text-align: center;
+    padding-top: 20px;
+    font-size: 1.3em;
+}
+
+@media(max-width: 450px) {
+    li.nav-item>a {
+        font-size: 1.2em;
+        padding: 10px;
+    }
+
+    #btn-container {
+        margin: 150px auto;
+    }
+}
+
+.dot {
+    background-color: #F4F7D5;
+    border-radius: 5px;
+    height: 5px;
+    width: 5px;
+    position: absolute;
+    z-index: 1;
+}

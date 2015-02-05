@@ -122,7 +122,7 @@ def index():
             email=session['email']
         )
     else:
-        return redirect(url_for("about"))
+        return render_template("landing.html")
 
 
 @app.route("/entries/post_delete/<account_name>", methods=["GET"])
