@@ -38,3 +38,19 @@ class UpdatePasswordForm(Form):
         validators.EqualTo("confirm_new_password", message="Passwords must match")
     ])
     confirm_new_password = PasswordField("confirm new password", [validators.Required()])
+
+class RecoverPasswordForm(Form):
+    email = TextField("email", [
+        validators.Required(),
+        validators.Email()
+    ])
+
+class ConfirmRecoverPasswordForm(Form):
+    token = TextField("token", [validators.Required()])
+    password = PasswordField("password", [
+        validators.Required(),
+        validators.EqualTo("confirm_password", message="Passwords must match")
+    ])
+    confirm_password = PasswordField("confirm password", [
+        validators.Required()
+    ])

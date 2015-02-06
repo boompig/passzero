@@ -11,8 +11,8 @@ from werkzeug.contrib.fixers import ProxyFix
 import config
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex
 from datastore_postgres import db_init, get_user_salt, check_login, db_get_entries, save_edit_entry, db_save_entry, db_export, db_delete_entry, db_create_account, db_update_password, db_confirm_signup, db_get_account
-from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm
-from mailgun import send_confirmation_email
+from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm
+from mailgun import send_confirmation_email, send_recovery_email
 
 
 if os.path.exists("my_env.py"):
@@ -45,13 +45,40 @@ class User(db.Model):
 
     def authenticate(self, form_password):
         """Return True on success, False on failure."""
-
         hashed_password = get_hashed_password(form_password, self.salt)
         return self.password == hashed_password
+
+    def change_password(self, new_password):
+        hashed_password = get_hashed_password(new_password, self.salt)
+        self.password = hashed_password
 
     def __repr__(self):
         return "<User(email=%s, password=%s, salt=%s, active=%s)>" % (self.email, self.password, self.salt, str(self.active))
 
+
+class AuthToken(db.Model):
+    __tablename__ = "auth_tokens"
+    id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    token = db.Column(db.String, nullable=False)
+
+    def random_token(self):
+        self.token = random_hex(app.config['TOKEN_SIZE'])
+
+    def __repr__(self):
+        return "<AuthToken(user_id=%d, token=%s)>" % (self.user_id, self.token)
+
+class Entry(db.Model):
+    __tablename__ = "entries"
+    id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
+    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
+    account = db.Column(db.String, nullable=False)
+    username = db.Column(db.String, nullable=False)
+    password = db.Column(db.String, nullable=False)
+    padding = db.Column(db.String, nullable=False)
+
+    def __repr__(self):
+        return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
 
 def check_auth():
     """Return True iff user_id and password are in session."""
@@ -413,6 +440,64 @@ def update_password_api():
             code, data = json_form_validation_error(form.errors)
     else:
         code, data = json_noauth()
+
+    return write_json(code, data)
+
+
+@app.route("/recover")
+def recover_password():
+    return render_template("recover.html")
+
+
+@app.route("/recover/confirm")
+def recover_password_confirm():
+    try:
+        token = request.args['token']
+        token_obj = db.session.query(AuthToken).filter_by(token=token).one()
+        return render_template("recover.html", confirm=True)
+    except NoResultFound:
+        return "Token is invalid"
+    except KeyError:
+        return "Token is mandatory"
+
+@app.route("/recover/confirm", methods=["POST"])
+def recover_password_confirm_api():
+    form = ConfirmRecoverPasswordForm(request.form)
+    if form.validate():
+        # 1
+        token = db.session.query(AuthToken).filter_by(token=request.form['token']).one()
+        user = db.session.query(User).filter_by(id=token.user_id).one()
+        user.change_password(request.form['password'])
+        all_entries = db.session.query(Entry).filter_by(user_id=token.user_id).all()
+        for entry in all_entries:
+            db.session.delete(entry)
+        db.session.commit()
+        code, data = json_success("successfully changed password")
+    else:
+        code, data = json_form_validation_error(form.errors)
+    return write_json(code, data)
+
+@app.route("/recover", methods=["POST"])
+def recover_password_api():
+    form = RecoverPasswordForm(request.form)
+    if form.validate():
+        try:
+            user = db.session.query(User).filter_by(email=request.form['email']).one()
+            print user
+            # send a reset token to the email
+            token = AuthToken()
+            token.user_id = user.id
+            token.random_token()
+            db.session.add(token)
+            db.session.commit()
+            if send_recovery_email(user.email, token.token):
+                code, data = json_success("Recovery email sent to your email address")
+            else:
+                code, data = json_internal_error("internal server error")
+        except NoResultFound:
+            code, data = json_error(401, "no such email")
+    else:
+        code, data = json_form_validation_error(form.errors)
 
     return write_json(code, data)
 

@@ -34,7 +34,9 @@
         <input type="password" class="form-control" name="password" tabindex="2"
                 placeholder="password" required="true" />
 
-        {%- if not login -%}
+        {%- if login -%}
+        <a id="forgot-password" href="{{ url_for("recover_password") }}">Forgot Password</a>
+        {%- else -%}
         <label for="confirm-password">Confirm Password</label>
         <input type="password" class="form-control" name="confirm_password" tabindex="3"
                 placeholder="confirm password" required="true" />

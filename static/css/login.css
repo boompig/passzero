@@ -28,3 +28,9 @@ form {
     padding: 15px 20px;
     border-radius: 3px;
 }
+
+#forgot-password {
+    font-size: 0.9em;
+    padding: 0 0 0 0.5em;
+    margin: 0;
+}

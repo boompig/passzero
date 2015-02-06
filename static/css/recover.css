@@ -1,0 +1,16 @@
+form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+button[type='submit'] {
+    margin-top: 10px;
+}
+
+.check-container {
+    margin-top: 10px;
+}
+
+label {
+    margin-top: 10px;
+}
