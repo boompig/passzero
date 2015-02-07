@@ -464,17 +464,32 @@ def recover_password_confirm():
 def recover_password_confirm_api():
     form = ConfirmRecoverPasswordForm(request.form)
     if form.validate():
-        # 1
         token = db.session.query(AuthToken).filter_by(token=request.form['token']).one()
         user = db.session.query(User).filter_by(id=token.user_id).one()
+        # 1) change the user's password
         user.change_password(request.form['password'])
         all_entries = db.session.query(Entry).filter_by(user_id=token.user_id).all()
+        # 2) delete all user's entries
         for entry in all_entries:
             db.session.delete(entry)
+        # 3) delete the token used to make this change
+        db.session.delete(token)
         db.session.commit()
         code, data = json_success("successfully changed password")
     else:
         code, data = json_form_validation_error(form.errors)
+    return write_json(code, data)
+
+@app.route("/entries/nuclear", methods=["POST"])
+def nuke_entries_api():
+    if check_auth():
+        entries = db.session.query(Entry).filter_by(user_id=session['user_id']).all()
+        for entry in entries:
+            db.session.delete(entry)
+        db.session.commit()
+        code, data = json_success("Deleted all entries")
+    else:
+        code, data = json_noauth()
     return write_json(code, data)
 
 @app.route("/recover", methods=["POST"])
@@ -483,7 +498,6 @@ def recover_password_api():
     if form.validate():
         try:
             user = db.session.query(User).filter_by(email=request.form['email']).one()
-            print user
             # send a reset token to the email
             token = AuthToken()
             token.user_id = user.id

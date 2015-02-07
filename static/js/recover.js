@@ -7,6 +7,7 @@ function recoverPassword(e) {
     };
     $.post(url, data, function(response, textStatus, obj) {
         "use strict";
+        $("#success-msg").addClass("alert-success").text(response.msg).show();
         console.log(response);
     }, "json");
     return false;

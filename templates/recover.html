@@ -13,6 +13,8 @@
 
     <div class="alert alert-warning"><strong>Warning</strong> unless you have key rotation turned on, this will delete all your saved passwords. This is because your passwords are encrypted using your old password, so not even we can break this encryption.</div>
 
+    <div id="success-msg" class="alert" style="display: none;"></div>
+
     {%- if confirm -%}
     <form role="form" action="{{ url_for("recover_password_confirm_api") }}" method="post"
         onsubmit="recoverPasswordConfirm(event)">

@@ -18,6 +18,9 @@
         <li role="presentation">
             <a href="#export" aria-controls="export" role="tab" data-toggle="tab">Export</a>
         </li>
+        <li role="presentation">
+            <a href="#nuke" aria-controls="nuke" role="tab" data-toggle="tab">Nuke</a>
+        </li>
     </ul>
     <div class="tab-content">
         <div id="export" class="tab-pane" role="tabpanel">
@@ -30,31 +33,32 @@
         </div>
         <div id="settings" class="tab-pane active" role="tabpanel">
             <div class="alert alert-success" role="alert" style="display: none;"></div>
-
             <form role="form" id="change-password-form" onsubmit="changePassword(event)"
                 action="/advanced/password" method="UPDATE">
-
                 <h3>Change Password</h3>
-
                 <div class="error-msg"></div>
-
                 <label for="old_password">Old Password</label>
                 <span class="form-error" id="form-error-old_password"></span>
                 <input type="password" name="old_password" class="form-control"
                     placeholder="old password" required="true" />
-
                 <label for="new_password">New Password</label>
                 <span class="form-error" id="form-error-new_password"></span>
                 <input type="password" name="new_password" class="form-control"
                     placeholder="new password" required="true" />
-
                 <label for="confirm_new_password">Confirm New Password</label>
                 <span class="form-error" id="form-error-confirm_new_password"></span>
                 <input type="password" name="confirm_new_password" class="form-control"
                     placeholder="confirm new password" required="true" />
-
                 <button type="submit" class="btn btn-success"
                         id="change-password-btn">Change Password</button>
+            </form>
+        </div>
+        <div id="nuke" class="tab-pane" role="tabpanel">
+            <div class="alert alert-warning"><strong>Warning</strong> This action deletes all your entries and cannot be undone</div>
+            <div class="alert alert-success" id="nuke-success-msg" style="display:none;"></div>
+            <form role="form" action="{{ url_for("nuke_entries_api") }}" method="post"
+                onsubmit="nukeEntries(event)">
+                <button type="submit" class="btn btn-danger">Nuke Entries</button>
             </form>
         </div>
     </div>

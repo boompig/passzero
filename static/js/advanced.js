@@ -37,3 +37,14 @@ function changePassword(e) {
 
     return false;
 }
+
+function nukeEntries(e) {
+    "use strict";
+    e.preventDefault();
+    var elem = $(e.target);
+    var url = elem.attr("action");
+    $.post(url, {}, function(response) {
+        $("#nuke-success-msg").text(response.msg).show();
+    }, "json");
+    return false;
+}
