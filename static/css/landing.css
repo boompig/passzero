@@ -25,11 +25,16 @@ head {
     margin: 0;
     padding: 0;
     border: 0;
-    height: 100%;
     width: 100%;
     color: #fff;
 
     z-index: -2;
+}
+
+@media(min-height: 500px) {
+    #hero {
+        height: 100%;
+    }
 }
 
 nav.navbar {
@@ -129,6 +134,12 @@ nav:after {
     display: block;
     clear: both;
     margin-top: 100px;
+}
+
+@media(max-height: 519px) {
+    #hero-text-container {
+        height: 100%;
+    }
 }
 
 #title-text-container {
