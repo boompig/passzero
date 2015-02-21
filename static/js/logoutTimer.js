@@ -1,6 +1,7 @@
 function LogoutTimer() {
     "use strict";
     this.restart = true;
+    this.lastActive = null;
     this.val = 0;
     this.maxVal = 4 * 60;
 }
@@ -8,11 +9,15 @@ function LogoutTimer() {
 LogoutTimer.prototype.resetLogoutTimer = function () {
     "use strict";
     this.restart = true;
+    this.lastActive = new Date();
     console.log("restart");
 };
 
 LogoutTimer.prototype.startLogoutTimer = function() {
     "use strict";
+    if (this.lastActive === null) {
+        this.lastActive = new Date();
+    }
 
     // for debugging
     if (this.val % 10 === 0) console.log(this.val);
@@ -23,8 +28,7 @@ LogoutTimer.prototype.startLogoutTimer = function() {
         this.restart = false;
     } else {
         if (this.val <= 0) {
-            // logout
-            window.location.href = "/logout";
+            this.logout();
         } else {
             this.val--;
         }
@@ -34,4 +38,16 @@ LogoutTimer.prototype.startLogoutTimer = function() {
     window.setTimeout(function () {
         that.startLogoutTimer();
     }, 1000);
+};
+
+LogoutTimer.prototype.checkLogoutTimer = function () {
+    "use strict";
+    var now = new Date();
+    if (now - this.lastActive > (1000 * this.maxVal)) {
+        this.logout();
+    }
+};
+
+LogoutTimer.prototype.logout = function () {
+    window.location.href = "/logout";
 };

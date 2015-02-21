@@ -161,7 +161,7 @@ def post_delete(account_name):
 @app.route("/done_login", methods=["GET"])
 def post_login():
     flash("Successfully logged in as %s" % escape(session['email']))
-    return redirect(url_for("index"))
+    return redirect(url_for("view_entries"))
 
 
 @app.route("/login", methods=["POST"])

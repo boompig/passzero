@@ -37,4 +37,8 @@ $(function() {
     $("#entry-container").click(function() {
         timer.resetLogoutTimer();
     });
+
+    window.onfocus = function () {
+        timer.checkLogoutTimer();
+    };
 });

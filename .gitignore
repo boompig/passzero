@@ -13,3 +13,5 @@ server.crt
 server.key
 # environment setup
 my_env.py
+# ctags
+tags
