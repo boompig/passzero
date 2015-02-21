@@ -21,6 +21,18 @@ input[type="password"], input[type="text"] {
     width: 95%;
 }
 
+.password {
+    max-width: 200px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    border: 1px solid #555;
+}
+
+.password.password-hidden {
+    color: #555;
+    background-color: #555;
+}
+
 #num-entries {
     font-size: 1.15em;
     font-weight: bold;

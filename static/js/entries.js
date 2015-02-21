@@ -1,11 +1,10 @@
 function showHidePass(event) {
     var elem = $(event.target).parent().parent().find(".password");
-    var t = elem.attr("type");
-    if (t === "password") {
-        elem.attr("type", "text");
+    if (elem.hasClass("password-hidden")) {
+        elem.removeClass("password-hidden");
         $(event.target).text("Hide");
     } else {
-        elem.attr("type", "password");
+        elem.addClass("password-hidden");
         $(event.target).text("Show");
     }
 }
