@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response
 from flask_sslify import SSLify
 from flask.ext.compress import Compress
@@ -61,9 +62,17 @@ class AuthToken(db.Model):
     id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
     user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
     token = db.Column(db.String, nullable=False)
+    issue_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    # in seconds
+    MAX_AGE = 15 * 60
 
     def random_token(self):
         self.token = random_hex(app.config['TOKEN_SIZE'])
+
+    def is_expired(self):
+        delta = datetime.utcnow() - self.issue_time
+        return delta.seconds > self.MAX_AGE
 
     def __repr__(self):
         return "<AuthToken(user_id=%d, token=%s)>" % (self.user_id, self.token)
@@ -454,11 +463,23 @@ def recover_password_confirm():
     try:
         token = request.args['token']
         token_obj = db.session.query(AuthToken).filter_by(token=token).one()
-        return render_template("recover.html", confirm=True)
+        if token_obj.is_expired():
+            flash("Token has expired")
+            # delete old token from database
+            db.session.delete(token_obj)
+            db.session.commit()
+            return redirect(url_for("recover_password"))
+        else:
+            # delete token so cannot be used again
+            db.session.delete(token_obj)
+            db.session.commit()
+            return render_template("recover.html", confirm=True)
     except NoResultFound:
-        return "Token is invalid"
+        flash("Token is invalid")
+        return redirect(url_for("recover_password"))
     except KeyError:
-        return "Token is mandatory"
+        flash("Token is mandatory")
+        return redirect(url_for("recover_password"))
 
 @app.route("/recover/confirm", methods=["POST"])
 def recover_password_confirm_api():
