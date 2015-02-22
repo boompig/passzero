@@ -74,6 +74,8 @@ $(function() {
         if (elem.hasClass("selected")) {
             deselectText();
             elem.removeClass("selected");
+            elem.focus();
+            elem.select();
         } else {
             SelectText(this);
             elem.addClass("selected");
