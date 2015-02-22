@@ -31,6 +31,7 @@ input[type="password"], input[type="text"] {
 .password.password-hidden {
     color: #555;
     background-color: #555;
+    cursor: pointer;
 }
 
 #num-entries {
