@@ -6,7 +6,6 @@ function recoverPassword(e) {
         email: $("input[type='email']").val()
     };
     $.post(url, data, function(response, textStatus, obj) {
-        "use strict";
         $("#success-msg").addClass("alert-success").text(response.msg).show();
         console.log(response);
     }, "json");
@@ -23,11 +22,9 @@ function recoverPasswordConfirm(e) {
         token: window.location.search.replace("?token=", "")
     };
     $.post(url, data, function(response, textStatus, obj) {
-        "use strict";
         console.log(response);
-        window.location.href = "/logout"
+        window.location.href = "/logout";
     }, "json").error(function(obj, b) {
-        "use strict";
         $("#server-msg").text(obj.responseJSON.msg);
         console.log("error");
         console.log(obj.responseJSON);

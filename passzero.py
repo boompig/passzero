@@ -160,10 +160,11 @@ def delete_entry_api(entry_id):
 @app.route("/", methods=["GET"])
 def index():
     if check_auth():
-        return render_template("index.html",
-            logged_in=True,
-            email=session['email']
-        )
+        return redirect(url_for("view_entries"))
+        #return render_template("index.html",
+            #logged_in=True,
+            #email=session['email']
+        #)
     else:
         return render_template("landing.html")
 

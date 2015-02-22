@@ -15,11 +15,9 @@ function changePassword(e) {
         url: url,
         data: data,
         success: function (response) {
-            "use strict";
             $(".alert-success").text("Successfully changed password").show();
         },
         error: function (obj, textStatus, textCode) {
-            "use strict";
             var response = obj.responseJSON;
             $(".error-msg").text(response.msg);
 
