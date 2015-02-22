@@ -32,7 +32,7 @@ function deleteEntry(e, entry_id, account_name) {
  * From this SOF thread:
  * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse
  */
-function SelectText(element) {
+function selectText(element) {
     var doc = document;
     var text = element;
     var range, selection;
@@ -77,7 +77,7 @@ $(function() {
             elem.focus();
             elem.select();
         } else {
-            SelectText(this);
+            selectText(this);
             elem.addClass("selected");
         }
     });
