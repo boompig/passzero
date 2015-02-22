@@ -4,7 +4,7 @@ import os
 import StringIO
 
 # helpers
-from crypto_utils import get_hashed_password, pad_key, encrypt_password, random_hex
+from crypto_utils import get_hashed_password, pad_key, encrypt_password
 
 
 DB_INIT_SCRIPT = "db_init_postgres.sql"
@@ -55,52 +55,6 @@ def check_login(email, password_hash, salt):
     return (seq[0] if seq else None)
 
 
-def db_save_entry(user_id, account_name, account_username, enc_pass, padding):
-    """Save the given entry into the database. Return True on success, False on failure."""
-
-    sql = "INSERT INTO entries (user_id, account, username, password, padding) VALUES (%s, %s, %s, %s, %s)"
-    try:
-        conn = db_connect()
-        cur = conn.cursor()
-        cur.execute(sql, [user_id, account_name, account_username, enc_pass, padding])
-        conn.commit()
-        conn.close()
-        return True
-    except psycopg2.IntegrityError as e:
-        print e
-        return False
-
-
-def db_create_account(email, password_hash, salt, token):
-    """Create a new account. Return True on success, False on failure."""
-
-    sql = "INSERT INTO users (email, password, salt) VALUES (%s, %s, %s) RETURNING id"
-    token_sql = "INSERT INTO auth_tokens (user_id, token) VALUES (%s, %s)"
-    try:
-        conn = db_connect()
-        cur = conn.cursor()
-        cur.execute(sql, [email, password_hash, salt])
-        user_id = cur.fetchone()[0]
-        cur.execute(token_sql, [user_id, token])
-        conn.commit()
-        conn.close()
-        return True
-    except psycopg2.IntegrityError as e:
-        print e
-        return False
-
-
-def get_user_salt(email):
-    """Return the salt if the email is present, None otherwise"""
-
-    sql = "SELECT salt FROM users WHERE email=%s"
-    conn = db_connect()
-    cursor = conn.cursor()
-    cursor.execute(sql, [email])
-    row = cursor.fetchone()
-    conn.close()
-    return (row[0] if row else None)
-
 
 def save_edit_entry(user_id, entry_id, account_name, account_username, enc_password, padding):
     """Save the edited entry in the DB. Return True on success, False on failure"""
@@ -129,19 +83,6 @@ def db_export(user_id):
     return val
 
 
-def db_delete_entry(user_id, entry_id):
-    """Return True on success, False on failure"""
-
-    sql = "DELETE FROM entries WHERE id=%s AND user_id=%s"
-    conn = db_connect()
-    cur = conn.cursor()
-    cur.execute(sql, [entry_id, user_id])
-    result = cur.rowcount
-    conn.commit()
-    conn.close()
-    return result > 0
-
-
 def db_init():
     conn = db_connect()
     with open(DB_INIT_SCRIPT) as fp:
@@ -151,17 +92,13 @@ def db_init():
     conn.commit()
     conn.close()
 
-
-def db_get_account(email):
-    """Return info about the account."""
-
+def get_user_salt(email):
     conn = db_connect()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    sql = "SELECT * FROM users WHERE email=%s"
-    cur.execute(sql, [email])
-    row = cur.fetchone()
+    cur = conn.cursor()
+    cur.execute("SELECT salt FROM users WHERE email=%s", [email])
+    salt = cur.fetchone()[0]
     conn.close()
-    return row
+    return salt
 
 
 def db_update_password(user_id, user_email, old_password, new_password, entries):
@@ -187,23 +124,3 @@ def db_update_password(user_id, user_email, old_password, new_password, entries)
         return True
     else:
         return False
-
-def db_confirm_signup(token):
-    """Return True on success, False on failure"""
-    conn = db_connect()
-    cur = conn.cursor()
-    sql = "SELECT user_id FROM auth_tokens WHERE token=%s"
-    cur.execute(sql, [token])
-    row = cur.fetchone()
-
-    if row is None:
-        # no such token
-        return False
-
-    user_id = row[0]
-
-    update_sql = "UPDATE users SET active=TRUE where id=%s"
-    cur.execute(update_sql, [user_id])
-    conn.commit()
-    conn.close()
-    return True
