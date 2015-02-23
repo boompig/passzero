@@ -15,3 +15,5 @@ server.key
 my_env.py
 # ctags
 tags
+# bower stuff
+bower_components
