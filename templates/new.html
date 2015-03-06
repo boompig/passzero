@@ -50,6 +50,11 @@
                 aria-hidden="true" onclick="changeLen(+1)"></button>
         </div>
 
+        <div id="extra-container">
+            <label for="extra">Extra<label>
+            <textarea class="form-control" name="extra" id="extra" rows="4" cols="50">{{ (entry["extra"] if entry["extra"] else "") }}</textarea>
+        </div>
+
         <button type="submit" class="btn btn-success form-control" 
             id="create-btn">{{ ("Save" if entry else "Create" ) }}</button>
     </form>

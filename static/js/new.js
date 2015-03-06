@@ -26,6 +26,7 @@ function genPassword() {
 }
 
 function showHidePassword(e) {
+    "use strict";
     var elem = $("#password");
     var t = elem.attr("type");
     if (t === "password") {
@@ -60,16 +61,13 @@ function createNew (e) {
 function makeEdit (e) {
     "use strict";
     e.preventDefault();
-
     var elem = $(e.target);
     var url = elem.attr("action");
     var dataArray = elem.serializeArray();
     var data = parseArray(dataArray);
-
     $.post(url, data, function (response) {
         window.location.href = "/entries/done_edit/" + data.account;
     }, "json");
-
     return false;
 }
 
@@ -81,6 +79,7 @@ function changeLen(diff) {
 }
 
 function togglePasswordGen(on) {
+    "use strict";
     if (on) {
         $("#len-container").show();
         $("#gen-pass-btn").prop({ disabled: false });

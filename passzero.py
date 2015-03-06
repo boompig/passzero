@@ -433,6 +433,7 @@ def edit_entry_api(entry_id):
             entry.username = request.form['username']
             entry.password = enc_pass
             entry.padding = padding
+            entry.extra = request.form["extra"]
 
             db.session.add(entry)
             db.session.commit()

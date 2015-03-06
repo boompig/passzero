@@ -57,3 +57,12 @@ form {
 #len-container .text {
     font-size: 1.1em;
 }
+
+#extra-container {
+    margin-top: 0.4em;
+}
+
+#extra-container label {
+    display: block;
+}
+
