@@ -452,7 +452,7 @@ def edit_entry(entry_id):
     if not check_auth():
         return redirect(url_for("login"))
 
-    entries = db.session.query(Entry).filter_by(session['user_id'])
+    entries = db.session.query(Entry).filter_by(user_id=session['user_id'])
     dec_entries = decrypt_entries(entries, session['password'])
 
     fe = [e for e in dec_entries if e["id"] == entry_id]
@@ -475,7 +475,7 @@ def update_password_api():
     if check_auth():
         form = UpdatePasswordForm(request.form)
         if form.validate():
-            entries = db.session.query(Entry).filter_by(session['user_id'])
+            entries = db.session.query(Entry).filter_by(user_id=session['user_id'])
             dec_entries = decrypt_entries(entries, session['password'])
             status = db_update_password(
                 session['user_id'],
