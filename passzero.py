@@ -3,6 +3,7 @@ from flask import Flask, render_template, redirect, session, request, url_for, e
 from flask_sslify import SSLify
 from flask.ext.compress import Compress
 from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func, asc
 import json
 import os
 from sqlalchemy.orm.exc import NoResultFound
@@ -97,6 +98,11 @@ class Entry(db.Model):
         """Return a dictionary mapping fields to their decrypted values."""
         dec_password = decrypt_password(key, self.password)
         return { "password": dec_password }
+
+
+def get_entries():
+    return db.session.query(Entry).filter_by(
+            user_id=session['user_id']).order_by(asc(func.lower(Entry.account))).all()
 
 def check_auth():
     """Return True iff user_id and password are in session."""
@@ -304,7 +310,7 @@ def view_entries():
         #TODO flash some kind of error here
         return redirect(url_for("login"))
 
-    entries = db.session.query(Entry).filter_by(user_id=session['user_id'])
+    entries = get_entries()
     dec_entries = decrypt_entries(entries, session['password'])
     return render_template("entries.html", entries=dec_entries)
 
@@ -454,7 +460,7 @@ def edit_entry(entry_id):
     if not check_auth():
         return redirect(url_for("login"))
 
-    entries = db.session.query(Entry).filter_by(user_id=session['user_id'])
+    entries = get_entries()
     dec_entries = decrypt_entries(entries, session['password'])
 
     fe = [e for e in dec_entries if e["id"] == entry_id]
@@ -477,7 +483,7 @@ def update_password_api():
     if check_auth():
         form = UpdatePasswordForm(request.form)
         if form.validate():
-            entries = db.session.query(Entry).filter_by(user_id=session['user_id'])
+            entries = get_entries()
             dec_entries = decrypt_entries(entries, session['password'])
             status = db_update_password(
                 session['user_id'],
@@ -555,7 +561,7 @@ def recover_password_confirm_api():
 @app.route("/entries/nuclear", methods=["POST"])
 def nuke_entries_api():
     if check_auth():
-        entries = db.session.query(Entry).filter_by(user_id=session['user_id']).all()
+        entries = get_entries()
         for entry in entries:
             db.session.delete(entry)
         db.session.commit()
