@@ -45,6 +45,7 @@ class User(db.Model):
     password = db.Column(db.String, nullable=False)
     salt = db.Column(db.String(32), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=False)
+    last_login = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     def authenticate(self, form_password):
         """Return True on success, False on failure."""
@@ -191,6 +192,10 @@ def login_api():
                 session['email'] = user.email
                 session['password'] = request.form['password']
                 session['user_id'] = user.id
+                # write into last_login
+                user.last_login = datetime.utcnow()
+                db.session.add(user)
+                db.session.commit()
 
                 code, data = json_success("successfully logged in as %s" % escape(session['email']))
             else:
