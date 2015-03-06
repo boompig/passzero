@@ -1,5 +1,6 @@
 function showHidePass(event) {
-    var elem = $(event.target).parent().parent().find(".password");
+    "use strict";
+    var elem = $(event.target).parent().parent().find(".hidden-toggle");
     if (elem.hasClass("password-hidden")) {
         elem.removeClass("password-hidden");
         $(event.target).text("Hide");
@@ -11,7 +12,6 @@ function showHidePass(event) {
 
 function deleteEntry(e, entry_id, account_name) {
     "use strict";
-
     if (confirm("OK to delete entry for account " + account_name + "?")) {
         console.log("Deleting entry with ID " + entry_id);
         $.ajax({
@@ -33,6 +33,7 @@ function deleteEntry(e, entry_id, account_name) {
  * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse
  */
 function selectText(element) {
+    "use strict";
     var doc = document;
     var text = element;
     var range, selection;
@@ -69,7 +70,7 @@ $(function() {
         timer.resetLogoutTimer();
     });
 
-    $(".password").click(function (e) {
+    $(".hidden-toggle").click(function (e) {
         var elem = $(this);
         if (elem.hasClass("selected")) {
             deselectText();

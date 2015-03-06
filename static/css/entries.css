@@ -28,7 +28,7 @@ input[type="password"], input[type="text"] {
     border: 1px solid #555;
 }
 
-.password.password-hidden {
+.hidden-toggle.password-hidden {
     color: #555;
     background-color: #555;
     cursor: pointer;
@@ -47,4 +47,19 @@ input[type="password"], input[type="text"] {
 
 .entry-panel {
     margin-top: 0.4em;
+}
+
+.extra-container {
+    margin-top: 0.4em;
+}
+
+.extra {
+    margin: 0;
+    text-align: left;
+    padding: 4px 10px;
+
+    border-radius: 3px;
+    border: 1px solid #555;
+    max-width: 400px;
+    min-height: 100px;
 }

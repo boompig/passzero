@@ -11,7 +11,7 @@ from werkzeug.contrib.fixers import ProxyFix
 # some helpers
 import config
 from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex
-from datastore_postgres import db_init, db_get_entries, db_export, db_update_password
+from datastore_postgres import db_init, db_export, db_update_password
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm
 from mailgun import send_confirmation_email, send_recovery_email
 
@@ -88,9 +88,15 @@ class Entry(db.Model):
     username = db.Column(db.String, nullable=False)
     password = db.Column(db.String, nullable=False)
     padding = db.Column(db.String, nullable=False)
+    extra = db.Column(db.String)
 
     def __repr__(self):
         return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
+
+    def decrypt(self, key):
+        """Return a dictionary mapping fields to their decrypted values."""
+        dec_password = decrypt_password(key, self.password)
+        return { "password": dec_password }
 
 def check_auth():
     """Return True iff user_id and password are in session."""
@@ -281,18 +287,15 @@ def post_create(account_name):
 
 def decrypt_entries(entries, key):
     """Return a list of objects representing the decrypted entries"""
-    obj = []
+    arr = []
     for row in entries:
-        hex_ciphertext = row["password"]
-        padding = row["padding"]
-        password = decrypt_password(key + padding, hex_ciphertext)
-        obj.append({
-            "id": row["id"],
-            "account": row["account"],
-            "username": row["username"],
-            "password": password
-        })
-    return obj
+        obj = row.decrypt(key + row.padding)
+        obj["id"] = row.id
+        obj["account"] = row.account
+        obj["username"] = row.username
+        obj["extra"] = row.extra
+        arr.append(obj)
+    return arr
 
 @app.route("/view", methods=["GET"])
 def view_entries():
@@ -300,7 +303,7 @@ def view_entries():
         #TODO flash some kind of error here
         return redirect(url_for("login"))
 
-    entries = db_get_entries(session['user_id'])
+    entries = db.session.query(Entry).filter_by(user_id=session['user_id'])
     dec_entries = decrypt_entries(entries, session['password'])
     return render_template("entries.html", entries=dec_entries)
 
@@ -449,7 +452,7 @@ def edit_entry(entry_id):
     if not check_auth():
         return redirect(url_for("login"))
 
-    entries = db_get_entries(session['user_id'])
+    entries = db.session.query(Entry).filter_by(session['user_id'])
     dec_entries = decrypt_entries(entries, session['password'])
 
     fe = [e for e in dec_entries if e["id"] == entry_id]
@@ -472,7 +475,7 @@ def update_password_api():
     if check_auth():
         form = UpdatePasswordForm(request.form)
         if form.validate():
-            entries = db_get_entries(session['user_id'])
+            entries = db.session.query(Entry).filter_by(session['user_id'])
             dec_entries = decrypt_entries(entries, session['password'])
             status = db_update_password(
                 session['user_id'],

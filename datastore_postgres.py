@@ -24,19 +24,6 @@ def db_connect():
         )
 
 
-def db_get_entries(user_id):
-    """Return a list of entries as a list of dicts mapping column names to values"""
-
-    sql = "SELECT id, account, username, password, padding from entries where user_id=%s ORDER BY LOWER(account)"
-
-    conn = db_connect()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    cur.execute(sql, [user_id])
-    entries = cur.fetchall()
-    conn.close()
-    return entries
-
-
 def check_login(email, password_hash, salt):
     """Return user ID on success, None on failure"""
 

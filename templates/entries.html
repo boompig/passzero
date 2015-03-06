@@ -22,7 +22,13 @@
             <div class="entry" id="entry-{{ row["id"] }}">
                 <div class="entry-title account">{{ row["account"] }}</div>
                 <div class="username">{{ row["username"] }}</div>
-                <div class="password password-hidden">{{ row["password"] }}</div>
+                <div class="password hidden-toggle password-hidden">{{ row["password"] }}</div>
+                {% if "extra" in row and row["extra"] %}
+                    <div class="extra-container">
+                        <label for="extra">Extra Info</label>
+                        <div name="extra" class="extra hidden-toggle password-hidden">{{row["extra"]}}</div>
+                    </div>
+                {% endif %}
                 <div class="entry-panel">
                     <button type="button" class="btn btn-warning edit-btn"
                         onclick="window.location.href='/edit/{{ row["id"] }}'">Edit</button>
