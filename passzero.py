@@ -259,6 +259,7 @@ def new_entry_api():
         entry.username = request.form['username']
         entry.password = enc_pass
         entry.padding = padding
+        entry.extra = request.form["extra"]
 
         db.session.add(entry)
         db.session.commit()
