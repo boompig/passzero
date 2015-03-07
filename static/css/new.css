@@ -39,19 +39,27 @@ form {
 }
 
 #len-container {
-    /*padding-top: 1em;*/
-    padding-bottom: 0;
-    margin-left: 0.5em;
+    margin-top: 10px;
+
     padding-right: 1em;
-    padding-top: 0.8em;
+    padding-top: 1em;
     padding-bottom: 0.7em;
-    display: table-cell;
+    padding-left: 1em;
+    font-size: 0.9em;
+
+    /*display: table-cell;*/
+    display: block;
+    max-width: 300px;
     vertical-align: center;
+
+    border-radius: 10px;
+    border: 1px solid #aaa;
 }
 
 #len-container button {
-    padding-top: .3em;
-    padding-bottom: .3em;
+    padding-top: .25em;
+    padding-bottom: .25em;
+    padding-left: .2em;
 }
 
 #len-container .text {
@@ -66,3 +74,25 @@ form {
     display: block;
 }
 
+button#toggleSymbols {
+    margin-top: 10px;
+    border: 1px solid #999;
+    padding: 5px 15px;
+    font-size: 1.1em;
+    border-radius: 3px;
+    /*weight: bold;*/
+}
+
+#toggleSymbols:not(.active) .glyphicon {
+    display: none;
+}
+
+button#toggleSymbols:not(.active) {
+    background-color: #E8BB35;
+}
+
+button#toggleSymbols.active {
+    background-color: #5cb85c;
+    border-color: #4cae4c;
+    color: #fafafa;
+}

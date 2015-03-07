@@ -1,18 +1,38 @@
+var genSpecialChars = true;
+
+/**
+ * Get a random integer in interval [a, b)
+ */
+function randInt(a, b) {
+    return Math.floor(Math.random() * (b - a) + a);
+}
+
 /**
  * Generate a random password
  */
 function genPassword() {
     "use strict";
     var length = $("#passLen").text();
+    var i;
     var passArray = [];
-    var bannedChars = ['"', "'", "\\"];
-    var charCode;
+    var chars = [];
+    for (i = "a".charCodeAt(0); i <= "z".charCodeAt(0); i++) {
+        chars.push(String.fromCharCode(i));
+    }
+    for (i = "A".charCodeAt(0); i <= "Z".charCodeAt(0); i++) {
+        chars.push(String.fromCharCode(i));
+    }
+    for (i = "0".charCodeAt(0); i <= "9".charCodeAt(0); i++) {
+        chars.push(String.fromCharCode(i));
+    }
+    if (genSpecialChars) {
+        for (i = "!".charCodeAt(0); i <= "/".charCodeAt(0); i++) {
+            chars.push(String.fromCharCode(i));
+        }
+    }
 
     for(var i = 0; i < length; i++) {
-        do {
-            charCode = Math.round(Math.random() * (122 - 33) + 33);
-            passArray[i] = String.fromCharCode(charCode);
-        } while (bannedChars.indexOf(passArray[i]) >= 0);
+        passArray[i] = chars[randInt(0, chars.length)];
     }
 
     var pass = passArray.join("");
@@ -89,6 +109,17 @@ function togglePasswordGen(on) {
     }
 }
 
+function toggleSpecialChar(e) {
+    "use strict";
+    genSpecialChars = !genSpecialChars;
+    console.log(e);
+    if (genSpecialChars) {
+        $(e.currentTarget).addClass("active");
+    } else {
+        $(e.currentTarget).removeClass("active");
+    }
+}
+
 $(function() {
     "use strict";
 
@@ -97,6 +128,10 @@ $(function() {
     } else {
         $("#show-hide-btn").prop({ disabled: true });
     }
+
+    $("#toggleSymbols").click(function (e) {
+        toggleSpecialChar(e);
+    });
 
     $("#password").keyup(function () {
         if ($(this).val().length > 0) {
