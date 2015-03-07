@@ -3,10 +3,11 @@ from flask import Flask, render_template, redirect, session, request, url_for, e
 from flask_sslify import SSLify
 from flask.ext.compress import Compress
 from flask.ext.sqlalchemy import SQLAlchemy
-from sqlalchemy.sql import func, asc
 import json
+import logging
 import os
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.sql import func, asc
 from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
@@ -471,9 +472,8 @@ def edit_entry(entry_id):
         return redirect(url_for("login"))
 
     entries = get_entries()
-    dec_entries = decrypt_entries(entries, session['password'])
-
-    fe = [e for e in dec_entries if e["id"] == entry_id]
+    my_entries = [e for e in entries if e.id == entry_id]
+    fe = decrypt_entries(my_entries, session['password'])
     if len(fe) == 0:
         #TODO flash error msg about invalid ID here
         return redirect(url_for("login"))

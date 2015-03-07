@@ -59,6 +59,8 @@ def decrypt_field(key, salt, hex_ciphertext):
     """Return decrypted string of extra field"""
     full_ciphertext = hex_to_byte(hex_ciphertext)
     iv = full_ciphertext[-1 * AES.block_size:]
+    if len(iv) < AES.block_size:
+        raise TypeError("IV is too small")
     ciphertext = full_ciphertext[:-1 * AES.block_size]
     actual_key = hashlib.sha256(key + salt).digest()
     cipher = AES.new(actual_key, AES.MODE_CFB, iv)
