@@ -11,7 +11,7 @@ from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
 import config
-from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex
+from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex, encrypt_extra, decrypt_extra
 from datastore_postgres import db_init, db_export, db_update_password
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm
 from mailgun import send_confirmation_email, send_recovery_email
@@ -96,8 +96,20 @@ class Entry(db.Model):
 
     def decrypt(self, key):
         """Return a dictionary mapping fields to their decrypted values."""
-        dec_password = decrypt_password(key, self.password)
-        return { "password": dec_password }
+        dec_password = decrypt_password(key + self.padding, self.password)
+        if self.extra:
+            try:
+                dec_extra = decrypt_extra(key, self.padding, self.extra)
+            except TypeError:
+                dec_extra = self.extra
+        else:
+            dec_extra = ""
+        return { "password": dec_password, "extra": dec_extra }
+
+
+    def encrypt(self, key, salt, obj):
+        self.password = encrypt_password(key + salt, obj["password"])
+        self.extra = encrypt_extra(key, salt, obj["extra"])
 
 
 def get_entries():
@@ -257,15 +269,14 @@ def new_entry_api():
 
     if code == 200:
         padding = pad_key(session['password'])
-        enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
 
         entry = Entry()
+        entry.encrypt(session['password'], padding, request.form)
+
         entry.user_id = session['user_id']
         entry.account = request.form['account']
         entry.username = request.form['username']
-        entry.password = enc_pass
         entry.padding = padding
-        entry.extra = request.form["extra"]
 
         db.session.add(entry)
         db.session.commit()
@@ -296,11 +307,10 @@ def decrypt_entries(entries, key):
     """Return a list of objects representing the decrypted entries"""
     arr = []
     for row in entries:
-        obj = row.decrypt(key + row.padding)
+        obj = row.decrypt(key)
         obj["id"] = row.id
         obj["account"] = row.account
         obj["username"] = row.username
-        obj["extra"] = row.extra
         arr.append(obj)
     return arr
 
@@ -430,17 +440,16 @@ def edit_entry_api(entry_id):
     if not form.validate():
         code, data = json_form_validation_error(form.errors)
     else:
-        padding = pad_key(session['password'])
-        enc_pass = encrypt_password(session['password'] + padding, request.form['password'])
 
         try:
             entry = db.session.query(Entry).filter_by(id=entry_id).one()
             assert entry.user_id == session['user_id']
+            padding = pad_key(session['password'])
+            entry.encrypt(session["password"], padding, request.form)
+
             entry.account = request.form['account']
             entry.username = request.form['username']
-            entry.password = enc_pass
             entry.padding = padding
-            entry.extra = request.form["extra"]
 
             db.session.add(entry)
             db.session.commit()
