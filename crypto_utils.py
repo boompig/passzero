@@ -46,7 +46,7 @@ def encrypt_password(padded_key, password):
     return byte_to_hex(enc_password)
 
 
-def encrypt_extra(key, salt, extra):
+def encrypt_field(key, salt, extra):
     """Return encrypted hex string of extra field"""
     actual_key = hashlib.sha256(key + salt).digest()
     iv = Random.new().read(AES.block_size)
@@ -55,7 +55,7 @@ def encrypt_extra(key, salt, extra):
     hex_ciphertext = byte_to_hex(enc_extra)
     return hex_ciphertext
 
-def decrypt_extra(key, salt, hex_ciphertext):
+def decrypt_field(key, salt, hex_ciphertext):
     """Return decrypted string of extra field"""
     full_ciphertext = hex_to_byte(hex_ciphertext)
     iv = full_ciphertext[-1 * AES.block_size:]

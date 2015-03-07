@@ -11,7 +11,7 @@ from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
 import config
-from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex, encrypt_extra, decrypt_extra
+from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex, encrypt_field, decrypt_field
 from datastore_postgres import db_init, db_export, db_update_password
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm
 from mailgun import send_confirmation_email, send_recovery_email
@@ -99,17 +99,21 @@ class Entry(db.Model):
         dec_password = decrypt_password(key + self.padding, self.password)
         if self.extra:
             try:
-                dec_extra = decrypt_extra(key, self.padding, self.extra)
+                dec_extra = decrypt_field(key, self.padding, self.extra)
             except TypeError:
                 dec_extra = self.extra
         else:
             dec_extra = ""
-        return { "password": dec_password, "extra": dec_extra }
-
+        try:
+            dec_username = decrypt_field(key, self.padding, self.username)
+        except TypeError:
+            dec_username = self.username
+        return { "password": dec_password, "extra": dec_extra, "username": dec_username }
 
     def encrypt(self, key, salt, obj):
         self.password = encrypt_password(key + salt, obj["password"])
-        self.extra = encrypt_extra(key, salt, obj["extra"])
+        self.extra = encrypt_field(key, salt, obj["extra"])
+        self.username = encrypt_field(key, salt, obj["username"])
 
 
 def get_entries():
@@ -275,7 +279,6 @@ def new_entry_api():
 
         entry.user_id = session['user_id']
         entry.account = request.form['account']
-        entry.username = request.form['username']
         entry.padding = padding
 
         db.session.add(entry)
@@ -310,7 +313,6 @@ def decrypt_entries(entries, key):
         obj = row.decrypt(key)
         obj["id"] = row.id
         obj["account"] = row.account
-        obj["username"] = row.username
         arr.append(obj)
     return arr
 
@@ -448,7 +450,6 @@ def edit_entry_api(entry_id):
             entry.encrypt(session["password"], padding, request.form)
 
             entry.account = request.form['account']
-            entry.username = request.form['username']
             entry.padding = padding
 
             db.session.add(entry)
