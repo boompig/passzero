@@ -1,10 +1,50 @@
 var genSpecialChars = true;
 
+var words = [];
+var numWords = 4;
+var dictionary = "common.txt";
+
 /**
  * Get a random integer in interval [a, b)
  */
 function randInt(a, b) {
     return Math.floor(Math.random() * (b - a) + a);
+}
+
+function genPassphraseHelper() {
+    "use strict";
+    var phrase = "", index, word;
+    for (var i = 0; i < numWords; i++) {
+        index = Math.floor(Math.random() * words.length);
+        word = words[index];
+        word = word[0].toUpperCase() + word.substr(1);
+        phrase += word;
+    }
+    setPassword(phrase);
+    
+}
+
+function setPassword(pass) {
+    $("#password").val(pass).keyup();
+    if ($("#password").attr("type") == "password") {
+        showHidePassword();
+    }
+}
+
+function genPassphrase () {
+    "use strict";
+    if (words.length === 0) {
+        $.get("/dictionary/" + dictionary, function (response) {
+            words = response.split("\n").filter(function (w) {
+                return w.length >= 5;
+            });
+            
+            genPassphraseHelper();
+        });
+    } else {
+        genPassphraseHelper();
+    }
+    return 0;
 }
 
 /**
@@ -36,12 +76,7 @@ function genPassword() {
     }
 
     var pass = passArray.join("");
-    $("#password").val(pass).keyup();
-
-    if ($("#password").attr("type") == "password") {
-        showHidePassword();
-    }
-
+    setPassword(pass);
     return 0;
 }
 

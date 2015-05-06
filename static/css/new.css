@@ -8,12 +8,32 @@ input[type="submit"] {
     width: 80%;
 }
 
-#show-hide-btn, #gen-pass-btn {
+@media(min-width: 700px) {
+    .form-control {
+        width: 80%;
+    }
+}
+
+@media(max-width: 699px) {
+    .form-control {
+        width: 90%;
+    }
+}
+
+#show-hide-btn, #gen-pass-btn, #gen-passphrase-btn {
     margin-top: 0.5em;
 }
 
-#gen-pass-btn {
-    margin-left: 0.5em;
+@media(min-width: 700px) {
+    #gen-pass-btn, #gen-passphrase-btn {
+        margin-left: 0.5em;
+    }
+}
+
+@media(max-width: 699px) {
+    #gen-pass-btn, #gen-passphrase-btn {
+        margin-left: 0;
+    }
 }
 
 button[type="submit"] {
@@ -29,9 +49,20 @@ form {
     border-radius: 10px;
     margin-top: 30px;
 
-    padding-left: 2em;
     padding-top: 1em;
     padding-bottom: 1em;
+}
+
+@media(min-width: 700px) {
+    form {
+        padding-left: 2em;
+    }
+}
+
+@media (max-width: 699px) {
+    form {
+        padding-left: 0.8em;
+    }
 }
 
 #create-btn {

@@ -17,3 +17,9 @@ my_env.py
 tags
 # bower stuff
 bower_components
+
+# sublime stuff
+*.sublime-*
+
+# weird Mac stuff
+.DS_Store

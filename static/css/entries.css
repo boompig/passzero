@@ -22,7 +22,8 @@ input[type="password"], input[type="text"] {
 }
 
 .password {
-    max-width: 200px;
+    min-width: 200px;
+    max-width: 280px;
     padding: 2px 5px;
     border-radius: 3px;
     border: 1px solid #555;
