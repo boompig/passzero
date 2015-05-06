@@ -107,6 +107,7 @@ form {
 
 button#toggleSymbols {
     margin-top: 10px;
+    margin-bottom: 10px;
     border: 1px solid #999;
     padding: 5px 15px;
     font-size: 1.1em;
@@ -126,6 +127,10 @@ button#toggleSymbols.active {
     background-color: #5cb85c;
     border-color: #4cae4c;
     color: #fafafa;
+}
+
+#len-container #phraseLen, #len-container #passLen {
+    font-size: 1.3em;
 }
 
 .btn-settings {
