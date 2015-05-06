@@ -43,19 +43,30 @@
         <button type="button" class="btn btn-info" id="gen-passphrase-btn"
             onclick="genPassphrase()">Random Phrase</button>
 
-        <div id="len-container">
-            <span id="pass-len-text" class="text">Length</span>
-            <button type="button" class="glyphicon glyphicon-minus"
-                aria-hidden="true" onclick="changeLen(-1)"></button>
-            <span id="passLen" class="text">12</span>
-            <button type="button" class="glyphicon glyphicon-plus"
-                aria-hidden="true" onclick="changeLen(+1)"></button>
-            <div>
-                <!--<input type="checkbox" name="specialChar" id="specialChar" value="1" checked="checked" />-->
-                <button type="button" class="active" id="toggleSymbols">
-                    <span class="glyphicon glyphicon-ok"></span>
-                    <span>Use special characters</span>
-                </button>
+        <button type="button" class="btn btn-settings" onclick="showHideSettings()">
+            <span class="glyphicon glyphicon-cog"></span>Settings
+        </button>
+        <div id="len-container" style="display: none;">
+            <div class="password-settings">
+                <span id="pass-len-text" class="text">Length</span>
+                <button type="button" class="glyphicon glyphicon-minus"
+                    aria-hidden="true" onclick="changeLen(-1)"></button>
+                <span id="passLen" class="text">12</span>
+                <button type="button" class="glyphicon glyphicon-plus"
+                    aria-hidden="true" onclick="changeLen(+1)"></button>
+                <div>
+                    <!--<input type="checkbox" name="specialChar" id="specialChar" value="1" checked="checked" />-->
+                    <button type="button" class="active" id="toggleSymbols">
+                        <span class="glyphicon glyphicon-ok"></span>
+                        <span>Use special characters</span>
+                    </button>
+                </div>
+            </div>
+            <div class="passphrase-settings">
+                <span class="text">Number of Words</span>
+                <button type="button" class="glyphicon glyphicon-minus" aria-hidden="true" onclick="changePhraseLen(-1)"></button>
+                <span id="phraseLen" class="text">4</span>
+                <button type="button" class="glyphicon glyphicon-plus" aria-hidden="true" onclick="changePhraseLen(+1)"></button>
             </div>
         </div>
 

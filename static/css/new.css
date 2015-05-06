@@ -127,3 +127,14 @@ button#toggleSymbols.active {
     border-color: #4cae4c;
     color: #fafafa;
 }
+
+.btn-settings {
+    display: block;
+    margin-top: 0.5em;
+    border: 1px solid #777;
+    background-color: #ddd;
+}
+
+.btn-settings .glyphicon {
+    margin-right: 0.5em;
+}

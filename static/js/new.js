@@ -1,8 +1,15 @@
-var genSpecialChars = true;
-
+/* for passphrase generation */
 var words = [];
-var numWords = 4;
 var dictionary = "common.txt";
+
+/* settings */
+var showSettings = false;
+var genSpecialChars = true;
+var maxNumWords = 10;
+
+function showHideSettings () {
+    $("#len-container").toggle();
+}
 
 /**
  * Get a random integer in interval [a, b)
@@ -14,6 +21,7 @@ function randInt(a, b) {
 function genPassphraseHelper() {
     "use strict";
     var phrase = "", index, word;
+    var numWords = Number($("#phraseLen").text());
     for (var i = 0; i < numWords; i++) {
         index = Math.floor(Math.random() * words.length);
         word = words[index];
@@ -131,6 +139,15 @@ function changeLen(diff) {
     var elem = $("#passLen");
     var len = Number(elem.text());
     elem.text(len + diff);
+}
+
+function changePhraseLen(diff) {
+    "use strict";
+    var elem = $("#phraseLen");
+    var len = Number(elem.text());
+    if (len + diff > 0 && len + diff <= maxNumWords) {
+        elem.text(len + diff);
+    }
 }
 
 function togglePasswordGen(on) {
