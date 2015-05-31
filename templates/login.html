@@ -67,6 +67,7 @@
         </div>
 
         <script src="{{ url_for("static", filename="lib/jquery/dist/jquery.min.js") }}"></script> 
+        <script src="{{ url_for("static", filename="js/utils.js") + "?build=" + config['BUILD_ID'] }}"></script>
         <script src="{{ url_for("static", filename="/js/login.js") + "?build=" + config['BUILD_ID'] }}"></script>
     </body>
 </html>
