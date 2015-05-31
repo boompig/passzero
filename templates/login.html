@@ -4,14 +4,14 @@
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") }}" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="css/navbar.css") }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") + "?build=" + config['BUILD_ID'] }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/navbar.css") + "?build=" + config['BUILD_ID'] }}" />
     </head>
     <body>
         <div id="hero" class="container">
             <nav class="navbar">
                 <ul class="nav-items">
-                    <li class="nav-item"><a href="/about">Home</a></li>
+                    <li class="nav-item"><a href="/">Home</a></li>
                     {%- if login -%}
                     <li class="nav-item"><a href="/signup">Register</a></li>
                     {%- else -%}
@@ -66,6 +66,7 @@
             </div>
         </div>
 
-        <script src="{{ url_for("static", filename="/js/login.js") }}"></script>
+        <script src="{{ url_for("static", filename="lib/jquery/dist/jquery.min.js") }}"></script> 
+        <script src="{{ url_for("static", filename="/js/login.js") + "?build=" + config['BUILD_ID'] }}"></script>
     </body>
 </html>

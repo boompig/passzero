@@ -38,7 +38,7 @@
         <script src="{{ url_for("static", filename="lib/bootstrap/dist/js/bootstrap.min.js") }}"></script>
 
         <!-- include utilities JS file -->
-        <script src="{{ url_for("static", filename="js/utils.js") }}"></script>
+        <script src="{{ url_for("static", filename="js/utils.js") + "?build=" + config['BUILD_ID'] }}"></script>
         {% block js %}
         {% endblock %}
     </body>
