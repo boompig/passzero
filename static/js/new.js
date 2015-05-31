@@ -79,7 +79,7 @@ function genPassword() {
         }
     }
 
-    for(var i = 0; i < length; i++) {
+    for (i = 0; i < length; i++) {
         passArray[i] = chars[randInt(0, chars.length)];
     }
 

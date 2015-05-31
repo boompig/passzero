@@ -4,7 +4,6 @@ from flask_sslify import SSLify
 from flask.ext.compress import Compress
 from flask.ext.sqlalchemy import SQLAlchemy
 import json
-import logging
 import os
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.sql import func, asc
