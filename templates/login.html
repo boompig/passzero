@@ -1,54 +1,71 @@
-{% extends "layout.html" %}
+<html lang="en">
+    <head>
+        <title>PassZero</title>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+        <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/navbar.css") }}" />
+    </head>
+    <body>
+        <div id="hero" class="container">
+            <nav class="navbar">
+                <ul class="nav-items">
+                    <li class="nav-item"><a href="/about">Home</a></li>
+                    {%- if login -%}
+                    <li class="nav-item"><a href="/signup">Register</a></li>
+                    {%- else -%}
+                    <li class="nav-item"><a href="/login">Sign In</a></li>
+                    {%- endif -%}
+                    <li class="nav-item"><a href="/about">About</a></li>
+                </ul>
+            </nav>
+            <div id="form-container">
+                {%- if login -%}
+                <form method="POST" action="/login" role="form" onsubmit="login(event)">
+                {%- else -%}
+                <form method="POST" action="/signup" role="form" onsubmit="createAccount(event)">
+                {%- endif -%}
+                    <h1 class="title">
+                        {%- if login -%}
+                        Login to PassZero
+                        {%- else -%}
+                        Sign Up for PassZero
+                        {%- endif -%}
+                    </h1>
 
-{% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") }}" />
-{% endblock %}
+                    <div class="error" id="error-msg"></div>
 
-{% block js %}
-    <script src="{{ url_for("static", filename="/js/login.js") }}"></script>
-{% endblock %}
+                    <label for="email">Email</label>
+                    <span class="form-error" id="form-error-email"></span>
+                    <input type="email" class="form-control" name="email" tabindex="1"
+                            placeholder="email" required="true" />
 
-{% block body %}
-    {%- if login -%}
-    <form method="POST" action="/login" role="form" onsubmit="login(event)">
-    {%- else -%}
-    <form method="POST" action="/signup" role="form" onsubmit="createAccount(event)">
-    {%- endif -%}
-        <h1 class="title">
-            {%- if login -%}
-            Login to PassZero
-            {%- else -%}
-            Sign Up for PassZero
-            {%- endif -%}
-        </h1>
+                    <label for="password">Password</label>
+                    <span class="form-error" id="form-error-password"></span>
+                    <input type="password" class="form-control" name="password" tabindex="2"
+                            placeholder="password" required="true" />
 
-        <div class="error" id="error-msg"></div>
+                    {%- if login -%}
+                    <a id="forgot-password" href="{{ url_for("recover_password") }}">Forgot Password</a>
+                    {%- else -%}
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" class="form-control" name="confirm_password" tabindex="3"
+                            placeholder="confirm password" required="true" />
+                    {%- endif -%}
 
-        <label for="email">Email</label>
-        <span class="form-error" id="form-error-email"></span>
-        <input type="email" class="form-control" name="email" tabindex="1"
-                placeholder="email" required="true" />
+                    <button id="submit-btn"
+                        type="submit" name="submit">
+                        {%- if login -%}
+                            Log In
+                        {%- else -%}
+                            Sign Up
+                        {%- endif -%}
+                    </button>
+                </form>
+            </div>
+        </div>
 
-        <label for="password">Password</label>
-        <span class="form-error" id="form-error-password"></span>
-        <input type="password" class="form-control" name="password" tabindex="2"
-                placeholder="password" required="true" />
-
-        {%- if login -%}
-        <a id="forgot-password" href="{{ url_for("recover_password") }}">Forgot Password</a>
-        {%- else -%}
-        <label for="confirm-password">Confirm Password</label>
-        <input type="password" class="form-control" name="confirm_password" tabindex="3"
-                placeholder="confirm password" required="true" />
-        {%- endif -%}
-
-        <button class="btn btn-success form-control" id="submit-btn"
-            type="submit" name="submit">
-            {%- if login -%}
-                Log In
-            {%- else -%}
-                Sign Up
-            {%- endif -%}
-        </button>
-    </form>
-{% endblock %}
+        <script src="{{ url_for("static", filename="/js/login.js") }}"></script>
+    </body>
+</html>
