@@ -22,17 +22,15 @@
                     <li class="nav-item"><a href="/about">About</a></li>
                 </ul>
             </nav>
-            <div id="msg-container">
-                {% with messages = get_flashed_messages() %}
-                    {% if messages %}
-                        <div class=flashes>
-                            {% for message in messages %}
-                                <div class="alert alert-success" role="alert">{{ message }}</div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
-            </div>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class=flashes>
+                        {% for message in messages %}
+                            <div class="alert alert-success" role="alert">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
             <div id="form-container">
                 {%- if login -%}
                 <form method="POST" action="/login" role="form" onsubmit="login(event)">
