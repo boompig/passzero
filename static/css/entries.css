@@ -9,6 +9,12 @@
     margin-top: .5em;
 }
 
+#search-form {
+    display: none;
+    margin: 0 auto;
+    width: 90%;
+}
+
 .entry-title {
     font-weight: bold;
     font-size: 1.2em;

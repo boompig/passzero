@@ -1,8 +1,9 @@
 {% extends "layout.html" -%}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/logoutTimer.js") }}"></script>
-    <script src="{{ url_for("static", filename="js/entries.js") }}"></script>
+    <script src="{{ url_for("static", filename="lib/angular/angular.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/logoutTimer.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/entries.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block css %}
@@ -10,35 +11,48 @@
 {% endblock %}
 
 {% block body %}
+    {% raw %}
     <h1 class="title">PassZero Entries</h1>
-    <div id="num-entries">You have {{ entries|length }} {{ ("entry" if entries|length == 1 else "entries") }}</div>
+    <div id="num-entries" ng-cloak>You have {{ ctrl.entries.length }} {{ (entries.length === 1 ? "entry" : "entries") }}</div>
 
-    <div id="entry-container">
-        {%- if entries|length == 0 -%}
-        <div class="empty-msg">No entries yet. Try <a href="/entries/new">making some</a>.</div>
-        {%- endif -%}
+    <form id="search-form" ng-if="ctrl.entries.length > 0" ng-cloak>
+        <div class="input-group">
+            <span class="input-group-addon" id="basic-addon1">
+                <span class="glyphicon glyphicon-search"></span>
+            </span>
+            <input type="text" name="search" id="search" class="form-control"
+                placeholder="search" aria-hiddenby="basic-addon1" />
+        </div>
+    </form>
 
-        {% for row in entries %}
-            <div class="entry" id="entry-{{ row["id"] }}">
-                <div class="entry-title account">{{ row["account"] }}</div>
-                <div class="username">{{ row["username"] }}</div>
-                <div class="password hidden-toggle password-hidden">
-                    <span class="inner-password">{{ row["password"] }}</span>
+    <div id="entry-container" ng-cloak>
+        <div ng-if="ctrl.entries.length === 0">
+            <div class="empty-msg">No entries yet. Try <a href="/entries/new">making some</a>.</div>
+        </div>
+
+        <div ng-repeat="entry in ctrl.entries track by $index">
+            <div class="entry" id="entry-{{ entry.id }}">
+                <div class="entry-title account">{{ entry.account }}</div>
+                <div class="username">{{ entry.username }}</div>
+                <div class="password hidden-toggle password-hidden"
+                    ng-click="ctrl.toggleHidden(entry)">
+                    <span class="inner-password">{{ entry.password }}</span>
                 </div>
-                {% if "extra" in row and row["extra"] %}
+                <div ng-if="entry.extra">
                     <div class="extra-container">
                         <label for="extra">Extra Info</label>
-                        <div name="extra" class="extra hidden-toggle password-hidden">{{row["extra"]}}</div>
+                        <div name="extra" class="extra hidden-toggle password-hidden">{{ entry.extra }}</div>
                     </div>
-                {% endif %}
+                </div>
                 <div class="entry-panel">
                     <button type="button" class="btn btn-warning edit-btn"
-                        onclick="window.location.href='/edit/{{ row["id"] }}'">Edit</button>
+                        ng-click="ctrl.editEntry(entry.id)">Edit</button>
                     <button type="button" class="btn btn-info show-hide-btn" onclick="showHidePass(event)">Show</button>
                     <button type="button" class="btn btn-danger" class="delete-btn"
-                    onclick="deleteEntry(event, {{ row["id"] }}, '{{ row["account"] }}')">Delete</button>
+                        ng-click="ctrl.deleteEntry(entry)">Delete</button>
                 </div>
             </div>
-        {% endfor %}
+        </div>
     </div>
+    {% endraw %}
 {% endblock %}

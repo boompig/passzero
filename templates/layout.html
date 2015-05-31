@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="PassZero">
     <head>
         <meta charset="utf-8" />
         <!-- for mobile -->
@@ -14,7 +14,7 @@
         {% block css %}
         {% endblock %}
     </head>
-    <body>
+    <body ng-controller="PassZeroCtrl as ctrl">
         {% include "nav.html" %}
         <div class="container">
             <div class="inner-container">

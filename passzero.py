@@ -316,6 +316,17 @@ def decrypt_entries(entries, key):
         arr.append(obj)
     return arr
 
+@app.route("/api/entries", methods=["GET"])
+def api_get_entries():
+    if not check_auth():
+        #TODO flash some kind of error here
+        return redirect(url_for("login"))
+
+    entries = get_entries()
+    dec_entries = decrypt_entries(entries, session['password'])
+    return write_json(200, dec_entries)
+
+
 @app.route("/view", methods=["GET"])
 def view_entries():
     if not check_auth():
