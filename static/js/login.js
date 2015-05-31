@@ -10,6 +10,7 @@ function createAccount(e) {
     $.post(url, data, function (response) {
         console.log(response);
         window.location.href = "/done_signup/" + data.email;
+        $("#error-msg-container").hide();
     }, "json").error(function(obj, textStatus, textCode) {
         if (textCode === "CONFLICT") {
             $("#error-msg").text("An account with this email already exists");
@@ -30,6 +31,7 @@ function createAccount(e) {
             console.log(textStatus);
             console.log(textCode);
         }
+        $("#error-msg-container").show();
     });
 
     return false;
@@ -38,15 +40,14 @@ function createAccount(e) {
 function login(e) {
     "use strict";
     e.preventDefault();
-
     var elem = $(e.target);
     var dataArray = elem.serializeArray();
     var url = elem.attr("action");
     var data = parseArray(dataArray);
-
     $.post(url, data, function (response) {
         console.log(response);
         window.location.href = "/done_login";
+        $("#error-msg-container").hide();
     }, "json").error(function(obj, textStatus, textCode) {
         var response = JSON.parse(obj.responseText);
         if (textCode === "UNAUTHORIZED") {
@@ -56,6 +57,7 @@ function login(e) {
             console.log(textStatus);
             console.log(textCode);
         }
+        $("#error-msg-container").show();
     });
 
     return false;

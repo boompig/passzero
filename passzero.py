@@ -229,7 +229,7 @@ def login_api():
             else:
                 code, data = json_error(401, "Either the email or password is incorrect")
         except NoResultFound:
-            code, data = json_error(401, "There is not account with that email")
+            code, data = json_error(401, "There is no account with that email")
     else:
         code, data = json_form_validation_error(form.errors)
 

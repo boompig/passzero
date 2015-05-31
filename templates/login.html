@@ -4,6 +4,8 @@
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+        <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
         <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") + "?build=" + config['BUILD_ID'] }}" />
         <link rel="stylesheet" href="{{ url_for("static", filename="css/navbar.css") + "?build=" + config['BUILD_ID'] }}" />
     </head>
@@ -20,6 +22,17 @@
                     <li class="nav-item"><a href="/about">About</a></li>
                 </ul>
             </nav>
+            <div id="msg-container">
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class=flashes>
+                            {% for message in messages %}
+                                <div class="alert alert-success" role="alert">{{ message }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            </div>
             <div id="form-container">
                 {%- if login -%}
                 <form method="POST" action="/login" role="form" onsubmit="login(event)">
@@ -34,7 +47,9 @@
                         {%- endif -%}
                     </h1>
 
-                    <div class="error" id="error-msg"></div>
+                    <div class="alert alert-danger" id="error-msg-container">
+                        <div id="error-msg"></div>
+                    </div>
 
                     <label for="email">Email</label>
                     <span class="form-error" id="form-error-email"></span>
