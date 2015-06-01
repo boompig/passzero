@@ -50,14 +50,19 @@ String.prototype.endswith = function (s) {
 };
 
 var PassZeroCtrl = function ($scope, $location, $http) {
+    this.search = null;
     this.entries = [];
+    this.filteredEntries = [];
 
-    this.search = function (q) {
+    this.searchEntries = function (q) {
+        if (q === "" || q === null)
+            return this.entries;
         var entry;
         var l = [];
-        for (var i = 0; i < Entries.entries.length; i++) {
-            entry = Entries.entries[i];
-            if (entry.indexOf(q) >= 0) {
+        for (var i = 0; i < this.entries.length; i++) {
+            entry = this.entries[i];
+            if (entry.account.toLowerCase().indexOf(q) >= 0 ||
+                entry.username.toLowerCase().indexOf(q) >= 0) {
                 l.push(entry);
             }
         }
@@ -65,35 +70,18 @@ var PassZeroCtrl = function ($scope, $location, $http) {
     };
 
     this.getEntries = function () {
-        var entries = this.entries;
+        var that = this;
         $http.get("/api/entries").success(function (response) {
             console.log(response);
             for (var i = 0; i < response.length; i++) {
-                entries.push(response[i]);
+                that.entries.push(response[i]);
             }
+            that.submitSearch();
         });
     };
 
-    this.submitSearch = function (e) {
-        e.preventDefault();
-        var q = $("#search").val();
-        var l = Entries.search(q);
-        $("#entries").empty();
-        var elem;
-        var passwordElem;
-        for (var i = 0; i < l.length; i++) {
-            elem = $("<div></div>").addClass("entry").attr("id", "entry-" + i);
-            $("<div></div>").addClass("entry-title").addClass("account")
-                .text(entry.account).appendTo(elem);
-            $("<div></div>").addClass("username")
-                .text(entry.username).appendTo(elem);
-            passwordElem = $("<div></div>").addClass("password").addClass("hidden-toggle")
-                .addClass("password-hidden").text(entry.username);
-            $("<span></span>").addClass("inner-password").text(entry.password)
-                .appendTo(passwordElem);
-            passwordElem.appendTo(elem);
-        }
-        return false;
+    this.submitSearch = function () {
+        this.filteredEntries = this.searchEntries(this.search);
     };
 
     this.editEntry = function (idx) {

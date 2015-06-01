@@ -15,13 +15,16 @@
     <h1 class="title">PassZero Entries</h1>
     <div id="num-entries" ng-cloak>You have {{ ctrl.entries.length }} {{ (entries.length === 1 ? "entry" : "entries") }}</div>
 
-    <form id="search-form" ng-if="ctrl.entries.length > 0" ng-cloak>
+    <form id="search-form" ng-if="ctrl.entries.length > 0"
+        ng-submit="ctrl.submitSearch()" ng-cloak>
         <div class="input-group">
             <span class="input-group-addon" id="basic-addon1">
                 <span class="glyphicon glyphicon-search"></span>
             </span>
             <input type="text" name="search" id="search" class="form-control"
-                placeholder="search" aria-hiddenby="basic-addon1" />
+                placeholder="search" aria-hiddenby="basic-addon1"
+                ng-change="ctrl.submitSearch()"
+                ng-model="ctrl.search" />
         </div>
     </form>
 
@@ -30,7 +33,7 @@
             <div class="empty-msg">No entries yet. Try <a href="/entries/new">making some</a>.</div>
         </div>
 
-        <div ng-repeat="entry in ctrl.entries track by $index">
+        <div ng-repeat="entry in ctrl.filteredEntries">
             <div class="entry" id="entry-{{ entry.id }}">
                 <div class="entry-title account">{{ entry.account }}</div>
                 <div class="username">{{ entry.username }}</div>
