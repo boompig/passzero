@@ -249,7 +249,7 @@ def logout():
     if 'user_id' in session:
         session.pop("user_id")
 
-    flash("Successfully logged out")
+    #flash("Successfully logged out")
     return redirect(url_for("login"))
 
 
