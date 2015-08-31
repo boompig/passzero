@@ -210,13 +210,28 @@ def post_login():
     return redirect(url_for("view_entries"))
 
 
+##################################################
+#   API-only, returns JSON
+##################################################
+
+@app.route("/api/login", methods=["POST"])
 @app.route("/login", methods=["POST"])
-def login_api():
+def api_login():
+    """Try to log in using JSON post data.
+    Respond with JSON data and set HTTP status code.
+    On success:
+        - fetch user from database
+        - set session cookies
+        - update last login info in database
+        - return 200 code and success msg in JSON
+    On error:
+        - return 4xx code and error msg in JSON
+    """
     form = LoginForm(request.form)
     if form.validate():
         try:
-            user = db.session.query(User).filter_by(email=request.form['email']).one()
-            if user.authenticate(request.form['password']):
+            user = db.session.query(User).filter_by(email=request.form["email"]).one()
+            if user.authenticate(request.form["password"]):
                 session['email'] = user.email
                 session['password'] = request.form['password']
                 session['user_id'] = user.id
@@ -224,15 +239,17 @@ def login_api():
                 user.last_login = datetime.utcnow()
                 db.session.add(user)
                 db.session.commit()
-
-                code, data = json_success("successfully logged in as %s" % escape(session['email']))
+                # craft message to return to user
+                msg = "successfully logged in as {email}".format(
+                    email = escape(session["email"])
+                )
+                code, data = json_success(msg)
             else:
                 code, data = json_error(401, "Either the email or password is incorrect")
         except NoResultFound:
             code, data = json_error(401, "There is no account with that email")
     else:
         code, data = json_form_validation_error(form.errors)
-
     return write_json(code, data)
 
 @app.route("/login", methods=["GET"])
