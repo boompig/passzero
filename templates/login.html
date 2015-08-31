@@ -11,72 +11,11 @@
     </head>
     <body>
         <div id="hero" class="container">
-            <nav class="navbar">
-                <ul class="nav-items">
-                    <li class="nav-item"><a href="/">Home</a></li>
-                    {%- if login -%}
-                    <li class="nav-item"><a href="/signup">Register</a></li>
-                    {%- else -%}
-                    <li class="nav-item"><a href="/login">Sign In</a></li>
-                    {%- endif -%}
-                    <li class="nav-item"><a href="/about">About</a></li>
-                </ul>
-            </nav>
-            {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    <div class=flashes>
-                        {% for message in messages %}
-                            <div class="flash alert alert-success" role="alert">{{ message }}</div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            <div id="form-container">
-                {%- if login -%}
-                <form method="POST" action="/login" role="form" onsubmit="login(event)">
-                {%- else -%}
-                <form method="POST" action="/signup" role="form" onsubmit="createAccount(event)">
-                {%- endif -%}
-                    <h1 class="title">
-                        {%- if login -%}
-                        Login to PassZero
-                        {%- else -%}
-                        Sign Up for PassZero
-                        {%- endif -%}
-                    </h1>
-
-                    <div class="alert alert-danger" id="error-msg-container">
-                        <div id="error-msg"></div>
-                    </div>
-
-                    <label for="email">Email</label>
-                    <span class="form-error" id="form-error-email"></span>
-                    <input type="email" class="form-control" name="email" tabindex="1"
-                            placeholder="email" required="true" />
-
-                    <label for="password">Password</label>
-                    <span class="form-error" id="form-error-password"></span>
-                    <input type="password" class="form-control" name="password" tabindex="2"
-                            placeholder="password" required="true" />
-
-                    {%- if login -%}
-                    <a id="forgot-password" href="{{ url_for("recover_password") }}">Forgot Password</a>
-                    {%- else -%}
-                    <label for="confirm-password">Confirm Password</label>
-                    <input type="password" class="form-control" name="confirm_password" tabindex="3"
-                            placeholder="confirm password" required="true" />
-                    {%- endif -%}
-
-                    <button id="submit-btn"
-                        type="submit" name="submit">
-                        {%- if login -%}
-                            Log In
-                        {%- else -%}
-                            Sign Up
-                        {%- endif -%}
-                    </button>
-                </form>
-            </div>
+            {% if login %}
+                {% include "login_existing.html" %}
+            {% else %}
+                {% include "login_new.html" %}
+            {% endif %}
         </div>
 
         <script src="{{ url_for("static", filename="lib/jquery/dist/jquery.min.js") }}"></script> 

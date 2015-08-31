@@ -1,0 +1,38 @@
+<nav class="navbar">
+    <ul class="nav-items">
+        <li class="nav-item"><a href="/">Home</a></li>
+        <li class="nav-item"><a href="/login">Sign In</a></li>
+        <li class="nav-item"><a href="/about">About</a></li>
+    </ul>
+</nav>
+{% include "flash_messages.html" %}
+<div id="form-container">
+    <form method="POST" action="/signup" role="form" onsubmit="createAccount(event)">
+        <h1 class="title">
+            Sign Up for PassZero
+        </h1>
+
+        <div class="alert alert-danger" id="error-msg-container">
+            <div id="error-msg"></div>
+        </div>
+
+        <label for="email">Email</label>
+        <span class="form-error" id="form-error-email"></span>
+        <input type="email" class="form-control" name="email" tabindex="1"
+                placeholder="email" required="true" />
+
+        <label for="password">Password</label>
+        <span class="form-error" id="form-error-password"></span>
+        <input type="password" class="form-control" name="password" tabindex="2"
+                placeholder="password" required="true" />
+
+        <label for="confirm-password">Confirm Password</label>
+        <input type="password" class="form-control" name="confirm_password" tabindex="3"
+                placeholder="confirm password" required="true" />
+
+        <button id="submit-btn"
+            type="submit" name="submit">
+                Sign Up
+        </button>
+    </form>
+</div>
