@@ -24,3 +24,8 @@ PassZero is implemented as a simple web app with results held in a database, the
 * create virtualenv from requirements.txt
 * create self-signed certificate for SSL, place it at root of PassZero
 * `foreman start local`
+
+## Deploying
+
+* run `make` to generate new build ID so caches are invalidated for old CSS and JS resources
+* deploy to server
