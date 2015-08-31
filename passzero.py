@@ -252,6 +252,29 @@ def api_login():
         code, data = json_form_validation_error(form.errors)
     return write_json(code, data)
 
+
+@app.route("/api/entries", methods=["GET"])
+def api_get_entries():
+    """Get entries of logged-in user.
+    Respond with JSON data corresponding to entries, or error msg. Set HTTP status code.
+    On success:
+        - read all entries and decrypt them
+        - write them out as massive JSON array
+        - set status code 200
+    On error:
+        - set status code 4xx
+        - write JSON object { "status": "error", "msg": <relevant error msg> }
+    """
+    if not check_auth():
+        code, data = json_error(401, "Must log in to get list of entries")
+    else:
+        code = 200
+        entries = get_entries()
+        dec_entries = decrypt_entries(entries, session['password'])
+        data = dec_entries
+    return write_json(code, data)
+
+
 @app.route("/login", methods=["GET"])
 def login():
     return render_template("login.html", login=True, error=None)
@@ -332,16 +355,6 @@ def decrypt_entries(entries, key):
         obj["account"] = row.account
         arr.append(obj)
     return arr
-
-@app.route("/api/entries", methods=["GET"])
-def api_get_entries():
-    if not check_auth():
-        #TODO flash some kind of error here
-        return redirect(url_for("login"))
-
-    entries = get_entries()
-    dec_entries = decrypt_entries(entries, session['password'])
-    return write_json(200, dec_entries)
 
 
 @app.route("/view", methods=["GET"])
