@@ -18,4 +18,5 @@ CREATE TABLE IF NOT EXISTS entries
     account VARCHAR NOT NULL,
     username VARCHAR NOT NULL, password VARCHAR NOT NULL,
     padding VARCHAR NOT NULL,
+    url VARCHAR,
     extra TEXT);
