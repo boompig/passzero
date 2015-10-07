@@ -40,7 +40,7 @@ input[type="password"], input[type="text"] {
     cursor: pointer;
 }
 
-#num-entries {
+#num-entries, #loading-text {
     font-size: 1.15em;
     font-weight: bold;
     text-align: center;

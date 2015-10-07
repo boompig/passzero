@@ -54,6 +54,8 @@ var PassZeroCtrl = function ($scope, $location, $http) {
     this.entries = [];
     this.filteredEntries = [];
 
+    this.loadedEntries = false;
+
     this.searchEntries = function (q) {
         if (q === "" || q === null)
             return this.entries;
@@ -76,6 +78,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
             for (var i = 0; i < response.length; i++) {
                 that.entries.push(response[i]);
             }
+            that.loadedEntries = true;
             that.submitSearch();
         });
     };
@@ -130,5 +133,5 @@ var PassZeroCtrl = function ($scope, $location, $http) {
     this.init();
 };
 
-var app = angular.module("PassZero", [])
+var app = angular.module("PassZero", ["ngAnimate"])
     .controller("PassZeroCtrl", PassZeroCtrl);
