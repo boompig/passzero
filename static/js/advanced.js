@@ -16,6 +16,10 @@ function changePassword(e) {
         data: data,
         success: function (response) {
             $(".alert-success").text("Successfully changed password").show();
+            // reset form fields
+            elem.find("input[type='password']").each(function (idx) {
+                $(this).val("");
+            });
         },
         error: function (obj, textStatus, textCode) {
             var response = obj.responseJSON;
