@@ -91,6 +91,7 @@ class AuthToken(db.Model):
     def __repr__(self):
         return "<AuthToken(user_id=%d, token=%s)>" % (self.user_id, self.token)
 
+
 class Entry(db.Model):
     __tablename__ = "entries"
     id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
@@ -129,6 +130,7 @@ class Entry(db.Model):
 def get_entries():
     return db.session.query(Entry).filter_by(
             user_id=session['user_id']).order_by(asc(func.lower(Entry.account))).all()
+
 
 def check_auth():
     """Return True iff user_id and password are in session."""
@@ -651,17 +653,22 @@ def recover_password_confirm_api():
         code, data = json_form_validation_error(form.errors)
     return write_json(code, data)
 
+@app.route("/api/entries/nuclear", methods=["POST"])
 @app.route("/entries/nuclear", methods=["POST"])
 def nuke_entries_api():
     if check_auth():
-        entries = get_entries()
-        for entry in entries:
-            db.session.delete(entry)
-        db.session.commit()
-        code, data = json_success("Deleted all entries")
+        if check_csrf(request.form):
+            entries = get_entries()
+            for entry in entries:
+                db.session.delete(entry)
+            db.session.commit()
+            code, data = json_success("Deleted all entries")
+        else:
+            code, data = json_csrf_validation_error()
     else:
         code, data = json_noauth()
     return write_json(code, data)
+
 
 @app.route("/recover", methods=["POST"])
 def recover_password_api():

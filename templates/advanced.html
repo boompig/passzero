@@ -58,6 +58,7 @@
             <div class="alert alert-success" id="nuke-success-msg" style="display:none;"></div>
             <form role="form" action="{{ url_for("nuke_entries_api") }}" method="post"
                 onsubmit="nukeEntries(event)">
+                <input type="hidden" name="csrf_token" value={{ csrf_token() }} />
                 <button type="submit" class="btn btn-danger">Nuke Entries</button>
             </form>
         </div>
