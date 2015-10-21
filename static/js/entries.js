@@ -53,6 +53,11 @@ var PassZeroCtrl = function ($scope, $location, $http) {
     this.search = null;
     this.entries = [];
     this.filteredEntries = [];
+    /**
+     * CSRF token is stored in a hidden field in the HTML by the server.
+     * This field is filled at load
+     */
+    this.csrf_token = null;
 
     this.loadedEntries = false;
 
@@ -95,7 +100,8 @@ var PassZeroCtrl = function ($scope, $location, $http) {
     this.deleteEntry = function (entry) {
         if (confirm("OK to delete entry for account " + entry.account + "?")) {
             console.log("Deleting entry with ID " + entry.id);
-            $http.delete("/entries/" + entry.id)
+            var data = { csrf_token: this.csrf_token };
+            $http.delete("/entries/" + entry.id, { params: data })
             .success(function (result) {
                 window.location.href = "/entries/post_delete/" + entry.account;
             }).error(function (obj, textStatus, textCode) {
@@ -126,7 +132,8 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         window.onfocus = function () {
             timer.checkLogoutTimer();
         };
-
+        // fill in CSRF token value
+        this.csrf_token = $("#csrf_token").val();
         this.getEntries();
     };
 

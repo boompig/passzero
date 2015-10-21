@@ -186,26 +186,6 @@ def json_internal_error(msg):
     return json_error(500, msg)
 
 
-@app.route("/entries/<int:entry_id>", methods=["DELETE"])
-def delete_entry_api(entry_id):
-    """Print 1 on success and 0 on failure"""
-    if check_auth():
-        try:
-            entry = db.session.query(Entry).filter_by(id=entry_id).one()
-            assert entry.user_id == session['user_id']
-            db.session.delete(entry)
-            db.session.commit()
-            code, data = json_success("successfully deleted entry with ID %d" % entry_id)
-        except NoResultFound:
-            code, data = json_error(400, "no such entry")
-        except AssertionError:
-            code, data = json_error(400, "the given entry does not belong to you")
-    else:
-        code, data = json_noauth()
-
-    return write_json(code, data)
-
-
 @app.route("/", methods=["GET"])
 def index():
     if check_auth():
@@ -293,6 +273,29 @@ def api_get_entries():
         entries = get_entries()
         dec_entries = decrypt_entries(entries, session['password'])
         data = dec_entries
+    return write_json(code, data)
+
+
+@app.route("/api/entries/<int:entry_id>", methods=["DELETE"])
+@app.route("/entries/<int:entry_id>", methods=["DELETE"])
+def delete_entry_api(entry_id):
+    """Print 1 on success and 0 on failure"""
+    if check_auth():
+        if check_csrf(request.args):
+            try:
+                entry = db.session.query(Entry).filter_by(id=entry_id).one()
+                assert entry.user_id == session['user_id']
+                db.session.delete(entry)
+                db.session.commit()
+                code, data = json_success("successfully deleted entry with ID %d" % entry_id)
+            except NoResultFound:
+                code, data = json_error(400, "no such entry")
+            except AssertionError:
+                code, data = json_error(400, "the given entry does not belong to you")
+        else:
+            code, data = json_csrf_validation_error()
+    else:
+        code, data = json_noauth()
     return write_json(code, data)
 
 
