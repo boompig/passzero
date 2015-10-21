@@ -49,6 +49,7 @@
                 <span class="form-error" id="form-error-confirm_new_password"></span>
                 <input type="password" name="confirm_new_password" class="form-control"
                     placeholder="confirm new password" required="true" />
+                <input type="hidden" name="csrf_token" value={{ csrf_token() }} />
                 <button type="submit" class="btn btn-success"
                         id="change-password-btn">Change Password</button>
             </form>

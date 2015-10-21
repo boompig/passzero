@@ -565,6 +565,7 @@ def edit_entry(entry_id):
     else:
         return render_template("new.html", e_id=entry_id, entry=fe[0], error=None)
 
+
 @app.route("/advanced")
 def advanced():
     if check_auth():
@@ -575,28 +576,38 @@ def advanced():
 
 @app.route("/advanced/password", methods=["UPDATE"])
 def update_password_api():
-    if check_auth():
-        form = UpdatePasswordForm(request.form)
-        if form.validate():
-            entries = get_entries()
-            dec_entries = decrypt_entries(entries, session['password'])
-            status = db_update_password(
-                session['user_id'],
-                session['email'],
-                request.form['old_password'],
-                request.form['new_password'],
-                dec_entries
-            )
-            if status:
-                session['password'] = request.form['new_password']
-                code, data = json_success("successfully changed password")
-            else:
-                code, data = json_error(401, "old password is incorrect")
-        else:
-            code, data = json_form_validation_error(form.errors)
-    else:
+    """Change the master password. Return values are JSON.
+    Success is marked by HTTP status code."""
+    if not check_auth():
         code, data = json_noauth()
+        return write_json(code, data)
+    form = UpdatePasswordForm(request.form)
+    if not form.validate():
+        code, data = json_form_validation_error(form.errors)
+        return write_json(code, data)
+    if not check_csrf(request.form):
+        code, data = json_csrf_validation_error()
+        return write_json(code, data)
 
+    entries = get_entries()
+    try:
+        dec_entries = decrypt_entries(entries, session['password'])
+    except ValueError:
+        msg = "Error decrypting entries. This means the old password is most likely incorrect"
+        code, data = json_error(500, msg)
+        return write_json(code, data)
+    status = db_update_password(
+        session['user_id'],
+        session['email'],
+        request.form['old_password'],
+        request.form['new_password'],
+        dec_entries
+    )
+    if status:
+        session['password'] = request.form['new_password']
+        code, data = json_success("successfully changed password")
+    else:
+        code, data = json_error(401, "old password is incorrect")
     return write_json(code, data)
 
 
@@ -626,8 +637,13 @@ def recover_password_confirm():
         flash("Token is mandatory")
         return redirect(url_for("recover_password"))
 
+
 @app.route("/recover/confirm", methods=["POST"])
 def recover_password_confirm_api():
+    """This is the API that is hit by a link from an email.
+    Check the token that is sent with the email, then nuke all the entries.
+    Return JSON. HTTP status codes indicate success or failure.
+    """
     form = ConfirmRecoverPasswordForm(request.form)
     if form.validate():
         token = db.session.query(AuthToken).filter_by(token=request.form['token']).one()
@@ -656,6 +672,12 @@ def recover_password_confirm_api():
 @app.route("/api/entries/nuclear", methods=["POST"])
 @app.route("/entries/nuclear", methods=["POST"])
 def nuke_entries_api():
+    """Delete all entries. Return JSON. Success is measured by HTTP status code.
+    Possible values:
+        - 401: failed to authenticate
+        - 403: CSRF token validation failed
+        - 200: success
+    """
     if check_auth():
         if check_csrf(request.form):
             entries = get_entries()
@@ -690,7 +712,6 @@ def recover_password_api():
             code, data = json_error(401, "no such email")
     else:
         code, data = json_form_validation_error(form.errors)
-
     return write_json(code, data)
 
 
