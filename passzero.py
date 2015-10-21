@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response
+from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response, abort
 from flask_sslify import SSLify
 from flask.ext.compress import Compress
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -189,6 +189,16 @@ def json_internal_error(msg):
     return json_error(500, msg)
 
 
+def check_all_csrf():
+    """Check CSRF token differently depending on the request method"""
+    if request.method == "POST" or request.method == "UPDATE":
+        return check_csrf(request.form)
+    elif request.method == "DELETE" or request.method == "GET":
+        return check_csrf(request.args)
+    else:
+        return abort(500)
+
+
 def requires_json_auth(function):
     """This is a decorator which does authentication for JSON requests.
     If not authenticated, return json_noauth.
@@ -199,6 +209,20 @@ def requires_json_auth(function):
             return function(*args, **kwargs)
         else:
             code, data = json_noauth()
+            return write_json(code, data)
+    return inner
+
+
+def requires_csrf_check(function):
+    """This is a decorator which checks CSRF tokens for JSON requests.
+    If not authenticated, return json_csrf_validation_error.
+    If authenticated, call the function."""
+    @wraps(function)
+    def inner(*args, **kwargs):
+        if check_all_csrf():
+            return function(*args, **kwargs)
+        else:
+            code, data = json_csrf_validation_error()
             return write_json(code, data)
     return inner
 
@@ -293,28 +317,27 @@ def api_get_entries():
 @app.route("/api/entries/<int:entry_id>", methods=["DELETE"])
 @app.route("/entries/<int:entry_id>", methods=["DELETE"])
 @requires_json_auth
+@requires_csrf_check
 def delete_entry_api(entry_id):
     """Delete the entry with the given ID. Return JSON.
     Provide success/failure via HTTP status code."""
-    if check_csrf(request.args):
-        try:
-            entry = db.session.query(Entry).filter_by(id=entry_id).one()
-            assert entry.user_id == session['user_id']
-            db.session.delete(entry)
-            db.session.commit()
-            code, data = json_success("successfully deleted entry with ID %d" % entry_id)
-        except NoResultFound:
-            code, data = json_error(400, "no such entry")
-        except AssertionError:
-            code, data = json_error(400, "the given entry does not belong to you")
-    else:
-        code, data = json_csrf_validation_error()
+    try:
+        entry = db.session.query(Entry).filter_by(id=entry_id).one()
+        assert entry.user_id == session['user_id']
+        db.session.delete(entry)
+        db.session.commit()
+        code, data = json_success("successfully deleted entry with ID %d" % entry_id)
+    except NoResultFound:
+        code, data = json_error(400, "no such entry")
+    except AssertionError:
+        code, data = json_error(400, "the given entry does not belong to you")
     return write_json(code, data)
 
 
 @app.route("/entries/new", methods=["POST"])
 @app.route("/api/entries/new", methods=["POST"])
 @requires_json_auth
+@requires_csrf_check
 def new_entry_api():
     """Create a new entry for the logged-in user.
     POST parameters:
@@ -333,9 +356,6 @@ def new_entry_api():
         code = 200
     else:
         code, data = json_form_validation_error(form.errors)
-    if code == 200:
-        if not check_csrf(request.form):
-            code, data = json_csrf_validation_error()
 
     if code == 200:
         padding = pad_key(session['password'])
@@ -529,6 +549,7 @@ def post_export():
 @app.route("/api/entries/<int:entry_id>", methods=["POST"])
 @app.route("/entries/<int:entry_id>", methods=["POST"])
 @requires_json_auth
+@requires_csrf_check
 def edit_entry_api(entry_id):
     code = 200
     data = {}
@@ -582,15 +603,13 @@ def advanced():
 @app.route("/api/advanced/password", methods=["UPDATE"])
 @app.route("/advanced/password", methods=["UPDATE"])
 @requires_json_auth
+@requires_csrf_check
 def update_password_api():
     """Change the master password. Return values are JSON.
     Success is marked by HTTP status code."""
     form = UpdatePasswordForm(request.form)
     if not form.validate():
         code, data = json_form_validation_error(form.errors)
-        return write_json(code, data)
-    if not check_csrf(request.form):
-        code, data = json_csrf_validation_error()
         return write_json(code, data)
 
     entries = get_entries()
@@ -676,6 +695,7 @@ def recover_password_confirm_api():
 @app.route("/api/entries/nuclear", methods=["POST"])
 @app.route("/entries/nuclear", methods=["POST"])
 @requires_json_auth
+@requires_csrf_check
 def nuke_entries_api():
     """Delete all entries. Return JSON. Success is measured by HTTP status code.
     Possible values:
@@ -683,14 +703,11 @@ def nuke_entries_api():
         - 403: CSRF token validation failed
         - 200: success
     """
-    if check_csrf(request.form):
-        entries = get_entries()
-        for entry in entries:
-            db.session.delete(entry)
-        db.session.commit()
-        code, data = json_success("Deleted all entries")
-    else:
-        code, data = json_csrf_validation_error()
+    entries = get_entries()
+    for entry in entries:
+        db.session.delete(entry)
+    db.session.commit()
+    code, data = json_success("Deleted all entries")
     return write_json(code, data)
 
 
