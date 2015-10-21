@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response
+from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response, send_from_directory
 from flask_sslify import SSLify
 from flask.ext.compress import Compress
 from flask.ext.sqlalchemy import SQLAlchemy
@@ -17,6 +17,12 @@ from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, Recov
 from mailgun import send_confirmation_email, send_recovery_email
 
 
+def generate_csrf_token():
+    """Generate a CSRF token for the session, if not currently set"""
+    if "csrf_token" not in session:
+        session["csrf_token"] = random_hex(app.config["CSRF_TOKEN_LENGTH"])
+    return session["csrf_token"]
+
 
 if os.path.exists("my_env.py"):
     from my_env import setup_env
@@ -28,6 +34,10 @@ compress.init_app(app)
 app.config.from_object(config)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['DUMP_FILE'] = "passzero_dump.csv"
+
+# define global callback for CSRF token"""
+app.jinja_env.globals["csrf_token"] = generate_csrf_token
+
 if 'FLASK_SECRET_KEY' in os.environ:
     app.secret_key = str(os.environ["FLASK_SECRET_KEY"])
     sslify = SSLify(app, permanent=True)
@@ -125,6 +135,11 @@ def check_auth():
     return 'user_id' in session and 'password' in session
 
 
+def check_csrf(form):
+    "Return True iff csrf_token is set in the given form and it matches up with the session"""
+    return "csrf_token" in form and form["csrf_token"] == session["csrf_token"]
+
+
 def json_error(code, msg):
     return (code, {
         "status": "error",
@@ -150,6 +165,11 @@ def json_form_validation_error(errors):
     code, data = json_error(400, "Failed to validate form")
     for k, v in dict(errors).iteritems():
         data[k] = v[0]
+    return (code, data)
+
+
+def json_csrf_validation_error():
+    code, data = json_error(403, "Failed to validate CSRF token")
     return (code, data)
 
 
@@ -232,9 +252,10 @@ def api_login():
         try:
             user = db.session.query(User).filter_by(email=request.form["email"]).one()
             if user.authenticate(request.form["password"]):
-                session['email'] = user.email
-                session['password'] = request.form['password']
-                session['user_id'] = user.id
+                session["email"] = user.email
+                session["password"] = request.form["password"]
+                session["user_id"] = user.id
+                generate_csrf_token()
                 # write into last_login
                 user.last_login = datetime.utcnow()
                 db.session.add(user)
@@ -275,6 +296,53 @@ def api_get_entries():
     return write_json(code, data)
 
 
+@app.route("/entries/new", methods=["POST"])
+@app.route("/api/entries/new", methods=["POST"])
+def new_entry_api():
+    """Create a new entry for the logged-in user.
+    POST parameters:
+        - account (required)
+        - password (required)
+        - confirm_password (required)
+        - extra (optional)
+    Respond with JSON message on success, and 4xx codes and message on failure.
+        - 401: not authenticated
+        - 400: error in POST parameters
+        - 403: CSRF check failed
+        - 200: success
+    """
+    form = NewEntryForm(request.form)
+    if form.validate():
+        if check_auth():
+            code = 200
+        else:
+            code, data = json_noauth()
+    else:
+        code, data = json_form_validation_error(form.errors)
+    if code == 200:
+        if not check_csrf(request.form):
+            code, data = json_csrf_validation_error()
+
+    if code == 200:
+        padding = pad_key(session['password'])
+
+        entry = Entry()
+        entry.encrypt(session['password'], padding, request.form)
+
+        entry.user_id = session['user_id']
+        entry.account = request.form['account']
+        entry.padding = padding
+
+        db.session.add(entry)
+        db.session.commit()
+        code, data = json_success("successfully added account %s" % escape(request.form['account']))
+
+    return write_json(code, data)
+
+# -----^ API functions ^------
+##################################################
+
+
 @app.route("/login", methods=["GET"])
 def login():
     return render_template("login.html", login=True, error=None)
@@ -298,34 +366,6 @@ def new_entry_view():
     if not check_auth():
         return redirect(url_for("login"))
     return render_template("new.html", error=None)
-
-
-@app.route("/entries/new", methods=["POST"])
-def new_entry_api():
-    form = NewEntryForm(request.form)
-    if form.validate():
-        if check_auth():
-            code = 200
-        else:
-            code, data = json_noauth()
-    else:
-        code, data = json_form_validation_error(form.errors)
-
-    if code == 200:
-        padding = pad_key(session['password'])
-
-        entry = Entry()
-        entry.encrypt(session['password'], padding, request.form)
-
-        entry.user_id = session['user_id']
-        entry.account = request.form['account']
-        entry.padding = padding
-
-        db.session.add(entry)
-        db.session.commit()
-        code, data = json_success("successfully added account %s" % escape(request.form['account']))
-
-    return write_json(code, data)
 
 
 @app.route("/done_signup/<email>", methods=["GET"])
