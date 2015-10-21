@@ -14,6 +14,7 @@ PassZero is powered by the following technologies:
 * Postgres
 * ~~sqlite3~~
 * pyCrypto
+* Angular.js
 
 ## Design
 
