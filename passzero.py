@@ -1,5 +1,5 @@
 from datetime import datetime
-from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response, send_from_directory
+from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response
 from flask_sslify import SSLify
 from flask.ext.compress import Compress
 from flask.ext.sqlalchemy import SQLAlchemy
