@@ -37,6 +37,8 @@
         <input type="password" name="password" id="password" autocomplete="off" 
             required="true" class="form-control" value="{{ (entry["password"] if entry) }}" />
 
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
         <button type="button" class="btn btn-info"
             id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
         <button type="button" class="btn btn-info" id="gen-pass-btn"
