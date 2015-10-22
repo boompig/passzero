@@ -7,11 +7,14 @@ dove
 dragon
 eagle
 elephant
+emu
 fox
 giraffe
 hippo
+lion
 lynx
 manatee
+ostrich
 otter
 porcupine
 raven
