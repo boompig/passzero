@@ -7,6 +7,8 @@ var showSettings = false;
 var genSpecialChars = true;
 var maxNumWords = 10;
 
+var timer = null;
+
 function showHideSettings () {
     $("#len-container").toggle();
 }
@@ -195,4 +197,17 @@ $(function() {
             $("#show-hide-btn").prop({ disabled: true });
         }
     });
+
+    // set in globals (declared at top)
+    timer = new LogoutTimer();
+    timer.startLogoutTimer();
+    $("form").click(function () {
+        timer.resetLogoutTimer();
+    });
+    $("form").keydown(function() {
+        timer.resetLogoutTimer();
+    });
+    window.onfocus = function () {
+        timer.checkLogoutTimer();
+    };
 });
