@@ -1,11 +1,11 @@
 {% extends "layout.html" %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/recover.css") }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/recover.css") + "?build=" + config['BUILD_ID'] }}" />
 {% endblock %}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/recover.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/recover.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block body %}

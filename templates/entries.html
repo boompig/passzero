@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/entries.css") }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/entries.css") + "?build=" + config['BUILD_ID'] }}" />
 {% endblock %}
 
 {% block body %}
