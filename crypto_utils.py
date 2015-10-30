@@ -14,7 +14,6 @@ def hex_to_byte(s):
 
 def pad_to_length(key, length):
     """Return the padding"""
-
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     padding = []
     while len(key) + len(padding) < length:
@@ -25,7 +24,6 @@ def pad_to_length(key, length):
 
 def pad_key(key):
     """Return the padding"""
-
     if len(key) < 16:
         return pad_to_length(key, 16)
     elif len(key) < 24:
@@ -38,11 +36,9 @@ def pad_key(key):
 
 def encrypt_password(padded_key, password):
     """Return encrypted password where encrypted password is a hex string"""
-
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(padded_key, AES.MODE_CFB, iv)
     enc_password = iv + cipher.encrypt(password)
-
     return byte_to_hex(enc_password)
 
 
@@ -54,6 +50,7 @@ def encrypt_field(key, salt, extra):
     enc_extra = cipher.encrypt(extra) + iv
     hex_ciphertext = byte_to_hex(enc_extra)
     return hex_ciphertext
+
 
 def decrypt_field(key, salt, hex_ciphertext):
     """Return decrypted string of extra field"""
