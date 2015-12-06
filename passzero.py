@@ -255,6 +255,18 @@ def post_login():
 #   API-only, returns JSON
 ##################################################
 
+@app.route("/api/logout", methods=["POST"])
+def api_logout():
+    if 'email' in session:
+        session.pop("email")
+    if 'password' in session:
+        session.pop("password")
+    if 'user_id' in session:
+        session.pop("user_id")
+    code, data = json_success("Successfully logged out")
+    return write_json(code, data)
+
+
 @app.route("/api/login", methods=["POST"])
 @app.route("/login", methods=["POST"])
 def api_login():
