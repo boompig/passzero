@@ -255,6 +255,11 @@ def post_login():
 #   API-only, returns JSON
 ##################################################
 
+@app.route("/api/csrf_token", methods=["GET"])
+def api_get_csrf_token():
+    return write_json(200, session["csrf_token"])
+
+
 @app.route("/api/logout", methods=["POST"])
 def api_logout():
     if 'email' in session:
