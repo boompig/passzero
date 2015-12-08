@@ -191,7 +191,10 @@ def json_internal_error(msg):
 
 def check_all_csrf():
     """Check CSRF token differently depending on the request method"""
-    if request.method == "POST" or request.method == "UPDATE":
+    data = request.get_json(silent=True)
+    if data:
+        return check_csrf(data)
+    elif request.method == "POST" or request.method == "UPDATE":
         return check_csrf(request.form)
     elif request.method == "DELETE" or request.method == "GET":
         return check_csrf(request.args)
