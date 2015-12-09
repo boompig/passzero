@@ -29,7 +29,7 @@ class PassZeroApiTester(unittest.TestCase):
         result = json_post(
             url=self.base_url + "/api/login",
             data={
-                "email": "daniel@slav.slv",
+                "email": "sample@fake.com",
                 "password": "wrong_pass"
             }
         )
@@ -57,7 +57,7 @@ class PassZeroApiTester(unittest.TestCase):
         assert result.status_code == 400
 
     def test_correct_login(self):
-        email = "dbkats@fake.com"
+        email = "sample@fake.com"
         password = "right_pass"
         # create account
         user = passzero.create_inactive_account(email, password)
