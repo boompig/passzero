@@ -394,8 +394,8 @@ def new_entry_api():
 
         db.session.add(entry)
         db.session.commit()
-        code, data = json_success("successfully added account %s" % escape(request_data['account']))
-
+        code = 200
+        data = { "entry_id": entry.id }
     return write_json(code, data)
 
 # -----^ API functions ^------
