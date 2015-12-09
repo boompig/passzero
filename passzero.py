@@ -288,13 +288,14 @@ def api_login():
     On error:
         - return 4xx code and error msg in JSON
     """
-    form = LoginForm(request.form)
+    request_data = request.get_json()
+    form = LoginForm(data=request_data)
     if form.validate():
         try:
-            user = db.session.query(User).filter_by(email=request.form["email"]).one()
-            if user.authenticate(request.form["password"]):
+            user = db.session.query(User).filter_by(email=request_data["email"]).one()
+            if user.authenticate(request_data["password"]):
                 session["email"] = user.email
-                session["password"] = request.form["password"]
+                session["password"] = request_data["password"]
                 session["user_id"] = user.id
                 generate_csrf_token()
                 # write into last_login
@@ -462,30 +463,54 @@ def view_entries():
     return render_template("entries.html", entries=dec_entries)
 
 
+def create_inactive_account(email, password):
+    """Create an account which has not been activated.
+    Return the user object (model)"""
+    salt = get_salt(app.config['SALT_SIZE'])
+    password_hash = get_hashed_password(password, salt)
+    user = User()
+    user.email = email
+    user.password = password_hash
+    user.salt = salt
+    user.active = False
+    # necessary to get user ID
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+
+def activate_account(user):
+    """Set the user to active and commit changes"""
+    user.active = True
+    db.session.add(user)
+    db.session.commit()
+
+
+def delete_account(user):
+    """Delete the given user from the database."""
+    db.session.delete(user)
+    db.session.commit()
+
+
+def get_account_with_email(email):
+     return db.session.query(User).filter_by(email=email).one()
+
+
 @app.route("/signup", methods=["POST"])
 def signup_api():
     form = SignupForm(request.form)
     if form.validate():
         try:
-            user = db.session.query(User).filter_by(email=request.form['email']).one()
+            user = get_account_with_email(request.form["email"])
         except NoResultFound:
-            salt = get_salt(app.config['SALT_SIZE'])
-            password_hash = get_hashed_password(request.form['password'], salt)
             token = AuthToken()
             token.random_token()
-            if send_confirmation_email(request.form['email'], token.token):
-                user = User()
-                user.email = request.form['email']
-                user.password = password_hash
-                user.salt = salt
-                user.active = False
-
-                # necessary to get user ID
-                db.session.add(user)
-                db.session.commit()
-
+            if send_confirmation_email(request.form["email"], token.token):
+                user = create_inactive_account(
+                    request.form["email"],
+                    request.form["password"]
+                )
                 token.user_id = user.id;
-
                 # now add token
                 db.session.add(token)
                 db.session.commit()
@@ -533,11 +558,7 @@ def confirm_signup():
             db.session.delete(token_obj)
 
             user = db.session.query(User).filter_by(id=token_obj.user_id).one()
-
-            # set the user as active
-            user.active = True
-            db.session.add(user)
-            db.session.commit()
+            activate_account(user)
             return redirect(url_for("post_confirm_signup"))
     except NoResultFound:
         flash("Token is invalid")

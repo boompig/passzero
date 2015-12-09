@@ -37,6 +37,16 @@ function createAccount(e) {
     return false;
 }
 
+var postJSON = function(url, data) {
+    return $.ajax({
+        url: url,
+        data: JSON.stringify(data),
+        dataType: "json",
+        method: "POST",
+        contentType: "application/json"
+    });
+};
+
 function login(e) {
     "use strict";
     e.preventDefault();
@@ -44,13 +54,16 @@ function login(e) {
     var dataArray = elem.serializeArray();
     var url = elem.attr("action");
     var data = parseArray(dataArray);
-    $.post(url, data, function (response) {
+    console.log(data);
+    postJSON(url, data)
+    .done(function (response) {
         console.log(response);
         window.location.href = "/done_login";
         $("#error-msg-container").hide();
     }, "json").error(function(obj, textStatus, textCode) {
-        var response = JSON.parse(obj.responseText);
-        if (textCode === "UNAUTHORIZED") {
+        console.log(obj);
+        if (textCode === "UNAUTHORIZED" || textCode === "BAD REQUEST") {
+            var response = JSON.parse(obj.responseText);
             $("#error-msg").text(response.msg);
         } else {
             console.log(obj);
