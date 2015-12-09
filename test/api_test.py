@@ -253,6 +253,91 @@ class PassZeroApiTester(unittest.TestCase):
             assert entry_delete_response.status_code == 400
         passzero.delete_account(user)
 
+    def _create_cse(self, session, entry):
+        data_json = json.dumps(entry)
+        response = session.post(self.base_url + "/api/entries/cse",
+            data=data_json, headers=self.json_header, verify=False)
+        assert response is not None
+        assert response.status_code == 200
+        entry_id = response.json()["entry_id"]
+        assert entry_id is not None
+        assert type(entry_id) == int
+
+    def _get_cse(self, session):
+        """Given session, return list of encrypted entries."""
+        response = session.get(self.base_url + "/api/entries/cse",
+            headers=self.json_header, verify=False)
+        assert response is not None
+        assert response.status_code == 200
+        enc_entries = response.json()
+        assert type(enc_entries) == []
+        return enc_entries
+
+    def _decrypt_field(self, extended_key, ciphertext):
+        cipher = AES.new(extended_key, AES.MODE_CFB, iv)
+        return cipher.decrypt(ciphertext)
+
+    def _decrypt_cse(self, key, enc_entry):
+        assert "key_salt" in enc_entry
+        raw_salt = base64.b64decode(enc_entry["key_salt"])
+        extended_key = KDF.PBKDF2(key, raw_salt)
+        assert "iv" in enc_entry
+        dec_entry = {}
+        for field in ["account", "username", "password", "extra"]:
+            assert field in enc_entry
+            dec_entry[field] = self._decrypt_field(extended_key,
+                base64.b64decode(enc_entry[field]))
+        return dec_entry
+
+    def _check_entries_equal(self, e1, e2):
+        fields = ["account", "username", "password"]
+        for field in fields:
+            assert field in e1
+            assert field in e2
+            assert e1[field] == e2[field]
+
+    def test_get_cse_empty(self):
+        email = "sample@fake.com"
+        password = "right_pass"
+        user = create_active_account(email, password)
+        with requests.Session() as s:
+            self._login(s, email, password)
+            enc_entries = self._get_cse(s)
+            assert enc_entries == []
+            token = self._get_csrf_token(s)
+            entry = {
+                "account": "fake",
+                "username": "entry_username",
+                "password": "entry_pass",
+                "extra": "",
+                "csrf_token": token
+            }
+            self._create_cse(s, entry)
+            enc_entries = self._get_cse(s)
+            assert len(enc_entries) == 1
+            dec_entry = self._decrypt_cse(password, enc_entries[0])
+            self._check_entries_equal(entry, dec_entry)
+        passzero.delete_account(user)
+
+
+    def test_cse_create(self):
+        email = "sample@fake.com"
+        password = "right_pass"
+        user = create_active_account(email, password)
+        with requests.Session() as s:
+            self._login(s, email, password)
+            token = self._get_csrf_token(s)
+            entry = {
+                "account": "fake",
+                "username": "entry_username",
+                "password": "entry_pass",
+                "csrf_token": token
+            }
+            self._create_cse(s, entry)
+        passzero.delete_account(user)
+
 
 if __name__ == '__main__':
-    unittest.main()
+    import sys
+    print >>sys.stderr, "Run with nosetests"
+    sys.exit(1)
