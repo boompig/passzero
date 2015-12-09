@@ -31,7 +31,7 @@ function genPassphraseHelper() {
         phrase += word;
     }
     setPassword(phrase);
-    
+
 }
 
 function setPassword(pass) {
@@ -48,7 +48,7 @@ function genPassphrase () {
             words = response.split("\n").filter(function (w) {
                 return w.length >= 5;
             });
-            
+
             genPassphraseHelper();
         });
     } else {
@@ -105,6 +105,11 @@ function showHidePassword(e) {
     }
 }
 
+/**
+ * Called to submit form data to server
+ * Creates a new entry
+ * On success does a redirect
+ */
 function createNew (e) {
     "use strict";
     e.preventDefault();
@@ -113,9 +118,10 @@ function createNew (e) {
     var url = $(e.target).attr("action");
     var data = parseArray(dataArray);
 
-    $.post(url, data, function(response) {
+    postJSON(url, data)
+    .done(function(response) {
         window.location.href = "/entries/done_new/" + data.account;
-    }, "json").error(function (obj, textStatus, textCode) {
+    }).error(function (obj, textStatus, textCode) {
         console.log(obj);
         console.log(textStatus);
         console.log(textCode);

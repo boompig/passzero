@@ -9,3 +9,13 @@ function parseArray(arr) {
     }
     return obj;
 }
+
+function postJSON (url, data) {
+    return $.ajax({
+        url: url,
+        data: JSON.stringify(data),
+        method: "POST",
+        dataType: "json",
+        contentType: "application/json"
+    });
+}

@@ -124,6 +124,8 @@ class Entry(db.Model):
 
     def encrypt(self, key, salt, obj):
         self.password = encrypt_password(key + salt, obj["password"])
+        if "extra" not in obj:
+            obj["extra"] = ""
         self.extra = encrypt_field(key, salt, obj["extra"])
         self.username = encrypt_field(key, salt, obj["username"])
 
@@ -260,7 +262,8 @@ def post_login():
 
 @app.route("/api/csrf_token", methods=["GET"])
 def api_get_csrf_token():
-    return write_json(200, session["csrf_token"])
+    token = generate_csrf_token()
+    return write_json(200, token)
 
 
 @app.route("/api/logout", methods=["POST"])
@@ -372,7 +375,8 @@ def new_entry_api():
         - 403: CSRF check failed
         - 200: success
     """
-    form = NewEntryForm(request.form)
+    request_data = request.get_json()
+    form = NewEntryForm(data=request_data)
     if form.validate():
         code = 200
     else:
@@ -382,15 +386,15 @@ def new_entry_api():
         padding = pad_key(session['password'])
 
         entry = Entry()
-        entry.encrypt(session['password'], padding, request.form)
+        entry.encrypt(session['password'], padding, request_data)
 
         entry.user_id = session['user_id']
-        entry.account = request.form['account']
+        entry.account = request_data['account']
         entry.padding = padding
 
         db.session.add(entry)
         db.session.commit()
-        code, data = json_success("successfully added account %s" % escape(request.form['account']))
+        code, data = json_success("successfully added account %s" % escape(request_data['account']))
 
     return write_json(code, data)
 

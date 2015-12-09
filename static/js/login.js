@@ -37,16 +37,6 @@ function createAccount(e) {
     return false;
 }
 
-var postJSON = function(url, data) {
-    return $.ajax({
-        url: url,
-        data: JSON.stringify(data),
-        dataType: "json",
-        method: "POST",
-        contentType: "application/json"
-    });
-};
-
 function login(e) {
     "use strict";
     e.preventDefault();
@@ -60,7 +50,7 @@ function login(e) {
         console.log(response);
         window.location.href = "/done_login";
         $("#error-msg-container").hide();
-    }, "json").error(function(obj, textStatus, textCode) {
+    }).error(function(obj, textStatus, textCode) {
         console.log(obj);
         if (textCode === "UNAUTHORIZED" || textCode === "BAD REQUEST") {
             var response = JSON.parse(obj.responseText);
