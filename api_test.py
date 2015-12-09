@@ -16,6 +16,13 @@ def json_post(url, data):
         headers=headers)
 
 
+def create_active_account(email, password):
+    """Create account and return the user object"""
+    user = passzero.create_inactive_account(email, password)
+    passzero.activate_account(user)
+    return user
+
+
 class PassZeroApiTester(unittest.TestCase):
     @property
     def base_url(self):
@@ -125,8 +132,7 @@ class PassZeroApiTester(unittest.TestCase):
         email = "sample@fake.com"
         password = "right_pass"
         # create account
-        user = passzero.create_inactive_account(email, password)
-        passzero.activate_account(user)
+        user =create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
         passzero.delete_account(user)
@@ -134,8 +140,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_get_entries_empty(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = passzero.create_inactive_account(email, password)
-        passzero.activate_account(user)
+        user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             entries = self._get_entries(s)
@@ -145,8 +150,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_create_no_csrf(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = passzero.create_inactive_account(email, password)
-        passzero.activate_account(user)
+        user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
 
@@ -168,8 +172,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_create_entry(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = passzero.create_inactive_account(email, password)
-        passzero.activate_account(user)
+        user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -191,8 +194,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_delete_entry(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = passzero.create_inactive_account(email, password)
-        passzero.activate_account(user)
+        user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -211,8 +213,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_delete_entry_no_token(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = passzero.create_inactive_account(email, password)
-        passzero.activate_account(user)
+        user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -234,8 +235,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_delete_nonexistant_entry(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = passzero.create_inactive_account(email, password)
-        passzero.activate_account(user)
+        user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
