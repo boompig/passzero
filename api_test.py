@@ -21,6 +21,10 @@ class PassZeroApiTester(unittest.TestCase):
     def base_url(self):
         return "https://127.0.0.1:5050"
 
+    @property
+    def json_header(self):
+        return { "Content-Type": "application/json" }
+
     def setUp(self):
         # disable certificate warnings for testing
         requests.packages.urllib3.disable_warnings()
@@ -71,15 +75,8 @@ class PassZeroApiTester(unittest.TestCase):
         # create account
         user = passzero.create_inactive_account(email, password)
         passzero.activate_account(user)
-        result = json_post(
-            url=self.base_url + "/api/login",
-            data={
-                "email": email,
-                "password": password
-            }
-        )
-        assert result is not None
-        assert result.status_code == 200
+        with requests.Session() as s:
+            self._login(s, email, password)
         passzero.delete_account(user)
 
     def test_get_entries_empty(self):
@@ -88,23 +85,33 @@ class PassZeroApiTester(unittest.TestCase):
         user = passzero.create_inactive_account(email, password)
         passzero.activate_account(user)
         with requests.Session() as s:
-            headers = { "Content-Type": "application/json" }
-            data={
-                "email": email,
-                "password": password
-            }
-            auth_response = s.post(self.base_url + "/api/login",
-                data=json.dumps(data), headers=headers,
-                verify=False)
-            assert auth_response is not None
-            assert auth_response.status_code == 200
-            entry_response = s.get(self.base_url + "/api/entries",
-                headers=headers, verify=False)
-            assert entry_response is not None
-            assert entry_response.status_code == 200
-            assert entry_response.json() is not None
-            assert entry_response.json() == []
+            self._login(s, email, password)
+            entries = self._get_entries(s)
+            assert entries == []
         passzero.delete_account(user)
+
+    def _login(self, s, email, password):
+        """s is session"""
+        data={
+            "email": email,
+            "password": password
+        }
+        auth_response = s.post(self.base_url + "/api/login",
+            data=json.dumps(data), headers=self.json_header,
+            verify=False)
+        assert auth_response is not None
+        assert auth_response.status_code == 200
+
+    def _get_csrf_token(self, s):
+        """s is session. Return CSRF token"""
+        csrf_response = s.get(self.base_url + "/api/csrf_token",
+            headers=self.json_header, verify=False)
+        assert csrf_response is not None
+        assert csrf_response.status_code == 200
+        token = csrf_response.json()
+        assert type(token) == unicode
+        assert len(token) != 0
+        return token
 
     def test_create_no_csrf(self):
         email = "sample@fake.com"
@@ -112,16 +119,7 @@ class PassZeroApiTester(unittest.TestCase):
         user = passzero.create_inactive_account(email, password)
         passzero.activate_account(user)
         with requests.Session() as s:
-            headers = { "Content-Type": "application/json" }
-            data={
-                "email": email,
-                "password": password
-            }
-            auth_response = s.post(self.base_url + "/api/login",
-                data=json.dumps(data), headers=headers,
-                verify=False)
-            assert auth_response is not None
-            assert auth_response.status_code == 200
+            self._login(s, email, password)
 
             entry = {
                 "account": "fake",
@@ -130,17 +128,34 @@ class PassZeroApiTester(unittest.TestCase):
             }
             entry_create_response = s.post(self.base_url + "/api/entries/new",
                 data=json.dumps(entry),
-                headers=headers, verify=False)
+                headers=self.json_header, verify=False)
             assert entry_create_response is not None
             assert entry_create_response.status_code == 403
 
-            entry_response = s.get(self.base_url + "/api/entries",
-                headers=headers, verify=False)
-            assert entry_response is not None
-            assert entry_response.status_code == 200
-            assert entry_response.json() is not None
-            assert entry_response.json() == []
+            entries = self._get_entries(s)
+            assert entries == []
         passzero.delete_account(user)
+
+    def _create_entry(self, s, entry):
+        """s is session. Return entry ID."""
+        entry_create_response = s.post(self.base_url + "/api/entries/new",
+            data=json.dumps(entry),
+            headers=self.json_header, verify=False)
+        assert entry_create_response is not None
+        assert entry_create_response.status_code == 200
+        entry_id = entry_create_response.json()["entry_id"]
+        assert type(entry_id) == int
+        return entry_id
+
+    def _get_entries(self, s):
+        entry_response = s.get(self.base_url + "/api/entries",
+            headers=self.json_header, verify=False)
+        assert entry_response is not None
+        assert entry_response.status_code == 200
+        entries = entry_response.json()
+        assert entries is not None
+        assert type(entries) == list
+        return entries
 
     def test_create_entry(self):
         email = "sample@fake.com"
@@ -148,47 +163,30 @@ class PassZeroApiTester(unittest.TestCase):
         user = passzero.create_inactive_account(email, password)
         passzero.activate_account(user)
         with requests.Session() as s:
-            headers = { "Content-Type": "application/json" }
-            data={
-                "email": email,
-                "password": password
-            }
-            auth_response = s.post(self.base_url + "/api/login",
-                data=json.dumps(data), headers=headers,
-                verify=False)
-            assert auth_response is not None
-            assert auth_response.status_code == 200
-
-            csrf_response = s.get(self.base_url + "/api/csrf_token",
-                headers=headers, verify=False)
-            assert csrf_response is not None
-            assert csrf_response.status_code == 200
-            token = csrf_response.json()
-            assert type(token) == unicode
-            assert len(token) != 0
-
+            self._login(s, email, password)
+            token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
                 "username": "entry_username",
                 "password": "entry_pass",
                 "csrf_token": token
             }
-            entry_create_response = s.post(self.base_url + "/api/entries/new",
-                data=json.dumps(entry),
-                headers=headers, verify=False)
-            assert entry_create_response is not None
-            assert entry_create_response.status_code == 200
-            entry_id = entry_create_response.json()["entry_id"]
-            assert type(entry_id) == int
-
-            entry_response = s.get(self.base_url + "/api/entries",
-                headers=headers, verify=False)
-            assert entry_response is not None
-            assert entry_response.status_code == 200
-            assert entry_response.json() is not None
-            assert type(entry_response.json()) == list
-            assert len(entry_response.json()) == 1
+            entry_id = self._create_entry(s, entry)
+            entries = self._get_entries(s)
+            assert len(entries) == 1
         passzero.delete_account(user)
+
+    def test_get_csrf_token(self):
+        with requests.Session() as s:
+            self._get_csrf_token(s)
+
+    def _delete_entry(self, s, entry_id, token):
+        url = self.base_url + "/api/entries/{}?csrf_token={}".format(
+            entry_id, token)
+        entry_delete_response = s.delete(url,
+            headers=self.json_header, verify=False)
+        assert entry_delete_response is not None
+        assert entry_delete_response.status_code == 200
 
     def test_delete_entry(self):
         email = "sample@fake.com"
@@ -196,24 +194,8 @@ class PassZeroApiTester(unittest.TestCase):
         user = passzero.create_inactive_account(email, password)
         passzero.activate_account(user)
         with requests.Session() as s:
-            headers = { "Content-Type": "application/json" }
-            data={
-                "email": email,
-                "password": password
-            }
-            auth_response = s.post(self.base_url + "/api/login",
-                data=json.dumps(data), headers=headers,
-                verify=False)
-            assert auth_response is not None
-            assert auth_response.status_code == 200
-
-            csrf_response = s.get(self.base_url + "/api/csrf_token",
-                headers=headers, verify=False)
-            assert csrf_response is not None
-            assert csrf_response.status_code == 200
-            token = csrf_response.json()
-            assert type(token) == unicode
-            assert len(token) != 0
+            self._login(s, email, password)
+            token = self._get_csrf_token(s)
 
             entry = {
                 "account": "fake",
@@ -221,27 +203,10 @@ class PassZeroApiTester(unittest.TestCase):
                 "password": "entry_pass",
                 "csrf_token": token
             }
-            entry_create_response = s.post(self.base_url + "/api/entries/new",
-                data=json.dumps(entry),
-                headers=headers, verify=False)
-            assert entry_create_response is not None
-            assert entry_create_response.status_code == 200
-            entry_id = entry_create_response.json()["entry_id"]
-            assert type(entry_id) == int
-
-            url = self.base_url + "/api/entries/{}?csrf_token={}".format(
-                entry_id, token)
-            entry_delete_response = s.delete(url,
-                headers=headers, verify=False)
-            assert entry_delete_response is not None
-            assert entry_delete_response.status_code == 200
-
-            entry_response = s.get(self.base_url + "/api/entries",
-                headers=headers, verify=False)
-            assert entry_response is not None
-            assert entry_response.status_code == 200
-            assert entry_response.json() is not None
-            assert entry_response.json() == []
+            entry_id = self._create_entry(s, entry)
+            self._delete_entry(s, entry_id, token)
+            entries = self._get_entries(s)
+            assert entries == []
         passzero.delete_account(user)
 
 
