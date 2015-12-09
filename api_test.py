@@ -1,11 +1,8 @@
 import json
-import urllib2
 import unittest
 import requests
 import passzero
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import NoResultFound
-from requests import Request
 
 """
 Very hacky API testing - runs on local server

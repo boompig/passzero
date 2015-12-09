@@ -1,4 +1,4 @@
-BUILD_ID = "extravagant_porcupine"
+BUILD_ID = "zany_snake"
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32
