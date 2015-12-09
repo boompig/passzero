@@ -196,7 +196,6 @@ class PassZeroApiTester(unittest.TestCase):
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
-
             entry = {
                 "account": "fake",
                 "username": "entry_username",
@@ -207,6 +206,29 @@ class PassZeroApiTester(unittest.TestCase):
             self._delete_entry(s, entry_id, token)
             entries = self._get_entries(s)
             assert entries == []
+        passzero.delete_account(user)
+
+    def test_delete_entry_no_token(self):
+        email = "sample@fake.com"
+        password = "right_pass"
+        user = passzero.create_inactive_account(email, password)
+        passzero.activate_account(user)
+        with requests.Session() as s:
+            self._login(s, email, password)
+            token = self._get_csrf_token(s)
+            entry = {
+                "account": "fake",
+                "username": "entry_username",
+                "password": "entry_pass",
+                "csrf_token": token
+            }
+            entry_id = self._create_entry(s, entry)
+            url = self.base_url + "/api/entries/{}".format(
+                entry_id)
+            entry_delete_response = s.delete(url,
+                headers=self.json_header, verify=False)
+            assert entry_delete_response is not None
+            assert entry_delete_response.status_code == 403
         passzero.delete_account(user)
 
     def test_delete_nonexistant_entry(self):
