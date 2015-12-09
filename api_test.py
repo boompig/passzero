@@ -153,7 +153,6 @@ class PassZeroApiTester(unittest.TestCase):
         user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
-
             entry = {
                 "account": "fake",
                 "username": "entry_username",
@@ -182,7 +181,7 @@ class PassZeroApiTester(unittest.TestCase):
                 "password": "entry_pass",
                 "csrf_token": token
             }
-            entry_id = self._create_entry(s, entry)
+            self._create_entry(s, entry)
             entries = self._get_entries(s)
             assert len(entries) == 1
         passzero.delete_account(user)
@@ -239,7 +238,6 @@ class PassZeroApiTester(unittest.TestCase):
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
-
             entry = {
                 "account": "fake",
                 "username": "entry_username",

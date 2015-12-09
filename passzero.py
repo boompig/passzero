@@ -12,7 +12,7 @@ from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
 import config
-from crypto_utils import encrypt_password, decrypt_password, pad_key, get_hashed_password, get_salt, random_hex, encrypt_field, decrypt_field
+from crypto_utils import decrypt_password, pad_key, get_hashed_password, get_salt, random_hex, encrypt_field, decrypt_field, get_kdf_salt, extend_key, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv
 from datastore_postgres import db_init, db_export, db_update_password
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm
 from mailgun import send_confirmation_email, send_recovery_email
@@ -102,32 +102,74 @@ class Entry(db.Model):
     password = db.Column(db.String, nullable=False)
     padding = db.Column(db.String, nullable=False)
     extra = db.Column(db.String)
+    key_salt = db.Column(db.String)
+    iv = db.Column(db.String)
 
     def __repr__(self):
         return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
 
     def decrypt(self, key):
         """Return a dictionary mapping fields to their decrypted values."""
-        dec_password = decrypt_password(key + self.padding, self.password)
+        if self.key_salt is not None and self.key_salt != "":
+            return self._decrypt_with_kdf(key)
+        else:
+            return self._decrypt_with_padding(key)
+
+    def _decrypt_with_kdf(self, key):
+        key_salt = hex_to_byte(self.key_salt)
+        iv = hex_to_byte(self.iv)
+        extended_key = extend_key(key, key_salt)
+        dec_password = decrypt_field(extended_key, self.password, iv)
         if self.extra:
             try:
-                dec_extra = decrypt_field(key, self.padding, self.extra)
+                dec_extra = decrypt_field(extended_key, self.extra, iv)
             except TypeError:
                 dec_extra = self.extra
         else:
             dec_extra = ""
         try:
-            dec_username = decrypt_field(key, self.padding, self.username)
+            dec_username = decrypt_field(extended_key, self.username, iv)
         except TypeError:
             dec_username = self.username
-        return { "password": dec_password, "extra": dec_extra, "username": dec_username }
+        return {
+            "password": dec_password,
+            "extra": dec_extra,
+            "username": dec_username
+        }
 
-    def encrypt(self, key, salt, obj):
-        self.password = encrypt_password(key + salt, obj["password"])
+    def _decrypt_with_padding(self, key):
+        dec_password = decrypt_password(key + self.padding, self.password)
+        if self.extra:
+            try:
+                dec_extra = decrypt_field_old(key, self.padding, self.extra)
+            except TypeError:
+                dec_extra = self.extra
+        else:
+            dec_extra = ""
+        try:
+            dec_username = decrypt_field_old(key, self.padding, self.username)
+        except TypeError:
+            dec_username = self.username
+        return {
+            "password": dec_password,
+            "extra": dec_extra,
+            "username": dec_username
+        }
+
+    def encrypt(self, key, salt, obj, key_salt=None, iv=None):
         if "extra" not in obj:
             obj["extra"] = ""
-        self.extra = encrypt_field(key, salt, obj["extra"])
-        self.username = encrypt_field(key, salt, obj["username"])
+        if key_salt is None:
+            # create key salt
+            key_salt = get_kdf_salt()
+        if iv is None:
+            iv = get_iv()
+        extended_key = extend_key(key, key_salt)
+        self.username = encrypt_field(extended_key, obj["username"], iv)
+        self.password = encrypt_field(extended_key, obj["password"], iv)
+        self.extra = encrypt_field(extended_key, obj["extra"], iv)
+        self.key_salt = byte_to_hex(key_salt)
+        self.iv = byte_to_hex(iv)
 
 
 def get_entries():

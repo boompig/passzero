@@ -4,7 +4,7 @@ import sys
 # authentication
 from crypto_utils import get_salt, get_hashed_password
 # entry
-from crypto_utils import pad_key, encrypt_field, decrypt_field
+from crypto_utils import pad_key, encrypt_field, decrypt_field, get_kdf_salt, extend_key, get_iv
 SALT_SIZE = 64
 
 
@@ -16,30 +16,35 @@ class DecryptedEntry(object):
         self.extra = extra
 
     def encrypt(self, raw_key):
-        salt = pad_key(raw_key)
+        salt = get_kdf_salt()
+        extended_key = extend_key(raw_key, salt)
+        iv = get_iv()
         return EncryptedEntry(
             account=self.account,
-            username=encrypt_field(raw_key, salt, self.username),
-            password=encrypt_field(raw_key, salt, self.password),
-            extra=encrypt_field(raw_key, salt, self.extra),
-            padding=salt
+            username=encrypt_field(extended_key, self.username, iv),
+            password=encrypt_field(extended_key, self.password, iv),
+            extra=encrypt_field(extended_key, self.extra, iv),
+            key_salt=salt,
+            iv=iv
         )
 
 
 class EncryptedEntry(object):
-    def __init__(self, account, username, password, extra, padding):
+    def __init__(self, account, username, password, extra, key_salt, iv):
         self.account = account
         self.username = username
         self.password = password
         self.extra = extra
-        self.padding = padding
+        self.key_salt = key_salt
+        self.iv = iv
 
     def decrypt(self, raw_key):
+        extended_key = extend_key(raw_key, self.key_salt)
         return DecryptedEntry(
             account=self.account,
-            username=decrypt_field(raw_key, self.padding, self.username),
-            password=decrypt_field(raw_key, self.padding, self.password),
-            extra=decrypt_field(raw_key, self.padding, self.extra)
+            username=decrypt_field(extended_key, self.username, self.iv),
+            password=decrypt_field(extended_key, self.password, self.iv),
+            extra=decrypt_field(extended_key, self.extra, self.iv)
         )
 
 

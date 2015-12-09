@@ -2,11 +2,13 @@ from Crypto.Cipher import AES
 from Crypto import Random
 import random
 import hashlib
+from Crypto.Protocol import KDF
 
 
 def byte_to_hex(s):
     arr = [ord(c) for c in s]
     return ''.join('{:02x}'.format(x) for x in arr)
+
 
 def hex_to_byte(s):
     return s.decode("hex")
@@ -34,6 +36,20 @@ def pad_key(key):
         return None
 
 
+def random_string(length):
+    """Return random byte string of given length"""
+    return Random.new().read(length)
+
+
+def get_kdf_salt():
+    return random_string(16)
+
+
+def extend_key(key, salt):
+    """Extend the given key into a key of length suitable for AES"""
+    return KDF.PBKDF2(key, salt)
+
+
 def encrypt_password(padded_key, password):
     """Return encrypted password where encrypted password is a hex string"""
     iv = Random.new().read(AES.block_size)
@@ -42,17 +58,29 @@ def encrypt_password(padded_key, password):
     return byte_to_hex(enc_password)
 
 
-def encrypt_field(key, salt, extra):
+def get_iv():
+    return Random.new().read(AES.block_size)
+
+
+def encrypt_field(extended_key, message, iv):
     """Return encrypted hex string of extra field"""
-    actual_key = hashlib.sha256(key + salt).digest()
-    iv = Random.new().read(AES.block_size)
-    cipher = AES.new(actual_key, AES.MODE_CFB, iv)
-    enc_extra = cipher.encrypt(extra) + iv
-    hex_ciphertext = byte_to_hex(enc_extra)
+    cipher = AES.new(extended_key, AES.MODE_CFB, iv)
+    enc_msg = cipher.encrypt(message)
+    hex_ciphertext = byte_to_hex(enc_msg)
     return hex_ciphertext
 
 
-def decrypt_field(key, salt, hex_ciphertext):
+def decrypt_field(extended_key, hex_ciphertext, iv):
+    """Return decrypted string of extra field"""
+    ciphertext = hex_to_byte(hex_ciphertext)
+    if len(iv) < AES.block_size:
+        raise TypeError("IV is too small")
+    cipher = AES.new(extended_key, AES.MODE_CFB, iv)
+    msg = cipher.decrypt(ciphertext)
+    return msg
+
+
+def decrypt_field_old(key, salt, hex_ciphertext):
     """Return decrypted string of extra field"""
     full_ciphertext = hex_to_byte(hex_ciphertext)
     iv = full_ciphertext[-1 * AES.block_size:]
