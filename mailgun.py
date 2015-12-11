@@ -41,6 +41,3 @@ def send_confirmation_email(email, token):
         "Thanks for signing up for PassZero",
         "To complete your PassZero signup, follow this link: %s" % link
     )
-
-if __name__ == "__main__":
-    send_confirmation_email("dbkats@gmail.com")
