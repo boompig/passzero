@@ -470,7 +470,6 @@ def new_entry_api():
 @requires_csrf_check
 def api_new_entry():
     request_data = request.get_json()
-    print request_data
     enc_entry = EncryptedEntry()
     enc_entry.account = request_data["account"]
     enc_entry.username = request_data["username"]
