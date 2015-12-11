@@ -32,6 +32,24 @@ class NewEntryForm(Form):
     ])
     extra = TextField("extra")
 
+class NewEncryptedEntryForm(Form):
+    account = TextField("account", [
+        validators.Required()
+    ])
+    username = TextField("username", [
+        validators.Required()
+    ])
+    password = PasswordField("password", [
+        validators.Required()
+    ])
+    key_salt = PasswordField("key_salt", [
+        validators.Required()
+    ])
+    iv = PasswordField("iv", [
+        validators.Required()
+    ])
+    extra = TextField("extra")
+
 class UpdatePasswordForm(Form):
     old_password = PasswordField("old password", [validators.Required()])
     new_password = PasswordField("new password", [

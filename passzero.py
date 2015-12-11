@@ -14,7 +14,7 @@ from werkzeug.contrib.fixers import ProxyFix
 import config
 from crypto_utils import decrypt_password, pad_key, get_hashed_password, get_salt, random_hex, encrypt_field, decrypt_field, get_kdf_salt, extend_key, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv
 from datastore_postgres import db_init, db_export, db_update_password
-from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm
+from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, NewEncryptedEntryForm
 from mailgun import send_confirmation_email, send_recovery_email
 
 
@@ -470,21 +470,22 @@ def new_entry_api():
 @requires_csrf_check
 def api_new_entry():
     request_data = request.get_json()
-    enc_entry = EncryptedEntry()
-    enc_entry.account = request_data["account"]
-    enc_entry.username = request_data["username"]
-    enc_entry.password = request_data["password"]
-    enc_entry.extra = request_data["extra"]
-    enc_entry.key_salt = request_data["key_salt"]
-    enc_entry.iv = request_data["iv"]
-    enc_entry.user_id = session["user_id"]
-
-    db.session.add(enc_entry)
-    db.session.commit()
-
-    result_data = { "entry_id": enc_entry.id }
-    code = 200
-
+    form = NewEncryptedEntryForm(data=request_data)
+    if form.validate():
+        enc_entry = EncryptedEntry()
+        enc_entry.account = request_data["account"]
+        enc_entry.username = request_data["username"]
+        enc_entry.password = request_data["password"]
+        enc_entry.extra = request_data["extra"]
+        enc_entry.key_salt = request_data["key_salt"]
+        enc_entry.iv = request_data["iv"]
+        enc_entry.user_id = session["user_id"]
+        db.session.add(enc_entry)
+        db.session.commit()
+        result_data = { "entry_id": enc_entry.id }
+        code = 200
+    else:
+        code, result_data = json_form_validation_error(form.errors)
     return write_json(code, result_data)
 
 
