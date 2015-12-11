@@ -112,36 +112,23 @@ class PassZeroApiTester(unittest.TestCase):
         assert entry_delete_response is not None
         assert entry_delete_response.status_code == 200
 
-    def test_wrong_login(self):
-        result = json_post(
-            url=self.base_url + "/api/login",
-            data={
-                "email": "sample@fake.com",
-                "password": "wrong_pass"
-            }
-        )
-        assert result is not None
-        assert result.status_code == 401
+    def test_login_no_users(self):
+        with requests.Session() as session:
+            result = api.login(session, "sample@fake.com", "right_pass")
+            assert result is not None
+            self.assertEqual(result.status_code, 401)
 
     def test_no_email(self):
-        result = json_post(
-            url=self.base_url + "/api/login",
-            data={
-                "password": "wrong_pass"
-            }
-        )
-        assert result is not None
-        assert result.status_code == 400
+        with requests.Session() as session:
+            result = api.login(session, "", "right_pass")
+            assert result is not None
+            assert result.status_code == 400
 
     def test_no_password(self):
-        result = json_post(
-            url=self.base_url + "/api/login",
-            data={
-                "password": "wrong_pass"
-            }
-        )
-        assert result is not None
-        assert result.status_code == 400
+        with requests.Session() as session:
+            result = api.login(session, "sample@fake.com", "")
+            assert result is not None
+            assert result.status_code == 400
 
     def test_correct_login(self):
         email = "sample@fake.com"
@@ -398,12 +385,32 @@ class PassZeroApiTester(unittest.TestCase):
                 "csrf_token": token
             }
             enc_entry = self._encrypt_cse(password, entry)
-            entry_id = self._create_cse(s, enc_entry)
-            data_json = json.dumps(entry)
-            response = s.post(self.base_url + "/api/v2/entries",
-                data=data_json, headers=self.json_header, verify=False)
+            del enc_entry["account"]
+            response = api.create_entry_v2(s, enc_entry)
             self.assertIsNotNone(response)
             self.assertEqual(response.status_code, 400)
+
+    def test_cse_create_no_token(self):
+        email = "sample@fake.com"
+        password = "right_pass"
+        user = create_active_account(email, password)
+        with requests.Session() as session:
+            api.login(session, email, password)
+            enc_entries = self._get_cse(session)
+            assert enc_entries == []
+            token = api.get_csrf_token(session)
+            entry = {
+                "account": "fake_account",
+                "username": "entry_username",
+                "password": "entry_pass",
+                "extra": "",
+                "csrf_token": token
+            }
+            enc_entry = self._encrypt_cse(password, entry)
+            del enc_entry["csrf_token"]
+            response = api.create_entry_v2(session, enc_entry)
+            self.assertIsNotNone(response)
+            self.assertEqual(response.status_code, 403)
 
     def test_get_cse_empty(self):
         email = "sample@fake.com"
