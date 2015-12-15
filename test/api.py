@@ -11,8 +11,13 @@ def login(session, email, password):
         "password": password
     }
     return session.post(base_url + "/api/login",
-        data=json.dumps(data), headers=json_header,
-        verify=False)
+        data=json.dumps(data),
+        headers=json_header, verify=False)
+
+
+def logout(session):
+    return session.post(base_url + "/api/logout",
+        headers=json_header, verify=False)
 
 
 def get_csrf_token(session):

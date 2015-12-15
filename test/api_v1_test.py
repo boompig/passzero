@@ -71,10 +71,15 @@ class PassZeroApiTester(unittest.TestCase):
             pass
 
     def _login(self, session, email, password):
-        """s is session"""
         auth_response = api.login(session, email, password)
         self.assertIsNotNone(auth_response)
         self.assertEqual(auth_response.status_code, 200)
+
+    def _logout(self, session):
+        auth_response = api.logout(session)
+        self.assertIsNotNone(auth_response)
+        self.assertEqual(auth_response.status_code, 200)
+
 
     def _get_csrf_token(self, session):
         """s is session. Return CSRF token"""
@@ -298,6 +303,19 @@ class PassZeroApiTester(unittest.TestCase):
             assert len(entries) == 1
             self._check_entries_equal(entry, entries[0])
 
+
+    def test_logout(self):
+        email = "sample@fake.com"
+        password = "right_pass"
+        user = create_active_account(email, password)
+        with requests.Session() as s:
+            self._login(s, email, password)
+            token = self._get_csrf_token(s)
+            entries = self._get_entries(s)
+            assert len(entries) == 0
+            self._logout(s)
+            response = api.get_entries(s)
+            self.assertEqual(response.status_code, 401)
 
 
 if __name__ == '__main__':
