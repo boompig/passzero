@@ -725,25 +725,26 @@ def post_export():
 @requires_json_auth
 @requires_csrf_check
 def edit_entry_api(entry_id):
-    code = 200
-    data = {}
-    form = NewEntryForm(request.form)
+    request_data = request.get_json()
+    form = NewEntryForm(data=request_data)
     if not form.validate():
         code, data = json_form_validation_error(form.errors)
     else:
+        code = 200
+        data = {}
         try:
             entry = db.session.query(Entry).filter_by(id=entry_id).one()
             assert entry.user_id == session['user_id']
             padding = pad_key(session['password'])
-            entry.encrypt(session["password"], padding, request.form)
+            entry.encrypt(session["password"], padding, request_data)
 
-            entry.account = request.form['account']
+            entry.account = request_data['account']
             entry.padding = padding
 
             db.session.add(entry)
             db.session.commit()
             code, data = json_success(
-                "successfully edited account %s" % escape(request.form["account"])
+                "successfully edited account %s" % escape(request_data["account"])
             )
         except NoResultFound:
             code, data = json_error(400, "no such entry")

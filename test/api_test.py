@@ -11,10 +11,6 @@ from Crypto.Cipher import AES
 
 import api
 
-"""
-Very hacky API testing - runs on local server
-"""
-
 
 def json_post(url, data):
     data_json = json.dumps(data)
@@ -31,6 +27,9 @@ def create_active_account(email, password):
 
 
 class PassZeroApi(object):
+    """Test version 1 of the JSON API. Use some internal methods
+    to create accounts and also to clean up after each testcase.
+    Currently uses local psql database."""
     @staticmethod
     def login(session, username, password):
         data = {
@@ -67,8 +66,6 @@ class PassZeroApiTester(unittest.TestCase):
         try:
             user = passzero.get_account_with_email(email)
             self.assertIsNotNone(user)
-            # delete all encrypted entries
-            passzero.delete_all_encrypted_entries(user)
             passzero.delete_account(user)
         except NoResultFound:
             pass
@@ -82,35 +79,48 @@ class PassZeroApiTester(unittest.TestCase):
     def _get_csrf_token(self, session):
         """s is session. Return CSRF token"""
         csrf_response = api.get_csrf_token(session)
-        assert csrf_response is not None
-        assert csrf_response.status_code == 200
+        self.assertIsNotNone(csrf_response)
+        self.assertEqual(csrf_response.status_code, 200)
         token = csrf_response.json()
         assert type(token) == unicode
         assert len(token) != 0
         return token
 
-    def _create_entry(self, session, entry):
-        """s is session. Return entry ID."""
-        entry_create_response = api.create_entry(session, entry)
+    def _create_entry(self, session, entry, token):
+        """Return entry ID"""
+        entry_create_response = api.create_entry(session, entry, token)
         self.assertIsNotNone(entry_create_response)
         self.assertEqual(entry_create_response.status_code, 200)
         entry_id = entry_create_response.json()["entry_id"]
         assert type(entry_id) == int
         return entry_id
 
+    def _edit_entry(self, session, entry_id, entry, token):
+        """Returns nothing"""
+        entry_edit_response = api.edit_entry(session, entry_id, entry, token)
+        self.assertIsNotNone(entry_edit_response)
+        response_json = entry_edit_response.json()
+        try:
+            self.assertEqual(entry_edit_response.status_code, 200)
+        except AssertionError as e:
+            print response_json
+            raise e
+
     def _get_entries(self, session):
+        """Return list of entries"""
         entry_response = api.get_entries(session)
-        assert entry_response is not None
-        assert entry_response.status_code == 200
+        self.assertIsNotNone(entry_response)
+        self.assertEqual(entry_response.status_code, 200)
         entries = entry_response.json()
-        assert entries is not None
+        self.assertIsNotNone(entries)
         assert type(entries) == list
         return entries
 
     def _delete_entry(self, session, entry_id, token):
+        """Returns nothing"""
         entry_delete_response = api.delete_entry(session, entry_id, token)
-        assert entry_delete_response is not None
-        assert entry_delete_response.status_code == 200
+        self.assertIsNotNone(entry_delete_response)
+        self.assertEqual(entry_delete_response.status_code, 200)
 
     def test_login_no_users(self):
         with requests.Session() as session:
@@ -182,9 +192,8 @@ class PassZeroApiTester(unittest.TestCase):
                 "username": "entry_username",
                 "password": "entry_pass",
                 "extra": "entry_extra",
-                "csrf_token": token
             }
-            entry_id = self._create_entry(s, entry)
+            entry_id = self._create_entry(s, entry, token)
             entries = self._get_entries(s)
             assert len(entries) == 1
             self._delete_entry(s, entry_id, token)
@@ -208,9 +217,8 @@ class PassZeroApiTester(unittest.TestCase):
                 "username": "entry_username",
                 "password": "entry_pass",
                 "extra": "entry_extra",
-                "csrf_token": token
             }
-            entry_id = self._create_entry(s, entry)
+            entry_id = self._create_entry(s, entry, token)
             self._delete_entry(s, entry_id, token)
             entries = self._get_entries(s)
             assert entries == []
@@ -228,9 +236,8 @@ class PassZeroApiTester(unittest.TestCase):
                 "username": "entry_username",
                 "password": "entry_pass",
                 "extra": "entry_extra",
-                "csrf_token": token
             }
-            entry_id = self._create_entry(s, entry)
+            entry_id = self._create_entry(s, entry, token)
             url = self.base_url + "/api/entries/{}".format(
                 entry_id)
             entry_delete_response = s.delete(url,
@@ -251,9 +258,8 @@ class PassZeroApiTester(unittest.TestCase):
                 "username": "entry_username",
                 "password": "entry_pass",
                 "extra": "entry_extra",
-                "csrf_token": token
             }
-            entry_id = self._create_entry(s, entry)
+            entry_id = self._create_entry(s, entry, token)
             url = self.base_url + "/api/entries/{}?csrf_token={}".format(
                 entry_id + 1, token)
             entry_delete_response = s.delete(url,
@@ -262,157 +268,14 @@ class PassZeroApiTester(unittest.TestCase):
             assert entry_delete_response.status_code == 400
         passzero.delete_account(user)
 
-    def _create_cse(self, session, entry):
-        response = api.create_entry_v2(session, entry)
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, 200)
-        entry_id = response.json()["entry_id"]
-        self.assertIsNotNone(entry_id)
-        assert type(entry_id) == int
-        return entry_id
-
-    def _get_cse(self, session):
-        """Given session, return list of encrypted entries."""
-        response = api.get_entries_v2(session)
-        assert response is not None
-        assert response.status_code == 200
-        enc_entries = response.json()
-        assert type(enc_entries) == list
-        return enc_entries
-
-    def _decrypt_field(self, extended_key, ciphertext, iv):
-        cipher = AES.new(extended_key, AES.MODE_CFB, iv)
-        return cipher.decrypt(ciphertext)
-
-    def _encrypt_field(self, extended_key, msg, iv):
-        cipher = AES.new(extended_key, AES.MODE_CFB, iv)
-        return cipher.encrypt(msg)
-
-    def _get_key_salt(self):
-        return Random.new().read(32)
-
-    def _get_iv(self):
-        return Random.new().read(AES.block_size)
-
-    def _delete_cse(self, session, entry_id, token):
-        response = api.delete_entry_v2(session, entry_id, token)
-        self.assertIsNotNone(response)
-        self.assertEqual(response.status_code, 200)
-        return response.json()
-
-    def _decrypt_cse(self, key, enc_entry):
-        self.assertIn("key_salt", enc_entry)
-        raw_salt = base64.b64decode(enc_entry["key_salt"])
-        extended_key = KDF.PBKDF2(key, raw_salt)
-        self.assertIn("iv", enc_entry)
-        raw_iv = base64.b64decode(enc_entry["iv"])
-        dec_entry = {}
-        for field in self.entry_fields:
-            self.assertIn(field, enc_entry)
-            raw_field = base64.b64decode(enc_entry[field])
-            dec_entry[field] = self._decrypt_field(extended_key,
-                raw_field, raw_iv)
-            logging.debug(field)
-            logging.debug(enc_entry[field])
-            logging.debug(dec_entry[field])
-        return dec_entry
-
     def _check_entries_equal(self, e1, e2):
-        for field in self.entry_fields:
-            logging.debug("Checking field %s" % field)
+        entry_fields = ["account", "username", "password", "extra"]
+        for field in entry_fields:
             self.assertIn(field, e1)
             self.assertIn(field, e2)
             self.assertEqual(e1[field], e2[field])
 
-    def _encrypt_cse(self, key, entry):
-        key_salt = self._get_key_salt()
-        extended_key = KDF.PBKDF2(key, key_salt)
-        iv = self._get_iv()
-        enc_entry = {}
-        for field in self.entry_fields:
-            ciphertext = self._encrypt_field(extended_key,
-                entry[field], iv)
-            enc_entry[field] = base64.b64encode(ciphertext)
-            logging.debug(field)
-            logging.debug(enc_entry[field])
-        enc_entry["iv"] = base64.b64encode(iv)
-        enc_entry["key_salt"] = base64.b64encode(key_salt)
-        enc_entry["csrf_token"] = entry["csrf_token"]
-        return enc_entry
-
-    def test_cse_create_and_delete(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user = create_active_account(email, password)
-        with requests.Session() as s:
-            self._login(s, email, password)
-            enc_entries = self._get_cse(s)
-            assert enc_entries == []
-            token = self._get_csrf_token(s)
-            entry = {
-                "account": "fake_account",
-                "username": "entry_username",
-                "password": "entry_pass",
-                "extra": "",
-                "csrf_token": token
-            }
-            enc_entry = self._encrypt_cse(password, entry)
-            entry_id = self._create_cse(s, enc_entry)
-            enc_entries = self._get_cse(s)
-            self.assertEqual(len(enc_entries), 1)
-            self._check_entries_equal(enc_entry, enc_entries[0])
-            dec_entry = self._decrypt_cse(password, enc_entries[0])
-            logging.debug("checking entries equal...")
-            self._check_entries_equal(entry, dec_entry)
-            logging.debug("deleting...")
-            self._delete_cse(s, entry_id, token)
-        passzero.delete_account(user)
-
-    def test_cse_create_no_account(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user = create_active_account(email, password)
-        with requests.Session() as s:
-            self._login(s, email, password)
-            enc_entries = self._get_cse(s)
-            assert enc_entries == []
-            token = self._get_csrf_token(s)
-            entry = {
-                "account": "fake_account",
-                "username": "entry_username",
-                "password": "entry_pass",
-                "extra": "",
-                "csrf_token": token
-            }
-            enc_entry = self._encrypt_cse(password, entry)
-            del enc_entry["account"]
-            response = api.create_entry_v2(s, enc_entry)
-            self.assertIsNotNone(response)
-            self.assertEqual(response.status_code, 400)
-
-    def test_cse_create_no_token(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user = create_active_account(email, password)
-        with requests.Session() as session:
-            api.login(session, email, password)
-            enc_entries = self._get_cse(session)
-            assert enc_entries == []
-            token = api.get_csrf_token(session)
-            entry = {
-                "account": "fake_account",
-                "username": "entry_username",
-                "password": "entry_pass",
-                "extra": "",
-                "csrf_token": token
-            }
-            enc_entry = self._encrypt_cse(password, entry)
-            del enc_entry["csrf_token"]
-            response = api.create_entry_v2(session, enc_entry)
-            self.assertIsNotNone(response)
-            self.assertEqual(response.status_code, 403)
-
-    def test_get_cse_empty(self):
+    def test_edit_existing_entry(self):
         email = "sample@fake.com"
         password = "right_pass"
         user = create_active_account(email, password)
@@ -423,12 +286,18 @@ class PassZeroApiTester(unittest.TestCase):
                 "account": "fake",
                 "username": "entry_username",
                 "password": "entry_pass",
-                "extra": "",
-                "csrf_token": token
+                "extra": "entry_extra",
             }
-            enc_entries = self._get_cse(s)
-            assert enc_entries == []
-        passzero.delete_account(user)
+            entry_id = self._create_entry(s, entry, token)
+            entry["account"] = "new account"
+            entry["username"] = "new_username"
+            entry["password"] = "new_password"
+            entry["extra"] = "new extra"
+            self._edit_entry(s, entry_id, entry, token)
+            entries = self._get_entries(s)
+            assert len(entries) == 1
+            self._check_entries_equal(entry, entries[0])
+
 
 
 if __name__ == '__main__':
