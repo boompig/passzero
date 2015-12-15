@@ -53,6 +53,18 @@ def edit_entry(session, entry_id, entry, token):
         data=json.dumps(data),
         headers=json_header, verify=False)
 
+
+def signup(session, email, password):
+    url = base_url + "/api/signup"
+    data = {
+        "email": email,
+        "password": password,
+        "confirm_password": password
+    }
+    return session.post(url,
+        data=json.dumps(data),
+        headers=json_header, verify=False)
+
 #### v2 API starts here
 
 def get_entries_v2(session):

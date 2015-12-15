@@ -325,6 +325,8 @@ def post_login():
 #   API-only, returns JSON
 ##################################################
 
+##### below: API v1
+
 @app.route("/api/csrf_token", methods=["GET"])
 def api_get_csrf_token():
     token = generate_csrf_token()
@@ -344,7 +346,6 @@ def api_logout():
 
 
 @app.route("/api/login", methods=["POST"])
-@app.route("/login", methods=["POST"])
 def api_login():
     """Try to log in using JSON post data.
     Respond with JSON data and set HTTP status code.
@@ -404,7 +405,6 @@ def get_entries_api():
 
 
 @app.route("/api/entries/<int:entry_id>", methods=["DELETE"])
-@app.route("/entries/<int:entry_id>", methods=["DELETE"])
 @requires_json_auth
 @requires_csrf_check
 def delete_entry_api(entry_id):
@@ -423,7 +423,6 @@ def delete_entry_api(entry_id):
     return write_json(code, data)
 
 
-@app.route("/entries/new", methods=["POST"])
 @app.route("/api/entries/new", methods=["POST"])
 @requires_json_auth
 @requires_csrf_check
@@ -463,6 +462,41 @@ def new_entry_api():
         data = { "entry_id": entry.id }
     return write_json(code, data)
 
+
+@app.route("/api/signup", methods=["POST"])
+def signup_api():
+    request_data = request.get_json()
+    form = SignupForm(data=request_data)
+    if form.validate():
+        try:
+            user = get_account_with_email(request_data["email"])
+        except NoResultFound:
+            token = AuthToken()
+            token.random_token()
+            if send_confirmation_email(request_data["email"], token.token):
+                user = create_inactive_account(
+                    request_data["email"],
+                    request_data["password"]
+                )
+                token.user_id = user.id;
+                # now add token
+                db.session.add(token)
+                db.session.commit()
+                code, data = json_success(
+                    "Successfully created account with email %s" % request_data['email']
+                )
+            else:
+                code, data = json_internal_error("failed to send email")
+        else:
+            if user.active:
+                code, data = json_error(400, "an account with this email address already exists")
+            else:
+                code, data = json_error(400, "This account has already been created. Check your inbox for a confirmation email.")
+    else:
+        code, data = json_form_validation_error(form.errors)
+    return write_json(code, data)
+
+### below: API v2
 
 @app.route("/api/v2/entries", methods=["POST"])
 @app.route("/api/entries/cse", methods=["POST"])
@@ -627,39 +661,6 @@ def delete_account(user):
 
 def get_account_with_email(email):
      return db.session.query(User).filter_by(email=email).one()
-
-
-@app.route("/signup", methods=["POST"])
-def signup_api():
-    form = SignupForm(request.form)
-    if form.validate():
-        try:
-            user = get_account_with_email(request.form["email"])
-        except NoResultFound:
-            token = AuthToken()
-            token.random_token()
-            if send_confirmation_email(request.form["email"], token.token):
-                user = create_inactive_account(
-                    request.form["email"],
-                    request.form["password"]
-                )
-                token.user_id = user.id;
-                # now add token
-                db.session.add(token)
-                db.session.commit()
-                code, data = json_success(
-                    "Successfully created account with email %s" % request.form['email']
-                )
-            else:
-                code, data = json_internal_error("failed to send email")
-        else:
-            if user.active:
-                code, data = json_error(400, "an account with this email address already exists")
-            else:
-                code, data = json_error(400, "This account has already been created. Check your inbox for a confirmation email.")
-    else:
-        code, data = json_form_validation_error(form.errors)
-    return write_json(code, data)
 
 
 @app.route("/signup", methods=["GET"])
