@@ -114,11 +114,10 @@ function createNew (e) {
     "use strict";
     e.preventDefault();
 
-    var dataArray = $(e.target).serializeArray();
     var url = $(e.target).attr("action");
-    var data = parseArray(dataArray);
+    var data = getFormData(e.target);
 
-    postJSON(url, data)
+    pzAPI.createEntry(data, data.csrf_token)
     .done(function(response) {
         window.location.href = "/entries/done_new/" + data.account;
     }).error(function (obj, textStatus, textCode) {
@@ -129,16 +128,20 @@ function createNew (e) {
     return false;
 }
 
+function getEntryID() {
+    var components = window.location.href.split("/");
+    return components[components.length - 1];
+}
+
 function makeEdit (e) {
     "use strict";
     e.preventDefault();
-    var elem = $(e.target);
-    var url = elem.attr("action");
-    var dataArray = elem.serializeArray();
-    var data = parseArray(dataArray);
-    $.post(url, data, function (response) {
+    var data = getFormData(e.target);
+    var entry_id = getEntryID();
+    pzAPI.editEntry(entry_id, data, data.csrf_token)
+    .done(function(response) {
         window.location.href = "/entries/done_edit/" + data.account;
-    }, "json");
+    });
     return false;
 }
 

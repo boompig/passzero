@@ -31,6 +31,14 @@ $.getJSON = function(url, data) {
 var pzAPI = {
     base_url: "https://" + window.location.host,
 
+    _copyObject: function(o) {
+        var newObj = {};
+        for (var k in o) {
+            newObj[k] = o[k];
+        }
+        return newObj;
+    },
+
     login: function(email, password) {
         var url = pzAPI.base_url + "/api/login";
         var data = {
@@ -38,6 +46,11 @@ var pzAPI = {
             password: password
         };
         return $.postJSON(url, data);
+    },
+
+    logout: function() {
+        var url = pzAPI.base_url + "/api/logout";
+        return $.postJSON(url);
     },
 
     signup: function(email, password, confirm_password) {
@@ -49,6 +62,44 @@ var pzAPI = {
         };
         return $.postJSON(url, data);
     },
+
+    getCSRFToken: function() {
+        var url = pzAPI.base_url + "/api/csrf_token";
+        return $.getJSON(url);
+    },
+
+    getEntries: function() {
+        var url = pzAPI.base_url + "/api/entries";
+        return $.getJSON(url);
+    },
+
+    _createEntry: function(entry, csrf_token) {
+        var url = pzAPI.base_url + "/api/entries/new";
+        var data = pzAPI._copyObject(entry);
+        data.csrf_token = csrf_token;
+        return $.postJSON(url, data);
+    },
+
+    createEntry: function(entry) {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._createEntry(entry, response);
+        });
+    },
+
+    _editEntry: function(entry_id, entry, csrf_token) {
+        var url = "/api/entries/" + entry_id;
+        var data = pzAPI._copyObject(entry);
+        data.csrf_token = csrf_token;
+        return $.postJSON(url, data);
+    },
+
+    editEntry: function(entry_id, entry) {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._editEntry(entry_id, entry, response);
+        });
+    }
 };
 
 if (module && module.exports) {

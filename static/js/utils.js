@@ -10,12 +10,12 @@ function parseArray(arr) {
     return obj;
 }
 
-function postJSON (url, data) {
-    return $.ajax({
-        url: url,
-        data: JSON.stringify(data),
-        method: "POST",
-        dataType: "json",
-        contentType: "application/json"
-    });
+/**
+ * Given a DOM node representing a form, return object representing form data
+ * Mapping of form element names to values
+ */
+function getFormData(formElem) {
+    var $elem = $(formElem);
+    var dataArray = $elem.serializeArray();
+    return parseArray(dataArray);
 }

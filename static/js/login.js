@@ -7,7 +7,7 @@ function getFormData(formElem) {
 function createAccount(e) {
     "use strict";
     e.preventDefault();
-    var data = getFormData(e.target)
+    var data = getFormData(e.target);
     pzAPI.signup(data.email, data.password, data.confirm_password)
     .done(function(response) {
         console.log(response);

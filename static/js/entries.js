@@ -101,7 +101,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         if (confirm("OK to delete entry for account " + entry.account + "?")) {
             console.log("Deleting entry with ID " + entry.id);
             var data = { csrf_token: this.csrf_token };
-            $http.delete("/entries/" + entry.id, { params: data })
+            $http.delete("/api/entries/" + entry.id, { params: data })
             .success(function (result) {
                 window.location.href = "/entries/post_delete/" + entry.account;
             }).error(function (obj, textStatus, textCode) {
