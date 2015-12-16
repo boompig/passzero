@@ -1,17 +1,19 @@
+function getFormData(formElem) {
+    var $elem = $(formElem);
+    var dataArray = $elem.serializeArray();
+    return parseArray(dataArray);
+}
+
 function createAccount(e) {
     "use strict";
     e.preventDefault();
-
-    var elem = $(e.target);
-    var dataArray = elem.serializeArray();
-    var url = elem.attr("action");
-    var data = parseArray(dataArray);
-
-    $.post(url, data, function (response) {
+    var data = getFormData(e.target)
+    pzAPI.signup(data.email, data.password, data.confirm_password)
+    .done(function(response) {
         console.log(response);
         window.location.href = "/done_signup/" + data.email;
         $("#error-msg-container").hide();
-    }, "json").error(function(obj, textStatus, textCode) {
+    }).error(function(obj, textStatus, textCode) {
         if (textCode === "CONFLICT") {
             $("#error-msg").text("An account with this email already exists");
         } else if (textCode === "BAD REQUEST") {
@@ -40,13 +42,9 @@ function createAccount(e) {
 function login(e) {
     "use strict";
     e.preventDefault();
-    var elem = $(e.target);
-    var dataArray = elem.serializeArray();
-    var url = elem.attr("action");
-    var data = parseArray(dataArray);
-    console.log(data);
-    postJSON(url, data)
-    .done(function (response) {
+    var data = getFormData(e.target);
+    pzAPI.login(data.email, data.password)
+    .done(function(response) {
         console.log(response);
         window.location.href = "/done_login";
         $("#error-msg-container").hide();
