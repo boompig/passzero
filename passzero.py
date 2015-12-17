@@ -731,6 +731,8 @@ def recover_password_confirm_api():
             user = db.session.query(User).filter_by(id=token.user_id).one()
             # 1) change the user's password
             user.change_password(request.form['password'])
+            # 2) activate user's account, if not already active
+            user.active = True
             all_entries = db.session.query(Entry).filter_by(user_id=token.user_id).all()
             # 2) delete all user's entries
             for entry in all_entries:
