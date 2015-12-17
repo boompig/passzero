@@ -2,7 +2,6 @@ from datetime import datetime
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response, abort
 from flask_sslify import SSLify
 from flask.ext.compress import Compress
-from flask.ext.sqlalchemy import SQLAlchemy
 from functools import wraps
 import json
 import os
@@ -12,10 +11,11 @@ from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
 import config
-from crypto_utils import decrypt_password, pad_key, get_hashed_password, get_salt, random_hex, encrypt_field, decrypt_field, get_kdf_salt, extend_key, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv
-from datastore_postgres import db_init, db_export, db_update_password
+from crypto_utils import pad_key, get_hashed_password, get_salt, random_hex
+from datastore_postgres import db_export, db_update_password
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, NewEncryptedEntryForm
 from mailgun import send_confirmation_email, send_recovery_email
+from models import db, User, AuthToken, EncryptedEntry, Entry
 
 
 def generate_csrf_token():
@@ -47,152 +47,9 @@ else:
     sslify = SSLify(app, permanent=True)
     app.secret_key = '64f5abcf8369e362c36a6220128de068'
     DEBUG = True
-db = SQLAlchemy(app)
 
-
-class User(db.Model):
-    __tablename__ = "users"
-    id = db.Column(db.Integer, db.Sequence("users_id_seq"), primary_key=True)
-    email = db.Column(db.String, unique=True)
-    password = db.Column(db.String, nullable=False)
-    salt = db.Column(db.String(32), nullable=False)
-    active = db.Column(db.Boolean, nullable=False, default=False)
-    last_login = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    def authenticate(self, form_password):
-        """Return True on success, False on failure."""
-        hashed_password = get_hashed_password(form_password, self.salt)
-        return self.password == hashed_password
-
-    def change_password(self, new_password):
-        hashed_password = get_hashed_password(new_password, self.salt)
-        self.password = hashed_password
-
-    def __repr__(self):
-        return "<User(email=%s, password=%s, salt=%s, active=%s)>" % (self.email, self.password, self.salt, str(self.active))
-
-
-class AuthToken(db.Model):
-    __tablename__ = "auth_tokens"
-    id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
-    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
-    token = db.Column(db.String, nullable=False)
-    issue_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
-    # in seconds
-    MAX_AGE = 15 * 60
-
-    def random_token(self):
-        self.token = random_hex(app.config['TOKEN_SIZE'])
-
-    def is_expired(self):
-        delta = datetime.utcnow() - self.issue_time
-        return delta.seconds > self.MAX_AGE
-
-    def __repr__(self):
-        return "<AuthToken(user_id=%d, token=%s)>" % (self.user_id, self.token)
-
-
-class EncryptedEntry(db.Model):
-    __tablename__ = "enc_entries"
-    id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
-    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
-    account = db.Column(db.String, nullable=False)
-    username = db.Column(db.String, nullable=False)
-    password = db.Column(db.String, nullable=False)
-    extra = db.Column(db.String, nullable=False)
-    key_salt = db.Column(db.String)
-    iv = db.Column(db.String)
-
-    def to_json(self):
-        return {
-            "id": self.id,
-            "account": self.account,
-            "username": self.username,
-            "password": self.password,
-            "extra": self.extra,
-            "key_salt": self.key_salt,
-            "iv": self.iv
-        }
-
-
-class Entry(db.Model):
-    __tablename__ = "entries"
-    id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
-    user_id = db.Column(db.String, db.ForeignKey("users.id"), nullable=False)
-    account = db.Column(db.String, nullable=False)
-    username = db.Column(db.String, nullable=False)
-    password = db.Column(db.String, nullable=False)
-    padding = db.Column(db.String, nullable=False)
-    extra = db.Column(db.String)
-    key_salt = db.Column(db.String)
-    iv = db.Column(db.String)
-
-    def __repr__(self):
-        return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
-
-    def decrypt(self, key):
-        """Return a dictionary mapping fields to their decrypted values."""
-        if self.key_salt is not None and self.key_salt != "":
-            return self._decrypt_with_kdf(key)
-        else:
-            return self._decrypt_with_padding(key)
-
-    def _decrypt_with_kdf(self, key):
-        key_salt = hex_to_byte(self.key_salt)
-        iv = hex_to_byte(self.iv)
-        extended_key = extend_key(key, key_salt)
-        dec_password = decrypt_field(extended_key, self.password, iv)
-        if self.extra:
-            try:
-                dec_extra = decrypt_field(extended_key, self.extra, iv)
-            except TypeError:
-                dec_extra = self.extra
-        else:
-            dec_extra = ""
-        try:
-            dec_username = decrypt_field(extended_key, self.username, iv)
-        except TypeError:
-            dec_username = self.username
-        return {
-            "password": dec_password,
-            "extra": dec_extra,
-            "username": dec_username
-        }
-
-    def _decrypt_with_padding(self, key):
-        dec_password = decrypt_password(key + self.padding, self.password)
-        if self.extra:
-            try:
-                dec_extra = decrypt_field_old(key, self.padding, self.extra)
-            except TypeError:
-                dec_extra = self.extra
-        else:
-            dec_extra = ""
-        try:
-            dec_username = decrypt_field_old(key, self.padding, self.username)
-        except TypeError:
-            dec_username = self.username
-        return {
-            "password": dec_password,
-            "extra": dec_extra,
-            "username": dec_username
-        }
-
-    def encrypt(self, key, salt, obj, key_salt=None, iv=None):
-        if "extra" not in obj:
-            obj["extra"] = ""
-        if key_salt is None:
-            # create key salt
-            key_salt = get_kdf_salt()
-        if iv is None:
-            iv = get_iv()
-        extended_key = extend_key(key, key_salt)
-        self.username = encrypt_field(extended_key, obj["username"], iv)
-        self.password = encrypt_field(extended_key, obj["password"], iv)
-        self.extra = encrypt_field(extended_key, obj["extra"], iv)
-        self.key_salt = byte_to_hex(key_salt)
-        self.iv = byte_to_hex(iv)
+db.app = app
+db.init_app(app)
 
 
 def get_entries():
@@ -653,6 +510,20 @@ def delete_all_encrypted_entries(user):
         raise
 
 
+def delete_all_entries(user):
+    entries = db.session.query(Entry).filter_by(user_id=user.id).all()
+    for entry in entries:
+        db.session.delete(entry)
+    db.session.commit()
+
+
+def delete_all_auth_tokens(user):
+    auth_tokens = db.session.query(AuthToken).filter_by(user_id=user.id).all()
+    for token in auth_tokens:
+        db.session.delete(token)
+    db.session.commit()
+
+
 def delete_account(user):
     """Delete the given user from the database."""
     db.session.delete(user)
@@ -879,10 +750,8 @@ def nuke_entries_api():
         - 403: CSRF token validation failed
         - 200: success
     """
-    entries = get_entries()
-    for entry in entries:
-        db.session.delete(entry)
-    db.session.commit()
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    delete_all_entries(user)
     code, data = json_success("Deleted all entries")
     return write_json(code, data)
 
@@ -925,7 +794,7 @@ def get_version():
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
-    db_init()
+    db.create_all()
 
     if DEBUG:
         app.debug = True

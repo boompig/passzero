@@ -66,6 +66,8 @@ class PassZeroApiTester(unittest.TestCase):
         try:
             user = passzero.get_account_with_email(email)
             self.assertIsNotNone(user)
+            passzero.delete_all_entries(user)
+            passzero.delete_all_auth_tokens(user)
             passzero.delete_account(user)
         except NoResultFound:
             pass
@@ -238,7 +240,6 @@ class PassZeroApiTester(unittest.TestCase):
             self._delete_entry(s, entry_id, token)
             entries = self._get_entries(s)
             assert entries == []
-        passzero.delete_account(user)
 
     def test_delete_entry_no_token(self):
         email = "sample@fake.com"
@@ -260,7 +261,6 @@ class PassZeroApiTester(unittest.TestCase):
                 headers=self.json_header, verify=False)
             assert entry_delete_response is not None
             assert entry_delete_response.status_code == 403
-        passzero.delete_account(user)
 
     def test_delete_nonexistant_entry(self):
         email = "sample@fake.com"
@@ -282,7 +282,6 @@ class PassZeroApiTester(unittest.TestCase):
                 headers=self.json_header, verify=False)
             assert entry_delete_response is not None
             assert entry_delete_response.status_code == 400
-        passzero.delete_account(user)
 
     def _check_entries_equal(self, e1, e2):
         entry_fields = ["account", "username", "password", "extra"]
