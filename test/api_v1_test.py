@@ -158,6 +158,15 @@ class PassZeroApiTester(unittest.TestCase):
             assert result is not None
             assert result.status_code == 400
 
+    def test_login_inactive(self):
+        email = "sample@fake.com"
+        password = "right_pass"
+        with requests.Session() as session:
+            signup_result = api.signup(session, email, password)
+            self.assertEqual(signup_result.status_code, 200)
+            login_result = api.login(session, email, password)
+            self.assertEqual(login_result.status_code, 401)
+
     def test_correct_login(self):
         email = "sample@fake.com"
         password = "right_pass"

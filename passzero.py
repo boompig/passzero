@@ -219,6 +219,7 @@ def api_login():
     if form.validate():
         try:
             user = db.session.query(User).filter_by(email=request_data["email"]).one()
+            assert(user.active)
             if user.authenticate(request_data["password"]):
                 session["email"] = user.email
                 session["password"] = request_data["password"]
@@ -237,6 +238,9 @@ def api_login():
                 code, data = json_error(401, "Either the email or password is incorrect")
         except NoResultFound:
             code, data = json_error(401, "There is no account with that email")
+        except AssertionError:
+            code, data = json_error(401,
+                "The account has not been activated. Check your email!")
     else:
         code, data = json_form_validation_error(form.errors)
     return write_json(code, data)
