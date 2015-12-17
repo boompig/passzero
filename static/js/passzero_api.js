@@ -99,6 +99,17 @@ var pzAPI = {
         .then(function(response) {
             return pzAPI._editEntry(entry_id, entry, response);
         });
+    },
+    _recoverAccount: function(email, token) {
+        var url = "/api/recover";
+        var data = { "csrf_token": token, "email": email };
+        return $.postJSON(url, data);
+    },
+    recoverAccount: function(email) {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._recoverAccount(email, response);
+        });
     }
 };
 

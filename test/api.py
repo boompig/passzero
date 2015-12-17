@@ -65,6 +65,16 @@ def signup(session, email, password):
         data=json.dumps(data),
         headers=json_header, verify=False)
 
+def recover(session, email, token):
+    url = base_url + "/api/recover"
+    data = {
+        "email": email,
+        "csrf_token": token
+    }
+    return session.post(url,
+        data=json.dumps(data),
+        headers=json_header, verify=False)
+
 #### v2 API starts here
 
 def get_entries_v2(session):

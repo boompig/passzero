@@ -1,14 +1,12 @@
 function recoverPassword(e) {
     "use strict";
     e.preventDefault();
-    var url = $(e.target).prop("action");
-    var data = {
-        email: $("input[type='email']").val()
-    };
-    $.post(url, data, function(response, textStatus, obj) {
+    var email = $("input[type='email']").val();
+    pzAPI.recoverAccount(email)
+    .done(function(response, textStatus, obj) {
         $("#success-msg").addClass("alert-success").text(response.msg).show();
         console.log(response);
-    }, "json");
+    });
     return false;
 }
 

@@ -95,7 +95,7 @@ class PassZeroApiTester(unittest.TestCase):
 
 
     def _get_csrf_token(self, session):
-        """s is session. Return CSRF token"""
+        """Return CSRF token"""
         csrf_response = api.get_csrf_token(session)
         self.assertIsNotNone(csrf_response)
         self.assertEqual(csrf_response.status_code, 200)
@@ -342,6 +342,32 @@ class PassZeroApiTester(unittest.TestCase):
         password = "right_pass"
         with requests.Session() as s:
             self._signup(s, email, password)
+
+    def test_recover_account_invalid_email(self):
+        email = "sample@fake.com"
+        with requests.Session() as s:
+            token = self._get_csrf_token(s)
+            recover_result = api.recover(s, email, token)
+            self.assertEqual(recover_result.status_code, 401)
+
+    def test_recover_account_valid_email(self):
+        email = "sample@fake.com"
+        password = "a_password"
+        user = create_active_account(email, password)
+        with requests.Session() as s:
+            token = self._get_csrf_token(s)
+            recover_result = api.recover(s, email, token)
+            self.assertEqual(recover_result.status_code, 200)
+
+
+    def test_recover_account_valid_email_inactive(self):
+        email = "sample@fake.com"
+        password = "a_password"
+        with requests.Session() as s:
+            self._signup(s, email, password)
+            token = self._get_csrf_token(s)
+            recover_result = api.recover(s, email, token)
+            self.assertEqual(recover_result.status_code, 200)
 
 
 if __name__ == '__main__':

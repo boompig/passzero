@@ -23,6 +23,7 @@
         onsubmit="recoverPassword(event)">
     {%- endif -%}
         <div id="server-msg" class="error"></div>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         {%- if confirm -%}
             <label for="password">Password</label>
             <input type="password" name="password" class="form-control"

@@ -760,14 +760,15 @@ def nuke_entries_api():
     return write_json(code, data)
 
 
-@app.route("/recover", methods=["POST"])
+@app.route("/api/recover", methods=["POST"])
 def recover_password_api():
     """This method sends a recovery email to the user's email address.
     It does not require any authentication."""
-    form = RecoverPasswordForm(request.form)
+    request_data = request.get_json()
+    form = RecoverPasswordForm(data=request_data)
     if form.validate():
         try:
-            user = db.session.query(User).filter_by(email=request.form['email']).one()
+            user = db.session.query(User).filter_by(email=request_data['email']).one()
             # send a reset token to the email
             token = AuthToken()
             token.user_id = user.id
