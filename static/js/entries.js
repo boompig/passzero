@@ -61,9 +61,15 @@ var PassZeroCtrl = function ($scope, $location, $http) {
 
     this.loadedEntries = false;
 
+    /**
+     * Given a query, return all entry objects matching that query.
+     * Match is not case sensitive
+     * Match is done on account name or username
+     */
     this.searchEntries = function (q) {
         if (q === "" || q === null)
             return this.entries;
+        q = q.toLowerCase();
         var entry;
         var l = [];
         for (var i = 0; i < this.entries.length; i++) {
