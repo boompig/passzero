@@ -218,7 +218,7 @@ def api_login():
     form = LoginForm(data=request_data)
     if form.validate():
         try:
-            user = db.session.query(User).filter_by(email=request_data["email"]).one()
+            user = get_account_with_email(request_data["email"])
             assert(user.active)
             if user.authenticate(request_data["password"]):
                 session["email"] = user.email

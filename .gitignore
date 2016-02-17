@@ -23,3 +23,6 @@ bower_components
 
 # weird Mac stuff
 .DS_Store
+
+# Node junk
+npm-debug.log
