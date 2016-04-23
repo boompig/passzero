@@ -1,3 +1,4 @@
+from __future__ import print_function
 import json
 import unittest
 import requests
@@ -90,7 +91,7 @@ class PassZeroApiTester(unittest.TestCase):
         try:
             self.assertEqual(auth_response.status_code, 200)
         except AssertionError as e:
-            print response_json
+            print(response_json)
             raise e
 
 
@@ -121,7 +122,7 @@ class PassZeroApiTester(unittest.TestCase):
         try:
             self.assertEqual(entry_edit_response.status_code, 200)
         except AssertionError as e:
-            print response_json
+            print(response_json)
             raise e
 
     def _get_entries(self, session):
@@ -372,5 +373,5 @@ class PassZeroApiTester(unittest.TestCase):
 
 if __name__ == '__main__':
     import sys
-    print >>sys.stderr, "Run with nosetests"
+    print("Fatal error: run this file with nosetests command instead", file=sys.stderr)
     sys.exit(1)
