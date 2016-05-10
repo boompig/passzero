@@ -581,12 +581,14 @@ def export_entries():
     if not check_auth():
         #TODO
         return "unauthorized"
-
-    export_contents = db_export(session['user_id'])
-    response = make_response(export_contents)
-    response.headers["Content-Disposition"] = ("attachment; filename=%s" %\
-            app.config['DUMP_FILE'])
-    return response
+    export_contents = db_export(db.session, session['user_id'])
+    if export_contents:
+        response = make_response(export_contents)
+        response.headers["Content-Disposition"] = ("attachment; filename=%s" %\
+                app.config['DUMP_FILE'])
+        return response
+    else:
+        return "failed to export table - internal error"
 
 
 @app.route("/advanced/done_export")
