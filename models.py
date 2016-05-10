@@ -1,8 +1,9 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+import binascii
 
 from config import TOKEN_SIZE
-from crypto_utils import get_hashed_password, extend_key, get_kdf_salt,  decrypt_password, random_hex, encrypt_field, decrypt_field, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv
+from crypto_utils import get_hashed_password, extend_key, get_kdf_salt,  decrypt_password, random_hex, encrypt_field, decrypt_field, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv, decrypt_messages
 
 db = SQLAlchemy()
 
@@ -79,22 +80,47 @@ class Entry(db.Model):
     account = db.Column(db.String, nullable=False)
     username = db.Column(db.String, nullable=False)
     password = db.Column(db.String, nullable=False)
-    padding = db.Column(db.String, nullable=False)
+    padding = db.Column(db.String)
     extra = db.Column(db.String)
     key_salt = db.Column(db.String)
     iv = db.Column(db.String)
+    version = db.Column(db.Integer, nullable=False)
+    pinned = db.Column(db.Boolean, default=False, nullable=False)
 
     def __repr__(self):
         return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
 
     def decrypt(self, key):
         """Return a dictionary mapping fields to their decrypted values."""
-        if self.key_salt is not None and self.key_salt != "":
-            return self._decrypt_with_kdf(key)
+        if self.version == 1:
+            return self._decrypt_version_1(key)
+        elif self.version == 2:
+            return self._decrypt_version_2(key)
         else:
-            return self._decrypt_with_padding(key)
+            return self._decrypt_version_3(key)
 
-    def _decrypt_with_kdf(self, key):
+    def _decrypt_version_3(self, key):
+        kdf_salt = binascii.a2b_base64(self.key_salt)
+        extended_key = extend_key(key, kdf_salt)
+        iv = binascii.a2b_base64(self.iv)
+        messages = [
+            binascii.a2b_base64(self.account),
+            binascii.a2b_base64(self.username),
+            binascii.a2b_base64(self.password),
+            binascii.a2b_base64(self.extra)
+        ]
+        dec_messages = decrypt_messages(extended_key, iv, messages)
+        return {
+            "account": dec_messages[0],
+            "username": dec_messages[1],
+            "password": dec_messages[2],
+            "extra": dec_messages[3]
+        }
+
+    def _decrypt_version_1(self, key):
+        return self._decrypt_with_padding(key)
+
+    def _decrypt_version_2(self, key):
         key_salt = hex_to_byte(self.key_salt)
         iv = hex_to_byte(self.iv)
         extended_key = extend_key(key, key_salt)
@@ -111,9 +137,10 @@ class Entry(db.Model):
         except TypeError:
             dec_username = self.username
         return {
+            "account": self.account,
+            "username": dec_username,
             "password": dec_password,
-            "extra": dec_extra,
-            "username": dec_username
+            "extra": dec_extra
         }
 
     def _decrypt_with_padding(self, key):
@@ -130,9 +157,10 @@ class Entry(db.Model):
         except TypeError:
             dec_username = self.username
         return {
+            "account": self.account,
+            "username": dec_username,
             "password": dec_password,
-            "extra": dec_extra,
-            "username": dec_username
+            "extra": dec_extra
         }
 
     def encrypt(self, key, salt, obj, key_salt=None, iv=None):

@@ -36,13 +36,31 @@ def pad_key(key):
         return None
 
 
+def encrypt_messages(extended_key, iv, messages):
+    """Encrypt a bunch of messages, in order, with the same IV.
+    This approach uses a stream cipher"""
+    cipher = AES.new(extended_key, AES.MODE_CFB, iv)
+    enc_messages = [cipher.encrypt(message) for message in messages]
+    return enc_messages
+
+
+def decrypt_messages(extended_key, iv, messages):
+    cipher = AES.new(extended_key, AES.MODE_CFB, iv)
+    dec_messages = [cipher.decrypt(message) for message in messages]
+    return dec_messages
+
+
+def random_bytes(length):
+    return Random.new().read(length)
+
+
 def random_string(length):
     """Return random byte string of given length"""
     return Random.new().read(length)
 
 
-def get_kdf_salt():
-    return random_string(16)
+def get_kdf_salt(num_bytes=16):
+    return random_string(num_bytes)
 
 
 def extend_key(key, salt):

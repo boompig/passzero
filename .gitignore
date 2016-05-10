@@ -15,8 +15,9 @@ server.key
 my_env.py
 # ctags
 tags
-# bower stuff
+# node.js folders
 bower_components
+node_modules
 
 # sublime stuff
 *.sublime-*

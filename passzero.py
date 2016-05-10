@@ -12,10 +12,11 @@ from werkzeug.contrib.fixers import ProxyFix
 # some helpers
 import config
 from crypto_utils import pad_key, get_hashed_password, get_salt, random_hex
-from datastore_postgres import db_export, db_update_password
+from datastore_postgres import db_export
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, NewEncryptedEntryForm
 from mailgun import send_confirmation_email, send_recovery_email
 from models import db, User, AuthToken, EncryptedEntry, Entry
+from utils.change_password import change_password
 
 
 def generate_csrf_token():
@@ -53,8 +54,10 @@ db.init_app(app)
 
 
 def get_entries():
-    return db.session.query(Entry).filter_by(
-            user_id=session['user_id']).order_by(asc(func.lower(Entry.account))).all()
+    return db.session.query(Entry)\
+        .filter_by(user_id=session['user_id'], pinned=False)\
+        .order_by(asc(func.lower(Entry.account)))\
+        .all()
 
 
 def check_auth():
@@ -463,7 +466,6 @@ def decrypt_entries(entries, key):
     for row in entries:
         obj = row.decrypt(key)
         obj["id"] = row.id
-        obj["account"] = row.account
         arr.append(obj)
     return arr
 
@@ -670,12 +672,11 @@ def update_password_api():
         msg = "Error decrypting entries. This means the old password is most likely incorrect"
         code, data = json_error(500, msg)
         return write_json(code, data)
-    status = db_update_password(
+    status = change_password(
+        db.session,
         session['user_id'],
-        session['email'],
         request.form['old_password'],
         request.form['new_password'],
-        dec_entries
     )
     if status:
         session['password'] = request.form['new_password']
