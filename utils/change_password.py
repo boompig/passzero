@@ -1,78 +1,16 @@
 from __future__ import print_function
-from argparse import ArgumentParser
-from models import Entry, User
-from sqlalchemy import create_engine, MetaData, and_
-from sqlalchemy.orm import sessionmaker
-from crypto_utils import encrypt_messages, random_bytes, get_kdf_salt, extend_key, decrypt_messages, get_hashed_password
 from Crypto.Cipher import AES
+from argparse import ArgumentParser
+from crypto_utils import encrypt_messages, random_bytes, get_kdf_salt, extend_key, get_hashed_password
+from models import Entry, User
+from sqlalchemy.orm.exc import NoResultFound
 import binascii
 import logging
-import sys
-from sqlalchemy.orm.exc import NoResultFound
-
-
-"""
-Encryption scheme works like this:
-
-we have fields ['account', 'username', 'password', 'extra']
-    OLDEST VERSION: <padding> + some other bullshit
-    OLD VERSION: reuses IV among items
-
-    NEW VERSION: uses IV to create stream cipher, then encrypts all fields in order
-        1. account
-        2. username
-        3. password
-        4. extra
-
-    Stream cipher uses IV of AES.block_size, which in pyCrypto is 16 bytes
-        - equivalent to 128-bit
-
-    Key used is generated with PBKDF2
-        - salted with 32 bytes, so 256-bit key
-
-"""
-
-
-def decrypt_old_entries(session, user_id, user_key):
-    """Return generator over list of tuples
-    item is (decrypted_entry, old entry)"""
-    results = session.query(Entry).filter_by(
-        user_id=user_id, iv=None
-    )
-    for entry in results:
-        dec_entry = decrypt_old_entry(entry, user_key)
-        yield (dec_entry, entry)
 
 
 def find_entries(session, user_id):
     return session.query(Entry).filter_by(
         user_id=user_id, pinned=False)
-
-
-def decrypt_newer_entries(session, user_id, user_key):
-    q = session.query(Entry)
-    #.filter_by(
-        #user_id = user_id, iv!=None
-    #)
-    results = q.filter(and_(Entry.user_id == user_id, Entry.iv != None))
-    for entry in results:
-        dec_entry = decrypt_old_entry(entry, user_key)
-        yield (dec_entry, entry)
-
-
-def encrypt_dec_entry(dec_entry, user_key):
-    enc_entry, iv, kdf_salt = encrypt_entry(dec_entry, user_key)
-    return {
-        "entry": enc_entry,
-        "iv": iv,
-        "kdf_salt": kdf_salt
-    }
-
-def decrypt_old_entry(entry, user_key):
-    dec_entry = entry.decrypt(user_key)
-    if "account" not in dec_entry:
-        dec_entry["account"] = entry.account
-    return dec_entry
 
 
 def base64_encode(bin_data):
@@ -82,9 +20,11 @@ def base64_encode(bin_data):
     else:
         return s
 
+
 def encrypt_entry(entry, user_key):
     """First we use a different KDF key for each entry.
-    This is equivalent to salting the entry."""
+    This is equivalent to salting the entry.
+    Return Entry object"""
     kdf_salt = get_kdf_salt(num_bytes=32)
     extended_key = extend_key(user_key, kdf_salt)
     fields = ["account", "username", "password", "extra"]
@@ -94,13 +34,16 @@ def encrypt_entry(entry, user_key):
     enc_entry = {}
     for field, enc_message in zip(fields, enc_messages):
         enc_entry[field] = base64_encode(enc_message)
-    return (enc_entry, base64_encode(iv), base64_encode(kdf_salt))
+    entry_dict = {
+        "entry": enc_entry,
+        "kdf_salt": base64_encode(kdf_salt),
+        "iv": base64_encode(iv)
+    }
+    return create_entry_from_dict(entry_dict)
 
 
-def insert_new_entry(session, entry_dict, user_id, user_key, is_pinned=False):
+def create_entry_from_dict(entry_dict):
     entry = Entry()
-    # metadata
-    entry.user_id = user_id
     # entry contents
     entry.account = entry_dict["entry"]["account"]
     entry.username = entry_dict["entry"]["username"]
@@ -111,23 +54,15 @@ def insert_new_entry(session, entry_dict, user_id, user_key, is_pinned=False):
     entry.iv = entry_dict["iv"]
     # more metadata - which encryption scheme to use to decrypt
     entry.version = 3
-    entry.pinned = is_pinned
+    entry.pinned = False
     # old information
     entry.padding = None
-    # make sure we can decrypt
-    test_decrypt_entry(user_key, entry_dict)
+    return entry
+
+
+def insert_new_entry(session, entry, user_id):
+    entry.user_id = user_id
     session.add(entry)
-
-
-def test_decrypt_entry(user_key, entry):
-    # go through the process backwards
-    fields = ["account", "username", "password", "extra"]
-    messages = [binascii.a2b_base64(entry["entry"][field]) for field in fields]
-    kdf_salt = binascii.a2b_base64(entry["kdf_salt"])
-    iv = binascii.a2b_base64(entry["iv"])
-    extended_key = extend_key(user_key, kdf_salt)
-    # TODO this does nothing
-    decrypt_messages(extended_key, iv, messages)
 
 
 def parse_args():
@@ -159,8 +94,9 @@ def create_pinned_entry(session, user_id, master_password):
         "password": "sanity",
         "extra": "sanity"
     }
-    new_entry = encrypt_dec_entry(dec_entry, master_password)
-    insert_new_entry(session, new_entry, user_id, master_password, is_pinned=True)
+    new_entry = encrypt_entry(dec_entry, master_password)
+    new_entry.pinned = True
+    insert_new_entry(session, new_entry, user_id)
 
 
 def find_user(session, user_id):
@@ -177,8 +113,8 @@ def verify_pinned_entry(session, pinned_entry, old_password):
 
 def reencrypt_entry(session, old_entry, user_id, old_password, new_password):
     dec_entry = old_entry.decrypt(old_password)
-    new_entry = encrypt_dec_entry(dec_entry, new_password)
-    insert_new_entry(session, new_entry, user_id, new_password)
+    new_entry = encrypt_entry(dec_entry, new_password)
+    insert_new_entry(session, new_entry, user_id)
     session.delete(old_entry)
 
 
