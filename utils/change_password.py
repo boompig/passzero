@@ -1,7 +1,6 @@
 from __future__ import print_function
 from argparse import ArgumentParser
 from models import Entry, User
-import ipdb
 from sqlalchemy import create_engine, MetaData, and_
 from sqlalchemy.orm import sessionmaker
 from crypto_utils import encrypt_messages, random_bytes, get_kdf_salt, extend_key, decrypt_messages, get_hashed_password
@@ -129,7 +128,6 @@ def test_decrypt_entry(user_key, entry):
     extended_key = extend_key(user_key, kdf_salt)
     # TODO this does nothing
     decrypt_messages(extended_key, iv, messages)
-    #ipdb.set_trace()
 
 
 def parse_args():

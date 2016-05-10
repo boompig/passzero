@@ -1,8 +1,8 @@
-from Crypto.Cipher import AES
 from Crypto import Random
-import random
-import hashlib
+from Crypto.Cipher import AES
 from Crypto.Protocol import KDF
+import hashlib
+import random
 
 
 def byte_to_hex(s):
