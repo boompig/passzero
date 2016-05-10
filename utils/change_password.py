@@ -213,32 +213,13 @@ def change_password(session, user_id, old_password, new_password):
         logging.info("Verified pinned entry")
         session.delete(pinned_entry)
     except NoResultFound:
-        logging.error("No pinned entry was found for user ID {}".format(
+        logging.warning("No pinned entry was found for user ID {}".format(
             user_id
         ))
-        session.rollback()
-        return False
     reencrypt_entries(session, user_id, old_password, new_password)
     change_password_in_user_table(session, user_id, new_password)
+    create_pinned_entry(session, user_id, new_password)
     session.commit()
     return True
 
-
-def get_session():
-    meta = MetaData()
-    engine = create_engine("postgres://dbkats:@localhost/dbkats")
-    meta.bind = engine
-    meta.create_all()
-    Session = sessionmaker()
-    Session.configure(bind=engine)
-    session = Session()
-    return session
-
-
-if __name__ == "__main__":
-    args = parse_args()
-    setup_logging()
-    session = get_session()
-    user_id = find_user_id(session, args.email, args.old_password)
-    change_password(session, user_id, args.old_password, args.new_password)
 
