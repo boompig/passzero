@@ -1,6 +1,5 @@
 from __future__ import print_function
 from Crypto.Cipher import AES
-from argparse import ArgumentParser
 from crypto_utils import encrypt_messages, random_bytes, get_kdf_salt, extend_key, get_hashed_password
 from models import Entry, User
 from sqlalchemy.orm.exc import NoResultFound
@@ -63,23 +62,6 @@ def create_entry_from_dict(entry_dict):
 def insert_new_entry(session, entry, user_id):
     entry.user_id = user_id
     session.add(entry)
-
-
-def parse_args():
-    parser = ArgumentParser()
-    parser.add_argument("--email", required=True)
-    parser.add_argument("--old-password", required=True)
-    parser.add_argument("--new-password", required=True)
-    return parser.parse_args()
-
-
-def find_user_id(session, email, password):
-    user = session.query(User).filter_by(email=email).one()
-    return user.id
-
-
-def setup_logging():
-    logging.basicConfig(level=logging.INFO)
 
 
 def find_pinned_entry(session, user_id):

@@ -16,7 +16,7 @@ from datastore_postgres import db_export
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, NewEncryptedEntryForm
 from mailgun import send_confirmation_email, send_recovery_email
 from models import db, User, AuthToken, EncryptedEntry, Entry
-from utils.change_password import change_password
+from utils.change_password import change_password, encrypt_entry, insert_new_entry
 
 
 def generate_csrf_token():
@@ -309,18 +309,15 @@ def new_entry_api():
         code = 200
     else:
         code, data = json_form_validation_error(form.errors)
-
     if code == 200:
-        padding = pad_key(session['password'])
-
-        entry = Entry()
-        entry.encrypt(session['password'], padding, request_data)
-
-        entry.user_id = session['user_id']
-        entry.account = request_data['account']
-        entry.padding = padding
-
-        db.session.add(entry)
+        dec_entry = {
+            "account": request_data["account"],
+            "username": request_data["username"],
+            "password": request_data["password"],
+            "extra": (request_data["extra"] or "")
+        }
+        entry = encrypt_entry(dec_entry, session["password"])
+        insert_new_entry(db.session, entry, session["user_id"])
         db.session.commit()
         code = 200
         data = { "entry_id": entry.id }
@@ -613,13 +610,20 @@ def edit_entry_api(entry_id):
         try:
             entry = db.session.query(Entry).filter_by(id=entry_id).one()
             assert entry.user_id == session['user_id']
-            padding = pad_key(session['password'])
-            entry.encrypt(session["password"], padding, request_data)
-
-            entry.account = request_data['account']
-            entry.padding = padding
-
-            db.session.add(entry)
+            dec_entry = {
+                "account": request_data["account"],
+                "username": request_data["username"],
+                "password": request_data["password"],
+                "extra": (request_data["extra"] or "")
+            }
+            # do not add e2 to session, it's just a placeholder
+            e2 = encrypt_entry(dec_entry, session["password"])
+            entry.account = e2.account
+            entry.username = e2.username
+            entry.password = e2.password
+            entry.extra = e2.extra
+            entry.iv = e2.iv
+            entry.key_salt = e2.key_salt
             db.session.commit()
             code, data = json_success(
                 "successfully edited account %s" % escape(request_data["account"])
