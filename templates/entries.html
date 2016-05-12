@@ -15,7 +15,8 @@
     {% raw %}
     <h1 class="title">PassZero Entries</h1>
     <div id="num-entries" ng-cloak>
-        You have {{ ctrl.entries.length }} {{ (entries.length === 1 ? "entry" : "entries") }}
+        <span ng-if="!ctrl.loadedEntries">Loading entries...</span>
+        <span ng-if="ctrl.loadedEntries">You have {{ ctrl.entries.length }} {{ (entries.length === 1 ? "entry" : "entries") }}</span>
     </div>
 
     <form id="search-form" ng-if="ctrl.loadedEntries && ctrl.entries.length > 0"
