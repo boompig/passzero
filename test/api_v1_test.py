@@ -2,7 +2,7 @@ from __future__ import print_function
 import json
 import unittest
 import requests
-import passzero
+from passzero import passzero
 from sqlalchemy.orm.exc import NoResultFound
 import base64
 import logging
@@ -13,35 +13,11 @@ from Crypto.Cipher import AES
 import api
 
 
-def json_post(url, data):
-    data_json = json.dumps(data)
-    headers = { "Content-Type": "application/json" }
-    return requests.post(url, data_json, verify=False,
-        headers=headers)
-
-
 def create_active_account(email, password):
     """Create account and return the user object"""
     user = passzero.create_inactive_account(email, password)
     passzero.activate_account(user)
     return user
-
-
-class PassZeroApi(object):
-    """Test version 1 of the JSON API. Use some internal methods
-    to create accounts and also to clean up after each testcase.
-    Currently uses local psql database."""
-    @staticmethod
-    def login(session, username, password):
-        data = {
-            "email": email,
-            "password": password
-        }
-        auth_response = s.post(self.base_url + "/api/login",
-            data=json.dumps(data), headers=self.json_header,
-            verify=False)
-        self.assertIsNotNone(auth_response)
-        self.assertEqual(auth_response.status_code, 200)
 
 
 class PassZeroApiTester(unittest.TestCase):

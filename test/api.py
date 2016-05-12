@@ -82,7 +82,8 @@ def get_entries_v2(session):
         headers=json_header, verify=False)
 
 
-def create_entry_v2(session, entry):
+def create_entry_v2(session, entry, token):
+    entry["csrf_token"] = token
     return session.post(base_url + "/api/v2/entries",
         data=json.dumps(entry),
         headers=json_header, verify=False)

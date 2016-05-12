@@ -11,7 +11,7 @@ from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
 import config
-from crypto_utils import pad_key, get_hashed_password, get_salt, random_hex
+from crypto_utils import get_hashed_password, get_salt, random_hex
 from datastore_postgres import db_export
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, NewEncryptedEntryForm
 from mailgun import send_confirmation_email, send_recovery_email
@@ -673,7 +673,7 @@ def update_password_api():
 
     entries = get_entries()
     try:
-        dec_entries = decrypt_entries(entries, session['password'])
+        decrypt_entries(entries, session['password'])
     except ValueError:
         msg = "Error decrypting entries. This means the old password is most likely incorrect"
         code, data = json_error(500, msg)
