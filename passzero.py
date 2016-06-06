@@ -745,9 +745,10 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 
 if __name__ == "__main__":
     db.create_all()
-
     if DEBUG:
         app.debug = True
+        assert(os.path.exists("server.crt"))
+        assert(os.path.exists("server.key"))
         app.run(port=app.config['PORT'], ssl_context=("server.crt", "server.key"))
     else:
         app.debug = False

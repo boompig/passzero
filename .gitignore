@@ -13,7 +13,7 @@ cover
 # self-signed certificate
 server.csr
 server.crt
-server.key
+server.key*
 # environment setup
 my_env.py
 # ctags
