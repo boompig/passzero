@@ -1,19 +1,14 @@
 from mock import MagicMock
-import nose
-
-from passzero.models import User 
 from passzero.backend import create_inactive_user
-
-
-SALT_SIZE = 32
+from passzero.models import User 
+import nose
 
 
 def test_authenticate_user():
     session = MagicMock()
     user_key = "fake password"
     user = create_inactive_user(
-        session, "fake email", user_key, 
-        salt_size=SALT_SIZE)
+        session, "fake email", user_key)
     assert isinstance(user, User)
     assert user.authenticate(user_key)
 

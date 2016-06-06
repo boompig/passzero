@@ -1,9 +1,17 @@
-import binascii
 from Crypto.Cipher import AES
-from crypto_utils import get_salt, encrypt_messages, random_bytes, get_kdf_salt, extend_key, get_hashed_password
-from models import Entry, User
-from sqlalchemy.sql.expression import asc
+from passzero.crypto_utils import get_salt, encrypt_messages, random_bytes, get_kdf_salt, extend_key, get_hashed_password
+from passzero.config import SALT_SIZE
+from passzero.models import AuthToken, Entry, User
 from sqlalchemy import func
+from sqlalchemy.sql.expression import asc
+import binascii
+
+
+def activate_account(db_session, user):
+    """Set the user to active and commit changes"""
+    user.active = True
+    db_session.add(user)
+    db_session.commit()
 
 
 def base64_encode(bin_data):
@@ -48,10 +56,34 @@ def create_entry_from_dict(entry_dict):
     return entry
 
 
-def create_inactive_user(session, email, password, salt_size):
+def get_account_with_email(db_session, email):
+     return db_session.query(User).filter_by(email=email).one()
+
+
+def delete_all_entries(db_session, user):
+    entries = db_session.query(Entry).filter_by(user_id=user.id).all()
+    for entry in entries:
+        db_session.delete(entry)
+    db_session.commit()
+
+
+def delete_all_auth_tokens(db_session, user):
+    auth_tokens = db_session.query(AuthToken).filter_by(user_id=user.id).all()
+    for token in auth_tokens:
+        db_session.delete(token)
+    db_session.commit()
+
+
+def delete_account(db_session, user):
+    """Delete the given user from the database."""
+    db_session.delete(user)
+    db_session.commit()
+
+
+def create_inactive_user(session, email, password):
     """Create an account which has not been activated.
     Return the user object (model)"""
-    salt = get_salt(salt_size)
+    salt = get_salt(SALT_SIZE)
     password_hash = get_hashed_password(password, salt)
     user = User()
     user.email = email

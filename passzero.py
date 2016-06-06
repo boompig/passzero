@@ -1,22 +1,20 @@
 from datetime import datetime
 from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, Response, make_response, abort
-from flask_sslify import SSLify
 from flask.ext.compress import Compress
+from flask_sslify import SSLify
 from functools import wraps
-import json
-import os
+from passzero.backend import encrypt_entry, create_inactive_user, get_entries, decrypt_entries, activate_account, get_account_with_email, delete_all_entries
+from passzero.change_password import change_password, insert_new_entry
+from passzero.crypto_utils import random_hex
+from passzero.datastore_postgres import db_export
+from passzero.forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, NewEncryptedEntryForm
+from passzero.mailgun import send_confirmation_email, send_recovery_email
+from passzero.models import db, User, AuthToken, EncryptedEntry, Entry
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.contrib.fixers import ProxyFix
-
-# some helpers
-from backend import encrypt_entry, create_inactive_user, get_entries, decrypt_entries
-import config
-from crypto_utils import random_hex
-from datastore_postgres import db_export
-from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, NewEncryptedEntryForm
-from mailgun import send_confirmation_email, send_recovery_email
-from models import db, User, AuthToken, EncryptedEntry, Entry
-from change_password import change_password, insert_new_entry
+import json
+import os
+import passzero.config as pz_config
 
 
 def generate_csrf_token():
@@ -26,14 +24,14 @@ def generate_csrf_token():
     return session["csrf_token"]
 
 
-if os.path.exists("my_env.py"):
-    from my_env import setup_env
+if os.path.exists("passzero/my_env.py"):
+    from passzero.my_env import setup_env
     setup_env()
 
 compress = Compress()
 app = Flask(__name__, static_url_path="")
 compress.init_app(app)
-app.config.from_object(config)
+app.config.from_object(pz_config)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['DUMP_FILE'] = "passzero_dump.csv"
 
@@ -214,7 +212,7 @@ def api_login():
     form = LoginForm(data=request_data)
     if form.validate():
         try:
-            user = get_account_with_email(request_data["email"])
+            user = get_account_with_email(db.session, request_data["email"])
             assert(user.active)
             if user.authenticate(request_data["password"]):
                 session["email"] = user.email
@@ -323,7 +321,7 @@ def signup_api():
     form = SignupForm(data=request_data)
     if form.validate():
         try:
-            user = get_account_with_email(request_data["email"])
+            user = get_account_with_email(db.session, request_data["email"])
         except NoResultFound:
             token = AuthToken()
             token.random_token()
@@ -461,14 +459,7 @@ def view_entries():
 
 
 def create_inactive_account(email, password):
-    return create_inactive_user(db.session, email, password, app.config["SALT_SIZE"])
-
-
-def activate_account(user):
-    """Set the user to active and commit changes"""
-    user.active = True
-    db.session.add(user)
-    db.session.commit()
+    return create_inactive_user(db.session, email, password)
 
 
 def delete_all_encrypted_entries(user):
@@ -481,30 +472,6 @@ def delete_all_encrypted_entries(user):
     except:
         session.rollback()
         raise
-
-
-def delete_all_entries(user):
-    entries = db.session.query(Entry).filter_by(user_id=user.id).all()
-    for entry in entries:
-        db.session.delete(entry)
-    db.session.commit()
-
-
-def delete_all_auth_tokens(user):
-    auth_tokens = db.session.query(AuthToken).filter_by(user_id=user.id).all()
-    for token in auth_tokens:
-        db.session.delete(token)
-    db.session.commit()
-
-
-def delete_account(user):
-    """Delete the given user from the database."""
-    db.session.delete(user)
-    db.session.commit()
-
-
-def get_account_with_email(email):
-     return db.session.query(User).filter_by(email=email).one()
 
 
 @app.route("/signup", methods=["GET"])
@@ -536,7 +503,7 @@ def confirm_signup():
             db.session.delete(token_obj)
 
             user = db.session.query(User).filter_by(id=token_obj.user_id).one()
-            activate_account(user)
+            activate_account(db.session, user)
             return redirect(url_for("post_confirm_signup"))
     except NoResultFound:
         flash("Token is invalid")
@@ -733,7 +700,7 @@ def nuke_entries_api():
         - 200: success
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    delete_all_entries(user)
+    delete_all_entries(db.session, user)
     code, data = json_success("Deleted all entries")
     return write_json(code, data)
 

@@ -1,22 +1,35 @@
 from __future__ import print_function
-import json
-import unittest
-import requests
-from passzero import passzero
+from Crypto import Random
+from Crypto.Cipher import AES
+from Crypto.Protocol import KDF
+from passzero import backend as pz_backend
+from passzero.my_env import DATABASE_URL
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 import base64
+import json
 import logging
-from Crypto import Random
-from Crypto.Protocol import KDF
-from Crypto.Cipher import AES
+import requests
+import unittest
 
 import api
+DEFAULT_EMAIL = "sample@fake.com"
+
+
+def get_db_session():
+    engine = create_engine(DATABASE_URL)
+    Session = sessionmaker(bind=engine)
+    return Session()
 
 
 def create_active_account(email, password):
-    """Create account and return the user object"""
-    user = passzero.create_inactive_account(email, password)
-    passzero.activate_account(user)
+    """Create account and return the user object.
+    Use this function instead of API because we do email verification in real API
+    """
+    db_session = get_db_session()
+    user = pz_backend.create_inactive_user(db_session, email, password)
+    pz_backend.activate_account(db_session, user)
     return user
 
 
@@ -39,13 +52,14 @@ class PassZeroApiTester(unittest.TestCase):
 
     def tearDown(self):
         # delete account with fake email
-        email = "sample@fake.com"
+        email = DEFAULT_EMAIL
         try:
-            user = passzero.get_account_with_email(email)
+            db_session = get_db_session()
+            user = pz_backend.get_account_with_email(db_session, email)
             self.assertIsNotNone(user)
-            passzero.delete_all_entries(user)
-            passzero.delete_all_auth_tokens(user)
-            passzero.delete_account(user)
+            pz_backend.delete_all_entries(db_session, user)
+            pz_backend.delete_all_auth_tokens(db_session, user)
+            pz_backend.delete_account(db_session, user)
         except NoResultFound:
             pass
 
@@ -145,26 +159,26 @@ class PassZeroApiTester(unittest.TestCase):
             self.assertEqual(login_result.status_code, 401)
 
     def test_correct_login(self):
-        email = "sample@fake.com"
+        email = DEFAULT_EMAIL
         password = "right_pass"
         # create account
-        user =create_active_account(email, password)
+        user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
-        passzero.delete_account(user)
+        db_session = get_db_session()
 
     def test_get_entries_empty(self):
-        email = "sample@fake.com"
+        email = DEFAULT_EMAIL
         password = "right_pass"
         user = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             entries = self._get_entries(s)
             assert entries == []
-        passzero.delete_account(user)
+        db_session = get_db_session()
 
     def test_create_no_csrf(self):
-        email = "sample@fake.com"
+        email = DEFAULT_EMAIL
         password = "right_pass"
         user = create_active_account(email, password)
         with requests.Session() as s:
@@ -179,10 +193,9 @@ class PassZeroApiTester(unittest.TestCase):
                 headers=self.json_header, verify=False)
             self.assertIsNotNone(entry_create_response)
             assert entry_create_response.status_code == 403
-
             entries = self._get_entries(s)
             assert entries == []
-        passzero.delete_account(user)
+        db_session = get_db_session()
 
     def test_create_and_delete_entry(self):
         email = "sample@fake.com"
@@ -203,7 +216,8 @@ class PassZeroApiTester(unittest.TestCase):
             self._delete_entry(s, entry_id, token)
             entries = self._get_entries(s)
             assert len(entries) == 0
-        passzero.delete_account(user)
+        db_session = get_db_session()
+        pz_backend.delete_account(db_session, user)
 
     def test_get_csrf_token(self):
         with requests.Session() as s:
