@@ -3,7 +3,10 @@ import nose
 
 from passzero.models import User 
 from passzero.backend import create_inactive_user
-from config import SALT_SIZE
+
+
+SALT_SIZE = 32
+
 
 def test_authenticate_user():
     session = MagicMock()
