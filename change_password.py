@@ -1,62 +1,15 @@
 from __future__ import print_function
-from Crypto.Cipher import AES
-from crypto_utils import encrypt_messages, random_bytes, get_kdf_salt, extend_key, get_hashed_password
+from crypto_utils import get_hashed_password
 from models import Entry, User
 from sqlalchemy.orm.exc import NoResultFound
-import binascii
 import logging
+
+from backend import encrypt_entry
 
 
 def find_entries(session, user_id):
     return session.query(Entry).filter_by(
         user_id=user_id, pinned=False)
-
-
-def base64_encode(bin_data):
-    s = binascii.b2a_base64(bin_data)
-    if s[-1] == "\n":
-        return s[:-1]
-    else:
-        return s
-
-
-def encrypt_entry(entry, user_key):
-    """First we use a different KDF key for each entry.
-    This is equivalent to salting the entry.
-    Return Entry object"""
-    kdf_salt = get_kdf_salt(num_bytes=32)
-    extended_key = extend_key(user_key, kdf_salt)
-    fields = ["account", "username", "password", "extra"]
-    messages = [entry[field] for field in fields]
-    iv = random_bytes(AES.block_size)
-    enc_messages = encrypt_messages(extended_key, iv, messages)
-    enc_entry = {}
-    for field, enc_message in zip(fields, enc_messages):
-        enc_entry[field] = base64_encode(enc_message)
-    entry_dict = {
-        "entry": enc_entry,
-        "kdf_salt": base64_encode(kdf_salt),
-        "iv": base64_encode(iv)
-    }
-    return create_entry_from_dict(entry_dict)
-
-
-def create_entry_from_dict(entry_dict):
-    entry = Entry()
-    # entry contents
-    entry.account = entry_dict["entry"]["account"]
-    entry.username = entry_dict["entry"]["username"]
-    entry.password = entry_dict["entry"]["password"]
-    entry.extra = entry_dict["entry"]["extra"]
-    # encryption info
-    entry.key_salt = entry_dict["kdf_salt"]
-    entry.iv = entry_dict["iv"]
-    # more metadata - which encryption scheme to use to decrypt
-    entry.version = 3
-    entry.pinned = False
-    # old information
-    entry.padding = None
-    return entry
 
 
 def insert_new_entry(session, entry, user_id):

@@ -6,17 +6,17 @@ from functools import wraps
 import json
 import os
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.sql import func, asc
 from werkzeug.contrib.fixers import ProxyFix
 
 # some helpers
+from backend import encrypt_entry, create_inactive_user, get_entries, decrypt_entries
 import config
-from crypto_utils import get_hashed_password, get_salt, random_hex
+from crypto_utils import random_hex
 from datastore_postgres import db_export
 from forms import LoginForm, SignupForm, NewEntryForm, UpdatePasswordForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, NewEncryptedEntryForm
 from mailgun import send_confirmation_email, send_recovery_email
 from models import db, User, AuthToken, EncryptedEntry, Entry
-from utils.change_password import change_password, encrypt_entry, insert_new_entry
+from change_password import change_password, insert_new_entry
 
 
 def generate_csrf_token():
@@ -51,13 +51,6 @@ else:
 
 db.app = app
 db.init_app(app)
-
-
-def get_entries():
-    return db.session.query(Entry)\
-        .filter_by(user_id=session['user_id'], pinned=False)\
-        .order_by(asc(func.lower(Entry.account)))\
-        .all()
 
 
 def check_auth():
@@ -262,7 +255,7 @@ def get_entries_api():
         - set status code 4xx
     """
     code = 200
-    entries = get_entries()
+    entries = get_entries(db.session, session["user_id"])
     dec_entries = decrypt_entries(entries, session['password'])
     data = dec_entries
     return write_json(code, data)
@@ -457,41 +450,18 @@ def post_create(account_name):
     return redirect(url_for("view_entries"))
 
 
-def decrypt_entries(entries, key):
-    """Return a list of objects representing the decrypted entries"""
-    arr = []
-    for row in entries:
-        obj = row.decrypt(key)
-        obj["id"] = row.id
-        arr.append(obj)
-    return arr
-
-
 @app.route("/view", methods=["GET"])
 def view_entries():
     if not check_auth():
         #TODO flash some kind of error here
         return redirect(url_for("login"))
-
-    entries = get_entries()
+    entries = get_entries(db.session, session["user_id"])
     dec_entries = decrypt_entries(entries, session['password'])
     return render_template("entries.html", entries=dec_entries)
 
 
 def create_inactive_account(email, password):
-    """Create an account which has not been activated.
-    Return the user object (model)"""
-    salt = get_salt(app.config['SALT_SIZE'])
-    password_hash = get_hashed_password(password, salt)
-    user = User()
-    user.email = email
-    user.password = password_hash
-    user.salt = salt
-    user.active = False
-    # necessary to get user ID
-    db.session.add(user)
-    db.session.commit()
-    return user
+    return create_inactive_user(db.session, email, password, app.config["SALT_SIZE"])
 
 
 def activate_account(user):
@@ -641,7 +611,7 @@ def edit_entry_api(entry_id):
 def edit_entry(entry_id):
     if not check_auth():
         return redirect(url_for("login"))
-    entries = get_entries()
+    entries = get_entries(db.session, session["user_id"])
     my_entries = [e for e in entries if e.id == entry_id]
     fe = decrypt_entries(my_entries, session['password'])
     if len(fe) == 0:
@@ -670,8 +640,7 @@ def update_password_api():
     if not form.validate():
         code, data = json_form_validation_error(form.errors)
         return write_json(code, data)
-
-    entries = get_entries()
+    entries = get_entries(db.session, session["user_id"])
     try:
         decrypt_entries(entries, session['password'])
     except ValueError:

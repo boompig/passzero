@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import binascii
 
 from config import TOKEN_SIZE
-from crypto_utils import get_hashed_password, extend_key, get_kdf_salt,  decrypt_password, random_hex, encrypt_field, decrypt_field, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv, decrypt_messages
+from crypto_utils import get_hashed_password, extend_key, get_kdf_salt,  decrypt_password, random_hex, encrypt_field, decrypt_field, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv, decrypt_messages, extend_key_fast
 
 db = SQLAlchemy()
 
@@ -102,6 +102,24 @@ class Entry(db.Model):
     def _decrypt_version_3(self, key):
         kdf_salt = binascii.a2b_base64(self.key_salt)
         extended_key = extend_key(key, kdf_salt)
+        iv = binascii.a2b_base64(self.iv)
+        messages = [
+            binascii.a2b_base64(self.account),
+            binascii.a2b_base64(self.username),
+            binascii.a2b_base64(self.password),
+            binascii.a2b_base64(self.extra)
+        ]
+        dec_messages = decrypt_messages(extended_key, iv, messages)
+        return {
+            "account": dec_messages[0],
+            "username": dec_messages[1],
+            "password": dec_messages[2],
+            "extra": dec_messages[3]
+        }
+
+    def _decrypt_version_4(self, key):
+        kdf_salt = binascii.a2b_base64(self.key_salt)
+        extended_key = extend_key_fast(key, kdf_salt)
         iv = binascii.a2b_base64(self.iv)
         messages = [
             binascii.a2b_base64(self.account),
