@@ -146,4 +146,5 @@ def random_hex(size):
 
 
 def get_hashed_password(password, salt):
+    password = password.encode("utf-8")
     return hashlib.sha512(password + salt).hexdigest()

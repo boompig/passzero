@@ -92,6 +92,7 @@ class Entry(db.Model):
 
     def decrypt(self, key):
         """Return a dictionary mapping fields to their decrypted values."""
+        assert key is not None
         if self.version == 1:
             return self._decrypt_version_1(key)
         elif self.version == 2:
