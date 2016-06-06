@@ -4,7 +4,7 @@
 
 ## About
 
-PassZero is a secure password manager implemented in Python. It is accessible in the browser and can be run either locally or remotely. All data can be stored in an sqlite database
+PassZero is a secure password manager implemented in Python. It is accessible in the browser and can be run either locally or remotely.
 
 PassZero is powered by the following technologies:
 
@@ -14,7 +14,6 @@ PassZero is powered by the following technologies:
 * wtforms
 * jQuery
 * Postgres
-* ~~sqlite3~~
 * pyCrypto
 * Angular.js
 
