@@ -1,9 +1,9 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from passzero.config import TOKEN_SIZE
+from passzero.crypto_utils import get_hashed_password, extend_key, get_kdf_salt,  decrypt_password, random_hex, encrypt_field, decrypt_field, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv, decrypt_messages, extend_key_fast
 import binascii
 
-from config import TOKEN_SIZE
-from crypto_utils import get_hashed_password, extend_key, get_kdf_salt,  decrypt_password, random_hex, encrypt_field, decrypt_field, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv, decrypt_messages, extend_key_fast
 
 db = SQLAlchemy()
 
