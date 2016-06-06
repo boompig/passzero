@@ -30,3 +30,7 @@ PassZero is implemented as a simple web app with results held in a database, the
 
 * run `make` to generate new build ID so caches are invalidated for old CSS and JS resources
 * deploy to server
+
+## License
+
+* GPLv3
