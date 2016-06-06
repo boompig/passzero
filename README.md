@@ -1,8 +1,11 @@
 # PassZero
 
+[![Travis Build Status](https://travis-ci.org/boompig/passzero.svg?branch=travis-test)](https://travis-ci.org/boompig/passzero)
+[![Coverage Status](https://coveralls.io/repos/github/boompig/passzero/badge.svg?branch=travis-test)](https://coveralls.io/github/boompig/passzero?branch=travis-test)
+
 ## About
 
-PassZero is a secure password manager implemented in Python. It is accessible in the browser and can be run either locally or remotely. All data can be stored in an sqlite database
+PassZero is a secure password manager implemented in Python. It is accessible in the browser and can be run either locally or remotely.
 
 PassZero is powered by the following technologies:
 
@@ -12,7 +15,6 @@ PassZero is powered by the following technologies:
 * wtforms
 * jQuery
 * Postgres
-* ~~sqlite3~~
 * pyCrypto
 * Angular.js
 
@@ -30,3 +32,7 @@ PassZero is implemented as a simple web app with results held in a database, the
 
 * run `make` to generate new build ID so caches are invalidated for old CSS and JS resources
 * deploy to server
+
+## License
+
+* GPLv3

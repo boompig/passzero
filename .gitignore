@@ -5,7 +5,10 @@
 # ignore the dump file for database
 dump.sql
 # virtualenv
-venv
+venv*
+# code coverage
+.coverage
+cover
 
 # self-signed certificate
 server.csr
