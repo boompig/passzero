@@ -1,5 +1,7 @@
 # PassZero
 
+[![Build Status](https://travis-ci.org/boompig/passzero.svg?branch=travis-test)](https://travis-ci.org/boompig/passzero)
+
 ## About
 
 PassZero is a secure password manager implemented in Python. It is accessible in the browser and can be run either locally or remotely. All data can be stored in an sqlite database
