@@ -1,7 +1,7 @@
 # PassZero
 
-[![Travis Build Status](https://travis-ci.org/boompig/passzero.svg?branch=travis-test)](https://travis-ci.org/boompig/passzero)
-[![Coverage Status](https://coveralls.io/repos/github/boompig/passzero/badge.svg?branch=travis-test)](https://coveralls.io/github/boompig/passzero?branch=travis-test)
+[![Travis Build Status](https://travis-ci.org/boompig/passzero.svg?branch=master)](https://travis-ci.org/boompig/passzero)
+[![Coverage Status](https://coveralls.io/repos/github/boompig/passzero/badge.svg?branch=master)](https://coveralls.io/github/boompig/passzero?branch=master)
 
 ## About
 
