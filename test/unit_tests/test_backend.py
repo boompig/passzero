@@ -1,5 +1,5 @@
-from backend import encrypt_entry
-from models import Entry
+from passzero.backend import encrypt_entry
+from passzero.models import Entry
 from nose.tools import assert_equal
 
 
