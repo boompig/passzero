@@ -1,4 +1,4 @@
-import StringIO
+from six import StringIO
 
 
 def db_export(session, user_id):

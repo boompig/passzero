@@ -1,10 +1,9 @@
 from __future__ import print_function
-from crypto_utils import get_hashed_password
-from models import Entry, User
+from passzero.backend import encrypt_entry
+from passzero.crypto_utils import get_hashed_password
+from passzero.models import Entry, User
 from sqlalchemy.orm.exc import NoResultFound
 import logging
-
-from backend import encrypt_entry
 
 
 def find_entries(session, user_id):

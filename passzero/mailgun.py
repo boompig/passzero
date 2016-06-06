@@ -1,3 +1,4 @@
+from __future__ import print_function
 from flask import request
 import os
 import requests
@@ -10,7 +11,7 @@ def _send_mailgun_email(email, subject, msg):
         API_KEY = "key-%s" % os.environ["MAILGUN_API_KEY"]
     except KeyError as e:
         assert e == "MAILGUN_API_KEY"
-        print "MAILGUN_API_KEY not found in env"
+        print("MAILGUN_API_KEY not found in env")
         # MAILGUN_API_KEY not in envs
         return False
     payload = {
