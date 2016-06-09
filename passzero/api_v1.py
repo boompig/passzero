@@ -193,6 +193,7 @@ def signup_api():
 
 @api_v1.route("/api/recover", methods=["POST"])
 @api_v1.route("/api/v1/recover", methods=["POST"])
+@api_v1.route("/api/v1/user/recover", methods=["POST"])
 def recover_password_api():
     """This method sends a recovery email to the user's email address.
     It does not require any authentication."""
@@ -218,6 +219,7 @@ def recover_password_api():
     return write_json(code, data)
 
 
+@api_v1.route("/api/v1/user/recover/confirm", methods=["POST"])
 @api_v1.route("/api/v1/recover/confirm", methods=["POST"])
 @api_v1.route("/recover/confirm", methods=["POST"])
 def recover_password_confirm_api():

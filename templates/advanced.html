@@ -57,7 +57,7 @@
         <div id="nuke" class="tab-pane" role="tabpanel">
             <div class="alert alert-warning"><strong>Warning</strong> This action deletes all your entries and cannot be undone</div>
             <div class="alert alert-success" id="nuke-success-msg" style="display:none;"></div>
-            <form role="form" action="{{ url_for("nuke_entries_api") }}" method="post"
+            <form role="form" action="/api/v1/entries/nuclear" method="post"
                 onsubmit="nukeEntries(event)">
                 <input type="hidden" name="csrf_token" value={{ csrf_token() }} />
                 <button type="submit" class="btn btn-danger">Nuke Entries</button>

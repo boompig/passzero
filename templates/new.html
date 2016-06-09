@@ -14,7 +14,7 @@
         <form method="POST" action="/entries/{{ e_id }}" role="form"
             onsubmit="makeEdit(event)">
     {% else %}
-        <form method="POST" action="{{ url_for('new_entry_api') }}" role="form"
+        <form method="POST" action="api/v1/entries/new" role="form"
             onsubmit="createNew(event)">
     {% endif %}
         <h3 class="title">
