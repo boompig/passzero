@@ -80,7 +80,7 @@ def delete_account(db_session, user):
     db_session.commit()
 
 
-def create_inactive_user(session, email, password):
+def create_inactive_user(db_session, email, password):
     """Create an account which has not been activated.
     Return the user object (model)"""
     salt = get_salt(SALT_SIZE)
@@ -91,8 +91,8 @@ def create_inactive_user(session, email, password):
     user.salt = salt
     user.active = False
     # necessary to get user ID
-    session.add(user)
-    session.commit()
+    db_session.add(user)
+    db_session.commit()
     return user
 
 

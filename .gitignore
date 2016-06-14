@@ -27,6 +27,7 @@ node_modules
 
 # weird Mac stuff
 .DS_Store
+.cache
 
 # Node junk
 npm-debug.log

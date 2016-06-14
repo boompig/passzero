@@ -30,7 +30,7 @@ def create_active_account(email, password):
     db_session = get_db_session()
     user = pz_backend.create_inactive_user(db_session, email, password)
     pz_backend.activate_account(db_session, user)
-    return user
+    return user, db_session
 
 
 class PassZeroApiTester(unittest.TestCase):
@@ -162,7 +162,7 @@ class PassZeroApiTester(unittest.TestCase):
         email = DEFAULT_EMAIL
         password = "right_pass"
         # create account
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
         db_session = get_db_session()
@@ -170,7 +170,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_get_entries_empty(self):
         email = DEFAULT_EMAIL
         password = "right_pass"
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             entries = self._get_entries(s)
@@ -180,7 +180,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_create_no_csrf(self):
         email = DEFAULT_EMAIL
         password = "right_pass"
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             entry = {
@@ -200,7 +200,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_create_and_delete_entry(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -216,7 +216,7 @@ class PassZeroApiTester(unittest.TestCase):
             self._delete_entry(s, entry_id, token)
             entries = self._get_entries(s)
             assert len(entries) == 0
-        db_session = get_db_session()
+        #db_session = get_db_session()
         pz_backend.delete_account(db_session, user)
 
     def test_get_csrf_token(self):
@@ -226,7 +226,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_delete_entry(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -244,7 +244,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_delete_entry_no_token(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -265,7 +265,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_delete_nonexistant_entry(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -293,7 +293,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_edit_existing_entry(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -317,7 +317,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_logout(self):
         email = "sample@fake.com"
         password = "right_pass"
-        user = create_active_account(email, password)
+        user, db_session= create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -344,7 +344,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_recover_account_valid_email(self):
         email = "sample@fake.com"
         password = "a_password"
-        user = create_active_account(email, password)
+        user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             token = self._get_csrf_token(s)
             recover_result = api.recover(s, email, token)
