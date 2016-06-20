@@ -1,5 +1,5 @@
 from __future__ import print_function
-from passzero.backend import encrypt_entry
+from passzero.backend import encrypt_entry, insert_new_entry
 from passzero.crypto_utils import get_hashed_password
 from passzero.models import Entry, User
 from sqlalchemy.orm.exc import NoResultFound
@@ -9,11 +9,6 @@ import logging
 def find_entries(session, user_id):
     return session.query(Entry).filter_by(
         user_id=user_id, pinned=False)
-
-
-def insert_new_entry(session, entry, user_id):
-    entry.user_id = user_id
-    session.add(entry)
 
 
 def find_pinned_entry(session, user_id):

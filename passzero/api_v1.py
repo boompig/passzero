@@ -1,10 +1,11 @@
 from datetime import datetime
 from flask import Blueprint, session, request, escape
 from .api_utils import requires_json_auth, requires_csrf_check, generate_csrf_token, write_json, json_form_validation_error, json_success, json_error, json_internal_error
-from .change_password import insert_new_entry, change_password
+from .change_password import change_password
 from .forms import LoginForm, NewEntryForm, SignupForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, UpdatePasswordForm
 from .backend import get_account_with_email, get_entries, decrypt_entries,\
-        encrypt_entry, create_inactive_user, delete_all_entries
+        encrypt_entry, create_inactive_user, delete_all_entries,\
+        insert_entry_for_user
 from .models import db, Entry, AuthToken, User
 from .mailgun import send_confirmation_email, send_recovery_email
 from sqlalchemy.orm.exc import NoResultFound
@@ -147,9 +148,12 @@ def new_entry_api():
             "password": request_data["password"],
             "extra": (request_data["extra"] or "")
         }
-        entry = encrypt_entry(dec_entry, session["password"])
-        insert_new_entry(db.session, entry, session["user_id"])
-        db.session.commit()
+        entry = insert_entry_for_user(
+            db_session=db.session,
+            dec_entry=dec_entry,
+            user_id=session["user_id"],
+            user_key=session["password"]
+        )
         code = 200
         data = { "entry_id": entry.id }
     return write_json(code, data)
