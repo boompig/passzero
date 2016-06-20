@@ -26,9 +26,29 @@ def _decrypt_row(row, key):
     return obj
 
 
+def decrypt_entries_pool(entry_key_pair):
+    row, key = entry_key_pair
+    result = _decrypt_row(row, key)
+    return result
+
+
+def _decrypt_entries_multiprocess(entries, key):
+    from multiprocessing import Pool
+    pool = Pool(5)
+    entry_key_pairs = [(entry, key) for entry in entries]
+    results = pool.map(decrypt_entries_pool, entry_key_pairs)
+    pool.close()
+    pool.join()
+    return results
+
+
+def _decrypt_entries_single_thread(entries, key):
+    return [_decrypt_row(row, key) for row in entries]
+
+
 def decrypt_entries(entries, key):
     """Return a list of objects representing the decrypted entries"""
-    return [_decrypt_row(row, key) for row in entries]
+    return _decrypt_entries_multiprocess(entries, key)
 
 
 def get_entries(db_session, user_id):
@@ -39,6 +59,8 @@ def get_entries(db_session, user_id):
 
 
 def create_entry_from_dict(entry_dict):
+    """Create entry from dictionary. Do not add to database or session.
+    :return: Entry"""
     entry = Entry()
     # entry contents
     entry.account = entry_dict["entry"]["account"]
@@ -94,6 +116,18 @@ def create_inactive_user(db_session, email, password):
     db_session.add(user)
     db_session.commit()
     return user
+
+
+def insert_entry_for_user(db_session, dec_entry, user_id, user_key):
+    entry = encrypt_entry(dec_entry, user_key)
+    insert_new_entry(db_session, entry, user_id)
+    db_session.commit()
+    return entry
+
+
+def insert_new_entry(session, entry, user_id):
+    entry.user_id = user_id
+    session.add(entry)
 
 
 def encrypt_entry(entry, user_key):
