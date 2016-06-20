@@ -106,9 +106,7 @@ def view_entries():
     if not check_auth():
         #TODO flash some kind of error here
         return redirect(url_for("login"))
-    entries = get_entries(db.session, session["user_id"])
-    dec_entries = decrypt_entries(entries, session['password'])
-    return render_template("entries.html", entries=dec_entries)
+    return render_template("entries.html")
 
 
 @app.route("/signup", methods=["GET"])
