@@ -13,6 +13,12 @@ PassZero is implemented as a simple web app with results held in a database, the
 
 ## Running Locally
 
+* install postgres
+    - on some platforms it may be necessary to install python bindings at the system level
+* install the following packages if not present:
+    - python-dev
+    - libssl-dev
+    - postgresql-server-dev
 * create virtualenv from requirements.txt
 * create self-signed certificate for SSL, place it at root of PassZero
 * `foreman start local`
