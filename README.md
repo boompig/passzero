@@ -32,8 +32,8 @@ PassZero is implemented as a simple web app with results held in a database, the
 
 All instructions in "running locally", as well as:
 
-- install bower
-- `bower install bower.json`
+- install nodejs and npm
+- `make install`
 
 ## Deploying
 
