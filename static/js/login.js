@@ -59,6 +59,9 @@ function login(e) {
                 secure: true,
                 expires: 7
             });
+        } else {
+            // erase the cookie
+            Cookies.remove("email");
         }
         window.location.href = "/done_login";
     }).error(function(obj, textStatus, textCode) {
@@ -79,6 +82,7 @@ function login(e) {
 $(function() {
     var email = Cookies.get("email");
     if(email) {
+        $("[name='remember']").prop("checked", true);
         $("[name='email']").val(email);
     }
 });
