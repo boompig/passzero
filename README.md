@@ -21,6 +21,8 @@ PassZero is implemented as a simple web app with results held in a database, the
     - postgresql-server-dev
 * create virtualenv from requirements.txt
 * create self-signed certificate for SSL, place it at root of PassZero
+    - instructions [here](https://stackoverflow.com/questions/10175812/how-to-create-a-self-signed-certificate-with-openssl)
+* set `DATABASE_URL` environment variable
 * `foreman start local`
 
 ## Deploying

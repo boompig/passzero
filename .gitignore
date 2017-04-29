@@ -14,6 +14,8 @@ cover
 server.csr
 server.crt
 server.key*
+*.pem
+
 # environment setup
 my_env.py
 # ctags
