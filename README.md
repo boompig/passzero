@@ -23,6 +23,7 @@ PassZero is implemented as a simple web app with results held in a database, the
 * create self-signed certificate for SSL, place it at root of PassZero
     - instructions [here](https://stackoverflow.com/questions/10175812/how-to-create-a-self-signed-certificate-with-openssl)
 * set `DATABASE_URL` environment variable
+    - alternatively create file `passzero/my_env.py` with method `setup_env` which sets above environment variable
 * `foreman start local`
 
 ## Deploying
