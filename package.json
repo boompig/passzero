@@ -1,19 +1,17 @@
 {
   "name": "passzero",
-  "version": "0.0.0",
+  "version": "0.0.4",
   "homepage": "https://github.com/boompig/passzero",
   "authors": [
     "Daniel Kats <dbkats@cs.toronto.edu>"
   ],
-  "moduleType": [
-    "amd"
-  ],
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "jquery": "~2.1.4",
-    "bootstrap": "~3.3.4",
     "angular": "~1.4.0",
-    "angular-animate": "~1.4.7"
+    "angular-animate": "~1.4.7",
+    "bootstrap": "~3.3.4",
+    "jquery": "~2.1.4",
+    "js-cookie": "^2.1.4"
   }
 }

@@ -41,7 +41,6 @@ function createAccount(e) {
         }
         $("#error-msg-container").show();
     });
-
     return false;
 }
 
@@ -51,9 +50,17 @@ function login(e) {
     var data = getFormData(e.target);
     pzAPI.login(data.email, data.password)
     .done(function(response) {
+        //console.log(data);
         console.log(response);
-        window.location.href = "/done_login";
         $("#error-msg-container").hide();
+        if(data.remember) {
+            // create a cookie on successful login
+            Cookies.set("email", data.email, {
+                secure: true,
+                expires: 7
+            });
+        }
+        window.location.href = "/done_login";
     }).error(function(obj, textStatus, textCode) {
         console.log(obj);
         if (textCode === "UNAUTHORIZED" || textCode === "BAD REQUEST") {
@@ -68,3 +75,10 @@ function login(e) {
     });
     return false;
 }
+
+$(function() {
+    var email = Cookies.get("email");
+    if(email) {
+        $("[name='email']").val(email);
+    }
+});

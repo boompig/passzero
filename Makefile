@@ -1,10 +1,14 @@
-.PHONY: all lint test build clean
+.PHONY: all install lint test build clean
 
 SRC=passzero/*.py
 JS_SRC=static/js/*.js
 UNIT_TEST_SRC=tests/unit_tests/*.py
 
 all: lint test build
+
+install:
+	npm install
+	mv node_modules static/lib
 
 build: build/add_build_name.py passzero/config.py
 	python build/add_build_name.py passzero/config.py

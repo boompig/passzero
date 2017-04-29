@@ -23,6 +23,10 @@
         <span class="form-error" id="form-error-password"></span>
         <input type="password" class="form-control" name="password" tabindex="2"
                 placeholder="password" required="true" />
+        <label for="remember">
+            <input type="checkbox" name="remember" tabindex="3" />
+            <span>Remember email</span>
+        </label>
 
         <a id="forgot-password" href="{{ url_for("recover_password") }}">Forgot Password</a>
 
