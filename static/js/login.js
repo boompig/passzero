@@ -16,6 +16,12 @@ function createAccount(e) {
     }).error(function(obj, textStatus, textCode) {
         if (textCode === "CONFLICT") {
             $("#error-msg").text("An account with this email already exists");
+        } else if (textCode === "INTERNAL SERVER ERROR") {
+            if(obj.responseJSON) {
+                $("#error-msg").text(obj.responseJSON.msg);
+            } else {
+                $("#error-msg").text("Server error");
+            }
         } else if (textCode === "BAD REQUEST") {
             var response = JSON.parse(obj.responseText);
             console.log(response);
@@ -60,6 +66,5 @@ function login(e) {
         }
         $("#error-msg-container").show();
     });
-
     return false;
 }

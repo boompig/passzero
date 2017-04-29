@@ -10,7 +10,7 @@ MAILGUN_EMAIL = "postmaster@sandbox59e35b39818642c28107668b360d1284.mailgun.org"
 def _send_mailgun_email(email, subject, msg):
     try:
         API_KEY = "key-%s" % os.environ["MAILGUN_API_KEY"]
-    except KeyError as e:
+    except KeyError:
         print("MAILGUN_API_KEY not found in env", file=sys.stderr)
         # MAILGUN_API_KEY not in envs
         return False

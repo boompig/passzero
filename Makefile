@@ -1,12 +1,21 @@
-.PHONY: all clean
+.PHONY: all lint test build clean
 
-all:
-	jshint static/js/*.js
-	pyflakes *.py
+SRC=passzero/*.py
+JS_SRC=static/js/*.js
+UNIT_TEST_SRC=tests/unit_tests/*.py
+
+all: lint test build
+
+build: build/add_build_name.py passzero/config.py
+	python build/add_build_name.py passzero/config.py
+
+test: $(SRC) $(UNIT_TEST_SRC)
 	export PYTHONPATH=$(shell pwd)
-	nosetests test/backend_correctness.py
-	nosetests test/api_v1_test.py
-	python build/add_build_name.py config.py
+	py.test $(UNIT_TEST_SRC)
+
+lint: $(SRC) $(JS_SRC)
+	jshint $(JS_SRC)
+	pyflakes $(SRC)
 
 clean:
 	rm *.pyc

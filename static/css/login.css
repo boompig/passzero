@@ -68,16 +68,16 @@ form {
     margin-right: .5em;
 }
 
-label {
-    display: none;
-}
-
 form input.form-control {
     font-size: 1.1em;
     width: 100%;
     padding: .4em .5em;
     border-radius: 5px;
     border: 1px #777 solid;
+}
+
+label input[type=checkbox], label span {
+    display: inline;
 }
 
 form button {
@@ -103,4 +103,5 @@ form button {
     margin-left: .5em;
     color: #eee;
     text-decoration: none;
+    display: block;
 }
