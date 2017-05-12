@@ -3,6 +3,7 @@
 {% block js %}
     <script src="{{ url_for("static", filename="lib/angular/angular.min.js") }}"></script>
     <script src="{{ url_for("static", filename="lib/angular-animate/angular-animate.min.js") }}"></script>
+    <script src="{{ url_for("static", filename="lib/clipboard/dist/clipboard.min.js") }}"></script>
     <script src="{{ url_for("static", filename="js/logoutTimer.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <script src="{{ url_for("static", filename="js/entries.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
@@ -41,7 +42,7 @@
                 <div class="username">{{ entry.username }}</div>
                 <div class="password hidden-toggle password-hidden"
                     ng-click="ctrl.toggleHidden(entry)">
-                    <span class="inner-password">{{ entry.password }}</span>
+                    <span class="inner-password" id="inner-password-{{ entry.id }}">{{ entry.password }}</span>
                 </div>
                 <div ng-if="entry.extra">
                     <div class="extra-container">
@@ -50,6 +51,8 @@
                     </div>
                 </div>
                 <div class="entry-panel">
+                    <button type="button" data-clipboard-target="#inner-password-{{ entry.id }}"
+                        class="btn btn-success copy-pwd-btn" data-toggle="tooltip">Copy</button>
                     <button type="button" class="btn btn-warning edit-btn"
                         ng-click="ctrl.editEntry(entry.id)">Edit</button>
                     <button type="button" class="btn btn-info show-hide-btn" onclick="showHidePass(event)">Show</button>

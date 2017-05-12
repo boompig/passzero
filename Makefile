@@ -8,7 +8,7 @@ all: lint test build
 
 install:
 	npm install
-	mv node_modules static/lib
+	cp -R node_modules/* static/lib
 
 build: build/add_build_name.py passzero/config.py
 	python build/add_build_name.py passzero/config.py

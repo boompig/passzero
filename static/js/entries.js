@@ -85,6 +85,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
     this.getEntries = function () {
         var that = this;
         $http.get("/api/entries").success(function (response) {
+            console.log("Fetched entries:");
             console.log(response);
             for (var i = 0; i < response.length; i++) {
                 that.entries.push(response[i]);
@@ -129,7 +130,30 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         }
     };
 
+    this._onClip = function(e) {
+        e.clearSelection();
+        //console.log(e.trigger);
+        var elem = $(e.trigger);
+        // create the tooltip
+        elem.tooltip({
+            "container": "body",
+            "animation": true,
+            "placement": "bottom",
+            "title": "Copied to clipboard!",
+            "trigger": "manual"
+        });
+        // activate the tooltip
+        elem.tooltip("show");
+        window.setTimeout(function() {
+            // hide the tooltip after a delay
+            elem.tooltip("hide");
+        }, 3000);
+    };
+
     this.init = function () {
+        // init clip button
+        var clipboard = new Clipboard(".copy-pwd-btn");
+        clipboard.on("success", this._onClip);
         var timer = new LogoutTimer();
         timer.startLogoutTimer();
         $("#entry-container").click(function() {
