@@ -1,6 +1,7 @@
+import logging
 import os
 
-import nose
+import pytest
 from mock import MagicMock
 from nose.tools import assert_equal
 from sqlalchemy import create_engine
@@ -11,6 +12,7 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries,
                               get_account_with_email, get_entries,
                               insert_entry_for_user)
+from passzero.change_password import change_password
 from passzero.models import Entry, User
 
 DB_FILENAME = "passzero.db"
@@ -174,5 +176,36 @@ def test_get_account_with_email():
     assert True
 
 
+def test_change_password():
+    session = create_sqlite_session()
+    old_pwd = "hello"
+    new_pwd = "world"
+    user = create_inactive_user(session, "fake@fake.com", old_pwd)
+    logging.info("Creating fkae users")
+    for i in range(10):
+        dec_entry_in = {
+            "account": "a-%d" % i,
+            "username": "u",
+            "password": "p",
+            "extra": "e"
+        }
+        insert_entry_for_user(session, dec_entry_in,
+                user.id, old_pwd)
+    enc_entries = get_entries(session, user.id)
+    logging.info("Decrypting newly created entries")
+    dec_entries = decrypt_entries(enc_entries, old_pwd)
+    assert len(dec_entries) == 10
+    logging.info("Changing password")
+    change_password(session, user.id, old_pwd, new_pwd)
+    logging.info("Password has changed")
+    enc_entries = get_entries(session, user.id)
+    dec_entries = decrypt_entries(enc_entries, new_pwd)
+    dec_entries.sort(key=lambda entry: entry["username"])
+    for i in range(len(dec_entries)):
+        for field in ["username", "password", "extra"]:
+            assert dec_entry_in[field] == dec_entries[i][field]
+
+
 if __name__ == "__main__":
-    nose.main()
+    logging.basicConfig(level=logging.INFO)
+    pytest.main()

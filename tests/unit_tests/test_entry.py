@@ -64,4 +64,3 @@ def test_encrypt_and_decrypt_entry_v1():
     dec_entry_out = entry.decrypt(user_key)
     for field in ["account", "username", "password", "extra"]:
         assert dec_entry_out[field] == dec_entry_in[field]
-

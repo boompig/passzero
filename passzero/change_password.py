@@ -23,7 +23,7 @@ def create_pinned_entry(session, user_id, master_password):
         "password": "sanity",
         "extra": "sanity"
     }
-    new_entry = encrypt_entry(dec_entry, master_password)
+    new_entry = encrypt_entry(master_password, dec_entry)
     new_entry.pinned = True
     insert_new_entry(session, new_entry, user_id)
 
@@ -42,7 +42,7 @@ def verify_pinned_entry(session, pinned_entry, old_password):
 
 def reencrypt_entry(session, old_entry, user_id, old_password, new_password):
     dec_entry = old_entry.decrypt(old_password)
-    new_entry = encrypt_entry(dec_entry, new_password)
+    new_entry = encrypt_entry(new_password, dec_entry)
     insert_new_entry(session, new_entry, user_id)
     session.delete(old_entry)
 
