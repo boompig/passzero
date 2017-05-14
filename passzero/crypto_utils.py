@@ -24,7 +24,7 @@ def pad_to_length(key, length):
     return "".join(padding)
 
 
-def pad_key(key):
+def pad_key_legacy(key):
     """Return the padding"""
     if len(key) < 16:
         return pad_to_length(key, 16)
@@ -34,6 +34,26 @@ def pad_key(key):
         return pad_to_length(key, 32)
     else:
         return None
+
+
+def encrypt_password_legacy(padded_key, password):
+    """Return encrypted password where encrypted password is a hex string"""
+
+    iv = Random.new().read(AES.block_size)
+    cipher = AES.new(padded_key, AES.MODE_CFB, iv)
+    enc_password = iv + cipher.encrypt(password)
+
+    return byte_to_hex(enc_password)
+
+
+def encrypt_field_legacy(key, salt, extra):
+    """Return encrypted hex string of extra field"""
+    actual_key = hashlib.sha256(key + salt).digest()
+    iv = Random.new().read(AES.block_size)
+    cipher = AES.new(actual_key, AES.MODE_CFB, iv)
+    enc_extra = cipher.encrypt(extra) + iv
+    hex_ciphertext = byte_to_hex(enc_extra)
+    return hex_ciphertext
 
 
 def encrypt_messages(extended_key, iv, messages):

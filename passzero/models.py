@@ -6,9 +6,10 @@ from flask_sqlalchemy import SQLAlchemy
 from passzero.config import TOKEN_SIZE
 from passzero.crypto_utils import (decrypt_field_v1, decrypt_field_v2,
                                    decrypt_messages, decrypt_password,
-                                   encrypt_messages, extend_key,
+                                   encrypt_field_legacy, encrypt_messages,
+                                   encrypt_password_legacy, extend_key,
                                    get_hashed_password, get_iv, get_kdf_salt,
-                                   hex_to_byte, random_hex)
+                                   hex_to_byte, pad_key_legacy, random_hex)
 
 from .utils import base64_encode
 
@@ -255,3 +256,18 @@ class Entry(db.Model):
         self.key_salt = base64_encode(kdf_salt)
         # old information
         self.padding = None
+
+    def encrypt_v1(self, master_key, dec_entry):
+        """
+        WARNING: This is not secure! Do not use this!
+        This is only here to satisfy the unit test for decryption of these old entries
+        If they are still alive in the database
+        """
+        self.padding = pad_key_legacy(master_key)
+        self.account = dec_entry["account"]
+        self.username = encrypt_field_legacy(master_key,
+                self.padding, dec_entry["username"])
+        self.password = encrypt_password_legacy(master_key + self.padding,
+                dec_entry["password"])
+        self.extra = encrypt_field_legacy(master_key, self.padding, dec_entry["extra"])
+        self.version = 1
