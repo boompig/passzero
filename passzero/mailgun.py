@@ -1,5 +1,6 @@
 from __future__ import print_function
 from flask import request
+import logging
 import os
 import requests
 import sys
@@ -20,11 +21,15 @@ def _send_mailgun_email(email, subject, msg):
         "subject": subject,
         "text": msg
     }
-    r = requests.post(
-        MAILGUN_URL + "/messages",
-        data=payload,
-        auth = ("api", API_KEY)
-    )
+    try:
+        r = requests.post(
+            MAILGUN_URL + "/messages",
+            data=payload,
+            auth = ("api", API_KEY)
+        )
+    except Exception as e:
+        logging.error(e)
+        return False
     return r.ok
 
 def send_recovery_email(email, token):
