@@ -1,6 +1,6 @@
 .PHONY: all install lint test live-test build clean
 
-SRC=passzero/*.py
+SRC=server.py passzero/*.py
 JS_SRC=static/js/*.js
 UNIT_TEST_SRC=tests/unit_tests/*.py
 E2E_TEST_SRC=tests/end_to_end_tests/*.py
