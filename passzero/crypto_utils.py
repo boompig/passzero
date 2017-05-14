@@ -5,12 +5,12 @@ import hashlib
 import random
 
 
-def byte_to_hex(s):
+def byte_to_hex_legacy(s):
     arr = [ord(c) for c in s]
     return ''.join('{:02x}'.format(x) for x in arr)
 
 
-def hex_to_byte(s):
+def hex_to_byte_legacy(s):
     return s.decode("hex")
 
 
@@ -42,17 +42,26 @@ def encrypt_password_legacy(padded_key, password):
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(padded_key, AES.MODE_CFB, iv)
     enc_password = iv + cipher.encrypt(password)
+    return byte_to_hex_legacy(enc_password)
 
-    return byte_to_hex(enc_password)
 
-
-def encrypt_field_legacy(key, salt, extra):
-    """Return encrypted hex string of extra field"""
+def encrypt_field_v1(key, salt, field):
+    """
+    WARNING: do not use
+    Return encrypted hex string of field"""
     actual_key = hashlib.sha256(key + salt).digest()
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(actual_key, AES.MODE_CFB, iv)
-    enc_extra = cipher.encrypt(extra) + iv
-    hex_ciphertext = byte_to_hex(enc_extra)
+    enc_field = cipher.encrypt(field) + iv
+    hex_ciphertext = byte_to_hex_legacy(enc_field)
+    return hex_ciphertext
+
+
+def encrypt_field_v2(extended_key, message, iv):
+    """Return encrypted hex string of extra field"""
+    cipher = AES.new(extended_key, AES.MODE_CFB, iv)
+    enc_msg = cipher.encrypt(message)
+    hex_ciphertext = byte_to_hex_legacy(enc_msg)
     return hex_ciphertext
 
 
@@ -101,8 +110,8 @@ def get_iv():
 
 
 def decrypt_field_v2(extended_key, hex_ciphertext, iv):
-    """Return decrypted string of extra field"""
-    ciphertext = hex_to_byte(hex_ciphertext)
+    """Return decrypted string of field"""
+    ciphertext = hex_to_byte_legacy(hex_ciphertext)
     if len(iv) < AES.block_size:
         raise TypeError("IV is too small")
     cipher = AES.new(extended_key, AES.MODE_CFB, iv)
@@ -112,7 +121,7 @@ def decrypt_field_v2(extended_key, hex_ciphertext, iv):
 
 def decrypt_field_v1(key, salt, hex_ciphertext):
     """Return decrypted string of extra field"""
-    full_ciphertext = hex_to_byte(hex_ciphertext)
+    full_ciphertext = hex_to_byte_legacy(hex_ciphertext)
     iv = full_ciphertext[-1 * AES.block_size:]
     if len(iv) < AES.block_size:
         raise TypeError("IV is too small")
@@ -123,9 +132,9 @@ def decrypt_field_v1(key, salt, hex_ciphertext):
     return dec_extra
 
 
-def decrypt_password(padded_key, hex_ciphertext):
+def decrypt_password_legacy(padded_key, hex_ciphertext):
     """Return the decrypted password"""
-    ciphertext = hex_to_byte(hex_ciphertext)
+    ciphertext = hex_to_byte_legacy(hex_ciphertext)
 
     iv = ciphertext[:AES.block_size]
     enc_password = ciphertext[AES.block_size:]

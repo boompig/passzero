@@ -4,12 +4,14 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
 from passzero.config import TOKEN_SIZE
-from passzero.crypto_utils import (decrypt_field_v1, decrypt_field_v2,
-                                   decrypt_messages, decrypt_password,
-                                   encrypt_field_legacy, encrypt_messages,
+from passzero.crypto_utils import (byte_to_hex_legacy, decrypt_field_v1,
+                                   decrypt_field_v2, decrypt_messages,
+                                   decrypt_password_legacy, encrypt_field_v1,
+                                   encrypt_field_v2, encrypt_messages,
                                    encrypt_password_legacy, extend_key,
                                    get_hashed_password, get_iv, get_kdf_salt,
-                                   hex_to_byte, pad_key_legacy, random_hex)
+                                   hex_to_byte_legacy, pad_key_legacy,
+                                   random_hex)
 
 from .utils import base64_encode
 
@@ -158,8 +160,8 @@ class Entry(db.Model):
         return self._decrypt_with_padding(key)
 
     def _decrypt_version_2(self, key):
-        key_salt = hex_to_byte(self.key_salt)
-        iv = hex_to_byte(self.iv)
+        key_salt = hex_to_byte_legacy(self.key_salt)
+        iv = hex_to_byte_legacy(self.iv)
         extended_key = extend_key(key, key_salt)
         dec_password = decrypt_field_v2(extended_key, self.password, iv)
         if self.extra:
@@ -181,7 +183,7 @@ class Entry(db.Model):
         }
 
     def _decrypt_with_padding(self, key):
-        dec_password = decrypt_password(key + self.padding, self.password)
+        dec_password = decrypt_password_legacy(key + self.padding, self.password)
         if self.extra:
             try:
                 dec_extra = decrypt_field_v1(key, self.padding, self.extra)
@@ -257,6 +259,25 @@ class Entry(db.Model):
         # old information
         self.padding = None
 
+    def encrypt_v2(self, master_key, dec_entry):
+        """
+        WARNING: This is not secure! Do not use this!
+        This is only here to satisfy the unit test for decryption of these old entries
+        If they are still alive in the database
+        """
+        if "extra" not in dec_entry:
+            dec_entry["extra"] = ""
+        key_salt = get_kdf_salt()
+        iv = get_iv()
+        extended_key = extend_key(master_key, key_salt)
+        self.account = dec_entry["account"]
+        self.username = encrypt_field_v2(extended_key, dec_entry["username"], iv)
+        self.password = encrypt_field_v2(extended_key, dec_entry["password"], iv)
+        self.extra = encrypt_field_v2(extended_key, dec_entry["extra"], iv)
+        self.key_salt = byte_to_hex_legacy(key_salt)
+        self.iv = byte_to_hex_legacy(iv)
+        self.version = 2
+
     def encrypt_v1(self, master_key, dec_entry):
         """
         WARNING: This is not secure! Do not use this!
@@ -265,9 +286,9 @@ class Entry(db.Model):
         """
         self.padding = pad_key_legacy(master_key)
         self.account = dec_entry["account"]
-        self.username = encrypt_field_legacy(master_key,
+        self.username = encrypt_field_v1(master_key,
                 self.padding, dec_entry["username"])
         self.password = encrypt_password_legacy(master_key + self.padding,
                 dec_entry["password"])
-        self.extra = encrypt_field_legacy(master_key, self.padding, dec_entry["extra"])
+        self.extra = encrypt_field_v1(master_key, self.padding, dec_entry["extra"])
         self.version = 1
