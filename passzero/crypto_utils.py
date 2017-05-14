@@ -60,7 +60,7 @@ def random_string(length):
 
 
 def get_kdf_salt(num_bytes=32):
-    return random_string(num_bytes)
+    return random_bytes(num_bytes)
 
 
 def extend_key(key, salt):
@@ -76,27 +76,11 @@ def extend_key_fast(key, salt):
     return KDF.PBKDF2(key, salt, count=1)
 
 
-def encrypt_password(padded_key, password):
-    """Return encrypted password where encrypted password is a hex string"""
-    iv = Random.new().read(AES.block_size)
-    cipher = AES.new(padded_key, AES.MODE_CFB, iv)
-    enc_password = iv + cipher.encrypt(password)
-    return byte_to_hex(enc_password)
-
-
 def get_iv():
     return Random.new().read(AES.block_size)
 
 
-def encrypt_field(extended_key, message, iv):
-    """Return encrypted hex string of extra field"""
-    cipher = AES.new(extended_key, AES.MODE_CFB, iv)
-    enc_msg = cipher.encrypt(message)
-    hex_ciphertext = byte_to_hex(enc_msg)
-    return hex_ciphertext
-
-
-def decrypt_field(extended_key, hex_ciphertext, iv):
+def decrypt_field_v2(extended_key, hex_ciphertext, iv):
     """Return decrypted string of extra field"""
     ciphertext = hex_to_byte(hex_ciphertext)
     if len(iv) < AES.block_size:
@@ -106,7 +90,7 @@ def decrypt_field(extended_key, hex_ciphertext, iv):
     return msg
 
 
-def decrypt_field_old(key, salt, hex_ciphertext):
+def decrypt_field_v1(key, salt, hex_ciphertext):
     """Return decrypted string of extra field"""
     full_ciphertext = hex_to_byte(hex_ciphertext)
     iv = full_ciphertext[-1 * AES.block_size:]

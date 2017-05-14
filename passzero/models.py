@@ -4,7 +4,7 @@ from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 
 from passzero.config import TOKEN_SIZE
-from passzero.crypto_utils import (decrypt_field, decrypt_field_old,
+from passzero.crypto_utils import (decrypt_field_v1, decrypt_field_v2,
                                    decrypt_messages, decrypt_password,
                                    encrypt_messages, extend_key,
                                    get_hashed_password, get_iv, get_kdf_salt,
@@ -160,16 +160,16 @@ class Entry(db.Model):
         key_salt = hex_to_byte(self.key_salt)
         iv = hex_to_byte(self.iv)
         extended_key = extend_key(key, key_salt)
-        dec_password = decrypt_field(extended_key, self.password, iv)
+        dec_password = decrypt_field_v2(extended_key, self.password, iv)
         if self.extra:
             try:
-                dec_extra = decrypt_field(extended_key, self.extra, iv)
+                dec_extra = decrypt_field_v2(extended_key, self.extra, iv)
             except TypeError:
                 dec_extra = self.extra
         else:
             dec_extra = ""
         try:
-            dec_username = decrypt_field(extended_key, self.username, iv)
+            dec_username = decrypt_field_v2(extended_key, self.username, iv)
         except TypeError:
             dec_username = self.username
         return {
@@ -183,13 +183,13 @@ class Entry(db.Model):
         dec_password = decrypt_password(key + self.padding, self.password)
         if self.extra:
             try:
-                dec_extra = decrypt_field_old(key, self.padding, self.extra)
+                dec_extra = decrypt_field_v1(key, self.padding, self.extra)
             except TypeError:
                 dec_extra = self.extra
         else:
             dec_extra = ""
         try:
-            dec_username = decrypt_field_old(key, self.padding, self.username)
+            dec_username = decrypt_field_v1(key, self.padding, self.username)
         except TypeError:
             dec_username = self.username
         return {
