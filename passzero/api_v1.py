@@ -1,15 +1,21 @@
 from datetime import datetime
-from flask import Blueprint, session, request, escape
-from .api_utils import requires_json_auth, requires_csrf_check, generate_csrf_token, write_json, json_form_validation_error, json_success, json_error, json_internal_error
-from .change_password import change_password
-from .forms import LoginForm, NewEntryForm, SignupForm, RecoverPasswordForm, ConfirmRecoverPasswordForm, UpdatePasswordForm
-from .backend import get_account_with_email, get_entries, decrypt_entries,\
-        encrypt_entry, create_inactive_user, delete_all_entries,\
-        insert_entry_for_user
-from .models import db, Entry, AuthToken, User
-from .mailgun import send_confirmation_email, send_recovery_email
+
+from flask import Blueprint, escape, request, session
 from sqlalchemy.orm.exc import NoResultFound
 
+from .api_utils import (generate_csrf_token, json_error,
+                        json_form_validation_error, json_internal_error,
+                        json_success, requires_csrf_check, requires_json_auth,
+                        write_json)
+from .backend import (create_inactive_user, decrypt_entries,
+                      delete_all_entries, encrypt_entry,
+                      get_account_with_email, get_entries,
+                      insert_entry_for_user)
+from .change_password import change_password
+from .forms import (ConfirmRecoverPasswordForm, LoginForm, NewEntryForm,
+                    RecoverPasswordForm, SignupForm, UpdatePasswordForm)
+from .mailgun import send_confirmation_email, send_recovery_email
+from .models import AuthToken, Entry, User, db
 
 api_v1 = Blueprint("api_v1", __name__)
 
@@ -300,7 +306,8 @@ def edit_entry_api(entry_id):
                 "extra": (request_data["extra"] or "")
             }
             # do not add e2 to session, it's just a placeholder
-            e2 = encrypt_entry(dec_entry, session["password"])
+            e2 = encrypt_entry(session["password"], dec_entry,
+                    version=entry.version)
             entry.account = e2.account
             entry.username = e2.username
             entry.password = e2.password
@@ -349,5 +356,4 @@ def update_password_api():
     else:
         code, data = json_error(401, "old password is incorrect")
     return write_json(code, data)
-
 

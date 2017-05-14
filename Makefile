@@ -1,8 +1,9 @@
-.PHONY: all install lint test build clean
+.PHONY: all install lint test live-test build clean
 
 SRC=passzero/*.py
 JS_SRC=static/js/*.js
 UNIT_TEST_SRC=tests/unit_tests/*.py
+E2E_TEST_SRC=tests/end_to_end_tests/*.py
 CWD=$(shell pwd)
 
 all: lint test build
@@ -14,12 +15,18 @@ install: package.json
 build: build/add_build_name.py passzero/config.py
 	python build/add_build_name.py passzero/config.py
 
-test: $(SRC) $(UNIT_TEST_SRC)
+test: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest $(UNIT_TEST_SRC)
+
+test-cov: $(SRC) $(UNIT_TEST_SRC) lint
+	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html $(UNIT_TEST_SRC)
+
+live-test: $(SRC) $(E2E_TEST_SRC) lint
+	PYTHONPATH=$(CWD) pytest $(E2E_TEST_SRC)
 
 lint: $(SRC) $(JS_SRC)
 	jshint $(JS_SRC)
-	pyflakes $(SRC) $(UNIT_TEST_SRC)
+	pyflakes $(SRC) $(UNIT_TEST_SRC) $(E2E_TEST_SRC)
 
 clean:
 	find . -name '*.pyc' -delete

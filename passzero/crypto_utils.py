@@ -59,7 +59,7 @@ def random_string(length):
     return Random.new().read(length)
 
 
-def get_kdf_salt(num_bytes=16):
+def get_kdf_salt(num_bytes=32):
     return random_string(num_bytes)
 
 

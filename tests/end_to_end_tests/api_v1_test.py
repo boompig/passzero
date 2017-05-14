@@ -1,19 +1,17 @@
 from __future__ import print_function
-from Crypto import Random
-from Crypto.Cipher import AES
-from Crypto.Protocol import KDF
-from passzero import backend as pz_backend
-from passzero.my_env import DATABASE_URL
+
+import json
+import unittest
+
+import requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
-import base64
-import json
-import logging
-import requests
-import unittest
 
 import api
+from passzero import backend as pz_backend
+from passzero.my_env import DATABASE_URL
+
 DEFAULT_EMAIL = "sample@fake.com"
 
 
@@ -166,6 +164,8 @@ class PassZeroApiTester(unittest.TestCase):
         with requests.Session() as s:
             self._login(s, email, password)
         db_session = get_db_session()
+        # only if test fails
+        print(db_session)
 
     def test_get_entries_empty(self):
         email = DEFAULT_EMAIL
@@ -176,6 +176,8 @@ class PassZeroApiTester(unittest.TestCase):
             entries = self._get_entries(s)
             assert entries == []
         db_session = get_db_session()
+        # only if test fails
+        print(db_session)
 
     def test_create_no_csrf(self):
         email = DEFAULT_EMAIL
@@ -196,6 +198,8 @@ class PassZeroApiTester(unittest.TestCase):
             entries = self._get_entries(s)
             assert entries == []
         db_session = get_db_session()
+        # only if test fails
+        print(db_session)
 
     def test_create_and_delete_entry(self):
         email = "sample@fake.com"
@@ -321,6 +325,8 @@ class PassZeroApiTester(unittest.TestCase):
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
+            # only if test fails
+            print(token)
             entries = self._get_entries(s)
             assert len(entries) == 0
             self._logout(s)

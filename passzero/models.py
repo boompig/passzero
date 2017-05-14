@@ -1,9 +1,16 @@
-from datetime import datetime
-from flask_sqlalchemy import SQLAlchemy
-from passzero.config import TOKEN_SIZE
-from passzero.crypto_utils import get_hashed_password, extend_key, get_kdf_salt,  decrypt_password, random_hex, encrypt_field, decrypt_field, byte_to_hex, decrypt_field_old, hex_to_byte, get_iv, decrypt_messages, extend_key_fast
 import binascii
+from datetime import datetime
 
+from flask_sqlalchemy import SQLAlchemy
+
+from passzero.config import TOKEN_SIZE
+from passzero.crypto_utils import (decrypt_field, decrypt_field_old,
+                                   decrypt_messages, decrypt_password,
+                                   encrypt_messages, extend_key,
+                                   get_hashed_password, get_iv, get_kdf_salt,
+                                   hex_to_byte, random_hex)
+
+from .utils import base64_encode
 
 db = SQLAlchemy()
 
@@ -97,30 +104,40 @@ class Entry(db.Model):
             return self._decrypt_version_1(key)
         elif self.version == 2:
             return self._decrypt_version_2(key)
-        else:
+        elif self.version == 3:
             return self._decrypt_version_3(key)
+        elif self.version == 4:
+            return self._decrypt_version_4(key)
+        else:
+            raise AssertionError("Unsupported version: {}".format(self.version))
 
-    def _decrypt_version_3(self, key):
+    def _decrypt_version_4(self, key):
+        """
+        Version 4 encrypts, sequentially, the following data:
+        - username
+        - password
+        - extra field
+        Notably, 'account' field is *not* encrypted
+        """
         kdf_salt = binascii.a2b_base64(self.key_salt)
         extended_key = extend_key(key, kdf_salt)
         iv = binascii.a2b_base64(self.iv)
         messages = [
-            binascii.a2b_base64(self.account),
             binascii.a2b_base64(self.username),
             binascii.a2b_base64(self.password),
             binascii.a2b_base64(self.extra)
         ]
         dec_messages = decrypt_messages(extended_key, iv, messages)
         return {
-            "account": dec_messages[0],
-            "username": dec_messages[1],
-            "password": dec_messages[2],
-            "extra": dec_messages[3]
+            "account": self.account,
+            "username": dec_messages[0],
+            "password": dec_messages[1],
+            "extra": dec_messages[2]
         }
 
-    def _decrypt_version_4(self, key):
+    def _decrypt_version_3(self, key):
         kdf_salt = binascii.a2b_base64(self.key_salt)
-        extended_key = extend_key_fast(key, kdf_salt)
+        extended_key = extend_key(key, kdf_salt)
         iv = binascii.a2b_base64(self.iv)
         messages = [
             binascii.a2b_base64(self.account),
@@ -182,17 +199,59 @@ class Entry(db.Model):
             "extra": dec_extra
         }
 
-    def encrypt(self, key, salt, obj, key_salt=None, iv=None):
-        if "extra" not in obj:
-            obj["extra"] = ""
-        if key_salt is None:
-            # create key salt
-            key_salt = get_kdf_salt()
-        if iv is None:
-            iv = get_iv()
-        extended_key = extend_key(key, key_salt)
-        self.username = encrypt_field(extended_key, obj["username"], iv)
-        self.password = encrypt_field(extended_key, obj["password"], iv)
-        self.extra = encrypt_field(extended_key, obj["extra"], iv)
-        self.key_salt = byte_to_hex(key_salt)
-        self.iv = byte_to_hex(iv)
+    def encrypt_v4(self, master_key, dec_entry):
+        """
+        :param master_key:  The user's key, used to derive entry-specific enc key
+        :param dec_entry:   Entry to encrypt (dictionary of fields)
+        """
+        # generate random new IV
+        iv = get_iv()
+        kdf_salt = get_kdf_salt()
+        extended_key = extend_key(master_key, kdf_salt)
+        fields = ["username", "password", "extra"]
+        messages = [dec_entry[field] for field in fields]
+        enc_messages = encrypt_messages(extended_key, iv, messages)
+        enc_entry = {}
+        for field, enc_message in zip(fields, enc_messages):
+            enc_entry[field] = base64_encode(enc_message)
+        # entry contents
+        self.account = dec_entry["account"]
+        self.username = enc_entry["username"]
+        self.password = enc_entry["password"]
+        self.extra = enc_entry["extra"]
+        # metadata - which encryption scheme to use to decrypt
+        self.version = 4
+        self.pinned = False
+        self.key_salt = base64_encode(kdf_salt)
+        self.iv = base64_encode(iv)
+        # old information
+        self.padding = None
+
+
+    def encrypt_v3(self, master_key, dec_entry):
+        """
+        :param master_key:  The user's key, used to derive entry-specific enc key
+        :param dec_entry:   Entry to encrypt (dictionary of fields)
+        """
+        # generate random new IV
+        iv = get_iv()
+        kdf_salt = get_kdf_salt()
+        extended_key = extend_key(master_key, kdf_salt)
+        fields = ["account", "username", "password", "extra"]
+        messages = [dec_entry[field] for field in fields]
+        enc_messages = encrypt_messages(extended_key, iv, messages)
+        enc_entry = {}
+        for field, enc_message in zip(fields, enc_messages):
+            enc_entry[field] = base64_encode(enc_message)
+        # entry contents
+        self.account = enc_entry["account"]
+        self.username = enc_entry["username"]
+        self.password = enc_entry["password"]
+        self.extra = enc_entry["extra"]
+        # metadata - which encryption scheme to use to decrypt
+        self.version = 3
+        self.pinned = False
+        self.iv = base64_encode(iv)
+        self.key_salt = base64_encode(kdf_salt)
+        # old information
+        self.padding = None

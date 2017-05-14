@@ -1,10 +1,9 @@
-from Crypto.Cipher import AES
-from passzero.crypto_utils import get_salt, encrypt_messages, random_bytes, get_kdf_salt, extend_key, get_hashed_password
-from passzero.config import SALT_SIZE
-from passzero.models import AuthToken, Entry, User
 from sqlalchemy import func
 from sqlalchemy.sql.expression import asc
-import binascii
+
+from passzero.config import SALT_SIZE
+from passzero.crypto_utils import get_hashed_password, get_salt
+from passzero.models import AuthToken, Entry, User
 
 
 def activate_account(db_session, user):
@@ -12,12 +11,6 @@ def activate_account(db_session, user):
     user.active = True
     db_session.add(user)
     db_session.commit()
-
-
-def base64_encode(bin_data):
-    s = binascii.b2a_base64(bin_data)
-    if s[-1] == "\n":
-        return s[:-1]
 
 
 def _decrypt_row(row, key):
@@ -58,26 +51,6 @@ def get_entries(db_session, user_id):
         .all()
 
 
-def create_entry_from_dict(entry_dict):
-    """Create entry from dictionary. Do not add to database or session.
-    :return: Entry"""
-    entry = Entry()
-    # entry contents
-    entry.account = entry_dict["entry"]["account"]
-    entry.username = entry_dict["entry"]["username"]
-    entry.password = entry_dict["entry"]["password"]
-    entry.extra = entry_dict["entry"]["extra"]
-    # encryption info
-    entry.key_salt = entry_dict["kdf_salt"]
-    entry.iv = entry_dict["iv"]
-    # more metadata - which encryption scheme to use to decrypt
-    entry.version = 3
-    entry.pinned = False
-    # old information
-    entry.padding = None
-    return entry
-
-
 def get_account_with_email(db_session, email):
      return db_session.query(User).filter_by(email=email).one()
 
@@ -97,7 +70,9 @@ def delete_all_auth_tokens(db_session, user):
 
 
 def delete_account(db_session, user):
-    """Delete the given user from the database."""
+    """Delete the given user from the database.
+    Also delete all entries associated with that user"""
+    db_session.query(Entry).filter_by(user_id=user.id).delete()
     db_session.delete(user)
     db_session.commit()
 
@@ -118,8 +93,8 @@ def create_inactive_user(db_session, email, password):
     return user
 
 
-def insert_entry_for_user(db_session, dec_entry, user_id, user_key):
-    entry = encrypt_entry(dec_entry, user_key)
+def insert_entry_for_user(db_session, dec_entry, user_id, user_key, version=4):
+    entry = encrypt_entry(user_key, dec_entry, version=version)
     insert_new_entry(db_session, entry, user_id)
     db_session.commit()
     return entry
@@ -130,25 +105,18 @@ def insert_new_entry(session, entry, user_id):
     session.add(entry)
 
 
-def encrypt_entry(entry, user_key):
-    """We use a different KDF key for each entry.
+def encrypt_entry(user_key, dec_entry, version=4):
+    """
+    A different KDF key is used for each entry.
     This is equivalent to salting the entry.
-    :param entry: A dictionary representing the decrypted entry
-    :param user_key: A string representing the user's key
-    :return: Entry object"""
-    kdf_salt = get_kdf_salt(num_bytes=32)
-    extended_key = extend_key(user_key, kdf_salt)
-    fields = ["account", "username", "password", "extra"]
-    messages = [entry[field] for field in fields]
-    iv = random_bytes(AES.block_size)
-    enc_messages = encrypt_messages(extended_key, iv, messages)
-    enc_entry = {}
-    for field, enc_message in zip(fields, enc_messages):
-        enc_entry[field] = base64_encode(enc_message)
-    entry_dict = {
-        "entry": enc_entry,
-        "kdf_salt": base64_encode(kdf_salt),
-        "iv": base64_encode(iv)
-    }
-    return create_entry_from_dict(entry_dict)
+    :param dec_entry:   A dictionary representing the decrypted entry
+    :param user_key:    A string representing the user's key
+    :return:            Entry object
+    """
+    entry = Entry()
+    if version == 4:
+        entry.encrypt_v4(user_key, dec_entry)
+    else:
+        entry.encrypt_v3(user_key, dec_entry)
+    return entry
 

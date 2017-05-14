@@ -9,6 +9,7 @@ venv*
 # code coverage
 .coverage
 cover
+htmlcov
 
 # self-signed certificate
 server.csr
