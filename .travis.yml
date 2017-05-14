@@ -6,8 +6,7 @@ install:
     - "pip install -r requirements-dev.txt"
     - "pip install coveralls"
 env:
-    - DATABASE_URL="sqlite:///passzero.db"
-    - MAILGUN_API_KEY="xxxxxxxxxxxxxxxxxxxxxxxx"
+    - DATABASE_URL="sqlite:///passzero.db" MAILGUN_API_KEY="xxxxxxxxxxxxxxxxxxxxxxxx"
 script: "PYTHONPATH=. py.test tests/unit_tests --cov=passzero"
 after_success:
     - coveralls
