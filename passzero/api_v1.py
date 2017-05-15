@@ -8,7 +8,7 @@ from .api_utils import (generate_csrf_token, json_error,
                         json_form_validation_error, json_internal_error,
                         json_success, requires_csrf_check, requires_json_auth,
                         requires_json_form_validation, write_json)
-from .change_password import change_password
+from . import change_password
 from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm, LoginForm,
                     NewEntryForm, RecoverPasswordForm, SignupForm,
                     UpdatePasswordForm)
@@ -176,6 +176,7 @@ def signup_api(request_data):
             token.user_id = user.id;
             # now add token
             db.session.add(token)
+            change_password.create_pinned_entry(db.session, user.id, request_data["password"])
             db.session.commit()
             code, data = json_success(
                 "Successfully created account with email %s" % request_data['email']
@@ -359,7 +360,7 @@ def update_password_api(request_data):
         msg = "Error decrypting entries. This means the old password is most likely incorrect"
         code, data = json_error(500, msg)
         return write_json(code, data)
-    status = change_password(
+    status = change_password.change_password(
         db.session,
         user_id=session['user_id'],
         old_password=request_data['old_password'],
