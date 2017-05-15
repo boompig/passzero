@@ -1,61 +1,31 @@
-from .api_utils import requires_json_auth, requires_csrf_check, write_json, json_form_validation_error, json_success, json_error
-from .forms import NewEncryptedEntryForm
-from .models import db, EncryptedEntry
-from flask import Blueprint, request, session
+from flask import Blueprint, session
 from sqlalchemy.orm.exc import NoResultFound
 
+from . import backend
+from .api_utils import json_error, requires_json_auth, write_json
+from .models import Entry, db
 
 api_v2 = Blueprint("api_v2", __name__)
-
-
-@api_v2.route("/api/v2/entries", methods=["POST"])
-@api_v2.route("/api/entries/cse", methods=["POST"])
-@requires_json_auth
-@requires_csrf_check
-def api_new_entry():
-    request_data = request.get_json()
-    form = NewEncryptedEntryForm(data=request_data)
-    if form.validate():
-        enc_entry = EncryptedEntry()
-        enc_entry.account = request_data["account"]
-        enc_entry.username = request_data["username"]
-        enc_entry.password = request_data["password"]
-        enc_entry.extra = request_data["extra"]
-        enc_entry.key_salt = request_data["key_salt"]
-        enc_entry.iv = request_data["iv"]
-        enc_entry.user_id = session["user_id"]
-        db.session.add(enc_entry)
-        db.session.commit()
-        result_data = { "entry_id": enc_entry.id }
-        code = 200
-    else:
-        code, result_data = json_form_validation_error(form.errors)
-    return write_json(code, result_data)
-
 
 @api_v2.route("/api/v2/entries", methods=["GET"])
 @requires_json_auth
 def api_get_entries():
-    entries = db.session.query(EncryptedEntry).filter_by(
-            user_id=session['user_id']).all()
+    entries = db.session.query(Entry)\
+        .filter_by(user_id=session["user_id"], pinned=False)\
+        .all()
     l = [entry.to_json() for entry in entries]
     return write_json(200, l)
 
 
-@api_v2.route("/api/v2/entries/<int:entry_id>", methods=["DELETE"])
+@api_v2.route("/api/v2/entries/<int:entry_id>", methods=["GET"])
 @requires_json_auth
-@requires_csrf_check
-def api_delete_entry(entry_id):
+def api_get_entry(entry_id):
+    code = 200
     try:
-        entry = db.session.query(EncryptedEntry).filter_by(id=entry_id).one()
-        assert entry.user_id == session['user_id']
-        db.session.delete(entry)
-        db.session.commit()
-        code, data = json_success("successfully deleted entry with ID %d" % entry_id)
+        entry = db.session.query(Entry)\
+            .filter_by(id=entry_id, user_id=session["user_id"], pinned=False)\
+            .one()
+        data = backend._decrypt_row(entry, session["password"])
     except NoResultFound:
-        code, data = json_error(400, "no such entry")
-    except AssertionError:
-        code, data = json_error(400, "the given entry does not belong to you")
+        code, data = json_error(400, "no such entry or the entry does not belong to you")
     return write_json(code, data)
-
-
