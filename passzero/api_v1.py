@@ -1,11 +1,11 @@
 from datetime import datetime
 
-from flask import Blueprint, escape, request, session
+from flask import Blueprint, escape, session
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend
 from .api_utils import (generate_csrf_token, json_error,
-                        json_form_validation_error, json_internal_error,
+                        json_internal_error,
                         json_success, requires_csrf_check, requires_json_auth,
                         requires_json_form_validation, write_json)
 from . import change_password
@@ -40,7 +40,8 @@ def api_logout():
 
 @api_v1.route("/api/login", methods=["POST"])
 @api_v1.route("/api/v1/login", methods=["POST"])
-def api_login():
+@requires_json_form_validation(LoginForm)
+def api_login(request_data):
     """Try to log in using JSON post data.
     Respond with JSON data and set HTTP status code.
     On success:
@@ -51,34 +52,29 @@ def api_login():
     On error:
         - return 4xx code and error msg in JSON
     """
-    request_data = request.get_json()
-    form = LoginForm(data=request_data)
-    if form.validate():
-        try:
-            user = backend.get_account_with_email(db.session, request_data["email"])
-            assert(user.active)
-            if user.authenticate(request_data["password"]):
-                session["email"] = user.email
-                session["password"] = request_data["password"]
-                session["user_id"] = user.id
-                # write into last_login
-                user.last_login = datetime.utcnow()
-                db.session.add(user)
-                db.session.commit()
-                # craft message to return to user
-                msg = "successfully logged in as {email}".format(
-                    email = escape(session["email"])
-                )
-                code, data = json_success(msg)
-            else:
-                code, data = json_error(401, "Either the email or password is incorrect")
-        except NoResultFound:
-            code, data = json_error(401, "There is no account with that email")
-        except AssertionError:
-            code, data = json_error(401,
-                "The account has not been activated. Check your email!")
-    else:
-        code, data = json_form_validation_error(form.errors)
+    try:
+        user = backend.get_account_with_email(db.session, request_data["email"])
+        assert(user.active)
+        if user.authenticate(request_data["password"]):
+            session["email"] = user.email
+            session["password"] = request_data["password"]
+            session["user_id"] = user.id
+            # write into last_login
+            user.last_login = datetime.utcnow()
+            db.session.add(user)
+            db.session.commit()
+            # craft message to return to user
+            msg = "successfully logged in as {email}".format(
+                email = escape(session["email"])
+            )
+            code, data = json_success(msg)
+        else:
+            code, data = json_error(401, "Either the email or password is incorrect")
+    except NoResultFound:
+        code, data = json_error(401, "There is no account with that email")
+    except AssertionError:
+        code, data = json_error(401,
+            "The account has not been activated. Check your email!")
     return write_json(code, data)
 
 
@@ -222,64 +218,57 @@ def confirm_signup_api(request_data):
 @api_v1.route("/api/recover", methods=["POST"])
 @api_v1.route("/api/v1/recover", methods=["POST"])
 @api_v1.route("/api/v1/user/recover", methods=["POST"])
-def recover_password_api():
+@requires_json_form_validation(RecoverPasswordForm)
+def recover_password_api(request_data):
     """This method sends a recovery email to the user's email address.
     It does not require any authentication."""
-    request_data = request.get_json()
-    form = RecoverPasswordForm(data=request_data)
-    if form.validate():
-        try:
-            user = db.session.query(User).filter_by(email=request_data['email']).one()
-            # send a reset token to the email
-            token = AuthToken()
-            token.user_id = user.id
-            token.random_token()
-            db.session.add(token)
-            db.session.commit()
-            if send_recovery_email(user.email, token.token):
-                code, data = json_success("Recovery email sent to your email address")
-            else:
-                code, data = json_internal_error("internal server error")
-        except NoResultFound:
-            code, data = json_error(401, "no such email")
-    else:
-        code, data = json_form_validation_error(form.errors)
+    try:
+        user = db.session.query(User).filter_by(email=request_data['email']).one()
+        # send a reset token to the email
+        token = AuthToken()
+        token.user_id = user.id
+        token.random_token()
+        db.session.add(token)
+        db.session.commit()
+        if send_recovery_email(user.email, token.token):
+            code, data = json_success("Recovery email sent to your email address")
+        else:
+            code, data = json_internal_error("Failed to send email")
+    except NoResultFound:
+        code, data = json_error(401, "no such email")
     return write_json(code, data)
 
 
 @api_v1.route("/api/v1/user/recover/confirm", methods=["POST"])
 @api_v1.route("/api/v1/recover/confirm", methods=["POST"])
 @api_v1.route("/recover/confirm", methods=["POST"])
-def recover_password_confirm_api():
+@requires_json_form_validation(ConfirmRecoverPasswordForm)
+def recover_password_confirm_api(request_data):
     """This is the API that is hit by a link from an email.
     Check the token that is sent with the email, then nuke all the entries.
     Return JSON. HTTP status codes indicate success or failure.
     """
-    form = ConfirmRecoverPasswordForm(request.form)
-    if form.validate():
-        token = db.session.query(AuthToken).filter_by(token=request.form['token']).one()
-        if token.is_expired():
-            # delete old token
-            db.session.delete(token)
-            db.session.commit()
-            # return error via JSON
-            code, data = json_error(400, "token has expired")
-        else:
-            user = db.session.query(User).filter_by(id=token.user_id).one()
-            # 1) change the user's password
-            user.change_password(request.form['password'])
-            # 2) activate user's account, if not already active
-            user.active = True
-            all_entries = db.session.query(Entry).filter_by(user_id=token.user_id).all()
-            # 2) delete all user's entries
-            for entry in all_entries:
-                db.session.delete(entry)
-            # 3) delete the token used to make this change
-            db.session.delete(token)
-            db.session.commit()
-            code, data = json_success("successfully changed password")
+    token = db.session.query(AuthToken).filter_by(token=request_data['token']).one()
+    if token.is_expired():
+        # delete old token
+        db.session.delete(token)
+        db.session.commit()
+        # return error via JSON
+        code, data = json_error(400, "token has expired")
     else:
-        code, data = json_form_validation_error(form.errors)
+        user = db.session.query(User).filter_by(id=token.user_id).one()
+        # 1) change the user's password
+        user.change_password(request_data['password'])
+        # 2) activate user's account, if not already active
+        user.active = True
+        all_entries = db.session.query(Entry).filter_by(user_id=token.user_id).all()
+        # 2) delete all user's entries
+        for entry in all_entries:
+            db.session.delete(entry)
+        # 3) delete the token used to make this change
+        db.session.delete(token)
+        db.session.commit()
+        code, data = json_success("successfully changed password")
     return write_json(code, data)
 
 
@@ -306,40 +295,36 @@ def nuke_entries_api():
 @api_v1.route("/entries/<int:entry_id>", methods=["POST"])
 @requires_json_auth
 @requires_csrf_check
-def edit_entry_api(entry_id):
-    request_data = request.get_json()
-    form = NewEntryForm(data=request_data)
-    if not form.validate():
-        code, data = json_form_validation_error(form.errors)
-    else:
-        code = 200
-        data = {}
-        try:
-            entry = db.session.query(Entry).filter_by(id=entry_id).one()
-            assert entry.user_id == session['user_id']
-            dec_entry = {
-                "account": request_data["account"],
-                "username": request_data["username"],
-                "password": request_data["password"],
-                "extra": (request_data["extra"] or "")
-            }
-            # do not add e2 to session, it's just a placeholder
-            e2 = backend.encrypt_entry(session["password"], dec_entry,
-                    version=entry.version)
-            entry.account = e2.account
-            entry.username = e2.username
-            entry.password = e2.password
-            entry.extra = e2.extra
-            entry.iv = e2.iv
-            entry.key_salt = e2.key_salt
-            db.session.commit()
-            code, data = json_success(
-                "successfully edited account %s" % escape(request_data["account"])
-            )
-        except NoResultFound:
-            code, data = json_error(400, "no such entry")
-        except AssertionError:
-            code, data = json_error(400, "the given entry does not belong to you")
+@requires_json_form_validation(NewEntryForm)
+def edit_entry_api(request_data, entry_id):
+    code = 200
+    data = {}
+    try:
+        entry = db.session.query(Entry).filter_by(id=entry_id).one()
+        assert entry.user_id == session['user_id']
+        dec_entry = {
+            "account": request_data["account"],
+            "username": request_data["username"],
+            "password": request_data["password"],
+            "extra": (request_data["extra"] or "")
+        }
+        # do not add e2 to session, it's just a placeholder
+        e2 = backend.encrypt_entry(session["password"], dec_entry,
+                version=entry.version)
+        entry.account = e2.account
+        entry.username = e2.username
+        entry.password = e2.password
+        entry.extra = e2.extra
+        entry.iv = e2.iv
+        entry.key_salt = e2.key_salt
+        db.session.commit()
+        code, data = json_success(
+            "successfully edited account %s" % escape(request_data["account"])
+        )
+    except NoResultFound:
+        code, data = json_error(400, "no such entry")
+    except AssertionError:
+        code, data = json_error(400, "the given entry does not belong to you")
     return write_json(code, data)
 
 

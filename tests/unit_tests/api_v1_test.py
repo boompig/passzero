@@ -122,7 +122,7 @@ class PassZeroApiTester(unittest.TestCase):
         #TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
         email = DEFAULT_EMAIL
-        r = self.signup(email, password)
+        r = api.signup(self.app, email, password)
         print(r.data)
         # only printed on error
         assert r.status_code == 200
@@ -130,12 +130,12 @@ class PassZeroApiTester(unittest.TestCase):
         token = m1.call_args[0][2].split("?")[1].replace("token=", "")
         # link = m1.call_args[0][2][m1.call_args[0][2].index("http://"):]
         # activate
-        r = self.activate_account(token)
+        r = api.activate_account(self.app, token)
         print(r.data)
         assert r.status_code == 200
-        r = api.login(self.app, email, password)
-        print(r.data)
-        assert r.status_code == 200
+        # r = api.login(self.app, email, password)
+        # print(r.data)
+        # assert r.status_code == 200
 
     def test_get_entries_empty(self):
         email = DEFAULT_EMAIL
@@ -232,3 +232,61 @@ class PassZeroApiTester(unittest.TestCase):
         entries = api.get_entries(self.app)
         assert len(entries) == 1
         self._check_entries_equal(entry, entries[0])
+
+    def test_logout(self):
+        email = DEFAULT_EMAIL
+        password = "old_password"
+        self._create_active_account(email, password)
+        api.login(self.app, email, password)
+        api.logout(self.app)
+        r = api.get_entries(self.app, check_status=False)
+        # should not be able to get entries
+        assert r.status_code == 401
+
+    @mock.patch("passzero.mailgun.send_email")
+    def test_recover_account_valid_email(self, m1):
+        email = DEFAULT_EMAIL
+        old_password = "a_password"
+        self._create_active_account(email, old_password)
+        api.login(self.app, email, old_password)
+        # create an entry
+        entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+        }
+        csrf_token = api.get_csrf_token(self.app)
+        api.create_entry(self.app, entry, csrf_token)
+        entries = api.get_entries(self.app)
+        assert len(entries) == 1
+        # recover the account
+        csrf_token = api.get_csrf_token(self.app)
+        recover_result = api.recover_account(self.app, email, csrf_token)
+        assert recover_result.status_code == 200
+        recovery_token = m1.call_args[0][2].split("?")[1].replace("token=", "")
+        print("got recovery token from email: %s" % recovery_token)
+        csrf_token = api.get_csrf_token(self.app)
+        new_password = "this is my new password"
+        r = api.recover_account_confirm(
+            self.app,
+            recovery_token=recovery_token,
+            csrf_token=csrf_token,
+            password=new_password
+        )
+        assert r.status_code == 200
+        # check that you can't do anything here, and that no weird errors trigger
+        entries = api.get_entries(self.app)
+        assert entries == []
+        # now test login
+        api.logout(self.app)
+        # fail to login with old credentials
+        r = api.login(self.app, email, old_password, check_status=False)
+        print(r.data)
+        assert r.status_code == 401
+        # login with new credentials
+        r = api.login(self.app, email, new_password)
+        assert r.status_code == 200
+        # make sure all old entries deleted
+        entries = api.get_entries(self.app)
+        assert len(entries) == 0

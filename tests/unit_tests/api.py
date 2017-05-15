@@ -30,11 +30,14 @@ def get_csrf_token(app):
     return token
 
 
-def get_entries(app):
+def get_entries(app, check_status=True):
     r = app.get("/api/entries",
         headers=json_header, follow_redirects=True)
-    assert r.status_code == 200
-    return json.loads(r.data)
+    if check_status:
+        assert r.status_code == 200
+        return json.loads(r.data)
+    else:
+        return r
 
 
 def create_entry(app, entry, token):
@@ -82,14 +85,39 @@ def signup(app, email, password):
         headers=json_header, follow_redirects=True)
 
 
-def recover(app, email, token):
-    url = "/api/recover"
+def recover_account(app, email, csrf_token):
+    url = "/api/v1/user/recover"
     data = {
         "email": email,
-        "csrf_token": token
+        "csrf_token": csrf_token
     }
-    return app.post(url,
+    r = app.post(url,
         data=json.dumps(data),
+        headers=json_header, follow_redirects=True)
+    print(r.data)
+    assert r.status_code == 200
+    return r
+
+
+def recover_account_confirm(app, password, recovery_token, csrf_token):
+    url = "/api/v1/user/recover/confirm"
+    data = {
+        "password": password,
+        "confirm_password": password,
+        "csrf_token": csrf_token,
+        "token": recovery_token
+    }
+    r = app.post(url,
+        data=json.dumps(data),
+        headers=json_header, follow_redirects=True)
+    print(r.data)
+    assert r.status_code == 200
+    return r
+
+
+def activate_account(app, token):
+    return app.post("/api/v1/signup/confirm",
+        data=json.dumps({"token": token}),
         headers=json_header, follow_redirects=True)
 
 
