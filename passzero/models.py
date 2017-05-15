@@ -100,6 +100,18 @@ class Entry(db.Model):
     def __repr__(self):
         return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
 
+    def to_json(self):
+        """
+        :return             All fields of the entry, some possibly still encrypted
+        """
+        return {
+            "id": self.id,
+            "account": self.account,
+            "username": self.username,
+            "password": self.password,
+            "extra": self.extra,
+        }
+
     def decrypt(self, key):
         """Return a dictionary mapping fields to their decrypted values."""
         assert key is not None

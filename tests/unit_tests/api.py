@@ -140,34 +140,26 @@ def update_user_password(app, old_password, new_password, csrf_token):
 
 #### v2 API starts here
 
+def get_json(app, url):
+    return app.get(
+        url,
+        headers=json_header,
+        follow_redirects=True
+    )
+
+
 def get_entries_v2(app):
-    return app.get("/api/v2/entries",
-        headers=json_header, follow_redirects=True)
+    r = get_json(app, "/api/v2/entries")
+    assert r.status_code == 200
+    print(r.data)
+    return json.loads(r.data)
 
 
-def create_entry_v2(app, entry, token):
-    entry["csrf_token"] = token
-    return app.post("/api/v2/entries",
-        data=json.dumps(entry),
-        headers=json_header, follow_redirects=True)
-
-
-def delete_entry_v2(app, entry_id, token):
-    url = "/api/v2/entries/{}?csrf_token={}".format(
-        entry_id, token)
-    return app.delete(url,
-        headers=json_header, follow_redirects=True)
-
-
-def get_login_salt(app, email):
-    url = "/api/v2/login_key_salt?email=%s" % email
-    return app.get(url,
-        headers=json_header, follow_redirects=True)
-
-
-def login_v2(app, email, extended_key):
-    url = "/api/v2/login"
-    data = { "email": email, "extended_key": extended_key }
-    return app.post(url,
-        data=json.dumps(data),
-        headers=json_header, follow_redirects=True)
+def get_entry_v2(app, entry_id, check_status=True):
+    r = get_json(app, "/api/v2/entries/{}".format(entry_id))
+    if check_status:
+        assert r.status_code == 200
+        print(r.data)
+        return json.loads(r.data)
+    else:
+        return r

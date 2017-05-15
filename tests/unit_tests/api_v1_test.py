@@ -1,15 +1,14 @@
-# from __future__ import print_function
+from __future__ import print_function
 
 import json
-# import os
-# import tempfile
-import mock
-import unittest
 import logging
+import unittest
 
-from passzero.models import db
-from passzero.api_v1 import api_v1
+import mock
 from flask import Flask
+
+from passzero.api_v1 import api_v1
+from passzero.models import db
 
 from . import api
 
@@ -17,8 +16,6 @@ app = Flask(__name__)
 app.secret_key = 'foo'
 app.register_blueprint(api_v1, prefix="")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
-# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///passzero.db"
-# app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://daniel_kats:daniel_kats@localhost:5432/passzero"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 DEFAULT_EMAIL = "sample@fake.com"
@@ -121,7 +118,6 @@ class PassZeroApiTester(unittest.TestCase):
         # signup, etc etc
         #TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
-        email = DEFAULT_EMAIL
         r = api.signup(self.app, email, password)
         print(r.data)
         # only printed on error
