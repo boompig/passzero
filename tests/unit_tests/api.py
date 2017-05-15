@@ -3,20 +3,21 @@ json_header = { "Content-Type": "application/json" }
 
 ### v1 API starts here
 
-def login(app, email, password):
+def login(app, email, password, check_status=True):
     data={
         "email": email,
         "password": password
     }
-    r = app.post( "/api/login",
+    r = app.post("/api/login",
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
-    assert r.status_code == 200
+    if check_status:
+        assert r.status_code == 200
     return r
 
 
 def logout(app):
-    return app.post( "/api/logout",
+    return app.post("/api/logout",
         headers=json_header, follow_redirects=True)
 
 
@@ -30,16 +31,19 @@ def get_csrf_token(app):
 
 
 def get_entries(app):
-    r = app.get( "/api/entries",
+    r = app.get("/api/entries",
         headers=json_header, follow_redirects=True)
     assert r.status_code == 200
     return json.loads(r.data)
 
 
 def create_entry(app, entry, token):
+    """
+    :return entry_id:       The entry ID of the newly created entry
+    """
     data = entry
     data["csrf_token"] = token
-    r = app.post( "/api/entries/new",
+    r = app.post("/api/entries/new",
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
     print(r.data)
@@ -77,6 +81,7 @@ def signup(app, email, password):
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
 
+
 def recover(app, email, token):
     url = "/api/recover"
     data = {
@@ -87,16 +92,34 @@ def recover(app, email, token):
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
 
+
+def update_user_password(app, old_password, new_password, csrf_token):
+    url = "/api/v1/user/password"
+    data = {
+        "csrf_token": csrf_token,
+        "old_password": old_password,
+        "new_password": new_password,
+        "confirm_new_password": new_password
+    }
+    r = app.put(url,
+        data=json.dumps(data),
+        headers=json_header,
+        follow_redirects=True)
+    print(r.data)
+    assert r.status_code == 200
+    return r
+
+
 #### v2 API starts here
 
 def get_entries_v2(app):
-    return app.get( "/api/v2/entries",
+    return app.get("/api/v2/entries",
         headers=json_header, follow_redirects=True)
 
 
 def create_entry_v2(app, entry, token):
     entry["csrf_token"] = token
-    return app.post( "/api/v2/entries",
+    return app.post("/api/v2/entries",
         data=json.dumps(entry),
         headers=json_header, follow_redirects=True)
 

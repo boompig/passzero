@@ -7,7 +7,7 @@ dump.sql
 # virtualenv
 venv*
 # code coverage
-.coverage
+.coverage*
 cover
 htmlcov
 

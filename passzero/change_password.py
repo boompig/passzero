@@ -1,9 +1,12 @@
 from __future__ import print_function
+
+import logging
+
+from sqlalchemy.orm.exc import NoResultFound
+
 from passzero.backend import encrypt_entry, insert_new_entry
 from passzero.crypto_utils import get_hashed_password
 from passzero.models import Entry, User
-from sqlalchemy.orm.exc import NoResultFound
-import logging
 
 
 def find_entries(session, user_id):
@@ -69,6 +72,7 @@ def change_password(session, user_id, old_password, new_password):
     user = find_user(session, user_id)
     hashed_password = get_hashed_password(old_password, user.salt)
     if hashed_password != user.password:
+        logging.debug("[change_password] Hashed password is not the same as user password")
         session.rollback()
         return False
     # do sanity decryption
@@ -86,5 +90,4 @@ def change_password(session, user_id, old_password, new_password):
     create_pinned_entry(session, user_id, new_password)
     session.commit()
     return True
-
 

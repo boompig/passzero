@@ -25,9 +25,12 @@ DEFAULT_EMAIL = "sample@fake.com"
 
 
 class PassZeroApiTester(unittest.TestCase):
-    # @property
-    # def entry_fields(self):
-        # return ["account", "username", "password", "extra"]
+    def _check_entries_equal(self, e1, e2):
+        entry_fields = ["account", "username", "password", "extra"]
+        for field in entry_fields:
+            assert field in e1
+            assert field in e2
+            assert e1[field] == e2[field]
 
     @property
     def json_header(self):
@@ -99,7 +102,7 @@ class PassZeroApiTester(unittest.TestCase):
         r = self.activate_account(token)
         print(r.data)
         assert r.status_code == 200
-        r = self.login(email, password)
+        r = api.login(self.app, email, password)
         print(r.data)
         assert r.status_code == 200
 
@@ -108,7 +111,7 @@ class PassZeroApiTester(unittest.TestCase):
         assert isinstance(token, str) or isinstance(token, unicode)
 
     def test_login_invalid_account(self):
-        r = self.login(DEFAULT_EMAIL, "world")
+        r = api.login(self.app, DEFAULT_EMAIL, "world", check_status=False)
         # only printed on error
         print(r.data)
         assert r.status_code == 401
@@ -119,7 +122,6 @@ class PassZeroApiTester(unittest.TestCase):
         #TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
         email = DEFAULT_EMAIL
-        password = "fake password"
         r = self.signup(email, password)
         print(r.data)
         # only printed on error
@@ -131,7 +133,7 @@ class PassZeroApiTester(unittest.TestCase):
         r = self.activate_account(token)
         print(r.data)
         assert r.status_code == 200
-        r = self.login(email, password)
+        r = api.login(self.app, email, password)
         print(r.data)
         assert r.status_code == 200
 
@@ -182,4 +184,51 @@ class PassZeroApiTester(unittest.TestCase):
         entries = api.get_entries(self.app)
         assert len(entries) == 0
 
+    def test_edit_existing_entry(self):
+        email = DEFAULT_EMAIL
+        password = "right_pass"
+        self._create_active_account(email, password)
+        self.login(email, password)
+        create_token = api.get_csrf_token(self.app)
+        entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+        }
+        entry_id = api.create_entry(self.app, entry, create_token)
+        entry["account"] = "new account"
+        entry["username"] = "new_username"
+        entry["password"] = "new_password"
+        entry["extra"] = "new extra"
+        edit_token = api.get_csrf_token(self.app)
+        api.edit_entry(self.app, entry_id, entry, edit_token)
+        entries = api.get_entries(self.app)
+        assert len(entries) == 1
+        self._check_entries_equal(entry, entries[0])
 
+    def test_change_master_password(self):
+        email = DEFAULT_EMAIL
+        password = "old_password"
+        self._create_active_account(email, password)
+        self.login(email, password)
+        create_token = api.get_csrf_token(self.app)
+        entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+        }
+        api.create_entry(self.app, entry, create_token)
+        token = api.get_csrf_token(self.app)
+        assert token != create_token
+        r = api.update_user_password(
+            self.app,
+            csrf_token=token,
+            old_password=password,
+            new_password="a NEW very long and complicated password 7892384*$@*(!@"
+        )
+        print(r.data)
+        entries = api.get_entries(self.app)
+        assert len(entries) == 1
+        self._check_entries_equal(entry, entries[0])

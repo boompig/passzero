@@ -342,18 +342,16 @@ def edit_entry_api(entry_id):
     return write_json(code, data)
 
 
-@api_v1.route("/api/v1/advanced/password", methods=["UPDATE"])
-@api_v1.route("/api/advanced/password", methods=["UPDATE"])
-@api_v1.route("/advanced/password", methods=["UPDATE"])
+@api_v1.route("/api/v1/advanced/password", methods=["PUT", "UPDATE"])
+@api_v1.route("/api/v1/user/password", methods=["PUT", "UPDATE"])
+@api_v1.route("/api/advanced/password", methods=["PUT", "UPDATE"])
+@api_v1.route("/advanced/password", methods=["PUT", "UPDATE"])
 @requires_json_auth
 @requires_csrf_check
-def update_password_api():
+@requires_json_form_validation(UpdatePasswordForm)
+def update_password_api(request_data):
     """Change the master password. Return values are JSON.
     Success is marked by HTTP status code."""
-    form = UpdatePasswordForm(request.form)
-    if not form.validate():
-        code, data = json_form_validation_error(form.errors)
-        return write_json(code, data)
     entries = backend.get_entries(db.session, session["user_id"])
     try:
         backend.decrypt_entries(entries, session['password'])
@@ -363,12 +361,12 @@ def update_password_api():
         return write_json(code, data)
     status = change_password(
         db.session,
-        session['user_id'],
-        request.form['old_password'],
-        request.form['new_password'],
+        user_id=session['user_id'],
+        old_password=request_data['old_password'],
+        new_password=request_data['new_password']
     )
     if status:
-        session['password'] = request.form['new_password']
+        session['password'] = request_data['new_password']
         code, data = json_success("successfully changed password")
     else:
         code, data = json_error(401, "old password is incorrect")
