@@ -3,17 +3,15 @@ from datetime import datetime
 from flask import Blueprint, escape, request, session
 from sqlalchemy.orm.exc import NoResultFound
 
+from . import backend
 from .api_utils import (generate_csrf_token, json_error,
                         json_form_validation_error, json_internal_error,
                         json_success, requires_csrf_check, requires_json_auth,
-                        write_json)
-from .backend import (create_inactive_user, decrypt_entries,
-                      delete_all_entries, encrypt_entry,
-                      get_account_with_email, get_entries,
-                      insert_entry_for_user)
+                        requires_json_form_validation, write_json)
 from .change_password import change_password
-from .forms import (ConfirmRecoverPasswordForm, LoginForm, NewEntryForm,
-                    RecoverPasswordForm, SignupForm, UpdatePasswordForm)
+from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm, LoginForm,
+                    NewEntryForm, RecoverPasswordForm, SignupForm,
+                    UpdatePasswordForm)
 from .mailgun import send_confirmation_email, send_recovery_email
 from .models import AuthToken, Entry, User, db
 
@@ -22,6 +20,7 @@ api_v1 = Blueprint("api_v1", __name__)
 @api_v1.route("/api/csrf_token", methods=["GET"])
 @api_v1.route("/api/v1/csrf_token", methods=["GET"])
 def api_get_csrf_token():
+    # make sure there is a CSRF token
     token = generate_csrf_token()
     return write_json(200, token)
 
@@ -56,13 +55,12 @@ def api_login():
     form = LoginForm(data=request_data)
     if form.validate():
         try:
-            user = get_account_with_email(db.session, request_data["email"])
+            user = backend.get_account_with_email(db.session, request_data["email"])
             assert(user.active)
             if user.authenticate(request_data["password"]):
                 session["email"] = user.email
                 session["password"] = request_data["password"]
                 session["user_id"] = user.id
-                generate_csrf_token()
                 # write into last_login
                 user.last_login = datetime.utcnow()
                 db.session.add(user)
@@ -98,8 +96,8 @@ def get_entries_api():
         - set status code 4xx
     """
     code = 200
-    entries = get_entries(db.session, session["user_id"])
-    dec_entries = decrypt_entries(entries, session['password'])
+    entries = backend.get_entries(db.session, session["user_id"])
+    dec_entries = backend.decrypt_entries(entries, session['password'])
     data = dec_entries
     return write_json(code, data)
 
@@ -128,7 +126,8 @@ def delete_entry_api(entry_id):
 @api_v1.route("/api/v1/entries/new", methods=["POST"])
 @requires_json_auth
 @requires_csrf_check
-def new_entry_api():
+@requires_json_form_validation(NewEntryForm)
+def new_entry_api(request_data):
     """Create a new entry for the logged-in user.
     POST parameters:
         - account (required)
@@ -141,63 +140,81 @@ def new_entry_api():
         - 403: CSRF check failed
         - 200: success
     """
-    request_data = request.get_json()
-    form = NewEntryForm(data=request_data)
-    if form.validate():
-        code = 200
-    else:
-        code, data = json_form_validation_error(form.errors)
-    if code == 200:
-        dec_entry = {
-            "account": request_data["account"],
-            "username": request_data["username"],
-            "password": request_data["password"],
-            "extra": (request_data["extra"] or "")
-        }
-        entry = insert_entry_for_user(
-            db_session=db.session,
-            dec_entry=dec_entry,
-            user_id=session["user_id"],
-            user_key=session["password"]
-        )
-        code = 200
-        data = { "entry_id": entry.id }
+    # token has been spent here
+    dec_entry = {
+        "account": request_data["account"],
+        "username": request_data["username"],
+        "password": request_data["password"],
+        "extra": (request_data["extra"] or "")
+    }
+    entry = backend.insert_entry_for_user(
+        db_session=db.session,
+        dec_entry=dec_entry,
+        user_id=session["user_id"],
+        user_key=session["password"]
+    )
+    code = 200
+    data = { "entry_id": entry.id }
     return write_json(code, data)
 
 
 @api_v1.route("/api/signup", methods=["POST"])
 @api_v1.route("/api/v1/signup", methods=["POST"])
-def signup_api():
-    request_data = request.get_json()
-    form = SignupForm(data=request_data)
-    if form.validate():
-        try:
-            user = get_account_with_email(db.session, request_data["email"])
-        except NoResultFound:
-            token = AuthToken()
-            token.random_token()
-            if send_confirmation_email(request_data["email"], token.token):
-                user = create_inactive_user(
-                    db.session,
-                    request_data["email"],
-                    request_data["password"]
-                )
-                token.user_id = user.id;
-                # now add token
-                db.session.add(token)
-                db.session.commit()
-                code, data = json_success(
-                    "Successfully created account with email %s" % request_data['email']
-                )
-            else:
-                code, data = json_internal_error("failed to send email")
+@requires_json_form_validation(SignupForm)
+def signup_api(request_data):
+    try:
+        user = backend.get_account_with_email(db.session, request_data["email"])
+    except NoResultFound:
+        token = AuthToken()
+        token.random_token()
+        if send_confirmation_email(request_data["email"], token.token):
+            user = backend.create_inactive_user(
+                db.session,
+                request_data["email"],
+                request_data["password"]
+            )
+            token.user_id = user.id;
+            # now add token
+            db.session.add(token)
+            db.session.commit()
+            code, data = json_success(
+                "Successfully created account with email %s" % request_data['email']
+            )
         else:
-            if user.active:
-                code, data = json_error(400, "an account with this email address already exists")
-            else:
-                code, data = json_error(400, "This account has already been created. Check your inbox for a confirmation email.")
+            code, data = json_internal_error("failed to send email")
     else:
-        code, data = json_form_validation_error(form.errors)
+        if user.active:
+            code, data = json_error(400,
+                "an account with this email address already exists")
+        else:
+            code, data = json_error(400,
+                "This account has already been created. Check your inbox for a confirmation email.")
+    return write_json(code, data)
+
+
+@api_v1.route("/api/v1/signup/confirm", methods=["POST"])
+@api_v1.route("/api/v1/user/activate", methods=["POST"])
+@requires_json_form_validation(ActivateAccountForm)
+def confirm_signup_api(request_data):
+    try:
+        token = request_data['token']
+        token_obj = db.session.query(AuthToken).filter_by(token=token).one()
+        if token_obj.is_expired():
+            # delete old token from database
+            db.session.delete(token_obj)
+            db.session.commit()
+            code, data = json_error(401, "token has expired")
+        else:
+            # token deleted when password changed
+            db.session.delete(token_obj)
+            user = db.session.query(User).filter_by(id=token_obj.user_id).one()
+            if user.active:
+                code, data = json_error(400, "The account has already been activated")
+            else:
+                backend.activate_account(db.session, user)
+                code, data = json_success("Account has been activated")
+    except NoResultFound:
+        code, data = json_error(401, "token is invalid")
     return write_json(code, data)
 
 
@@ -278,7 +295,7 @@ def nuke_entries_api():
         - 200: success
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    delete_all_entries(db.session, user)
+    backend.delete_all_entries(db.session, user)
     code, data = json_success("Deleted all entries")
     return write_json(code, data)
 
@@ -306,7 +323,7 @@ def edit_entry_api(entry_id):
                 "extra": (request_data["extra"] or "")
             }
             # do not add e2 to session, it's just a placeholder
-            e2 = encrypt_entry(session["password"], dec_entry,
+            e2 = backend.encrypt_entry(session["password"], dec_entry,
                     version=entry.version)
             entry.account = e2.account
             entry.username = e2.username
@@ -337,9 +354,9 @@ def update_password_api():
     if not form.validate():
         code, data = json_form_validation_error(form.errors)
         return write_json(code, data)
-    entries = get_entries(db.session, session["user_id"])
+    entries = backend.get_entries(db.session, session["user_id"])
     try:
-        decrypt_entries(entries, session['password'])
+        backend.decrypt_entries(entries, session['password'])
     except ValueError:
         msg = "Error decrypting entries. This means the old password is most likely incorrect"
         code, data = json_error(500, msg)

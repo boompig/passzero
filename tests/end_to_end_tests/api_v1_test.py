@@ -74,10 +74,10 @@ class PassZeroApiTester(unittest.TestCase):
 
     def _signup(self, session, email, password):
         auth_response = api.signup(session, email, password)
-        self.assertIsNotNone(auth_response)
+        assert auth_response is not None
         response_json = auth_response.json()
         try:
-            self.assertEqual(auth_response.status_code, 200)
+            assert auth_response.status_code == 200
         except AssertionError as e:
             print(response_json)
             raise e
@@ -151,10 +151,12 @@ class PassZeroApiTester(unittest.TestCase):
         email = "sample@fake.com"
         password = "right_pass"
         with requests.Session() as session:
-            signup_result = api.signup(session, email, password)
-            self.assertEqual(signup_result.status_code, 200)
+            db_session = get_db_session()
+            pz_backend.create_inactive_user(db_session, email, password)
             login_result = api.login(session, email, password)
-            self.assertEqual(login_result.status_code, 401)
+            # only printed on error
+            print(login_result.text)
+            assert login_result.status_code == 401
 
     def test_correct_login(self):
         email = DEFAULT_EMAIL
@@ -175,9 +177,6 @@ class PassZeroApiTester(unittest.TestCase):
             self._login(s, email, password)
             entries = self._get_entries(s)
             assert entries == []
-        db_session = get_db_session()
-        # only if test fails
-        print(db_session)
 
     def test_create_no_csrf(self):
         email = DEFAULT_EMAIL
@@ -207,17 +206,19 @@ class PassZeroApiTester(unittest.TestCase):
         user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
-            token = self._get_csrf_token(s)
+            create_token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
                 "username": "entry_username",
                 "password": "entry_pass",
                 "extra": "entry_extra",
             }
-            entry_id = self._create_entry(s, entry, token)
+            entry_id = self._create_entry(s, entry, create_token)
             entries = self._get_entries(s)
             assert len(entries) == 1
-            self._delete_entry(s, entry_id, token)
+            delete_token = self._get_csrf_token(s)
+            assert delete_token != create_token
+            self._delete_entry(s, entry_id, delete_token)
             entries = self._get_entries(s)
             assert len(entries) == 0
         #db_session = get_db_session()
@@ -233,15 +234,16 @@ class PassZeroApiTester(unittest.TestCase):
         user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
-            token = self._get_csrf_token(s)
+            create_token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
                 "username": "entry_username",
                 "password": "entry_pass",
                 "extra": "entry_extra",
             }
-            entry_id = self._create_entry(s, entry, token)
-            self._delete_entry(s, entry_id, token)
+            entry_id = self._create_entry(s, entry, create_token)
+            delete_token = self._get_csrf_token(s)
+            self._delete_entry(s, entry_id, delete_token)
             entries = self._get_entries(s)
             assert entries == []
 
@@ -272,16 +274,17 @@ class PassZeroApiTester(unittest.TestCase):
         user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
-            token = self._get_csrf_token(s)
+            create_token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
                 "username": "entry_username",
                 "password": "entry_pass",
                 "extra": "entry_extra",
             }
-            entry_id = self._create_entry(s, entry, token)
+            entry_id = self._create_entry(s, entry, create_token)
+            delete_token = self._get_csrf_token(s)
             url = self.base_url + "/api/entries/{}?csrf_token={}".format(
-                entry_id + 1, token)
+                entry_id + 1, delete_token)
             entry_delete_response = s.delete(url,
                 headers=self.json_header, verify=False)
             assert entry_delete_response is not None
@@ -300,23 +303,23 @@ class PassZeroApiTester(unittest.TestCase):
         user, db_session = create_active_account(email, password)
         with requests.Session() as s:
             self._login(s, email, password)
-            token = self._get_csrf_token(s)
+            create_token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
                 "username": "entry_username",
                 "password": "entry_pass",
                 "extra": "entry_extra",
             }
-            entry_id = self._create_entry(s, entry, token)
+            entry_id = self._create_entry(s, entry, create_token)
             entry["account"] = "new account"
             entry["username"] = "new_username"
             entry["password"] = "new_password"
             entry["extra"] = "new extra"
-            self._edit_entry(s, entry_id, entry, token)
+            edit_token = self._get_csrf_token(s)
+            self._edit_entry(s, entry_id, entry, edit_token)
             entries = self._get_entries(s)
             assert len(entries) == 1
             self._check_entries_equal(entry, entries[0])
-
 
     def test_logout(self):
         email = "sample@fake.com"
@@ -332,7 +335,6 @@ class PassZeroApiTester(unittest.TestCase):
             self._logout(s)
             response = api.get_entries(s)
             self.assertEqual(response.status_code, 401)
-
 
     def test_signup(self):
         email = "sample@fake.com"
@@ -364,7 +366,7 @@ class PassZeroApiTester(unittest.TestCase):
             self._signup(s, email, password)
             token = self._get_csrf_token(s)
             recover_result = api.recover(s, email, token)
-            self.assertEqual(recover_result.status_code, 200)
+            assert recover_result.status_code == 200
 
 
 if __name__ == '__main__':

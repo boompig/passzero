@@ -65,6 +65,9 @@ class RecoverPasswordForm(Form):
         validators.Email()
     ])
 
+class ActivateAccountForm(Form):
+    token = TextField("token", [validators.Required()])
+
 class ConfirmRecoverPasswordForm(Form):
     token = TextField("token", [validators.Required()])
     password = PasswordField("password", [

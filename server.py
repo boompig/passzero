@@ -136,7 +136,6 @@ def confirm_signup():
         else:
             # token deleted when password changed
             db.session.delete(token_obj)
-
             user = db.session.query(User).filter_by(id=token_obj.user_id).one()
             activate_account(db.session, user)
             return redirect(url_for("post_confirm_signup"))

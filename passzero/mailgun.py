@@ -8,7 +8,7 @@ import sys
 MAILGUN_URL = "https://api.mailgun.net/v2/sandbox59e35b39818642c28107668b360d1284.mailgun.org"
 MAILGUN_EMAIL = "postmaster@sandbox59e35b39818642c28107668b360d1284.mailgun.org"
 
-def _send_mailgun_email(email, subject, msg):
+def send_email(email, subject, msg):
     try:
         API_KEY = "key-%s" % os.environ["MAILGUN_API_KEY"]
     except KeyError:
@@ -34,7 +34,7 @@ def _send_mailgun_email(email, subject, msg):
 
 def send_recovery_email(email, token):
     link =  request.url_root + "recover/confirm?token=%s" % token
-    return _send_mailgun_email(
+    return send_email(
         email,
         "Recover your PassZero account",
         "To complete your PassZero account recovery, follow this link: %s" % link
@@ -42,7 +42,7 @@ def send_recovery_email(email, token):
 
 def send_confirmation_email(email, token):
     link =  request.url_root + "signup/confirm?token=%s" % token
-    return _send_mailgun_email(
+    return send_email(
         email,
         "Thanks for signing up for PassZero",
         "To complete your PassZero signup, follow this link: %s" % link

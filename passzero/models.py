@@ -207,7 +207,7 @@ class Entry(db.Model):
         :param master_key:  The user's key, used to derive entry-specific enc key
         :param dec_entry:   Entry to encrypt (dictionary of fields)
         """
-        assert isinstance(master_key, str)
+        assert isinstance(master_key, str) or isinstance(master_key, unicode)
         assert isinstance(dec_entry, dict)
         # generate random new IV
         iv = get_iv()

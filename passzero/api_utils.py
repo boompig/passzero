@@ -1,8 +1,11 @@
 import json
+import logging
 from functools import wraps
-from .crypto_utils import random_hex
+
+from flask import Response, abort, request, session
+
 from .config import CSRF_TOKEN_LENGTH
-from flask import session, Response, request, abort
+from .crypto_utils import random_hex
 
 
 def requires_json_auth(function):
@@ -25,12 +28,37 @@ def requires_csrf_check(function):
     If authenticated, call the function."""
     @wraps(function)
     def inner(*args, **kwargs):
+        # make sure there is a CSRF token
+        generate_csrf_token()
         if check_all_csrf():
+            spend_csrf_token()
             return function(*args, **kwargs)
         else:
             code, data = json_csrf_validation_error()
             return write_json(code, data)
     return inner
+
+
+def requires_json_form_validation(form_class):
+    def real_function(function):
+        @wraps(function)
+        def inner(*args, **kwargs):
+            request_data = request.get_json()
+            form = form_class(data=request_data)
+            if form.validate():
+                return function(request_data, *args, **kwargs)
+            else:
+                code, data = json_form_validation_error(form.errors)
+                return write_json(code, data)
+        return inner
+    return real_function
+
+
+def spend_csrf_token():
+    """Invalidate previous CSRF token and set a new one"""
+    prev_token = session.pop("csrf_token")
+    logging.debug("[spend_csrf_token] Previous csrf_token was %s" % prev_token)
+    session["csrf_token"] = generate_csrf_token()
 
 
 def generate_csrf_token():
@@ -96,7 +124,8 @@ def check_all_csrf():
 
 def check_csrf(form):
     """
-    :return: True iff csrf_token is set form and matches the CSRF token in session"""
+    :return:     True iff csrf_token is set in the form and matches the CSRF token in session
+    """
     return "csrf_token" in form and form["csrf_token"] == session["csrf_token"]
 
 
@@ -108,5 +137,4 @@ def json_csrf_validation_error():
 def json_internal_error(msg):
     """Return tuple of (code, JSON data)"""
     return json_error(500, msg)
-
 
