@@ -39,8 +39,8 @@
         <div ng-repeat="entry in ctrl.filteredEntries" ng-cloak>
             <div class="entry" id="entry-{{ entry.id }}">
                 <div class="entry-title account">{{ entry.account }}</div>
-                <div class="username">{{ entry.username }}</div>
-                <div class="password hidden-toggle password-hidden"
+                <div ng-if="!entry.is_encrypted" class="username">{{ entry.username }}</div>
+                <div ng-if="!entry.is_encrypted" class="password hidden-toggle password-hidden"
                     ng-click="ctrl.toggleHidden(entry)">
                     <span class="inner-password" id="inner-password-{{ entry.id }}">{{ entry.password }}</span>
                 </div>
@@ -51,11 +51,20 @@
                     </div>
                 </div>
                 <div class="entry-panel">
-                    <button type="button" data-clipboard-target="#inner-password-{{ entry.id }}"
+                    <button type="button" ng-if="!entry.is_encrypted"
+                        data-clipboard-target="#inner-password-{{ entry.id }}"
                         class="btn btn-success copy-pwd-btn" data-toggle="tooltip">Copy</button>
                     <button type="button" class="btn btn-warning edit-btn"
                         ng-click="ctrl.editEntry(entry.id)">Edit</button>
-                    <button type="button" class="btn btn-info show-hide-btn" onclick="showHidePass(event)">Show</button>
+                    <span ng-if="entry.is_encrypted">
+                        <button type="button" class="btn btn-info decrypt-btn"
+                            ng-click="ctrl.decryptEntry($event, entry, $index)">Decrypt
+                        </button>
+                    </span>
+                    <span ng-if="!entry.is_encrypted">
+                        <button type="button" class="btn btn-info show-hide-btn" onclick="showHidePass(event)">Show
+                        </button>
+                    </span>
                     <button type="button" class="btn btn-danger" class="delete-btn"
                         ng-click="ctrl.deleteEntry(entry)">Delete</button>
                 </div>

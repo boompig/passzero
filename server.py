@@ -2,6 +2,7 @@ from flask import Flask, render_template, redirect, session, request, url_for, e
 from flask.ext.compress import Compress
 from flask_sslify import SSLify
 from passzero.api_v1 import api_v1
+from passzero.api_v2 import api_v2
 from passzero.api_utils import generate_csrf_token, check_auth
 from passzero.backend import get_entries, decrypt_entries, activate_account
 from passzero.datastore_postgres import db_export
@@ -23,6 +24,7 @@ app.config.from_object(pz_config)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['DUMP_FILE'] = "passzero_dump.csv"
 app.register_blueprint(api_v1)
+app.register_blueprint(api_v2, prefix="/api/v2")
 
 # define global callback for CSRF token"""
 app.jinja_env.globals["csrf_token"] = generate_csrf_token

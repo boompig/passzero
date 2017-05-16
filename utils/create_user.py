@@ -1,3 +1,6 @@
+"""
+This utility script is used for manual testing
+"""
 from argparse import ArgumentParser
 from passzero.backend import create_inactive_user, activate_account
 from passzero.my_env import DATABASE_URL
