@@ -161,6 +161,39 @@ class PassZeroApiTester(unittest.TestCase):
         entries = api.get_entries(self.app)
         assert len(entries) == 1
 
+    def test_create_entry_bad_csrf(self):
+        email = DEFAULT_EMAIL
+        password = "right_pass"
+        self._create_active_account(email, password)
+        self.login(email, password)
+        api.get_csrf_token(self.app)
+        entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+        }
+        r = api.create_entry(self.app, entry, "xxxxxxx", check_status=False)
+        assert r.status_code != 200
+        entries = api.get_entries(self.app)
+        assert len(entries) == 0
+
+    def test_create_entry_bad_no_account(self):
+        email = DEFAULT_EMAIL
+        password = "right_pass"
+        self._create_active_account(email, password)
+        self.login(email, password)
+        token = api.get_csrf_token(self.app)
+        entry = {
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+        }
+        r = api.create_entry(self.app, entry, token, check_status=False)
+        assert r.status_code != 200
+        entries = api.get_entries(self.app)
+        assert len(entries) == 0
+
     def test_create_and_delete_entry(self):
         email = DEFAULT_EMAIL
         password = "right_pass"
@@ -232,6 +265,41 @@ class PassZeroApiTester(unittest.TestCase):
         entries = api.get_entries(self.app)
         assert len(entries) == 1
         self._check_entries_equal(entry, entries[0])
+
+    def test_change_master_password_bad_old_password(self):
+        email = DEFAULT_EMAIL
+        old_password = "old_password"
+        self._create_active_account(email, old_password)
+        self.login(email, old_password)
+        create_token = api.get_csrf_token(self.app)
+        entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+        }
+        api.create_entry(self.app, entry, create_token)
+        token = api.get_csrf_token(self.app)
+        assert token != create_token
+        new_password = "a NEW very long and complicated password 7892384*$@*(!@"
+        r = api.update_user_password(
+            self.app,
+            csrf_token=token,
+            old_password="this is not right",
+            new_password=new_password,
+            check_status=False
+        )
+        assert r.status_code != 200
+        print(r.data)
+        entries = api.get_entries(self.app)
+        # but this should still work
+        assert len(entries) == 1
+        self._check_entries_equal(entry, entries[0])
+        # and logging out and logging in again should work
+        r = api.login(self.app, email, old_password)
+        assert r.status_code == 200
+        r = api.login(self.app, email, new_password, check_status=False)
+        assert r.status_code != 200
 
     def test_logout(self):
         email = DEFAULT_EMAIL

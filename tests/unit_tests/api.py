@@ -40,7 +40,7 @@ def get_entries(app, check_status=True):
         return r
 
 
-def create_entry(app, entry, token):
+def create_entry(app, entry, token, check_status=True):
     """
     :return entry_id:       The entry ID of the newly created entry
     """
@@ -49,9 +49,12 @@ def create_entry(app, entry, token):
     r = app.post("/api/entries/new",
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
-    print(r.data)
-    assert r.status_code == 200
-    return json.loads(r.data)["entry_id"]
+    if check_status:
+        print(r.data)
+        assert r.status_code == 200
+        return json.loads(r.data)["entry_id"]
+    else:
+        return r
 
 
 def delete_entry(app, entry_id, token):
@@ -121,7 +124,7 @@ def activate_account(app, token):
         headers=json_header, follow_redirects=True)
 
 
-def update_user_password(app, old_password, new_password, csrf_token):
+def update_user_password(app, old_password, new_password, csrf_token, check_status=True):
     url = "/api/v1/user/password"
     data = {
         "csrf_token": csrf_token,
@@ -133,8 +136,9 @@ def update_user_password(app, old_password, new_password, csrf_token):
         data=json.dumps(data),
         headers=json_header,
         follow_redirects=True)
-    print(r.data)
-    assert r.status_code == 200
+    if check_status:
+        print(r.data)
+        assert r.status_code == 200
     return r
 
 
