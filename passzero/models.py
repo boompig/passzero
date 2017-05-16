@@ -104,12 +104,15 @@ class Entry(db.Model):
         """
         :return             All fields of the entry, some possibly still encrypted
         """
+        assert self.version >= 4, "to_json is not well-defined for entries older than version 4"
         return {
             "id": self.id,
             "account": self.account,
             "username": self.username,
             "password": self.password,
             "extra": self.extra,
+            "version": self.version,
+            "is_encrypted": True
         }
 
     def decrypt(self, key):
