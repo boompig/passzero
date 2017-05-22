@@ -17,8 +17,6 @@ app = Flask(__name__)
 app.secret_key = 'foo'
 app.register_blueprint(api_v1, prefix="")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
-# app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///passzero.db"
-# app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://daniel_kats:daniel_kats@localhost:5432/passzero"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 DEFAULT_EMAIL = "sample@fake.com"

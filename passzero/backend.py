@@ -71,8 +71,14 @@ def delete_all_auth_tokens(db_session, user):
 
 def delete_account(db_session, user):
     """Delete the given user from the database.
-    Also delete all entries associated with that user"""
-    db_session.query(Entry).filter_by(user_id=user.id).delete()
+    Also delete all entries associated with that user
+    Delete all data for that user across all tables"""
+    entries = db_session.query(Entry).filter_by(user_id=user.id).all()
+    for entry in entries:
+        db_session.delete(entry)
+    auth_tokens = db_session.query(AuthToken).filter_by(user_id=user.id).all()
+    for token in auth_tokens:
+        db_session.delete(token)
     db_session.delete(user)
     db_session.commit()
 
