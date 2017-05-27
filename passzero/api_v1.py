@@ -317,6 +317,7 @@ def edit_entry_api(request_data, entry_id):
         entry.extra = e2.extra
         entry.iv = e2.iv
         entry.key_salt = e2.key_salt
+        entry.version = e2.version
         db.session.commit()
         code, data = json_success(
             "successfully edited account %s" % escape(request_data["account"])
