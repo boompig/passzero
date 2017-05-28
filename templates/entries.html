@@ -44,7 +44,7 @@
                     ng-click="ctrl.toggleHidden(entry)">
                     <span class="inner-password" id="inner-password-{{ entry.id }}">{{ entry.password }}</span>
                 </div>
-                <div ng-if="entry.extra">
+                <div ng-if="entry.extra && !entry.is_encrypted">
                     <div class="extra-container">
                         <label for="extra">Extra Info</label>
                         <div name="extra" class="extra hidden-toggle password-hidden">{{ entry.extra }}</div>
@@ -53,7 +53,8 @@
                 <div class="entry-panel">
                     <button type="button" ng-if="!entry.is_encrypted"
                         data-clipboard-target="#inner-password-{{ entry.id }}"
-                        class="btn btn-success copy-pwd-btn" data-toggle="tooltip">Copy</button>
+                        class="btn btn-success copy-pwd-btn"
+                        data-toggle="tooltip">Copy Password</button>
                     <button type="button" class="btn btn-warning edit-btn"
                         ng-click="ctrl.editEntry(entry.id)">Edit</button>
                     <span ng-if="entry.is_encrypted">
@@ -62,7 +63,8 @@
                         </button>
                     </span>
                     <span ng-if="!entry.is_encrypted">
-                        <button type="button" class="btn btn-info show-hide-btn" onclick="showHidePass(event)">Show
+                        <button type="button" class="btn btn-info show-hide-btn"
+                            onclick="showHidePass(event)">Show
                         </button>
                     </span>
                     <button type="button" class="btn btn-danger" class="delete-btn"

@@ -5,12 +5,14 @@ This file tests different versions of encrypt/decrypt algorithms for performance
 from __future__ import print_function
 
 import logging
+import os
 import random
 import time
+from argparse import ArgumentParser
 
 from create_user import get_db_session
 from passzero import backend
-from passzero.models import Entry
+from passzero.models import Entry, User
 
 # number of entries to create for a user
 NUM_ENTRIES = 300
@@ -45,7 +47,10 @@ def create_fake_entry_for_user(db_session, user_id, user_pt_password, version):
         "extra": ""
     }
     # create a long 'extra' string
+    # but break it up with some line breaks
     for i in range(1025):
+        if random.random() < 0.1:
+            dec_entry["extra"] += "\n"
         dec_entry["extra"] += "f"
     entry = backend.insert_entry_for_user(
         db_session,
@@ -170,6 +175,14 @@ def main(version):
         logging.debug("deleting user with ID %d...", user.id)
         delete_user(db_session, user)
 
+def create_fake_entries_for_user(db_session, user_id, password, version, num):
+    for i in range(num):
+        logging.debug("[%d] creating entry for user %d...", i + 1, user_id)
+        entry = create_fake_entry_for_user(
+            db_session, user_id, password, version=version)
+        assert entry.version == version
+        logging.debug("Created entry with version %d", entry.version)
+
 def main_api_v2(proportions):
     print("Testing entries with version proportions {}".format(str(proportions)))
     db_session = get_db_session()
@@ -179,13 +192,9 @@ def main_api_v2(proportions):
         n = 0
         for version, num_entries in proportions.iteritems():
             logging.info("Creating %d entries for version %d...", num_entries, version)
-            for i in range(num_entries):
-                n += 1
-                logging.debug("[%d] creating entry for user %d...", i + 1, user.id)
-                entry = create_fake_entry_for_user(
-                    db_session, user.id, user_pt_password, version=version)
-                assert entry.version == version
-                logging.debug("Created entry with version %d", entry.version)
+            create_fake_entries_for_user(
+                db_session, user.id, user_pt_password, version, num_entries)
+            n += num_entries
         logging.info("Created %d entries for user %d", n, user.id)
         logging.info("decrypting entries for user with ID %d...", user.id)
         entries = time_decrypt_entries_v2(db_session, user.id, user_pt_password)
@@ -203,13 +212,73 @@ def main_api_v2(proportions):
         logging.info("deleting user with ID %d...", user.id)
         delete_user(db_session, user)
 
+def save_user_id(user_id):
+    if not os.path.exists("/tmp/passzero"):
+        os.mkdir("/tmp/passzero")
+    fname = "/tmp/passzero/timing-userid.txt"
+    with open(fname, "w") as fp:
+        fp.write("%d\n" % user_id)
+    logging.info("Wrote user ID to file %s" % fname)
+
+def test_live(version):
+    """
+    Create entries and then check the difference in real time.
+    i.e. fire up the server and actually see how long everything takes to load
+    """
+    db_session = get_db_session()
+    logging.debug("creating user...")
+    user, user_pt_password = create_fake_user(db_session)
+    logging.info("Creating %d entries. email = %s password = %s",
+        NUM_ENTRIES, user.email, user_pt_password)
+    try:
+        create_fake_entries_for_user(db_session, user.id, user_pt_password,
+            version=version, num=NUM_ENTRIES)
+    except Exception as e:
+        logging.error(e)
+        raise e
+    save_user_id(user.id)
+
+def delete_live():
+    fname = "/tmp/passzero/timing-userid.txt"
+    assert os.path.exists(fname), "File with user ID must exist"
+    with open(fname, "r") as fp:
+        user_id = int(fp.read().strip())
+    db_session = get_db_session()
+    logging.info("deleting all entries for user with ID %d...", user_id)
+    delete_all_entries_for_user(db_session, user_id)
+    logging.info("deleting user with ID %d...", user_id)
+    try:
+        db_session.query(User).filter_by(id=user_id).one()
+        db_session.query(User).filter_by(id=user_id).delete()
+        db_session.commit()
+    except Exception as e:
+        print(type(e))
+        print(e)
+        pass
+    # remove the filename containing the relevant user ID
+    os.remove(fname)
+
 
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
         format="[%(levelname)s] %(message)s")
-    main_api_v2({4: 0, 3: 100})
-    main_api_v2({4: 20, 3: 80})
-    main_api_v2({4: 50, 3: 50})
-    main_api_v2({4: 80, 3: 20})
-    main_api_v2({4: 100, 3: 0})
+    parser = ArgumentParser()
+    parser.add_argument("--create-live", action="store_true", default=False,
+        help="Use to test the speed with server")
+    parser.add_argument("--version", type=int,
+        help="For use with --live")
+    parser.add_argument("--delete-live", action="store_true", default=False,
+        help="Cleanup of --create-live")
+    args = parser.parse_args()
+    if args.create_live:
+        assert args.version is not None, "--version must be set with --live"
+        test_live(args.version)
+    elif args.delete_live:
+        delete_live()
+    else:
+        main_api_v2({4: 0, 3: 100})
+        main_api_v2({4: 20, 3: 80})
+        main_api_v2({4: 50, 3: 50})
+        main_api_v2({4: 80, 3: 20})
+        main_api_v2({4: 100, 3: 0})
