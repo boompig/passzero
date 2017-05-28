@@ -19,6 +19,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 DEFAULT_EMAIL = "sample@fake.com"
+DEFAULT_PASSWORD = "right_pass"
 
 
 class PassZeroApiTester(unittest.TestCase):
@@ -157,26 +158,9 @@ class PassZeroApiTester(unittest.TestCase):
         entries = api.get_entries(self.app)
         assert len(entries) == 1
 
-    def test_create_entry_bad_csrf(self):
+    def test_create_entry_no_account(self):
         email = DEFAULT_EMAIL
-        password = "right_pass"
-        self._create_active_account(email, password)
-        self.login(email, password)
-        api.get_csrf_token(self.app)
-        entry = {
-            "account": "fake",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-        }
-        r = api.create_entry(self.app, entry, "xxxxxxx", check_status=False)
-        assert r.status_code != 200
-        entries = api.get_entries(self.app)
-        assert len(entries) == 0
-
-    def test_create_entry_bad_no_account(self):
-        email = DEFAULT_EMAIL
-        password = "right_pass"
+        password = DEFAULT_PASSWORD
         self._create_active_account(email, password)
         self.login(email, password)
         token = api.get_csrf_token(self.app)
@@ -187,6 +171,25 @@ class PassZeroApiTester(unittest.TestCase):
         }
         r = api.create_entry(self.app, entry, token, check_status=False)
         assert r.status_code != 200
+        entries = api.get_entries(self.app)
+        assert len(entries) == 0
+
+    def test_create_entry_bad_csrf(self):
+        email = DEFAULT_EMAIL
+        password = DEFAULT_PASSWORD
+        self._create_active_account(email, password)
+        self.login(email, password)
+        token = "foo"
+        entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+        }
+        r = api.create_entry(self.app, entry, token, check_status=False)
+        assert r.status_code != 200
+        # make sure that this is actually caused by CSRF
+        assert "csrf" in json.loads(r.data)["msg"].lower()
         entries = api.get_entries(self.app)
         assert len(entries) == 0
 
