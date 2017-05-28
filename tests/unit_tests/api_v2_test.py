@@ -74,7 +74,8 @@ class PassZeroApiTester(unittest.TestCase):
         for plaintext_field in ["account"]:
             assert entries[0][plaintext_field] == entry[plaintext_field]
         for encrypted_field in ["username", "password", "extra"]:
-            assert entries[0][encrypted_field] != entry[encrypted_field]
+            if encrypted_field in entries[0]:
+                assert entries[0][encrypted_field] != entry[encrypted_field]
         # now decrypt this individual entry
         dec_entry_out = api.get_entry_v2(self.app, entry_id)
         self.assertEntriesEqual(dec_entry_out, entry)

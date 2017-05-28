@@ -133,8 +133,12 @@ var PassZeroCtrl = function ($scope, $location, $http) {
             // substitute
             console.log(result);
             console.log(entryIndex);
-            // remove old encrypted element and add unencrypted element
-            that.entries.splice(entryIndex, 1, result);
+            // copy in the values from the decrypted entry into the current entry
+            for(var field in result) {
+                if(result.hasOwnProperty(field)) {
+                    entry[field] = result[field];
+                }
+            }
         }).error(function (obj, textStatus, textCode) {
             console.log(obj);
             console.log(textStatus);

@@ -126,3 +126,37 @@ def encrypt_entry(user_key, dec_entry, version=4):
         entry.encrypt_v3(user_key, dec_entry)
     return entry
 
+
+def edit_entry(session, entry_id, user_key, edited_entry, user_id):
+    """
+    Try to edit the entry with ID <entry_id>. Commit changes to DB.
+    Check first if the entry belongs to the current user
+    DO NOT bump the version
+    :param session:         Database session
+    :param entry_id:        ID of an existing entry to be edited
+    :param user_key:        Password of the logged-in user
+    :param edited_entry:    Dictionary of changes to the entry
+    :param user_id:         ID of the user
+    :return:                Newly edited entry
+    """
+    entry = session.query(Entry).filter_by(id=entry_id).one()
+    assert entry.user_id == user_id
+    dec_entry = {
+        "account": edited_entry["account"],
+        "username": edited_entry["username"],
+        "password": edited_entry["password"],
+        "extra": (edited_entry["extra"] or "")
+    }
+    # do not add e2 to session, it's just a placeholder
+    e2 = encrypt_entry(user_key, dec_entry,
+            version=entry.version)
+    # update those fields that the user might have changed
+    entry.account = e2.account
+    entry.username = e2.username
+    entry.password = e2.password
+    entry.extra = e2.extra
+    # update those parameters which might have changed on encryption
+    entry.iv = e2.iv
+    entry.key_salt = e2.key_salt
+    session.commit()
+    return entry

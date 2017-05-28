@@ -11,7 +11,12 @@ api_v2 = Blueprint("api_v2", __name__)
 def decrypt_entries_pool(entry_key_pair):
     entry, key = entry_key_pair
     if entry.version == 4:
-        return entry.to_json()
+        out = entry.to_json()
+        # remove the encrypted elements in order to conserve bandwidth
+        out.pop("username")
+        out.pop("password")
+        out.pop("extra")
+        return out
     else:
         return backend._decrypt_row(entry, key)
 
@@ -29,6 +34,13 @@ def __decrypt_multiprocess(enc_entries, master_key):
 @api_v2.route("/api/v2/entries", methods=["GET"])
 @requires_json_auth
 def api_get_entries():
+    """
+    Only works for logged-in users.
+    Return a list of available entries.
+    Do not decrypt entry contents
+
+    Output is JSON. Format: [ { <entry> }, ... ]
+    """
     enc_entries = backend.get_entries(db.session, session["user_id"])
     dec_entries = __decrypt_multiprocess(enc_entries, session["password"])
     return write_json(200, dec_entries)

@@ -300,25 +300,13 @@ def edit_entry_api(request_data, entry_id):
     code = 200
     data = {}
     try:
-        entry = db.session.query(Entry).filter_by(id=entry_id).one()
-        assert entry.user_id == session['user_id']
-        dec_entry = {
-            "account": request_data["account"],
-            "username": request_data["username"],
-            "password": request_data["password"],
-            "extra": (request_data["extra"] or "")
-        }
-        # do not add e2 to session, it's just a placeholder
-        e2 = backend.encrypt_entry(session["password"], dec_entry,
-                version=entry.version)
-        entry.account = e2.account
-        entry.username = e2.username
-        entry.password = e2.password
-        entry.extra = e2.extra
-        entry.iv = e2.iv
-        entry.key_salt = e2.key_salt
-        entry.version = e2.version
-        db.session.commit()
+        backend.edit_entry(
+            db.session,
+            entry_id,
+            session["password"],
+            request_data,
+            session["user_id"]
+        )
         code, data = json_success(
             "successfully edited account %s" % escape(request_data["account"])
         )

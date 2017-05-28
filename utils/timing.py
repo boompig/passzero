@@ -38,10 +38,18 @@ def create_fake_user(db_session):
     return (user, password)
 
 
+def get_fake_account_name():
+    with open("static/dictionary/words.txt") as fp:
+        words = [line.rstrip() for line in fp]
+    base = " ".join(random.sample(words, 2))
+    return base
+
+
 def create_fake_entry_for_user(db_session, user_id, user_pt_password, version):
     n = random.randint(1, 1000000)
+    # account name will be generated from the static words
     dec_entry = {
-        "account": "fake account %d" % n,
+        "account": get_fake_account_name(),
         "username": "fake email %d" % n,
         "password": "fake password %d" % n,
         "extra": ""
@@ -61,12 +69,14 @@ def create_fake_entry_for_user(db_session, user_id, user_pt_password, version):
     )
     return entry
 
+
 def _decrypt_entry_v2(pair):
     entry, master_key = pair
     if entry.version >= 4:
         return entry.to_json()
     else:
         return backend._decrypt_row(entry, master_key)
+
 
 def _decrypt_entries_multiprocess_v2(entries, master_key):
     from multiprocessing import Pool
@@ -77,6 +87,7 @@ def _decrypt_entries_multiprocess_v2(entries, master_key):
     pool.join()
     return results
 
+
 def _decrypt_entries_normal_v2(db_session, user_id, master_key):
     entries = backend.get_entries(db_session, user_id)
     l = []
@@ -86,6 +97,7 @@ def _decrypt_entries_normal_v2(db_session, user_id, master_key):
         else:
             l.append(backend._decrypt_row(entry, master_key))
     return l
+
 
 def decrypt_entries_v2(enc_entries, master_key):
     return _decrypt_entries_multiprocess_v2(enc_entries, master_key)
@@ -101,6 +113,7 @@ def time_decrypt_entries_v2(db_session, user_id, user_pt_password):
     print("[v2] Time: %.2f seconds" % (end - start))
     return dec_entries
 
+
 def time_decrypt_entries_v1(db_session, user_id, user_pt_password):
     enc_entries = backend.get_entries(db_session, user_id)
     print("[v1] Timing start")
@@ -111,6 +124,7 @@ def time_decrypt_entries_v1(db_session, user_id, user_pt_password):
     print("[v1] Time: %.2f seconds" % (end - start))
     return dec_entries
 
+
 def time_decrypt_entries(db_session, user_id, user_pt_password):
     enc_entries = backend.get_entries(db_session, user_id)
     print("Timing start")
@@ -120,6 +134,7 @@ def time_decrypt_entries(db_session, user_id, user_pt_password):
     print("Timing end")
     print("Time: %.2f seconds" % (end - start))
     return dec_entries
+
 
 def time_decrypt_partial(db_session, user_id, user_pt_password):
     enc_entries = backend.get_entries(db_session, user_id)
@@ -175,6 +190,7 @@ def main(version):
         logging.debug("deleting user with ID %d...", user.id)
         delete_user(db_session, user)
 
+
 def create_fake_entries_for_user(db_session, user_id, password, version, num):
     for i in range(num):
         logging.debug("[%d] creating entry for user %d...", i + 1, user_id)
@@ -182,6 +198,7 @@ def create_fake_entries_for_user(db_session, user_id, password, version, num):
             db_session, user_id, password, version=version)
         assert entry.version == version
         logging.debug("Created entry with version %d", entry.version)
+
 
 def main_api_v2(proportions):
     print("Testing entries with version proportions {}".format(str(proportions)))
@@ -212,6 +229,7 @@ def main_api_v2(proportions):
         logging.info("deleting user with ID %d...", user.id)
         delete_user(db_session, user)
 
+
 def save_user_id(user_id):
     if not os.path.exists("/tmp/passzero"):
         os.mkdir("/tmp/passzero")
@@ -219,6 +237,7 @@ def save_user_id(user_id):
     with open(fname, "w") as fp:
         fp.write("%d\n" % user_id)
     logging.info("Wrote user ID to file %s" % fname)
+
 
 def test_live(version):
     """
@@ -236,6 +255,9 @@ def test_live(version):
     except Exception as e:
         logging.error(e)
         raise e
+        # delete the user
+        delete_user(db_session, user)
+        
     save_user_id(user.id)
 
 def delete_live():

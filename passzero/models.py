@@ -150,7 +150,8 @@ class Entry(db.Model):
             "account": self.account,
             "username": dec_messages[0],
             "password": dec_messages[1],
-            "extra": dec_messages[2]
+            "extra": dec_messages[2],
+            "version": self.version
         }
 
     def _decrypt_version_3(self, key):
@@ -168,7 +169,8 @@ class Entry(db.Model):
             "account": dec_messages[0],
             "username": dec_messages[1],
             "password": dec_messages[2],
-            "extra": dec_messages[3]
+            "extra": dec_messages[3],
+            "version": self.version
         }
 
     def _decrypt_version_1(self, key):

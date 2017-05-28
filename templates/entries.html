@@ -36,7 +36,7 @@
             <div class="empty-msg">No entries yet. Try <a href="/entries/new">making some</a>.</div>
         </div>
 
-        <div ng-repeat="entry in ctrl.filteredEntries" ng-cloak>
+        <div ng-repeat="entry in ctrl.filteredEntries track by entry.id" ng-cloak>
             <div class="entry" id="entry-{{ entry.id }}">
                 <div class="entry-title account">{{ entry.account }}</div>
                 <div ng-if="!entry.is_encrypted" class="username">{{ entry.username }}</div>
