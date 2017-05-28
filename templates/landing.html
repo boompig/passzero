@@ -7,8 +7,9 @@
 
         <title>PassZero</title>
 
-        <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/landing.min.css") }}" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/navbar.min.css") }}" />
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/landing.css") }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/navbar.css") }}" />
     </head>
     <body>
         <div id="hero">
@@ -39,6 +40,7 @@
             </div>
         </div>
 
-        <script src="{{ url_for("static", filename="lib/jquery/dist/jquery.min.js") }}"></script>
+        <script src="{{ url_for("static", filename="/lib/jquery/dist/jquery.min.js") }}"></script>
+        <script src="{{ url_for("static", filename="/js/register-sw.js") + "?build=" + config['BUILD_ID'] }}"></script>
     </body>
 </html>

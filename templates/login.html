@@ -5,9 +5,10 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
 
+        <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/login.min.css") + "?build=" + config['BUILD_ID'] }}" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/navbar.min.css") + "?build=" + config['BUILD_ID'] }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="/css/login.css") + "?build=" + config['BUILD_ID'] }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/navbar.css") + "?build=" + config['BUILD_ID'] }}" />
     </head>
     <body>
         <div id="hero" class="container">
@@ -18,10 +19,11 @@
             {% endif %}
         </div>
 
-        <script src="{{ url_for("static", filename="lib/jquery/dist/jquery.min.js") }}"></script>
-        <script src="{{ url_for("static", filename="lib/js-cookie/src/js.cookie.js") }}"></script>
-        <script src="{{ url_for("static", filename="js/dist/utils.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
-        <script src="{{ url_for("static", filename="/js/dist/passzero_api.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
-        <script src="{{ url_for("static", filename="/js/dist/login.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+        <script src="{{ url_for("static", filename="/lib/jquery/dist/jquery.min.js") }}"></script>
+        <script src="{{ url_for("static", filename="/lib/js-cookie/src/js.cookie.js") }}"></script>
+        <script src="{{ url_for("static", filename="/js/utils.js") + "?build=" + config['BUILD_ID'] }}"></script>
+        <script src="{{ url_for("static", filename="/js/passzero_api.js") + "?build=" + config['BUILD_ID'] }}"></script>
+        <script src="{{ url_for("static", filename="/js/login.js") + "?build=" + config['BUILD_ID'] }}"></script>
+        <script src="{{ url_for("static", filename="/js/register-sw.js") + "?build=" + config['BUILD_ID'] }}"></script>
     </body>
 </html>
