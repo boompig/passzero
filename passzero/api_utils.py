@@ -71,7 +71,7 @@ def generate_csrf_token():
 def write_json(code, data):
     """Write JSON response. Code is status code."""
     return Response(
-        json.dumps(data),
+        json.dumps(data, separators=(",", ":")),
         status=code,
         mimetype="application/json"
     )
