@@ -130,7 +130,6 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         .success(function(result) {
             // the result is the new entry
             result.is_encrypted = false;
-            // substitute
             console.log(result);
             console.log(entryIndex);
             // copy in the values from the decrypted entry into the current entry

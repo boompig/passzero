@@ -38,7 +38,6 @@ def api_get_entries():
     Only works for logged-in users.
     Return a list of available entries.
     Do not decrypt entry contents
-
     Output is JSON. Format: [ { <entry> }, ... ]
     """
     enc_entries = backend.get_entries(db.session, session["user_id"])

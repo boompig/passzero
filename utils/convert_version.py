@@ -4,13 +4,15 @@ This utility is used to convert all entries for a given user.
 For now only works locally by hitting backend APIs
 """
 
-import json
+# import json
 import logging
 from argparse import ArgumentParser
 from getpass import getpass
-from passzero.my_env import DATABASE_URL
+
+# import requests
+
 from passzero import backend
-import requests
+from passzero.my_env import DATABASE_URL
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 

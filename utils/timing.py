@@ -69,14 +69,12 @@ def create_fake_entry_for_user(db_session, user_id, user_pt_password, version):
     )
     return entry
 
-
 def _decrypt_entry_v2(pair):
     entry, master_key = pair
     if entry.version >= 4:
         return entry.to_json()
     else:
         return backend._decrypt_row(entry, master_key)
-
 
 def _decrypt_entries_multiprocess_v2(entries, master_key):
     from multiprocessing import Pool
@@ -87,7 +85,6 @@ def _decrypt_entries_multiprocess_v2(entries, master_key):
     pool.join()
     return results
 
-
 def _decrypt_entries_normal_v2(db_session, user_id, master_key):
     entries = backend.get_entries(db_session, user_id)
     l = []
@@ -97,7 +94,6 @@ def _decrypt_entries_normal_v2(db_session, user_id, master_key):
         else:
             l.append(backend._decrypt_row(entry, master_key))
     return l
-
 
 def decrypt_entries_v2(enc_entries, master_key):
     return _decrypt_entries_multiprocess_v2(enc_entries, master_key)
@@ -112,7 +108,6 @@ def time_decrypt_entries_v2(db_session, user_id, user_pt_password):
     print("[v2] Timing end")
     print("[v2] Time: %.2f seconds" % (end - start))
     return dec_entries
-
 
 def time_decrypt_entries_v1(db_session, user_id, user_pt_password):
     enc_entries = backend.get_entries(db_session, user_id)
@@ -190,16 +185,6 @@ def main(version):
         logging.debug("deleting user with ID %d...", user.id)
         delete_user(db_session, user)
 
-
-def create_fake_entries_for_user(db_session, user_id, password, version, num):
-    for i in range(num):
-        logging.debug("[%d] creating entry for user %d...", i + 1, user_id)
-        entry = create_fake_entry_for_user(
-            db_session, user_id, password, version=version)
-        assert entry.version == version
-        logging.debug("Created entry with version %d", entry.version)
-
-
 def main_api_v2(proportions):
     print("Testing entries with version proportions {}".format(str(proportions)))
     db_session = get_db_session()
@@ -209,9 +194,13 @@ def main_api_v2(proportions):
         n = 0
         for version, num_entries in proportions.iteritems():
             logging.info("Creating %d entries for version %d...", num_entries, version)
-            create_fake_entries_for_user(
-                db_session, user.id, user_pt_password, version, num_entries)
-            n += num_entries
+            for i in range(num_entries):
+                n += 1
+                logging.debug("[%d] creating entry for user %d...", i + 1, user.id)
+                entry = create_fake_entry_for_user(
+                    db_session, user.id, user_pt_password, version=version)
+                assert entry.version == version
+                logging.debug("Created entry with version %d", entry.version)
         logging.info("Created %d entries for user %d", n, user.id)
         logging.info("decrypting entries for user with ID %d...", user.id)
         entries = time_decrypt_entries_v2(db_session, user.id, user_pt_password)
@@ -228,6 +217,15 @@ def main_api_v2(proportions):
         delete_all_entries_for_user(db_session, user.id)
         logging.info("deleting user with ID %d...", user.id)
         delete_user(db_session, user)
+
+
+def create_fake_entries_for_user(db_session, user_id, password, version, num):
+    for i in range(num):
+        logging.debug("[%d] creating entry for user %d...", i + 1, user_id)
+        entry = create_fake_entry_for_user(
+            db_session, user_id, password, version=version)
+        assert entry.version == version
+        logging.debug("Created entry with version %d", entry.version)
 
 
 def save_user_id(user_id):
@@ -259,6 +257,7 @@ def test_live(version):
         delete_user(db_session, user)
         
     save_user_id(user.id)
+
 
 def delete_live():
     fname = "/tmp/passzero/timing-userid.txt"
