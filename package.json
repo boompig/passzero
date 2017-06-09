@@ -5,6 +5,9 @@
   "authors": [
     "Daniel Kats <dbkats@cs.toronto.edu>"
   ],
+  "scripts": {
+      "minify:js": "nodejs scripts/minify.js"
+  },
   "license": "MIT",
   "private": true,
   "dependencies": {

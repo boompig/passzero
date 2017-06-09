@@ -4,8 +4,8 @@
     <script src="{{ url_for("static", filename="lib/angular/angular.min.js") }}"></script>
     <script src="{{ url_for("static", filename="lib/angular-animate/angular-animate.min.js") }}"></script>
     <script src="{{ url_for("static", filename="lib/clipboard/dist/clipboard.min.js") }}"></script>
-    <script src="{{ url_for("static", filename="js/logoutTimer.js") + "?build=" + config['BUILD_ID'] }}"></script>
-    <script src="{{ url_for("static", filename="js/entries.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/entries.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block css %}

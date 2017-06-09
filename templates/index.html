@@ -1,15 +1,15 @@
-{%- extends "layout.html" -%}
+{% extends "layout.html" %}
 
-{%- block css -%}
+{% block css %}
     <link rel="stylesheet" href="{{ url_for("static", filename="css/index.css") }}" />
-{%- endblock -%}
+{% endblock %}
 
-{%- block js -%}
-    <script src="{{ url_for("static", filename="js/logoutTimer.js") }}"></script>
-    <script src="{{ url_for("static", filename="js/index.js") }}"></script>
-{%- endblock -%}
+{% block js %}
+    <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/index.min.js") }}"></script>
+{% endblock %}
 
-{%- block body -%}
+{% block body %}
     <h1 class="title">PassZero</h1>
     <h4 id="logged-in-text">
         {%- if logged_in -%}
@@ -21,4 +21,4 @@
 
     <button id="create-new-btn" onclick="window.location.href='/entries/new'"
         title="Create New Entry">+</button>
-{%- endblock -%}
+{% endblock %}

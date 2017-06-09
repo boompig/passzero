@@ -34,3 +34,6 @@ node_modules
 
 # Node junk
 npm-debug.log
+
+# output of build
+static/js/dist

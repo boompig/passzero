@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/recover.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/recover.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block body %}

@@ -20,8 +20,8 @@
 
         <script src="{{ url_for("static", filename="lib/jquery/dist/jquery.min.js") }}"></script>
         <script src="{{ url_for("static", filename="lib/js-cookie/src/js.cookie.js") }}"></script>
-        <script src="{{ url_for("static", filename="js/utils.js") + "?build=" + config['BUILD_ID'] }}"></script>
-        <script src="{{ url_for("static", filename="/js/passzero_api.js") + "?build=" + config['BUILD_ID'] }}"></script>
-        <script src="{{ url_for("static", filename="/js/login.js") + "?build=" + config['BUILD_ID'] }}"></script>
+        <script src="{{ url_for("static", filename="js/dist/utils.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+        <script src="{{ url_for("static", filename="/js/dist/passzero_api.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+        <script src="{{ url_for("static", filename="/js/dist/login.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     </body>
 </html>

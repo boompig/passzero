@@ -1,6 +1,6 @@
 function showHidePass(event) {
     "use strict";
-    var elem = $(event.target).parent().parent().parent().find(".hidden-toggle");
+    var elem = $(event.target).parent().parent().find(".hidden-toggle");
     if (elem.hasClass("password-hidden")) {
         elem.removeClass("password-hidden");
         $(event.target).text("Hide");
@@ -75,7 +75,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         for (var i = 0; i < this.entries.length; i++) {
             entry = this.entries[i];
             if (entry.account.toLowerCase().indexOf(q) >= 0 ||
-                (!entry.is_encrypted && entry.username.toLowerCase().indexOf(q) >= 0)) {
+                entry.username.toLowerCase().indexOf(q) >= 0) {
                 l.push(entry);
             }
         }
@@ -84,13 +84,9 @@ var PassZeroCtrl = function ($scope, $location, $http) {
 
     this.getEntries = function () {
         var that = this;
-        $http.get("/api/v2/entries").success(function (response) {
-            console.log("Fetched entries:");
+        $http.get("/api/entries").success(function (response) {
             console.log(response);
             for (var i = 0; i < response.length; i++) {
-                if(!response[i].hasOwnProperty("is_encrypted")) {
-                    response[i].is_encrypted = false;
-                }
                 that.entries.push(response[i]);
             }
             that.loadedEntries = true;
@@ -111,7 +107,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         if (confirm("OK to delete entry for account " + entry.account + "?")) {
             console.log("Deleting entry with ID " + entry.id);
             var data = { csrf_token: this.csrf_token };
-            $http.delete("/api/v1/entries/" + entry.id, { params: data })
+            $http.delete("/api/entries/" + entry.id, { params: data })
             .success(function (result) {
                 window.location.href = "/entries/post_delete/" + entry.account;
             }).error(function (obj, textStatus, textCode) {
@@ -120,29 +116,6 @@ var PassZeroCtrl = function ($scope, $location, $http) {
                 console.log(textCode);
             });
         }
-    };
-
-    this.decryptEntry = function(event, entry, entryIndex) {
-        var that = this;
-        //console.log(event);
-        //console.log(entry.id);
-        $http.get("/api/v2/entries/" + entry.id)
-        .success(function(result) {
-            // the result is the new entry
-            result.is_encrypted = false;
-            console.log(result);
-            console.log(entryIndex);
-            // copy in the values from the decrypted entry into the current entry
-            for(var field in result) {
-                if(result.hasOwnProperty(field)) {
-                    entry[field] = result[field];
-                }
-            }
-        }).error(function (obj, textStatus, textCode) {
-            console.log(obj);
-            console.log(textStatus);
-            console.log(textCode);
-        });
     };
 
     this.toggleHidden = function (entry) {
@@ -156,30 +129,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         }
     };
 
-    this._onClip = function(e) {
-        e.clearSelection();
-        //console.log(e.trigger);
-        var elem = $(e.trigger);
-        // create the tooltip
-        elem.tooltip({
-            "container": "body",
-            "animation": true,
-            "placement": "bottom",
-            "title": "Copied to clipboard!",
-            "trigger": "manual"
-        });
-        // activate the tooltip
-        elem.tooltip("show");
-        window.setTimeout(function() {
-            // hide the tooltip after a delay
-            elem.tooltip("hide");
-        }, 3000);
-    };
-
     this.init = function () {
-        // init clip button
-        var clipboard = new Clipboard(".copy-pwd-btn");
-        clipboard.on("success", this._onClip);
         var timer = new LogoutTimer();
         timer.startLogoutTimer();
         $("#entry-container").click(function() {
