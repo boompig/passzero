@@ -46,7 +46,7 @@ function compressCssFiles(srcDir, distDir) {
             let contents = fs.readFileSync(srcPath);
             console.log(`[clean-css] ${srcPath} -> ${distPath}`);
             let output = new CleanCSS().minify(contents);
-            fs.writeFileSync(distPath, output);
+            fs.writeFileSync(distPath, output.styles);
         });
     });
 }
