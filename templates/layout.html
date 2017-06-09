@@ -10,7 +10,7 @@
         <title>PassZero</title>
 
         <link rel="stylesheet" href="{{ url_for("static", filename="lib/bootstrap/dist/css/bootstrap.min.css") }}" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="css/main.css") + "?build=" + config['BUILD_ID'] }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/main.min.css") + "?build=" + config['BUILD_ID'] }}" />
         {% block css %}
         {% endblock %}
     </head>

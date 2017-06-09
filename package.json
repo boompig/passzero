@@ -6,7 +6,7 @@
     "Daniel Kats <dbkats@cs.toronto.edu>"
   ],
   "scripts": {
-      "minify:js": "nodejs scripts/minify.js"
+    "minify": "nodejs scripts/minify.js"
   },
   "license": "MIT",
   "private": true,
@@ -17,5 +17,8 @@
     "clipboard": "^1.6.1",
     "jquery": "~2.1.4",
     "js-cookie": "^2.1.4"
+  },
+  "devDependencies": {
+    "clean-css": "^4.1.3"
   }
 }

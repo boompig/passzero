@@ -37,3 +37,4 @@ npm-debug.log
 
 # output of build
 static/js/dist
+static/css/dist
