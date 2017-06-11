@@ -29,11 +29,13 @@ copy-deps: node_modules
 minify-js: $(js_targets)
 
 static/js/dist/%.min.js: static/js/src/%.js
+	mkdir -p static/js/dist
 	$(uglifyjs) $< -o $@
 
 minify-css: $(css_targets)
 
 static/css/dist/%.min.css: static/css/src/%.css
+	mkdir -p static/css/dist
 	$(cleancss) $< >$@
 
 test: $(SRC) $(UNIT_TEST_SRC) lint
