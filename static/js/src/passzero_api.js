@@ -29,7 +29,7 @@ $.getJSON = function(url, data) {
 };
 
 var pzAPI = {
-    base_url: "https://" + window.location.host,
+    base_url: window.location.protocol + "//" + window.location.host,
 
     _copyObject: function(o) {
         var newObj = {};
