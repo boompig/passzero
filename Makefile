@@ -1,10 +1,13 @@
-.PHONY: all install lint test live-test build clean
+.PHONY: all install lint test live-test build clean minify-js minify-css minify
 
 SRC=server.py passzero/*.py
 JS_SRC=static/js/*.js
 UNIT_TEST_SRC=tests/unit_tests/*.py
 E2E_TEST_SRC=tests/end_to_end_tests/*.py
 CWD=$(shell pwd)
+
+js_targets := $(patsubst static/js/src/%.js,static/js/dist/%.min.js,$(wildcard static/js/src/*.js))
+css_targets := $(patsubst static/css/src/%.css,static/css/dist/%.min.css,$(wildcard static/css/src/*.css))
 
 all: lint test build
 
@@ -14,6 +17,18 @@ install: package.json
 
 build: build/add_build_name.py passzero/config.py
 	python build/add_build_name.py passzero/config.py
+
+minify: minify-js minify-css
+
+minify-js: $(js_targets)
+
+static/js/dist/%.min.js: static/js/src/%.js
+	uglifyjs $< -o $@
+
+minify-css: $(css_targets)
+
+static/css/dist/%.min.css: static/css/src/%.css
+	cleancss $< >$@
 
 test: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest $(UNIT_TEST_SRC)
