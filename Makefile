@@ -9,7 +9,7 @@ js_src := static/js/src/*.js
 js_targets := $(patsubst static/js/src/%.js,static/js/dist/%.min.js,$(wildcard static/js/src/*.js))
 css_targets := $(patsubst static/css/src/%.css,static/css/dist/%.min.css,$(wildcard static/css/src/*.css))
 
-uglifyjs := node_modules/uglifyjs/index.js
+uglifyjs := node_modules/uglify-js/bin/uglifyjs
 cleancss := node_modules/clean-css-cli/bin/cleancss
 
 all: lint test build
@@ -28,12 +28,12 @@ copy-deps: node_modules
 
 minify-js: $(js_targets)
 
-static/js/dist/%.min.js: $(uglifyjs) static/js/src/%.js
+static/js/dist/%.min.js: static/js/src/%.js
 	$(uglifyjs) $< -o $@
 
 minify-css: $(css_targets)
 
-static/css/dist/%.min.css: $(cleancss) static/css/src/%.css
+static/css/dist/%.min.css: static/css/src/%.css
 	$(cleancss) $< >$@
 
 test: $(SRC) $(UNIT_TEST_SRC) lint

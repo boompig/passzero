@@ -17,7 +17,7 @@
     "clipboard": "^1.6.1",
     "jquery": "~2.1.4",
     "js-cookie": "^2.1.4",
-    "uglifyjs": "^2.4.11"
+    "uglify-js": "^3.0.15"
   },
   "devDependencies": {
     "clean-css": "^4.1.3",
