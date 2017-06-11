@@ -133,6 +133,10 @@ tiny-emitter@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/tiny-emitter/-/tiny-emitter-2.0.0.tgz#bad327adb1804b42a231afa741532bd884cd09ad"
 
+uglifyjs@^2.4.11:
+  version "2.4.11"
+  resolved "https://registry.yarnpkg.com/uglifyjs/-/uglifyjs-2.4.11.tgz#3440d64e045759589524418eb641c68bb90d113e"
+
 wrappy@1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
