@@ -8,7 +8,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "postinstall": "make minify"
+    "postinstall": "make minify && make copy-deps"
   },
   "dependencies": {
     "angular": "~1.4.0",

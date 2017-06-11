@@ -24,6 +24,7 @@ build: build/add_build_name.py passzero/config.py
 minify: minify-js minify-css
 
 copy-deps: node_modules
+	mkdir -p static/lib
 	cp -R node_modules/* static/lib/
 
 minify-js: $(js_targets)
