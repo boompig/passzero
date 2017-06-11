@@ -15,8 +15,8 @@ cleancss := node_modules/clean-css-cli/bin/cleancss
 all: lint test build
 
 install: package.json
-	npm install
-	cp -R node_modules/* static/lib
+	yarn
+	make copy-deps
 
 build: build/add_build_name.py passzero/config.py
 	python build/add_build_name.py passzero/config.py
