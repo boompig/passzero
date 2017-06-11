@@ -1,4 +1,4 @@
-.PHONY: all install lint test live-test build clean minify-js minify-css minify
+.PHONY: all install lint test live-test build clean minify-js minify-css minify copy-deps
 
 SRC=server.py passzero/*.py
 JS_SRC=static/js/*.js
@@ -19,6 +19,9 @@ build: build/add_build_name.py passzero/config.py
 	python build/add_build_name.py passzero/config.py
 
 minify: minify-js minify-css
+
+copy-deps: node_modules
+	cp -R node_modules/* static/lib/
 
 minify-js: $(js_targets)
 

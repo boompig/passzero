@@ -34,7 +34,8 @@ if 'FLASK_SECRET_KEY' in os.environ:
     sslify = SSLify(app, permanent=True)
     DEBUG = False
 else:
-    sslify = SSLify(app, permanent=True)
+    if 'NO_SSL' not in os.environ:
+        sslify = SSLify(app, permanent=True)
     app.secret_key = '64f5abcf8369e362c36a6220128de068'
     DEBUG = True
 
@@ -237,7 +238,11 @@ if __name__ == "__main__":
         app.debug = True
         assert(os.path.exists("cert.pem"))
         assert(os.path.exists("key.pem"))
-        app.run(port=app.config['PORT'], ssl_context=("cert.pem", "key.pem"))
+        if 'NO_SSL' in os.environ:
+            # used for testing service workers
+            app.run(port=app.config['PORT'])
+        else:
+            app.run(port=app.config['PORT'], ssl_context=("cert.pem", "key.pem"))
     else:
         app.debug = False
         app.run(host='0.0.0.0', port=app.config['PORT'])

@@ -7,6 +7,9 @@
   ],
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "postinstall": "make minify"
+  },
   "dependencies": {
     "angular": "~1.4.0",
     "angular-animate": "~1.4.7",

@@ -21,8 +21,8 @@ server.key*
 my_env.py
 # ctags
 tags
+
 # node.js folders
-bower_components
 node_modules
 
 # sublime stuff
@@ -32,9 +32,12 @@ node_modules
 .DS_Store
 .cache
 
-# Node junk
+# node.js junk
 npm-debug.log
 
-# output of build
+# output of minifier
 static/js/dist
 static/css/dist
+
+# installed javascript modules
+static/lib
