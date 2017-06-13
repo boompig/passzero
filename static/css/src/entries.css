@@ -10,20 +10,15 @@
 }
 
 #search-form {
-    margin: 0 auto;
-    width: 90%;
+    /* top, right, bottom, left */
+    margin: 1em auto 0 auto;
+    max-width: 600px;
 }
 
 .entry-title {
     font-weight: bold;
     font-size: 1.2em;
     margin: .1em;
-}
-
-input[type="password"], input[type="text"] {
-    margin-top: 2px;
-    margin-bottom: 2px;
-    width: 95%;
 }
 
 .password {

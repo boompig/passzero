@@ -65,21 +65,17 @@ var PassZeroCtrl = function ($scope, $location, $http) {
      * Given a query, return all entry objects matching that query.
      * Match is not case sensitive
      * Match is done on account name or username
+     *
+     * NOTE: if you're thinking of tweaking the performance here, the real bottleneck is the draw
+     * This can be seen because the longest operation is on backspace which is a trivial case in the function below
      */
     this.searchEntries = function (q) {
         if (q === "" || q === null)
             return this.entries;
-        q = q.toLowerCase();
-        var entry;
-        var l = [];
-        for (var i = 0; i < this.entries.length; i++) {
-            entry = this.entries[i];
-            if (entry.account.toLowerCase().indexOf(q) >= 0 ||
-                (!entry.is_encrypted && entry.username.toLowerCase().indexOf(q) >= 0)) {
-                l.push(entry);
-            }
-        }
-        return l;
+        return this.entries.filter(function(entry) {
+            return (entry.account.toLowerCase().indexOf(q) >= 0 ||
+                (!entry.is_encrypted && entry.username.toLowerCase().indexOf(q) >= 0));
+        });
     };
 
     this.getEntries = function () {
@@ -196,5 +192,5 @@ var PassZeroCtrl = function ($scope, $location, $http) {
     this.init();
 };
 
-var app = angular.module("PassZero", ["ngAnimate"])
+var app = angular.module("PassZero", [])
     .controller("PassZeroCtrl", PassZeroCtrl);
