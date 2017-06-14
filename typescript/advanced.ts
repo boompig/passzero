@@ -1,11 +1,25 @@
-function changePassword(e) {
+// provided externally via CDN
+declare let $: any;
+
+//const Utils = require("./utils.js");
+//const pzAPI = require("./passzero_api.js");
+declare let Utils: any;
+declare let pzAPI: any;
+
+interface ChangeAccountPasswordData {
+    old_password: string;
+    new_password: string;
+    confirm_new_password: string;
+}
+
+function changePassword(e: Event) {
     "use strict";
     e.preventDefault();
 
-    var elem = $(e.target);
-    var url = elem.attr("action");
-    var dataArray = elem.serializeArray();
-    var data = parseArray(dataArray);
+    const elem = $(e.target);
+    const url = elem.attr("action");
+    const dataArray = elem.serializeArray();
+    let data : ChangeAccountPasswordData = Utils.parseArray(dataArray);
 
     $(".form-error").text("");
     $(".error-msg").text("");
@@ -36,17 +50,18 @@ function changePassword(e) {
     return false;
 }
 
-function nukeEntries(e) {
+function nukeEntries(e: Event) {
     "use strict";
     e.preventDefault();
     if (confirm("Are you sure you want to delete all your entries?")) {
-        var $elem = $(e.target);
-        var url = $elem.attr("action");
-        var csrf_token = $elem.find("[name='csrf_token']").val();
-        var data = { "csrf_token": csrf_token };
-        $.post(url, data, function(response) {
+        const $elem = $(e.target);
+        const url = $elem.attr("action");
+        const csrf_token = $elem.find("[name='csrf_token']").val();
+        const data = { "csrf_token": csrf_token };
+        pzAPI.nukeEntries
+        .then((response) => {
             $("#nuke-success-msg").text(response.msg).show();
-        }, "json");
+        });
     }
     return false;
 }

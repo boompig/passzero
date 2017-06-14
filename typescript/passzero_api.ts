@@ -1,8 +1,5 @@
-var require = require || null;
-var module = module || null;
-if (require) {
-    var $ = require("jquery");
-}
+// provided externally via CDN
+declare let $: any;
 
 $.postJSON = function(url, data) {
     data = data || {};
@@ -54,20 +51,20 @@ $.deleteJSON = function(url, data) {
 };
 
 
-var pzAPI = {
+const pzAPI = {
     base_url: window.location.protocol + "//" + window.location.host,
 
-    _copyObject: function(o) {
-        var newObj = {};
-        for (var k in o) {
+    _copyObject: function(o: any): any {
+        let newObj = {};
+        for (let k in o) {
             newObj[k] = o[k];
         }
         return newObj;
     },
 
     login: function(email, password) {
-        var url = pzAPI.base_url + "/api/login";
-        var data = {
+        const url = pzAPI.base_url + "/api/login";
+        const data = {
             email: email,
             password: password
         };
@@ -75,13 +72,13 @@ var pzAPI = {
     },
 
     logout: function() {
-        var url = pzAPI.base_url + "/api/logout";
+        const url = pzAPI.base_url + "/api/logout";
         return $.postJSON(url);
     },
 
-    signup: function(email, password, confirm_password) {
-        var url = pzAPI.base_url + "/api/signup";
-        var data = {
+    signup: function(email: string, password: string, confirm_password: string) {
+        const url = pzAPI.base_url + "/api/signup";
+        const data = {
             email: email,
             password: password,
             confirm_password: confirm_password
@@ -89,50 +86,49 @@ var pzAPI = {
         return $.postJSON(url, data);
     },
 
-    getCSRFToken: function() {
-        var url = pzAPI.base_url + "/api/csrf_token";
+    getCSRFToken: function(): Promise<string> {
+        const url = pzAPI.base_url + "/api/csrf_token";
         return $.getJSON(url);
     },
 
-    getEntries: function() {
-        var url = pzAPI.base_url + "/api/v1/entries";
+    getEntries: function(): Promise<Array<any>> {
+        const url = pzAPI.base_url + "/api/v1/entries";
         return $.getJSON(url);
     },
 
-    getEntriesV2: function() {
-        var url = pzAPI.base_url + "/api/v2/entries";
+    getEntriesV2: function(): Promise<Array<any>> {
+        const url = pzAPI.base_url + "/api/v2/entries";
         return $.getJSON(url);
     },
 
-    _createEntry: function(entry, csrf_token) {
-        var url = pzAPI.base_url + "/api/entries/new";
-        var data = pzAPI._copyObject(entry);
+    _createEntry: function(entry, csrf_token: string) {
+        const url = pzAPI.base_url + "/api/entries/new";
+        let data = pzAPI._copyObject(entry);
         data.csrf_token = csrf_token;
         return $.postJSON(url, data);
     },
 
-    createEntry: function(entry) {
+    createEntry: function(entry): Promise<any> {
         return pzAPI.getCSRFToken()
         .then(function(response) {
             return pzAPI._createEntry(entry, response);
         });
     },
 
-    _editEntry: function(entry_id, entry, csrf_token) {
-        var url = "/api/entries/" + entry_id;
-        var data = pzAPI._copyObject(entry);
+    _editEntry: function(entry_id: number, entry, csrf_token: string): Promise<any> {
+        const url = "/api/entries/" + entry_id;
+        let data = pzAPI._copyObject(entry);
         data.csrf_token = csrf_token;
         return $.postJSON(url, data);
     },
-    editEntry: function(entry_id, entry) {
+    editEntry: function(entry_id: number, entry): Promise<any> {
         return pzAPI.getCSRFToken()
         .then(function(response) {
             return pzAPI._editEntry(entry_id, entry, response);
         });
     },
-    _deleteEntry: function(csrf_token, entry_id) {
-        var url = "/api/entries/" + entry_id;
-        data.csrf_token = csrf_token;
+    _deleteEntry: function(csrf_token: string, entry_id: number) {
+        const url = "/api/entries/" + entry_id;
         return $.deleteJSON(url, { "csrf_token": csrf_token });
     },
     deleteEntry: function(entry_id) {
@@ -141,20 +137,20 @@ var pzAPI = {
             return pzAPI._deleteEntry(response, entry_id);
         });
     },
-    _recoverAccount: function(email, token) {
-        var url = "/api/recover";
-        var data = { "csrf_token": token, "email": email };
+    _recoverAccount: function(email: string, csrf_token: string): Promise<any> {
+        const url = "/api/recover";
+        const data = { "csrf_token": csrf_token, "email": email };
         return $.postJSON(url, data);
     },
-    recoverAccount: function(email) {
+    recoverAccount: function(email: string): Promise<any> {
         return pzAPI.getCSRFToken()
         .then(function(response) {
             return pzAPI._recoverAccount(email, response);
         });
     },
     _recoverAccountConfirm: function(csrfToken, token, password, confirmPassword) {
-        var url = "/api/v1/user/recover/confirm";
-        var data = {
+        const url = "/api/v1/user/recover/confirm";
+        const data = {
             "token": token,
             "password": password,
             "confirm_password": confirmPassword
@@ -168,8 +164,8 @@ var pzAPI = {
         });
     },
     _changeAccountPassword: function(csrfToken, oldPassword, newPassword, confirmNewPassword) {
-        var url = "/api/v1/user/password";
-        var data = {
+        const url = "/api/v1/user/password";
+        const data = {
             "csrf_token": csrfToken,
             "old_password": oldPassword,
             "new_password": newPassword,
@@ -183,8 +179,14 @@ var pzAPI = {
             return pzAPI._changeAccountPassword(response, oldPassword, newPassword, confirmNewPassword);
         });
     },
+    _nukeEntries: function(csrf_token: string): Promise<any> {
+        const url = "/api/v1/entries/nuclear";
+        return $.postJSON(url);
+    },
+    nukeEntries: function(): Promise<any> {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._nukeEntries(response);
+        });
+    }
 };
-
-if (module && module.exports) {
-    module.exports = pzAPI;
-}

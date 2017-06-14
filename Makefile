@@ -1,4 +1,4 @@
-.PHONY: all install lint test live-test build clean minify-js minify-css minify copy-deps
+.PHONY: all install lint test live-test build clean minify-js minify-css minify copy-deps ts-compile
 
 SRC=server.py passzero/*.py
 UNIT_TEST_SRC=tests/unit_tests/*.py
@@ -6,11 +6,13 @@ E2E_TEST_SRC=tests/end_to_end_tests/*.py
 CWD=$(shell pwd)
 
 js_src := static/js/src/*.js
-js_targets := $(patsubst static/js/src/%.js,static/js/dist/%.min.js,$(wildcard static/js/src/*.js))
-css_targets := $(patsubst static/css/src/%.css,static/css/dist/%.min.css,$(wildcard static/css/src/*.css))
+js_targets := $(patsubst static/js/src/%.js, static/js/dist/%.min.js, $(wildcard static/js/src/*.js))
+css_targets := $(patsubst static/css/src/%.css, static/css/dist/%.min.css,$(wildcard static/css/src/*.css))
+js_src_targets := $(patsubst typescript/%.ts, static/js/src/%.js, $(wildcard typescript/*.ts))
 
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
 cleancss := node_modules/clean-css-cli/bin/cleancss
+tsc		 := node_modules/typescript/bin/tsc
 
 all: lint test build
 
@@ -27,7 +29,12 @@ copy-deps: node_modules
 	mkdir -p static/lib
 	cp -R node_modules/* static/lib/
 
-minify-js: $(js_targets)
+ts-compile: $(js_src_targets)
+
+static/js/src/%.js: typescript/%.ts
+	$(tsc) --outFile $@ $<
+
+minify-js: ts-compile $(js_targets)
 
 static/js/dist/%.min.js: static/js/src/%.js
 	mkdir -p static/js/dist

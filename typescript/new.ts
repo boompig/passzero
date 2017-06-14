@@ -1,3 +1,11 @@
+// provided externally via CDN
+declare let $: any;
+
+// provided externally
+declare let Utils: any;
+declare let pzAPI: any;
+declare let LogoutTimer: any;
+
 /* for passphrase generation */
 var words = [];
 var dictionary = "common.txt";
@@ -37,7 +45,7 @@ function genPassphraseHelper() {
 function setPassword(pass) {
     $("#password").val(pass).keyup();
     if ($("#password").attr("type") == "password") {
-        showHidePassword();
+        showHidePassword(null);
     }
 }
 
@@ -90,7 +98,7 @@ function genPassword() {
     return 0;
 }
 
-function showHidePassword(e) {
+function showHidePassword(e: Event | null) {
     "use strict";
     var elem = $("#password");
     var t = elem.attr("type");
@@ -115,7 +123,7 @@ function createNew (e) {
     e.preventDefault();
 
     var url = $(e.target).attr("action");
-    var data = getFormData(e.target);
+    var data = Utils.getFormData(e.target);
 
     pzAPI.createEntry(data, data.csrf_token)
     .then(function(response) {
@@ -136,7 +144,7 @@ function getEntryID() {
 function makeEdit (e) {
     "use strict";
     e.preventDefault();
-    var data = getFormData(e.target);
+    var data = Utils.getFormData(e.target);
     var entry_id = getEntryID();
     pzAPI.editEntry(entry_id, data, data.csrf_token)
     .then(function(response) {
