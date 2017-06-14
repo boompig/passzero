@@ -1,6 +1,7 @@
 {
     "short_name": "PassZero",
-    "name": "PassZero: an open-source password manager",
+    "name": "PassZero",
+    "description": "An open source password manager",
     "icons": [
         {
             "src": "icon.png",
