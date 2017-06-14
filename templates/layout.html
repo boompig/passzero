@@ -9,6 +9,7 @@
 
         <title>PassZero</title>
 
+        <link rel="manifest" href="/manifest.json" />
         <link rel="stylesheet" href="{{ url_for("static", filename="lib/bootstrap/dist/css/bootstrap.min.css") }}" />
         <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/main.min.css") + "?build=" + config['BUILD_ID'] }}" />
         {% block css %}

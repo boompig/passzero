@@ -1,0 +1,14 @@
+{
+    "short_name": "PassZero",
+    "name": "PassZero: an open-source password manager",
+    "icons": [
+        {
+            "src": "icon.png",
+            "type": "image/png",
+            "sizes": "256x256"
+        }
+    ],
+    "start_url": "/login?sw=true",
+    "orientation": "portrait",
+    "display": "standalone"
+}
