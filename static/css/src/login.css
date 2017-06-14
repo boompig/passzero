@@ -63,7 +63,7 @@ html, body {
     max-width: 550px;
 }
 
-@media(min-height>=800px) {
+@media(min-height: 800px) {
     #form-container {
         margin-top: 20%;
     }

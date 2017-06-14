@@ -8,5 +8,7 @@
             "sizes": "256x256"
         }
     ],
-    "start_url": "/login?sw=true"
+    "start_url": "/login?sw=true",
+    "orientation": "portrait",
+    "display": "standalone"
 }
