@@ -1,8 +1,10 @@
 {% extends "layout.html" -%}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="lib/angular/angular.min.js") }}"></script>
-    <script src="{{ url_for("static", filename="lib/clipboard/dist/clipboard.min.js") }}"></script>
+    <!-- load libraries from CDN to decrease page load time -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.4/angular.min.js" integrity="sha256-jFCqhWdzGFjoG8/SAncY2afI/Xv1TPSWSZrb9dpXQbk=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.1/clipboard.min.js" integrity="sha256-El0fEiD3YOM7uIVZztyQzmbbPlgEj0oJVxRWziUh4UE=" crossorigin="anonymous"></script>
+    <!-- custom JS -->
     <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <script src="{{ url_for("static", filename="js/dist/entries.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}

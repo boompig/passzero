@@ -40,6 +40,20 @@ $.getJSON = function(url, data) {
     });
 };
 
+$.deleteJSON = function(url, data) {
+    data = data || {};
+    if (Object.keys(data).length > 0) {
+        url += "?" + $.param(data);
+    }
+    return $.ajax({
+        url: url,
+        method: "DELETE",
+        contentType: "application/json",
+        dataType: "json"
+    });
+};
+
+
 var pzAPI = {
     base_url: window.location.protocol + "//" + window.location.host,
 
@@ -81,7 +95,12 @@ var pzAPI = {
     },
 
     getEntries: function() {
-        var url = pzAPI.base_url + "/api/entries";
+        var url = pzAPI.base_url + "/api/v1/entries";
+        return $.getJSON(url);
+    },
+
+    getEntriesV2: function() {
+        var url = pzAPI.base_url + "/api/v2/entries";
         return $.getJSON(url);
     },
 
@@ -105,11 +124,21 @@ var pzAPI = {
         data.csrf_token = csrf_token;
         return $.postJSON(url, data);
     },
-
     editEntry: function(entry_id, entry) {
         return pzAPI.getCSRFToken()
         .then(function(response) {
             return pzAPI._editEntry(entry_id, entry, response);
+        });
+    },
+    _deleteEntry: function(csrf_token, entry_id) {
+        var url = "/api/entries/" + entry_id;
+        data.csrf_token = csrf_token;
+        return $.deleteJSON(url, { "csrf_token": csrf_token });
+    },
+    deleteEntry: function(entry_id) {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._deleteEntry(response, entry_id);
         });
     },
     _recoverAccount: function(email, token) {

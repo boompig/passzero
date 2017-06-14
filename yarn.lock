@@ -2,13 +2,9 @@
 # yarn lockfile v1
 
 
-angular-animate@~1.4.7:
-  version "1.4.14"
-  resolved "https://registry.yarnpkg.com/angular-animate/-/angular-animate-1.4.14.tgz#ee4068cafdb7e230026319ec6cb9207aca898038"
-
-angular@~1.4.0:
-  version "1.4.14"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.4.14.tgz#9d0feaf60ce6e52ce50f49ee328656d1e1875c37"
+angular@1.6.4:
+  version "1.6.4"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.6.4.tgz#03b7b15c01a0802d7e2cf593240e604054dc77fb"
 
 balanced-match@^0.4.1:
   version "0.4.2"

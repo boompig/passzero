@@ -80,14 +80,15 @@ var PassZeroCtrl = function ($scope, $location, $http) {
 
     this.getEntries = function () {
         var that = this;
-        $http.get("/api/v2/entries").success(function (response) {
+        $http.get("/api/v2/entries").then(function (response) {
+            var entries = response.data;
             console.log("Fetched entries:");
-            console.log(response);
-            for (var i = 0; i < response.length; i++) {
-                if(!response[i].hasOwnProperty("is_encrypted")) {
-                    response[i].is_encrypted = false;
+            console.log(entries);
+            for (var i = 0; i < entries.length; i++) {
+                if(!entries[i].hasOwnProperty("is_encrypted")) {
+                    entries[i].is_encrypted = false;
                 }
-                that.entries.push(response[i]);
+                that.entries.push(entries[i]);
             }
             that.loadedEntries = true;
             that.submitSearch();
@@ -108,9 +109,9 @@ var PassZeroCtrl = function ($scope, $location, $http) {
             console.log("Deleting entry with ID " + entry.id);
             var data = { csrf_token: this.csrf_token };
             $http.delete("/api/v1/entries/" + entry.id, { params: data })
-            .success(function (result) {
+            .then(function (result) {
                 window.location.href = "/entries/post_delete/" + entry.account;
-            }).error(function (obj, textStatus, textCode) {
+            }).catch(function (obj, textStatus, textCode) {
                 console.log(obj);
                 console.log(textStatus);
                 console.log(textCode);
@@ -123,18 +124,21 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         //console.log(event);
         //console.log(entry.id);
         $http.get("/api/v2/entries/" + entry.id)
-        .success(function(result) {
+        .then(function(result) {
+            var decEntry = result.data;
             // the result is the new entry
-            result.is_encrypted = false;
-            console.log(result);
+            decEntry.is_encrypted = false;
+            //console.log(decEntry);
             console.log(entryIndex);
             // copy in the values from the decrypted entry into the current entry
-            for(var field in result) {
-                if(result.hasOwnProperty(field)) {
-                    entry[field] = result[field];
+            for(var field in decEntry) {
+                if(decEntry.hasOwnProperty(field)) {
+                    // alter the passed parameter
+                    entry[field] = decEntry[field];
                 }
             }
-        }).error(function (obj, textStatus, textCode) {
+            console.log(entry);
+        }).catch(function (obj, textStatus, textCode) {
             console.log(obj);
             console.log(textStatus);
             console.log(textCode);
