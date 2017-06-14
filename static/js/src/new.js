@@ -118,9 +118,9 @@ function createNew (e) {
     var data = getFormData(e.target);
 
     pzAPI.createEntry(data, data.csrf_token)
-    .done(function(response) {
+    .then(function(response) {
         window.location.href = "/entries/done_new/" + data.account;
-    }).error(function (obj, textStatus, textCode) {
+    }).catch(function (obj, textStatus, textCode) {
         console.log(obj);
         console.log(textStatus);
         console.log(textCode);
@@ -139,7 +139,7 @@ function makeEdit (e) {
     var data = getFormData(e.target);
     var entry_id = getEntryID();
     pzAPI.editEntry(entry_id, data, data.csrf_token)
-    .done(function(response) {
+    .then(function(response) {
         window.location.href = "/entries/done_edit/" + data.account;
     });
     return false;

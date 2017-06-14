@@ -3,7 +3,7 @@ function recoverPassword(e) {
     e.preventDefault();
     var email = $("input[type='email']").val();
     pzAPI.recoverAccount(email)
-    .done(function(response, textStatus, obj) {
+    .then(function(response, textStatus, obj) {
         $("#success-msg").addClass("alert-success").text(response.msg).show();
         console.log(response);
     });
@@ -13,16 +13,15 @@ function recoverPassword(e) {
 function recoverPasswordConfirm(e) {
     "use strict";
     e.preventDefault();
-    var url = $(e.target).prop("action");
-    var data = {
-        password: $("input[name='password']").val(),
-        confirm_password: $("input[name='confirm_password']").val(),
-        token: window.location.search.replace("?token=", "")
-    };
-    $.post(url, data, function(response, textStatus, obj) {
+    var password = $("input[name='password']").val();
+    var confirmPassword = $("input[name='confirm_password']").val();
+    var token = window.location.search.replace("?token=", "");
+    pzAPI.recoverAccountConfirm(token, password, confirmPassword)
+    .then(function(response, textStatus, obj) {
         console.log(response);
         window.location.href = "/logout";
-    }, "json").error(function(obj, b) {
+    })
+    .catch(function(obj, b) {
         $("#server-msg").text(obj.responseJSON.msg);
         console.log("error");
         console.log(obj.responseJSON);

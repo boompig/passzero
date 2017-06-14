@@ -15,6 +15,18 @@ $.postJSON = function(url, data) {
     });
 };
 
+$.putJSON = function(url, data) {
+    data = data || {};
+    return $.ajax({
+        url: url,
+        data: JSON.stringify(data),
+        method: "PUT",
+        contentType: "application/json",
+        dataType: "json"
+    });
+};
+
+
 $.getJSON = function(url, data) {
     data = data || {};
     if (Object.keys(data).length > 0) {
@@ -110,7 +122,38 @@ var pzAPI = {
         .then(function(response) {
             return pzAPI._recoverAccount(email, response);
         });
-    }
+    },
+    _recoverAccountConfirm: function(csrfToken, token, password, confirmPassword) {
+        var url = "/api/v1/user/recover/confirm";
+        var data = {
+            "token": token,
+            "password": password,
+            "confirm_password": confirmPassword
+        };
+        return $.postJSON(url, data);
+    },
+    recoverAccountConfirm: function(token, password, confirmPassword) {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._recoverAccountConfirm(response, token, password, confirmPassword);
+        });
+    },
+    _changeAccountPassword: function(csrfToken, oldPassword, newPassword, confirmNewPassword) {
+        var url = "/api/v1/user/password";
+        var data = {
+            "csrf_token": csrfToken,
+            "old_password": oldPassword,
+            "new_password": newPassword,
+            "confirm_new_password": confirmNewPassword
+        };
+        return $.putJSON(url, data);
+    },
+    changeAccountPassword: function(oldPassword, newPassword, confirmNewPassword) {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._changeAccountPassword(response, oldPassword, newPassword, confirmNewPassword);
+        });
+    },
 };
 
 if (module && module.exports) {

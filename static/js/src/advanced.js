@@ -11,30 +11,26 @@ function changePassword(e) {
     $(".error-msg").text("");
     $(".alert-success").hide();
 
-    $.ajax({
-        url: url,
-        data: data,
-        success: function (response) {
-            $(".alert-success").text("Successfully changed password").show();
-            // reset form fields
-            elem.find("input[type='password']").each(function (idx) {
-                $(this).val("");
-            });
-        },
-        error: function (obj, textStatus, textCode) {
-            var response = obj.responseJSON;
-            $(".error-msg").text(response.msg);
+    pzAPI.changeAccountPassword(data.old_password, data.new_password, data.confirm_new_password)
+    .then(function (response) {
+        $(".alert-success").text("Successfully changed password").show();
+        // reset form fields
+        elem.find("input[type='password']").each(function (idx) {
+            $(this).val("");
+        });
+    })
+    .catch(function (obj, textStatus, textCode) {
+        var response = obj.responseJSON;
+        $(".error-msg").text(response.msg);
 
-            for (var key in response) {
-                if (key !== "status" && key !== "msg") {
-                    $("#form-error-" + key).text(response[key]);
-                }
+        for (var key in response) {
+            if (key !== "status" && key !== "msg") {
+                $("#form-error-" + key).text(response[key]);
             }
-            console.log(obj);
-            console.log(textStatus);
-            console.log(textCode);
-        },
-        method: "UPDATE"
+        }
+        console.log(obj);
+        console.log(textStatus);
+        console.log(textCode);
     });
 
     return false;
