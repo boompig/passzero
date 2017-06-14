@@ -19,6 +19,8 @@
     "clipboard": "^1.6.1",
     "jquery": "~2.1.4",
     "js-cookie": "^2.1.4",
+    "less": "^2.7.2",
+    "less-plugin-clean-css": "^1.5.1",
     "uglify-js": "^3.0.15"
   }
 }

@@ -1,4 +1,4 @@
-.PHONY: all install lint test live-test build clean minify-js minify-css minify copy-deps
+.PHONY: all install lint test live-test build clean minify-js build-css minify copy-deps
 
 SRC=server.py passzero/*.py
 UNIT_TEST_SRC=tests/unit_tests/*.py
@@ -7,10 +7,11 @@ CWD=$(shell pwd)
 
 js_src := static/js/src/*.js
 js_targets := $(patsubst static/js/src/%.js,static/js/dist/%.min.js,$(wildcard static/js/src/*.js))
-css_targets := $(patsubst static/css/src/%.css,static/css/dist/%.min.css,$(wildcard static/css/src/*.css))
+less_targets := $(patsubst less/%.less,static/css/dist/%.min.css,$(wildcard less/*.less))
 
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
 cleancss := node_modules/clean-css-cli/bin/cleancss
+lessc := 	node_modules/less/bin/lessc --clean-css
 
 all: lint test build
 
@@ -21,7 +22,7 @@ install: package.json
 build: build/add_build_name.py passzero/config.py
 	python build/add_build_name.py passzero/config.py
 
-minify: minify-js minify-css
+minify: minify-js build-css
 
 copy-deps: node_modules
 	mkdir -p static/lib
@@ -33,11 +34,11 @@ static/js/dist/%.min.js: static/js/src/%.js
 	mkdir -p static/js/dist
 	$(uglifyjs) $< -o $@
 
-minify-css: $(css_targets)
+build-css: $(less_targets)
 
-static/css/dist/%.min.css: static/css/src/%.css
+static/css/dist/%.min.css: less/%.less
 	mkdir -p static/css/dist
-	$(cleancss) $< >$@
+	$(lessc) $< >$@
 
 test: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest $(UNIT_TEST_SRC)
