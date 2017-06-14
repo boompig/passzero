@@ -54,7 +54,7 @@
                 </div>
                 <div class="entry-panel">
                     <button type="button" ng-if="!entry.is_encrypted"
-                        data-clipboard-target="#inner-password-{{ entry.id }}"
+                        data-clipboard-text="{{ entry.password }}"
                         class="btn btn-success copy-pwd-btn"
                         data-toggle="tooltip">Copy Password</button>
                     <button type="button" class="btn btn-warning edit-btn"
