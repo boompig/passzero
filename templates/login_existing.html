@@ -5,26 +5,26 @@
         <li class="nav-item"><a href="/about">About</a></li>
     </ul>
 </nav>
-{% include "flash_messages.html" %}
+
 <div id="form-container">
-    <form method="POST" action="/login" role="form" onsubmit="login(event)">
+    <form method="POST" action="/api/v1/login" role="form">
         <h1 class="title">
             Login to PassZero
         </h1>
 
-        <div class="alert alert-danger" id="error-msg-container">
-            <div id="error-msg"></div>
-        </div>
+        {% include "flash_messages.html" %}
 
         <span class="form-error" id="form-error-email"></span>
         <input type="email" class="form-control" name="email" tabindex="1"
-                placeholder="email" required="true" />
+            onchange="LoginForm.updateEmail(event)"
+            placeholder="email" required="true" />
 
         <span class="form-error" id="form-error-password"></span>
         <input type="password" class="form-control" name="password" tabindex="2"
-                placeholder="password" required="true" />
+            placeholder="password" required="true" />
         <label for="remember">
-            <input type="checkbox" name="remember" tabindex="3" />
+            <input type="checkbox" name="remember" tabindex="3"
+            onchange="LoginForm.checkRemember(event)" />
             <span>Remember email</span>
         </label>
 

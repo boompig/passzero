@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, escape, session
+from flask import Blueprint, escape, session, request, redirect, url_for, flash
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend
@@ -19,7 +19,7 @@ api_v1 = Blueprint("api_v1", __name__)
 
 @api_v1.route("/api/csrf_token", methods=["GET"])
 @api_v1.route("/api/v1/csrf_token", methods=["GET"])
-def api_get_csrf_token():
+def get_csrf_token_api():
     # make sure there is a CSRF token
     token = generate_csrf_token()
     return write_json(200, token)
@@ -27,7 +27,7 @@ def api_get_csrf_token():
 
 @api_v1.route("/api/logout", methods=["POST"])
 @api_v1.route("/api/v1/logout", methods=["POST"])
-def api_logout():
+def logout_api():
     if 'email' in session:
         session.pop("email")
     if 'password' in session:
@@ -41,7 +41,7 @@ def api_logout():
 @api_v1.route("/api/login", methods=["POST"])
 @api_v1.route("/api/v1/login", methods=["POST"])
 @requires_json_form_validation(LoginForm)
-def api_login(request_data):
+def login_api(request_data):
     """Try to log in using JSON post data.
     Respond with JSON data and set HTTP status code.
     On success:
@@ -75,7 +75,13 @@ def api_login(request_data):
     except AssertionError:
         code, data = json_error(401,
             "The account has not been activated. Check your email!")
-    return write_json(code, data)
+    if request.headers.get("Content-Type") == "application/json":
+        return write_json(code, data)
+    elif code == 200:
+        return redirect(url_for("post_login"))
+    else:
+        flash(data["msg"], "error")
+        return redirect(url_for("login"))
 
 
 @api_v1.route("/api/entries", methods=["GET"])

@@ -43,8 +43,12 @@ def requires_json_form_validation(form_class):
     def real_function(function):
         @wraps(function)
         def inner(*args, **kwargs):
-            request_data = request.get_json()
-            form = form_class(data=request_data)
+            if request.headers.get("Content-Type") == "application/json":
+                request_data = request.get_json()
+                form = form_class(data=request_data)
+            else:
+                request_data = request.form
+                form = form_class(request_data)
             if form.validate():
                 return function(request_data, *args, **kwargs)
             else:

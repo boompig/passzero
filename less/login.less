@@ -16,16 +16,6 @@ html, body {
     height: 100%;
 }
 
-.flashes {
-    width: 80%;
-    margin: 0 auto;
-}
-
-.flash {
-    margin-top: 4em;
-    margin-bottom: -4em;
-}
-
 .title {
     font-weight: normal;
     text-align: center;
@@ -35,24 +25,29 @@ html, body {
     margin-top: 0.5em;
 }
 
-#error-msg-container {
-    display: none;
-}
-
-.error {
-    color: red;
-    font-size: 0.9em;
-    text-align: center;
-}
-
-.form-error {
-    color: red;
-    font-size: 0.9em;
-    display: block;
-}
-
 .form-control {
     margin-bottom: 5px;
+}
+
+/**
+ * Specific styles for the registration
+ */
+.register-form , .register-form .form-error {
+    #error-msg-container, .form-error {
+        display: none;
+    }
+
+    .form-error {
+        padding-top: 0.4em;
+        padding-bottom: 0.4em;
+        margin-top: 1em;
+        margin-bottom: 0.1em;
+    }
+    /*.form-error {*/
+        /*color: red;*/
+        /*font-size: 0.9em;*/
+        /*text-align: center;*/
+    /*}*/
 }
 
 #form-container {

@@ -13,6 +13,7 @@ function createAccount(e) {
         console.log(response);
         window.location.href = "/done_signup/" + data.email;
         $("#error-msg-container").hide();
+        $(".form-error").hide();
     }).error(function(obj, textStatus, textCode) {
         if (textCode === "CONFLICT") {
             $("#error-msg").text("An account with this email already exists");
@@ -31,7 +32,10 @@ function createAccount(e) {
 
             for (var k in response) {
                 if (k !== "status" && k !== "msg") {
-                    $("#form-error-" + k).text(response[k]);
+                    console.log(response[k]);
+                    console.log(k);
+                    console.log($("#form-error-" + k));
+                    $("#form-error-" + k).text(response[k]).show();
                 }
             }
         } else {
@@ -44,45 +48,54 @@ function createAccount(e) {
     return false;
 }
 
-function login(e) {
-    "use strict";
-    e.preventDefault();
-    var data = getFormData(e.target);
-    pzAPI.login(data.email, data.password)
-    .done(function(response) {
-        //console.log(data);
-        console.log(response);
-        $("#error-msg-container").hide();
-        if(data.remember) {
-            // create a cookie on successful login
-            Cookies.set("email", data.email, {
+var LoginForm = function() {
+    this.email = "";
+    this.remember = false;
+
+    this.updateEmail = function(e) {
+        this.email = e.target.value;
+        console.log("email = " + this.email);
+        if(this.remember) {
+            this.saveEmail();
+        }
+    };
+
+    this.saveEmail = function() {
+        if(this.email && this.remember) {
+            console.log("saving email " + this.email);
+            // create a cookie when the checkbox is checked
+            Cookies.set("email", this.email, {
                 secure: true,
                 expires: 7
             });
+        }
+    };
+
+    this.checkRemember = function (e) {
+        this.remember = e.target.checked;
+        console.log("remember = " + this.remember);
+        if(this.remember) {
+            this.saveEmail();
         } else {
             // erase the cookie
             Cookies.remove("email");
         }
-        window.location.href = "/done_login";
-    }).error(function(obj, textStatus, textCode) {
-        console.log(obj);
-        if (textCode === "UNAUTHORIZED" || textCode === "BAD REQUEST") {
-            var response = JSON.parse(obj.responseText);
-            $("#error-msg").text(response.msg);
-        } else {
-            console.log(obj);
-            console.log(textStatus);
-            console.log(textCode);
+    };
+
+    this.init = function() {
+        var email = Cookies.get("email");
+        console.log(email);
+        if(email) {
+            $("[name='remember']").prop("checked", true);
+            $("[name='email']").val(email);
+            this.email = email;
+            this.remember = true;
         }
-        $("#error-msg-container").show();
-    });
-    return false;
-}
+    };
+
+    return this;
+}();
 
 $(function() {
-    var email = Cookies.get("email");
-    if(email) {
-        $("[name='remember']").prop("checked", true);
-        $("[name='email']").val(email);
-    }
+    LoginForm.init();
 });
