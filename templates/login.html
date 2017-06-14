@@ -6,7 +6,13 @@
         <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
 
         <link rel="manifest" href="/manifest.json" />
-        <link rel="stylesheet" href="/lib/bootstrap/dist/css/bootstrap.min.css" />
+        <link
+            href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+            crossorigin="anonymous">
+
+        <!-- custom CSS -->
         <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/login.min.css") + "?build=" + config['BUILD_ID'] }}" />
         <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/navbar.min.css") + "?build=" + config['BUILD_ID'] }}" />
     </head>
@@ -19,8 +25,19 @@
             {% endif %}
         </div>
 
-        <script src="{{ url_for("static", filename="/lib/jquery/dist/jquery.min.js") }}"></script>
-        <script src="{{ url_for("static", filename="/lib/js-cookie/src/js.cookie.js") }}"></script>
+        <script
+            src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+        <script
+            src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+        <script
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"
+            integrity="sha256-1A78rJEdiWTzco6qdn3igTBv9VupN3Q1ozZNTR4WE/Y="
+            crossorigin="anonymous"></script>
+
         <script src="{{ url_for("static", filename="/js/dist/utils.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
         <script src="{{ url_for("static", filename="/js/dist/passzero_api.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
         <script src="{{ url_for("static", filename="/js/dist/login.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
