@@ -1,0 +1,9 @@
+{
+    "extends": "tslint:recommended",
+    "rules": {
+        "comment-format": [false],
+        "no-console": [false],
+        "object-literal-sort-keys": [false],
+        "trailing-comma": [false]
+    }
+}

@@ -8,15 +8,15 @@ declare let Cookies: any;
 declare let Utils: any;
 declare let pzAPI: any;
 
-interface RegisterFormData {
-    email: string
-    password: string
-    confirm_password: string
+interface IRegisterFormData {
+    email: string;
+    password: string;
+    confirm_password: string;
 }
 
 function createAccount(e: Event) {
     e.preventDefault();
-    let data: RegisterFormData = Utils.getFormData(e.target);
+    const data: IRegisterFormData = Utils.getFormData(e.target);
     pzAPI.signup(data.email, data.password, data.confirm_password)
     .then((response) => {
         console.log(response);
@@ -28,19 +28,19 @@ function createAccount(e: Event) {
         } else if (textCode === "INTERNAL SERVER ERROR") {
             // clear out form-specific errors
             $(".form-error").text("");
-            if(obj.responseJSON) {
+            if (obj.responseJSON) {
                 $("#error-msg").text(obj.responseJSON.msg);
             } else {
                 $("#error-msg").text("Server error");
             }
         } else if (textCode === "BAD REQUEST") {
-            let response = JSON.parse(obj.responseText);
+            const response = JSON.parse(obj.responseText);
             console.log(response);
             $("#error-msg").text(response.msg);
 
             $(".form-error").text("");
 
-            for (let k in response) {
+            for (const k of response) {
                 if (k !== "status" && k !== "msg") {
                     $("#form-error-" + k).text(response[k]);
                 }
@@ -55,7 +55,7 @@ function createAccount(e: Event) {
     return false;
 }
 
-interface LoginFormData {
+interface ILoginFormData {
     email: string;
     password: string;
     remember: boolean;
@@ -64,13 +64,13 @@ interface LoginFormData {
 function login(e: Event) {
     "use strict";
     e.preventDefault();
-    let data: LoginFormData = Utils.getFormData(e.target);
+    const data: ILoginFormData = Utils.getFormData(e.target);
     pzAPI.login(data.email, data.password)
     .then((response) => {
         //console.log(data);
         console.log(response);
         $("#error-msg-container").hide();
-        if(data.remember) {
+        if (data.remember) {
             // create a cookie on successful login
             Cookies.set("email", data.email, {
                 secure: true,
@@ -84,7 +84,7 @@ function login(e: Event) {
     }).catch((obj, textStatus, textCode) => {
         console.log(obj);
         if (textCode === "UNAUTHORIZED" || textCode === "BAD REQUEST") {
-            let response = JSON.parse(obj.responseText);
+            const response = JSON.parse(obj.responseText);
             $("#error-msg").text(response.msg);
         } else {
             console.log(obj);
@@ -96,9 +96,9 @@ function login(e: Event) {
     return false;
 }
 
-$(function() {
-    let email: string = Cookies.get("email");
-    if(email) {
+$(() => {
+    const email: string = Cookies.get("email");
+    if (email) {
         $("[name='remember']").prop("checked", true);
         $("[name='email']").val(email);
     }

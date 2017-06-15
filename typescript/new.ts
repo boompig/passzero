@@ -1,25 +1,11 @@
 // provided externally via CDN
 declare let $: any;
+declare let angular: any;
 
 // provided externally
 declare let Utils: any;
 declare let pzAPI: any;
 declare let LogoutTimer: any;
-
-/* for passphrase generation */
-var words = [];
-var dictionary = "common.txt";
-
-/* settings */
-var showSettings = false;
-var genSpecialChars = true;
-var maxNumWords = 10;
-
-var timer = null;
-
-function showHideSettings () {
-    $("#len-container").toggle();
-}
 
 /**
  * Get a random integer in interval [a, b)
@@ -28,203 +14,249 @@ function randInt(a, b) {
     return Math.floor(Math.random() * (b - a) + a);
 }
 
-function genPassphraseHelper() {
-    "use strict";
-    var phrase = "", index, word;
-    var numWords = Number($("#phraseLen").text());
-    for (var i = 0; i < numWords; i++) {
-        index = Math.floor(Math.random() * words.length);
-        word = words[index];
-        word = word[0].toUpperCase() + word.substr(1);
-        phrase += word;
-    }
-    setPassword(phrase);
-
+interface ICreateEntryForm {
+    account: string;
+    username: string;
+    password: string;
+    extra: string;
+    csrf_token: string;
 }
 
-function setPassword(pass) {
-    $("#password").val(pass).keyup();
-    if ($("#password").attr("type") == "password") {
-        showHidePassword(null);
-    }
+interface IEntry {
+    account: string;
+    username: string;
+    password: string;
+    extra: string;
+    id: number;
+    version: number;
 }
 
-function genPassphrase () {
-    "use strict";
-    if (words.length === 0) {
-        $.get("/dictionary/" + dictionary, function (response) {
-            words = response.split("\n").filter(function (w) {
-                return w.length >= 5;
-            });
-
-            genPassphraseHelper();
-        });
-    } else {
-        genPassphraseHelper();
-    }
-    return 0;
-}
-
-/**
- * Generate a random password
- */
-function genPassword() {
-    "use strict";
-    var length = $("#passLen").text();
-    var i;
-    var passArray = [];
-    var chars = [];
-    for (i = "a".charCodeAt(0); i <= "z".charCodeAt(0); i++) {
-        chars.push(String.fromCharCode(i));
-    }
-    for (i = "A".charCodeAt(0); i <= "Z".charCodeAt(0); i++) {
-        chars.push(String.fromCharCode(i));
-    }
-    for (i = "0".charCodeAt(0); i <= "9".charCodeAt(0); i++) {
-        chars.push(String.fromCharCode(i));
-    }
-    if (genSpecialChars) {
-        for (i = "!".charCodeAt(0); i <= "/".charCodeAt(0); i++) {
-            chars.push(String.fromCharCode(i));
-        }
-    }
-
-    for (i = 0; i < length; i++) {
-        passArray[i] = chars[randInt(0, chars.length)];
-    }
-
-    var pass = passArray.join("");
-    setPassword(pass);
-    return 0;
-}
-
-function showHidePassword(e: Event | null) {
-    "use strict";
-    var elem = $("#password");
-    var t = elem.attr("type");
-    if (t === "password") {
-        elem.attr("type", "text");
-        $("#show-hide-btn").text("Hide");
-        togglePasswordGen(true);
-    } else {
-        elem.attr("type", "password");
-        $("#show-hide-btn").text("Show");
-        togglePasswordGen(false);
-    }
-}
-
-/**
- * Called to submit form data to server
- * Creates a new entry
- * On success does a redirect
- */
-function createNew (e) {
-    "use strict";
-    e.preventDefault();
-
-    var url = $(e.target).attr("action");
-    var data = Utils.getFormData(e.target);
-
-    pzAPI.createEntry(data, data.csrf_token)
-    .then(function(response) {
-        window.location.href = "/entries/done_new/" + data.account;
-    }).catch(function (obj, textStatus, textCode) {
-        console.log(obj);
-        console.log(textStatus);
-        console.log(textCode);
-    });
-    return false;
-}
-
-function getEntryID() {
-    var components = window.location.href.split("/");
-    return components[components.length - 1];
-}
-
-function makeEdit (e) {
-    "use strict";
-    e.preventDefault();
-    var data = Utils.getFormData(e.target);
-    var entry_id = getEntryID();
-    pzAPI.editEntry(entry_id, data, data.csrf_token)
-    .then(function(response) {
-        window.location.href = "/entries/done_edit/" + data.account;
-    });
-    return false;
-}
-
-function changeLen(diff) {
-    "use strict";
-    var elem = $("#passLen");
-    var len = Number(elem.text());
-    elem.text(len + diff);
-}
-
-function changePhraseLen(diff) {
-    "use strict";
-    var elem = $("#phraseLen");
-    var len = Number(elem.text());
-    if (len + diff > 0 && len + diff <= maxNumWords) {
-        elem.text(len + diff);
-    }
-}
-
-function togglePasswordGen(on) {
-    "use strict";
-    if (on) {
-        $("#len-container").show();
-        $("#gen-pass-btn").prop({ disabled: false });
-    } else {
-        $("#len-container").hide();
-        $("#gen-pass-btn").prop({ disabled: true });
-    }
-}
-
-function toggleSpecialChar(e) {
-    "use strict";
-    genSpecialChars = !genSpecialChars;
-    console.log(e);
-    if (genSpecialChars) {
-        $(e.currentTarget).addClass("active");
-    } else {
-        $(e.currentTarget).removeClass("active");
-    }
-}
-
-$(function() {
-    "use strict";
-
-    if ($("#password").val().length > 0) {
-        togglePasswordGen(false);
-    } else {
-        $("#show-hide-btn").prop({ disabled: true });
-    }
-
-    $("#toggleSymbols").click(function (e) {
-        toggleSpecialChar(e);
-    });
-
-    $("#password").keyup(function () {
-        if ($(this).val().length > 0) {
-            $("#show-hide-btn").prop({ disabled: false });
-            if ($("#show-hide-btn").text() === "Show") {
-                togglePasswordGen(false);
-            }
-        } else {
-            $("#show-hide-btn").prop({ disabled: true });
-        }
-    });
-
-    // set in globals (declared at top)
-    timer = new LogoutTimer();
-    timer.startLogoutTimer();
-    $("form").click(function () {
-        timer.resetLogoutTimer();
-    });
-    $("form").keydown(function() {
-        timer.resetLogoutTimer();
-    });
-    window.onfocus = function () {
-        timer.checkLogoutTimer();
+var NewCtrl = function() {
+    /**
+     * form data
+     */
+    this.entry = {
+        id: -1,
+        account: "",
+        username: "",
+        password: "",
+        extra: "",
+        version: -1,
     };
-});
+
+    /**
+     * UI settings
+     */
+    this.showSettings = false;
+    this.passwordIsVisible = false;
+
+    /**
+     * Settings for password generation
+     */
+    this.useSpecialChars = true;
+    /* number of words for word-generated passwords */
+    this.numWords = 5;
+    this.passwordGenMode = "password";
+    /* the length for character-generated passwords */
+    this.passwordLength = 16;
+    this.words = [];
+    /* name of the list of words to use, as stored on the server */
+    this.dictionary = "common.txt";
+    this.charSet = [];
+
+    /* logout timer */
+    this.timer = null;
+
+    this.showHideSettings = function() {
+        this.showSettings = !this.showSettings;
+    };
+
+    /**
+     * Return the passphrase that has been generated from the given corpus of words
+     */
+    this.genPassphraseHelper = function(words: Array<string>, numWords: number): string {
+        let phrase = "", index, word;
+        for (let i = 0; i < numWords; i++) {
+            let word = words[randInt(0, words.length)];
+            word = word[0].toUpperCase() + word.substr(1);
+            phrase += word;
+        }
+        return phrase;
+    }
+
+    this.genPassphrase = function() {
+        if (this.words.length === 0) {
+            $.get("/dictionary/" + this.dictionary)
+            .then((response) => {
+                this.words = response.split("\n").filter((w) => {
+                    return w.length >= 5;
+                });
+                console.log(`Read ${this.words.length} words from dictionary`);
+                this.entry.password = this.genPassphraseHelper(this.words, this.numWords);
+                this.showPassword();
+            });
+        } else {
+            console.log("Dictionary already loaded");
+            this.entry.password = this.genPassphraseHelper(this.words, this.numWords);
+            this.showPassword();
+        }
+    };
+
+    /**
+     * Generate the character set from which to pick for the password
+     */
+    this.genCharSet = function() {
+        this.charSet = [];
+        for (let i = "a".charCodeAt(0); i <= "z".charCodeAt(0); i++) {
+            this.charSet.push(String.fromCharCode(i));
+        }
+        for (let i = "A".charCodeAt(0); i <= "Z".charCodeAt(0); i++) {
+            this.charSet.push(String.fromCharCode(i));
+        }
+        for (let i = "0".charCodeAt(0); i <= "9".charCodeAt(0); i++) {
+            this.charSet.push(String.fromCharCode(i));
+        }
+        if (this.useSpecialChars) {
+            for (let i = "!".charCodeAt(0); i <= "/".charCodeAt(0); i++) {
+                this.charSet.push(String.fromCharCode(i));
+            }
+        }
+    };
+
+    /**
+     * Generate a random password from the character set
+     */
+    this._genPassword = function() {
+        if(this.charSet.length === 0) {
+            this.genCharSet();
+        }
+        const passArray: Array<string> = [];
+        for (let i = 0; i < this.passwordLength; i++) {
+            passArray[i] = this.charSet[randInt(0, this.charSet.length)];
+        }
+        this.entry.password = passArray.join("");
+        // show newly generated password
+        this.showPassword();
+    };
+
+    this.genPassword = function() {
+        if(this.passwordGenMode === "password") {
+            this._genPassword();
+        } else {
+            this.genPassphrase()
+        }
+    };
+
+    this.showPassword = function() {
+        // a wrapper around my somewhat convoluted function
+        this.passwordIsVisible = false;
+        this.showHidePassword(null);
+    };
+
+    /**
+     * This is a very dirty hack to actually display the contents of the password field
+     */
+    this.showHidePassword = function(e) {
+        let $elem = $("#password");
+        if (this.passwordIsVisible) {
+            // hide it
+            $elem.attr("type", "password");
+            this.passwordIsVisible = false;
+        } else {
+            // show it
+            $elem.attr("type", "text");
+            this.passwordIsVisible = true;
+        }
+    }
+
+    /**
+     * Called to submit form data to server
+     * Creates a new entry
+     * On success does a redirect
+     */
+    this.createNew = function(e: Event) {
+        e.preventDefault();
+        const url = $(e.target).attr("action");
+        const data: ICreateEntryForm = Utils.getFormData(e.target);
+        pzAPI.createEntry(data, data.csrf_token)
+        .then(function(response) {
+            window.location.href = "/entries/done_new/" + data.account;
+        }).catch((obj, textStatus, textCode) => {
+            console.log(obj);
+            console.log(textStatus);
+            console.log(textCode);
+        });
+        return false;
+    };
+
+    this.getEntryID = function(): number {
+        const components = window.location.href.split("/");
+        return Number(components[components.length - 1]);
+    };
+
+    this.makeEdit = function(e) {
+        "use strict";
+        e.preventDefault();
+        var data = Utils.getFormData(e.target);
+        var entry_id = this.getEntryID();
+        pzAPI.editEntry(entry_id, data, data.csrf_token)
+        .then(function(response) {
+            window.location.href = "/entries/done_edit/" + data.account;
+        });
+        return false;
+    };
+
+    this.changeLen = function(diff) {
+        var elem = $("#passLen");
+        var len = Number(elem.text());
+        elem.text(len + diff);
+    };
+
+    this.changePhraseLen = function(diff) {
+        var elem = $("#phraseLen");
+        var len = Number(elem.text());
+        if (len + diff > 0 && len + diff <= this.maxNumWords) {
+            elem.text(len + diff);
+        }
+    };
+
+    this.togglePasswordGen = function(on) {
+        if (on) {
+            $("#len-container").show();
+            $("#gen-pass-btn").prop({ disabled: false });
+        } else {
+            $("#len-container").hide();
+            $("#gen-pass-btn").prop({ disabled: true });
+        }
+    };
+
+    this.toggleUseSpecialChars = function(e: Event) {
+        this.useSpecialChars = !this.useSpecialChars;
+    };
+
+    /**
+     * Called by ng-init on the page
+     */
+    this.init = function(entry: IEntry | null) {
+        if(entry) {
+            this.entry = entry;
+        }
+        console.log(entry);
+
+        // set up the logout timer
+        this.timer = new LogoutTimer();
+        this.timer.startLogoutTimer();
+        $("form").click(() => {
+            this.timer.resetLogoutTimer();
+        });
+        $("form").keydown(() => {
+            this.timer.resetLogoutTimer();
+        });
+        window.onfocus = () => {
+            this.timer.checkLogoutTimer();
+        };
+    };
+};
+
+var app = angular.module("PassZero", [])
+    .controller("PassZeroCtrl", NewCtrl);
