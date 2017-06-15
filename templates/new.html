@@ -5,6 +5,9 @@
 {% endblock %}
 
 {% block js %}
+    <!-- angular from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.4/angular.min.js" integrity="sha256-jFCqhWdzGFjoG8/SAncY2afI/Xv1TPSWSZrb9dpXQbk=" crossorigin="anonymous"></script>
+
     <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <script src="{{ url_for("static", filename="js/dist/new.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
@@ -12,11 +15,14 @@
 {% block body %}
     {% if entry %}
         <form method="POST" action="/entries/{{ e_id }}" role="form"
-            onsubmit="makeEdit(event)">
+            data-ng-submit="ctrl.makeEdit($event)"
+            data-ng-init='ctrl.init({{ entry|tojson }})'>
     {% else %}
         <form method="POST" action="api/v1/entries/new" role="form"
-            onsubmit="createNew(event)">
+            data-ng-submit="ctrl.createNew($event)"
+            data-ng-init='ctrl.init(null)'>
     {% endif %}
+        <!-- indented because all of the following is in a form -->
         <h3 class="title">
             {%- if entry -%}
                 Edit PassZero entry for {{ entry["account"] }}
@@ -27,55 +33,82 @@
 
         <label for="account">Account</label>
         <input type="text" name="account" required="true" class="form-control"
-            value="{{ (entry["account"] if entry) }}" />
+            ng-model="ctrl.entry.account" />
 
         <label for="username">Username</label>
         <input type="text" name="username" autocomplete="off" required="true" 
-            class="form-control" value="{{ (entry["username"] if entry) }}"/>
+            class="form-control" ng-model="ctrl.entry.username" />
 
         <label for="password">Password</label>
         <input type="password" name="password" id="password" autocomplete="off" 
-            required="true" class="form-control" value="{{ (entry["password"] if entry) }}" />
+            required="true" class="form-control" ng-model="ctrl.entry.password" />
 
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
-        <button type="button" class="btn btn-info"
-            id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
-        <button type="button" class="btn btn-info" id="gen-pass-btn"
-            onclick="genPassword()">Random Password</button>
-        <button type="button" class="btn btn-info" id="gen-passphrase-btn"
-            onclick="genPassphrase()">Random Phrase</button>
+        <div class="btn-container">
+            {% raw %}
+            <button type="button" class="btn btn-info ng-cloak"
+                ng-if="ctrl.entry.id !== -1"
+                id="show-hide-btn"
+                data-ng-click="ctrl.showHidePassword($event)">
+                <span data-ng-cloak>{{ ctrl.passwordIsVisible ? "Hide Password" : "Show Password" }}</span>
+            </button>
+            {% endraw %}
+            <button type="button" class="btn btn-default btn-primary" id="gen-pass-btn"
+                data-ng-click="ctrl.genPassword()">Generate Password</button>
+            <button type="button" class="btn btn-settings" data-ng-click="ctrl.showHideSettings($event)">
+                <span class="glyphicon glyphicon-cog"></span>Settings
+            </button>
+        </div>
 
-        <button type="button" class="btn btn-settings" onclick="showHideSettings()">
-            <span class="glyphicon glyphicon-cog"></span>Settings
-        </button>
-        <div id="len-container" style="display: none;">
-            <div class="password-settings">
-                <span id="pass-len-text" class="text">Length</span>
-                <button type="button" class="minus-btn"
-                    aria-hidden="true" onclick="changeLen(-1)">-</button>
-                <span id="passLen" class="text">12</span>
-                <button type="button" 
-                    aria-hidden="true" onclick="changeLen(+1)">+</button>
+        {% raw %}
+        <div id="settings-container" data-ng-if="ctrl.showSettings" class="ng-cloak form-group">
+            <div class="input-group">
+                <h4>Password generation mode</h4>
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="passwordGenMode"
+                            ng-model="ctrl.passwordGenMode" value="password">Password
+                    </label>
+                </div>
+                <div class="radio">
+                    <label>
+                        <input type="radio" name="passwordGenMode"
+                            ng-model="ctrl.passwordGenMode" value="phrase">Phrase
+                    </label>
+                </div>
+            </div>
+            <div class="password-settings input-group" ng-if="ctrl.passwordGenMode === 'password'">
+                <h4>Password Settings</h4>
+                <span>Characters in Password: {{ ctrl.passwordLength }}</span>
+                <input type="range" class="input-range" min="6" max="32" step="1"
+                    ng-model="ctrl.passwordLength" />
                 <div>
-                    <!--<input type="checkbox" name="specialChar" id="specialChar" value="1" checked="checked" />-->
-                    <button type="button" class="active" id="toggleSymbols">
-                        <span class="glyphicon glyphicon-ok"></span>
+                    <button type="button" class="btn"
+                        ng-class="{ 'btn-warning': !ctrl.useSpecialChars, 'btn-success' : ctrl.useSpecialChars }"
+                        ng-click="ctrl.toggleUseSpecialChars($event)">
+                        <span class="glyphicon"
+                              ng-class="{ 'glyphicon-ok': ctrl.useSpecialChars, 'glyphicon-remove': !ctrl.useSpecialChars }"></span>
                         <span>Use special characters</span>
                     </button>
                 </div>
             </div>
-            <div class="passphrase-settings">
-                <span class="text">Number of Words</span>
-                <button type="button" class="minus-btn" aria-hidden="true" onclick="changePhraseLen(-1)">-</button>
-                <span id="phraseLen" class="text">4</span>
-                <button type="button" aria-hidden="true" onclick="changePhraseLen(+1)">+</button>
+            <div class="passphrase-settings" ng-if="ctrl.passwordGenMode === 'phrase'">
+                <h4>Passphrase Settings</h4>
+                <span class="text">Number of Words: {{ ctrl.numWords }}</span>
+                <input type="range" class="input-range" min="4" max="10" step="1"
+                    ng-model="ctrl.numWords" />
             </div>
         </div>
+        {% endraw %}
 
         <div id="extra-container">
             <label for="extra">Extra<label>
-            <textarea class="form-control" name="extra" id="extra" rows="4" cols="50">{{ (entry["extra"] if entry and entry["extra"] else "") }}</textarea>
+            {% raw %}
+                <textarea class="form-control" name="extra" id="extra" rows="4" cols="50"
+                    ng-model="ctrl.entry.extra">
+                </textarea>
+            {% endraw %}
         </div>
 
         <button type="submit" class="btn btn-success form-control" 
