@@ -1,15 +1,3 @@
-function showHidePass(event) {
-    "use strict";
-    var elem = $(event.target).parent().parent().parent().find(".hidden-toggle");
-    if (elem.hasClass("password-hidden")) {
-        elem.removeClass("password-hidden");
-        $(event.target).text("Hide");
-    } else {
-        elem.addClass("password-hidden");
-        $(event.target).text("Show");
-    }
-}
-
 /**
  * From this SOF thread:
  * https://stackoverflow.com/questions/985272/selecting-text-in-an-element-akin-to-highlighting-with-your-mouse
@@ -43,13 +31,25 @@ function deselectText () {
     }
 }
 
+function showHidePass(event) {
+    "use strict";
+    var elem = $(event.target).parent().parent().parent().find(".hidden-toggle");
+    if (elem.hasClass("password-hidden")) {
+        elem.removeClass("password-hidden");
+        $(event.target).text("Hide");
+    } else {
+        elem.addClass("password-hidden");
+        $(event.target).text("Show");
+    }
+}
+
 /* polyfill */
 String.prototype.endswith = function (s) {
     var idx = this.lastIndexOf(s);
     return idx >= 0 && idx == this.length - s.length;
 };
 
-var PassZeroCtrl = function ($scope, $location, $http) {
+var PassZeroCtrl = function ($scope, $location, $http, $window, $timeout) {
     this.search = null;
     this.entries = [];
     this.filteredEntries = [];
@@ -68,10 +68,14 @@ var PassZeroCtrl = function ($scope, $location, $http) {
      *
      * NOTE: if you're thinking of tweaking the performance here, the real bottleneck is the draw
      * This can be seen because the longest operation is on backspace which is a trivial case in the function below
+     *
+     * @return {Array} Return an array of entries
      */
     this.searchEntries = function (q) {
         if (q === "" || q === null)
             return this.entries;
+        // make search case-insensitive
+        q = q.toLowerCase();
         return this.entries.filter(function(entry) {
             return (entry.account.toLowerCase().indexOf(q) >= 0 ||
                 (!entry.is_encrypted && entry.username.toLowerCase().indexOf(q) >= 0));
@@ -101,7 +105,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
 
     this.editEntry = function (idx) {
         console.log(idx);
-        window.location.href = "/edit/" + idx;
+        $window.location.href = "/edit/" + idx;
     };
 
     this.deleteEntry = function (entry) {
@@ -110,7 +114,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
             var data = { csrf_token: this.csrf_token };
             $http.delete("/api/v1/entries/" + entry.id, { params: data })
             .then(function (result) {
-                window.location.href = "/entries/post_delete/" + entry.account;
+                $window.location.href = "/entries/post_delete/" + entry.account;
             }).catch(function (obj, textStatus, textCode) {
                 console.log(obj);
                 console.log(textStatus);
@@ -170,7 +174,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         });
         // activate the tooltip
         elem.tooltip("show");
-        window.setTimeout(function() {
+        $timeout(function() {
             // hide the tooltip after a delay
             elem.tooltip("hide");
         }, 3000);
@@ -185,7 +189,7 @@ var PassZeroCtrl = function ($scope, $location, $http) {
         $("#entry-container").click(function() {
             timer.resetLogoutTimer();
         });
-        window.onfocus = function () {
+        $window.onfocus = function () {
             timer.checkLogoutTimer();
         };
         // fill in CSRF token value
