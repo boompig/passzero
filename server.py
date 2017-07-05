@@ -1,17 +1,20 @@
-from flask import Flask, render_template, redirect, session, request, url_for, escape, flash, make_response
+import os
+
+from flask import (Flask, escape, flash, make_response, redirect,
+                   render_template, request, session, url_for)
 from flask.ext.compress import Compress
+from werkzeug.contrib.fixers import ProxyFix
+
+import passzero.config as pz_config
 from flask_sslify import SSLify
+from passzero.api_utils import check_auth, generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
-from passzero.api_utils import generate_csrf_token, check_auth
-from passzero.backend import get_entries, decrypt_entries, activate_account
+from passzero.backend import (activate_account, decrypt_entries, get_entries,
+                              password_strength_scores)
 from passzero.datastore_postgres import db_export
-from passzero.models import db, User, AuthToken
+from passzero.models import AuthToken, User, db
 from sqlalchemy.orm.exc import NoResultFound
-from werkzeug.contrib.fixers import ProxyFix
-import os
-import passzero.config as pz_config
-
 
 if os.path.exists("passzero/my_env.py"):
     from passzero.my_env import setup_env
@@ -183,6 +186,18 @@ def edit_entry(entry_id):
         return redirect(url_for("login"))
     else:
         return render_template("new.html", e_id=entry_id, entry=fe[0], error=None)
+
+
+@app.route("/entries/strength")
+def password_strength():
+    # generate
+    entries = get_entries(db.session, session["user_id"])
+    dec_entries = decrypt_entries(entries, session['password'])
+    entry_scores = password_strength_scores(session["email"], dec_entries)
+    if check_auth():
+        return render_template("password_strength.html", entry_scores=entry_scores)
+    else:
+        return redirect(url_for("login"))
 
 
 @app.route("/advanced")

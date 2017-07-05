@@ -1,9 +1,9 @@
-from sqlalchemy import func
-from sqlalchemy.sql.expression import asc
-
+from passzero import audit
 from passzero.config import SALT_SIZE
 from passzero.crypto_utils import get_hashed_password, get_salt
 from passzero.models import AuthToken, Entry, User
+from sqlalchemy import func
+from sqlalchemy.sql.expression import asc
 
 
 def activate_account(db_session, user):
@@ -11,6 +11,22 @@ def activate_account(db_session, user):
     user.active = True
     db_session.add(user)
     db_session.commit()
+
+
+def password_strength_scores(email, dec_entries):
+    l = []
+    for entry in dec_entries:
+        d = {}
+        d["account"] = entry["account"]
+        results = audit.password_strength(entry["password"], user_inputs=[
+            entry["account"], entry["username"], email
+        ])
+        d["score"] = results["score"]
+        d["feedback"] = " ".join(results["feedback"]["suggestions"])
+        if d["score"] == 0:
+            continue
+        l.append(d)
+    return l
 
 
 def _decrypt_row(row, key):
