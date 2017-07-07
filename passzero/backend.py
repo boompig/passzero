@@ -1,9 +1,10 @@
+from sqlalchemy import func
+from sqlalchemy.sql.expression import asc
+
 from passzero import audit
 from passzero.config import SALT_SIZE
 from passzero.crypto_utils import get_hashed_password, get_salt
-from passzero.models import AuthToken, Entry, User
-from sqlalchemy import func
-from sqlalchemy.sql.expression import asc
+from passzero.models import AuthToken, Entry, Service, User
 
 
 def activate_account(db_session, user):
@@ -23,7 +24,7 @@ def password_strength_scores(email, dec_entries):
         ])
         d["score"] = results["score"]
         d["feedback"] = " ".join(results["feedback"]["suggestions"])
-        if d["score"] == 0:
+        if entry["password"] == "" or entry["password"] == "-":
             continue
         l.append(d)
     return l
@@ -132,6 +133,7 @@ def encrypt_entry(user_key, dec_entry, version=4):
     A different KDF key is used for each entry.
     This is equivalent to salting the entry.
     :param dec_entry:   A dictionary representing the decrypted entry
+        Required keys depend on entry version
     :param user_key:    A string representing the user's key
     :return:            Entry object
     """
@@ -161,7 +163,8 @@ def edit_entry(session, entry_id, user_key, edited_entry, user_id):
         "account": edited_entry["account"],
         "username": edited_entry["username"],
         "password": edited_entry["password"],
-        "extra": (edited_entry["extra"] or "")
+        "extra": (edited_entry["extra"] or ""),
+        "has_2fa": edited_entry["has_2fa"]
     }
     # do not add e2 to session, it's just a placeholder
     e2 = encrypt_entry(user_key, dec_entry,
@@ -171,8 +174,20 @@ def edit_entry(session, entry_id, user_key, edited_entry, user_id):
     entry.username = e2.username
     entry.password = e2.password
     entry.extra = e2.extra
+    entry.has_2fa = e2.has_2fa
     # update those parameters which might have changed on encryption
     entry.iv = e2.iv
     entry.key_salt = e2.key_salt
     session.commit()
     return entry
+
+
+def get_services_map(session):
+    services = session.query(Service).all()
+    d = {}
+    for service in services:
+        d[service.name] = {
+            "has_two_factor": service.has_two_factor,
+            "link": service.link
+        }
+    return d

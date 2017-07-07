@@ -6,7 +6,8 @@ def test_encrypt_and_decrypt_entry_v4():
         "account": "test account",
         "username": "test username",
         "password": "test password",
-        "extra": "test extra"
+        "extra": "test extra",
+        "has_2fa": True
     }
     user_key = "test master key"
     entry = Entry()

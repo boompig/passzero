@@ -1,79 +1,65 @@
-from wtforms import Form, TextField, PasswordField, validators
+from wtforms import BooleanField, Form, PasswordField, TextField, validators
+
 
 class SignupForm(Form):
     email = TextField("email", [
-        validators.Required(),
+        validators.DataRequired(),
         validators.Email()
     ])
     password = PasswordField("password", [
-        validators.Required(),
+        validators.DataRequired(),
         validators.EqualTo("confirm_password", message="Passwords must match")
     ])
     confirm_password = PasswordField("confirm password", [
-        validators.Required()
+        validators.DataRequired()
     ])
 
 class LoginForm(Form):
     email = TextField("email", [
-        validators.Required(),
+        validators.DataRequired(),
         validators.Email()
     ])
-    password = PasswordField("password", [validators.Required()])
+    password = PasswordField("password", [validators.DataRequired()])
 
 class NewEntryForm(Form):
     account = TextField("account", [
-        validators.Required()
+        validators.DataRequired()
     ])
     username = TextField("username", [
-        validators.Required()
+        validators.DataRequired()
     ])
     password = PasswordField("password", [
-        validators.Required()
+        validators.DataRequired()
     ])
     extra = TextField("extra")
-
-class NewEncryptedEntryForm(Form):
-    account = TextField("account", [
-        validators.Required()
+    has_2fa = BooleanField("has_2fa", [
+        validators.AnyOf([True, False])
     ])
-    username = TextField("username", [
-        validators.Required()
-    ])
-    password = PasswordField("password", [
-        validators.Required()
-    ])
-    key_salt = PasswordField("key_salt", [
-        validators.Required()
-    ])
-    iv = PasswordField("iv", [
-        validators.Required()
-    ])
-    extra = TextField("extra")
 
 class UpdatePasswordForm(Form):
-    old_password = PasswordField("old password", [validators.Required()])
+    old_password = PasswordField("old password", [validators.DataRequired()])
     new_password = PasswordField("new password", [
-        validators.Required(),
+        validators.DataRequired(),
         validators.EqualTo("confirm_new_password", message="Passwords must match")
     ])
-    confirm_new_password = PasswordField("confirm new password", [validators.Required()])
+    confirm_new_password = PasswordField("confirm new password", [validators.DataRequired()])
     extra = TextField("extra")
 
 class RecoverPasswordForm(Form):
     email = TextField("email", [
-        validators.Required(),
+        validators.DataRequired(),
         validators.Email()
     ])
 
 class ActivateAccountForm(Form):
-    token = TextField("token", [validators.Required()])
+    token = TextField("token", [validators.DataRequired()])
 
 class ConfirmRecoverPasswordForm(Form):
-    token = TextField("token", [validators.Required()])
+    token = TextField("token", [validators.DataRequired()])
     password = PasswordField("password", [
-        validators.Required(),
+        validators.DataRequired(),
         validators.EqualTo("confirm_password", message="Passwords must match")
     ])
     confirm_password = PasswordField("confirm password", [
-        validators.Required()
+        validators.DataRequired()
     ])

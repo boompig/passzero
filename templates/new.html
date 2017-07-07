@@ -78,6 +78,12 @@
             <textarea class="form-control" name="extra" id="extra" rows="4" cols="50">{{ (entry["extra"] if entry and entry["extra"] else "") }}</textarea>
         </div>
 
+        <div>
+            <input type="checkbox" name="has_2fa"
+                {{ ("checked" if entry and entry["has_2fa"] else "") }}>
+            <label for="has_2fa">Acount has 2-factor authentication enabled</label>
+        </div>
+
         <button type="submit" class="btn btn-success form-control" 
             id="create-btn">{{ ("Save" if entry else "Create" ) }}</button>
     </form>

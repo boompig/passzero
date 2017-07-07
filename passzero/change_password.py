@@ -24,7 +24,8 @@ def create_pinned_entry(session, user_id, master_password):
         "account": "sanity",
         "username": "sanity",
         "password": "sanity",
-        "extra": "sanity"
+        "extra": "sanity",
+        "has_2fa": False
     }
     new_entry = encrypt_entry(master_password, dec_entry)
     new_entry.pinned = True
@@ -79,10 +80,10 @@ def change_password(session, user_id, old_password, new_password):
     try:
         pinned_entry = find_pinned_entry(session, user_id)
         verify_pinned_entry(session, pinned_entry, old_password)
-        logging.info("Verified pinned entry")
+        logging.info("[change_password] Verified pinned entry")
         session.delete(pinned_entry)
     except NoResultFound:
-        logging.warning("No pinned entry was found for user ID {}".format(
+        logging.warning("[change_password] No pinned entry was found for user ID {}".format(
             user_id
         ))
     reencrypt_entries(session, user_id, old_password, new_password)

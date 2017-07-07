@@ -46,7 +46,7 @@ def requires_json_form_validation(form_class):
             request_data = request.get_json()
             form = form_class(data=request_data)
             if form.validate():
-                return function(request_data, *args, **kwargs)
+                return function(form.data, *args, **kwargs)
             else:
                 code, data = json_form_validation_error(form.errors)
                 return write_json(code, data)

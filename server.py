@@ -11,7 +11,7 @@ from passzero.api_utils import check_auth, generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
 from passzero.backend import (activate_account, decrypt_entries, get_entries,
-                              password_strength_scores)
+                              password_strength_scores, get_services_map)
 from passzero.datastore_postgres import db_export
 from passzero.models import AuthToken, User, db
 from sqlalchemy.orm.exc import NoResultFound
@@ -180,22 +180,40 @@ def edit_entry(entry_id):
         return redirect(url_for("login"))
     entries = get_entries(db.session, session["user_id"])
     my_entries = [e for e in entries if e.id == entry_id]
-    fe = decrypt_entries(my_entries, session['password'])
-    if len(fe) == 0:
+    if len(my_entries) == 0:
         #TODO flash error msg about invalid ID here
         return redirect(url_for("login"))
     else:
+        fe = decrypt_entries(my_entries, session['password'])
+        print(fe[0])
         return render_template("new.html", e_id=entry_id, entry=fe[0], error=None)
 
 
 @app.route("/entries/strength")
 def password_strength():
-    # generate
-    entries = get_entries(db.session, session["user_id"])
-    dec_entries = decrypt_entries(entries, session['password'])
-    entry_scores = password_strength_scores(session["email"], dec_entries)
     if check_auth():
+        entries = get_entries(db.session, session["user_id"])
+        dec_entries = decrypt_entries(entries, session['password'])
+        entry_scores = password_strength_scores(session["email"], dec_entries)
         return render_template("password_strength.html", entry_scores=entry_scores)
+    else:
+        return redirect(url_for("login"))
+
+
+@app.route("/entries/2fa")
+def two_factor():
+    if check_auth():
+        entries = get_entries(db.session, session["user_id"])
+        services_map = get_services_map(db.session)
+        two_factor_map = {}
+        for entry in entries:
+            account = entry.account.lower()
+            two_factor_map[entry.account] = {
+                "service_has_2fa": services_map.get(account, {}).get("has_two_factor", False),
+                "entry_has_2fa": entry.has_2fa,
+                "entry_id": entry.id
+            }
+        return render_template("entries_2fa.html", two_factor_map=two_factor_map)
     else:
         return redirect(url_for("login"))
 
