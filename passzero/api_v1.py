@@ -130,6 +130,7 @@ def new_entry_api(request_data):
         - password (required)
         - confirm_password (required)
         - extra (optional)
+        - has_2fa (required)
     Respond with JSON message on success, and 4xx codes and message on failure.
         - 401: not authenticated
         - 400: error in POST parameters
@@ -141,7 +142,8 @@ def new_entry_api(request_data):
         "account": request_data["account"],
         "username": request_data["username"],
         "password": request_data["password"],
-        "extra": (request_data["extra"] or "")
+        "extra": (request_data["extra"] or ""),
+        "has_2fa": request_data["has_2fa"]
     }
     entry = backend.insert_entry_for_user(
         db_session=db.session,

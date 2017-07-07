@@ -88,10 +88,16 @@ class Entry(db.Model):
     id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     account = db.Column(db.String, nullable=False)
+
+    # these fields are *always* encrypted
     username = db.Column(db.String, nullable=False)
     password = db.Column(db.String, nullable=False)
     padding = db.Column(db.String)
     extra = db.Column(db.String)
+    
+    # this field is *never* encrypted
+    has_2fa = db.Column(db.Boolean, default=False, nullable=False)
+
     key_salt = db.Column(db.String)
     iv = db.Column(db.String)
     version = db.Column(db.Integer, nullable=False)
@@ -111,6 +117,7 @@ class Entry(db.Model):
             "username": self.username,
             "password": self.password,
             "extra": self.extra,
+            "has_2fa": self.has_2fa,
             "version": self.version,
             "is_encrypted": True
         }
@@ -151,6 +158,8 @@ class Entry(db.Model):
             "username": dec_messages[0],
             "password": dec_messages[1],
             "extra": dec_messages[2],
+            # add unencrypted metadata
+            "has_2fa": self.has_2fa,
             "version": self.version
         }
 
@@ -223,9 +232,16 @@ class Entry(db.Model):
         """
         :param master_key:  The user's key, used to derive entry-specific enc key
         :param dec_entry:   Entry to encrypt (dictionary of fields)
+            Expected fields:
+            - account
+            - username
+            - password
+            - extra
+            - has_2fa (bool)
         """
         assert isinstance(master_key, str) or isinstance(master_key, unicode)
         assert isinstance(dec_entry, dict)
+        assert "has_2fa" in dec_entry, "Entry %s must have field 'has_2fa'" % str(dec_entry)
         # generate random new IV
         iv = get_iv()
         kdf_salt = get_kdf_salt()
@@ -241,7 +257,9 @@ class Entry(db.Model):
         self.username = enc_entry["username"]
         self.password = enc_entry["password"]
         self.extra = enc_entry["extra"]
-        # metadata - which encryption scheme to use to decrypt
+        # entry metadata
+        self.has_2fa = dec_entry["has_2fa"]
+        # encryption metadata - which encryption scheme to use to decrypt
         self.version = 4
         self.pinned = False
         self.key_salt = base64_encode(kdf_salt)
@@ -311,3 +329,11 @@ class Entry(db.Model):
                 dec_entry["password"])
         self.extra = encrypt_field_v1(master_key, self.padding, dec_entry["extra"])
         self.version = 1
+
+
+class Service(db.Model):
+    __tablename__ = "services"
+    name = db.Column(db.String, primary_key=True, nullable=False)
+    link = db.Column(db.String)
+    has_two_factor = db.Column(db.Boolean)
+    

@@ -77,7 +77,8 @@ def test_delete_account():
         "account": "a",
         "username": "u",
         "password": "p",
-        "extra": "e"
+        "extra": "e",
+        "has_2fa": True
     }
     insert_entry_for_user(session, dec_entry_in, user.id, user_key)
     delete_account(session, user)
@@ -96,7 +97,8 @@ def test_insert_entry_for_user():
         "account": "a",
         "username": "u",
         "password": "p",
-        "extra": "e"
+        "extra": "e",
+        "has_2fa": True
     }
     user_key = "master key"
     insert_entry_for_user(session, dec_entry_in, 1, user_key)
@@ -119,7 +121,8 @@ def test_delete_all_entries():
             "account": "a-%d" % i,
             "username": "u",
             "password": "p",
-            "extra": "e"
+            "extra": "e",
+            "has_2fa": False
         }
         insert_entry_for_user(session, dec_entry_in,
                 user.id, user_key)
@@ -181,13 +184,14 @@ def test_change_password():
     old_pwd = "hello"
     new_pwd = "world"
     user = create_inactive_user(session, "fake@fake.com", old_pwd)
-    logging.info("Creating fkae users")
+    logging.info("Creating fake users")
     for i in range(10):
         dec_entry_in = {
             "account": "a-%d" % i,
             "username": "u",
             "password": "p",
-            "extra": "e"
+            "extra": "e",
+            "has_2fa": False
         }
         insert_entry_for_user(session, dec_entry_in,
                 user.id, old_pwd)

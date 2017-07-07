@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") }}" />
+{% endblock %}
+
+{% block js %}
+    <script src="{{ url_for("static", filename="js/dist/advanced.min.js") }}"></script>
+{% endblock %}
+
+{% block body %}
+<h1 class="title">2Factor Audit</h1>
+<div>
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Account</th>
+                <th>Possible to enable 2FA</th>
+                <th>Has 2FA enabled</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for account, d in two_factor_map|dictsort %}
+                <tr>
+                    <td>{{ account }} <a href="/edit/{{ d["entry_id"] }}">edit</a></td>
+                    <td>{{ ("?" if d["account_has_2fa"] is none else d["account_has_2fa"]|string ) }}</td>
+                    <td>{{ ("?" if d["entry_has_2fa"] is none else d["entry_has_2fa"]|string ) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

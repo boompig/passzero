@@ -153,6 +153,7 @@ class PassZeroApiTester(unittest.TestCase):
             "username": "entry_username",
             "password": "entry_pass",
             "extra": "entry_extra",
+            "has_2fa": True
         }
         api.create_entry(self.app, entry, token)
         entries = api.get_entries(self.app)
@@ -204,6 +205,7 @@ class PassZeroApiTester(unittest.TestCase):
             "username": "entry_username",
             "password": "entry_pass",
             "extra": "entry_extra",
+            "has_2fa": False
         }
         print("creating entry")
         entry_id = api.create_entry(self.app, entry, token)
@@ -222,22 +224,26 @@ class PassZeroApiTester(unittest.TestCase):
         self._create_active_account(email, password)
         self.login(email, password)
         create_token = api.get_csrf_token(self.app)
-        entry = {
+        old_entry = {
             "account": "fake",
             "username": "entry_username",
             "password": "entry_pass",
             "extra": "entry_extra",
+            "has_2fa": False
         }
-        entry_id = api.create_entry(self.app, entry, create_token)
-        entry["account"] = "new account"
-        entry["username"] = "new_username"
-        entry["password"] = "new_password"
-        entry["extra"] = "new extra"
+        entry_id = api.create_entry(self.app, old_entry, create_token)
+        new_entry = {
+            "account": "new account",
+            "username": "new username",
+            "password": "new password",
+            "extra": "new extra",
+            "has_2fa": True
+        }
         edit_token = api.get_csrf_token(self.app)
-        api.edit_entry(self.app, entry_id, entry, edit_token)
+        api.edit_entry(self.app, entry_id, new_entry, edit_token)
         entries = api.get_entries(self.app)
         assert len(entries) == 1
-        self._check_entries_equal(entry, entries[0])
+        self._check_entries_equal(new_entry, entries[0])
 
     def test_change_master_password(self):
         email = DEFAULT_EMAIL
@@ -322,6 +328,7 @@ class PassZeroApiTester(unittest.TestCase):
             "username": "entry_username",
             "password": "entry_pass",
             "extra": "entry_extra",
+            "has_2fa": False
         }
         csrf_token = api.get_csrf_token(self.app)
         api.create_entry(self.app, entry, csrf_token)
