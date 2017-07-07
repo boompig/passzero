@@ -20,6 +20,7 @@
     "jasmine": "^2.6.0",
     "jquery": "3.2.1",
     "js-cookie": "2.1.4",
+    "tablesort": "5.0.1",
     "uglify-js": "^3.0.15"
   }
 }

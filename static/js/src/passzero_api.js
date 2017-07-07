@@ -1,6 +1,4 @@
-var require = require || null;
-var module = module || null;
-if (require) {
+if (typeof require !== 'undefined') {
     var $ = require("jquery");
 }
 
@@ -185,6 +183,6 @@ var pzAPI = {
     },
 };
 
-if (module && module.exports) {
+if (typeof module !== 'undefined' && module.exports) {
     module.exports = pzAPI;
 }

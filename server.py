@@ -209,7 +209,7 @@ def two_factor():
         for entry in entries:
             account = entry.account.lower()
             two_factor_map[entry.account] = {
-                "account_has_2fa": services_map.get(account, {}).get("has_two_factor", False),
+                "service_has_2fa": services_map.get(account, {}).get("has_two_factor", False),
                 "entry_has_2fa": entry.has_2fa,
                 "entry_id": entry.id
             }
