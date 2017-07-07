@@ -24,7 +24,7 @@ def password_strength_scores(email, dec_entries):
         ])
         d["score"] = results["score"]
         d["feedback"] = " ".join(results["feedback"]["suggestions"])
-        if d["score"] == 0:
+        if entry["password"] == "" or entry["password"] == "-":
             continue
         l.append(d)
     return l

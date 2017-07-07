@@ -11,9 +11,10 @@ from sqlalchemy.orm.session import sessionmaker
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries,
                               get_account_with_email, get_entries,
-                              insert_entry_for_user)
+                              get_services_map, insert_entry_for_user,
+                              password_strength_scores)
 from passzero.change_password import change_password
-from passzero.models import Entry, User
+from passzero.models import Entry, Service, User
 
 DB_FILENAME = "passzero.db"
 
@@ -179,6 +180,15 @@ def test_get_account_with_email():
     assert True
 
 
+def create_fake_entry(i):
+    return {
+        "account": "a-%d" % i,
+        "username": "u",
+        "password": "p",
+        "extra": "e",
+        "has_2fa": False
+    }
+
 def test_change_password():
     session = create_sqlite_session()
     old_pwd = "hello"
@@ -186,13 +196,7 @@ def test_change_password():
     user = create_inactive_user(session, "fake@fake.com", old_pwd)
     logging.info("Creating fake users")
     for i in range(10):
-        dec_entry_in = {
-            "account": "a-%d" % i,
-            "username": "u",
-            "password": "p",
-            "extra": "e",
-            "has_2fa": False
-        }
+        dec_entry_in = create_fake_entry(i)
         insert_entry_for_user(session, dec_entry_in,
                 user.id, old_pwd)
     enc_entries = get_entries(session, user.id)
@@ -208,6 +212,32 @@ def test_change_password():
     for i in range(len(dec_entries)):
         for field in ["username", "password", "extra"]:
             assert dec_entry_in[field] == dec_entries[i][field]
+
+
+def test_password_strength_scores():
+    email = "fake@foo.io"
+    dec_entries = [create_fake_entry(i) for i in range(10)]
+    dec_entries.append({
+        "account": "no password here",
+        "username": "foo",
+        "password": "-",
+        "has_2fa": False
+    })
+    l = password_strength_scores(email, dec_entries)
+    # check that the no-password account is ignored
+    assert len(dec_entries) - 1 == len(l)
+    for entry, score in zip(dec_entries, l):
+        assert entry["account"] == score["account"]
+
+
+def test_get_services_map():
+    # insert a thingy
+    db_session = create_sqlite_session()
+    db_session.add(Service(name="MyService"))
+    db_session.commit()
+    service_map = get_services_map(db_session)
+    assert len(service_map) == 1
+    service_map.get("MyService", None) is not None
 
 
 if __name__ == "__main__":
