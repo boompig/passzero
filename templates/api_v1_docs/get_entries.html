@@ -1,0 +1,32 @@
+<div class="method-section">
+    <h2 id="get_entries">
+        <span class="http-method">GET</span>
+        <span class="uri">/api/v1/entries</span>
+    </h2>
+    <p class="about">Retrieve all decrypted entries for logged-in user</p>
+    <h3>Arguments</h3>
+    <p>none</p>
+
+    <h3>Response</h3>
+
+    Success:
+    <pre>
+        <code>
+[ &lt;entry-1&gt;, &lt;entry-2&gt;, ... ]
+</code></pre>
+
+    Error:
+    <pre>
+        <code>
+{
+    "status": "error",
+    "msg": string
+}
+</code></pre>
+
+    <h3>Status codes</h3>
+    <ul>
+        <li>200 - success
+        <li>401 - not authenticated
+    </ul>
+</div>

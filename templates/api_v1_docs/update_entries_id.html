@@ -1,0 +1,49 @@
+<div class="method-section">
+    <h2 id="update_entries_id">
+        <span class="method">UPDATE</span>
+        <span class="path">/api/v1/entries/&lt;entry_id:int&gt;</span>
+    </h2>
+    <p class="about">Update the specified entry</p>
+    <h3>Arguments</h3>
+    <pre>
+        <code data-lang="javascript">
+{
+    // entry fields
+    "account": string (required),
+    "username": string (required),
+    "password": string (required),
+    "extra" string (optional),
+    "has_2fa": boolean (required),
+    // metadata
+    "csrf_token": string (required)
+}
+</code></pre>
+
+    <h3>Response</h3>
+
+    Success:
+    <pre>
+        <code data-lang="javascript">
+{
+    "status": "success",
+    "msg": string
+}
+</code></pre>
+
+    Error:
+    <pre>
+        <code data-lang="javascript">
+{
+    "status": "error",
+    "msg": string
+}
+</code></pre>
+
+    <h3>Errors and status codes</h3>
+    <ul>
+        <li>200 - success
+        <li>400 - various input validation errors
+        <li>401 - not authenticated
+        <li>403 - bad csrf token
+    </ul>
+</div>

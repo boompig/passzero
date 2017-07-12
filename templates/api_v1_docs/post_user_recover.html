@@ -1,0 +1,42 @@
+<div class="method-section">
+    <h2 id="post_user_recover">
+        <span class="http-method">POST</span>
+        <span class="uri">/api/v1/user/recover</span>
+    </h2>
+
+    <p class="about">First step of account recovery for the specified user.
+    Send an account recovery token to the user's email address.</p>
+
+    <h3>Arguments</h3>
+    <pre><code data-lang="javascript">
+{
+    "email": string (required)
+}
+</code></pre>
+
+    <h3>Response</h3>
+
+    Success:
+    <pre><code data-lang="javascript">
+{
+    "status": "success",
+    "msg": string
+}
+</code></pre>
+
+    Error:
+    <pre><code data-lang="javascript">&nbsp;
+{
+    "status": "error",
+    "msg": string
+}
+</code></pre>
+
+    <h3>Status codes</h3>
+    <ul>
+        <li> 200 - success
+        <li> 400 - failed to validated parameters
+        <li> 401 - no account for this email
+        <li> 500 - internal server error, or email failed to send
+    </ul>
+</div>
