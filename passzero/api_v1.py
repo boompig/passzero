@@ -1,14 +1,13 @@
 from datetime import datetime
 
-from flask import Blueprint, escape, session, render_template
+from flask import Blueprint, escape, render_template, session
+
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import backend
-from .api_utils import (generate_csrf_token, json_error,
-                        json_internal_error,
+from . import backend, change_password
+from .api_utils import (generate_csrf_token, json_error, json_internal_error,
                         json_success, requires_csrf_check, requires_json_auth,
                         requires_json_form_validation, write_json)
-from . import change_password
 from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm, LoginForm,
                     NewEntryForm, RecoverPasswordForm, SignupForm,
                     UpdatePasswordForm)
@@ -18,9 +17,11 @@ from .models import AuthToken, Entry, User, db
 api_v1 = Blueprint("api_v1", __name__)
 
 @api_v1.route("/api", methods=["GET"])
+@api_v1.route("/api/v1", methods=["GET"])
 def show_api():
     """Display all available APIs"""
     return render_template("api_v1.html", title="PassZero &middot; API v1")
+
 
 @api_v1.route("/api/csrf_token", methods=["GET"])
 @api_v1.route("/api/v1/csrf_token", methods=["GET"])

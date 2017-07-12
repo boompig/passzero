@@ -1,0 +1,57 @@
+<table class="table table-striped" id="method-table">
+ <thead>
+  <tr>
+   <th>
+    Method &amp; path
+   </th>
+   <th>
+    Description
+   </th>
+   <th>
+    Requires login
+   </th>
+   <th>
+    Requires CSRF token
+   </th>
+  </tr>
+ </thead>
+ <tbody>
+  <tr>
+   <td>
+    <a href="#get_entries">
+     GET /api/v2/entries
+    </a>
+   </td>
+   <td class="about">
+    Return a list of encrypted entries.
+   </td>
+   <td class="requires-login">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+   <td class="requires-csrf-token">
+    <span class="glyphicon glyphicon-remove">
+    </span>
+   </td>
+  </tr>
+  <tr>
+   <td>
+    <a href="#get_entries_id">
+     GET /api/v2/entries/&lt;int:entry_id&gt;
+    </a>
+   </td>
+   <td class="about">
+    Decrypt the given entry and return the contents
+   </td>
+   <td class="requires-login">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+   <td class="requires-csrf-token">
+    <span class="glyphicon glyphicon-remove">
+    </span>
+   </td>
+  </tr>
+ </tbody>
+</table>
+

@@ -1,4 +1,7 @@
-from flask import Blueprint, session
+from multiprocessing import Pool
+
+from flask import Blueprint, session, render_template
+
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend
@@ -8,46 +11,84 @@ from .models import Entry, db
 api_v2 = Blueprint("api_v2", __name__)
 
 
-def decrypt_entries_pool(entry_key_pair):
-    entry, key = entry_key_pair
-    if entry.version == 4:
-        out = entry.to_json()
-        # remove the encrypted elements in order to conserve bandwidth
-        out.pop("username")
-        out.pop("password")
-        out.pop("extra")
-        return out
-    else:
-        return backend._decrypt_row(entry, key)
+def jsonify_entries_pool(entry):
+    assert entry.version >= 4
+    out = entry.to_json()
+    # remove the encrypted elements in order to conserve bandwidth
+    out.pop("username")
+    out.pop("password")
+    out.pop("extra")
+    return out
 
 
-def __decrypt_multiprocess(enc_entries, master_key):
-    from multiprocessing import Pool
+def __jsonify_entries_multiprocess(enc_entries):
     pool = Pool(5)
-    entry_key_pairs = [(entry, master_key) for entry in enc_entries]
-    results = pool.map(decrypt_entries_pool, entry_key_pairs)
+    results = pool.map(jsonify_entries_pool, enc_entries)
     pool.close()
     pool.join()
     return results
 
 
+@api_v2.route("/api/v2", methods=["GET"])
+def show_api():
+    """Display all available APIs"""
+    return render_template("api_v2.html", title="PassZero &middot; API v2")
+
+
 @api_v2.route("/api/v2/entries", methods=["GET"])
 @requires_json_auth
 def api_get_entries():
-    """
-    Only works for logged-in users.
-    Return a list of available entries.
-    Do not decrypt entry contents
-    Output is JSON. Format: [ { <entry> }, ... ]
+    """Return a list of encrypted entries.
+
+    Arguments:
+        none
+
+    Response:
+        on success:
+            ```
+            [ entry-1, entry-2, ..., entry-n ]
+            ```
+            exactly what information is returned depends on the entry version
+        on error:
+            ```
+            { "status": "error", "msg": string }
+            ```
+
+    Status codes:
+        - 200: success
+        - 500: there are some old entries (version < 4) so this method cannot work
     """
     enc_entries = backend.get_entries(db.session, session["user_id"])
-    dec_entries = __decrypt_multiprocess(enc_entries, session["password"])
-    return write_json(200, dec_entries)
+    if any([entry.version < 4 for entry in enc_entries]):
+        code, data = json_error(500, "This method does not work if there are entries below version 4")
+        return write_json(code, data)
+    jsonified_entries = __jsonify_entries_multiprocess(enc_entries)
+    return write_json(200, jsonified_entries)
 
 
 @api_v2.route("/api/v2/entries/<int:entry_id>", methods=["GET"])
 @requires_json_auth
 def api_get_entry(entry_id):
+    """Decrypt the given entry and return the contents
+
+    Arguments:
+        none
+
+    Response:
+        on success:
+            ```
+            entry
+            ```
+            exactly what information is returned depends on the entry version
+        on error:
+            ```
+            { "status": "error", "msg": string }
+            ```
+
+    Status codes:
+        - 200: success
+        - 500: there are some old entries (version < 4) so this method cannot work
+    """
     code = 200
     try:
         entry = db.session.query(Entry)\
