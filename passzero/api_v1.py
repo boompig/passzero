@@ -25,6 +25,17 @@ def show_api():
 @api_v1.route("/api/csrf_token", methods=["GET"])
 @api_v1.route("/api/v1/csrf_token", methods=["GET"])
 def api_get_csrf_token():
+    """Get CSRF token for current user's session.
+
+    Arguments:
+        none
+
+    Response:
+        CSRF token as string
+
+    Status codes:
+        - 200: success
+    """
     # make sure there is a CSRF token
     token = generate_csrf_token()
     return write_json(200, token)
@@ -33,6 +44,17 @@ def api_get_csrf_token():
 @api_v1.route("/api/logout", methods=["POST"])
 @api_v1.route("/api/v1/logout", methods=["POST"])
 def api_logout():
+    """Logout. Destroy current session.
+
+    Arguments:
+        none
+
+    Response:
+        { "status": "success", "msg": string }
+
+    Status codes:
+        - 200: success
+    """
     if 'email' in session:
         session.pop("email")
     if 'password' in session:
@@ -92,14 +114,20 @@ def api_login(request_data):
 @api_v1.route("/api/v1/entries", methods=["GET"])
 @requires_json_auth
 def get_entries_api():
-    """Get entries of logged-in user.
-    Respond with JSON data corresponding to entries, or error msg. Set HTTP status code.
-    On success:
-        - read all entries and decrypt them
-        - write them out as massive JSON array
-        - set status code 200
-    On error:
-        - set status code 4xx
+    """Retrieve all decrypted entries for the logged-in user
+
+    Arguments:
+        none
+
+    Response:
+        On success:
+            [<entry-1>, <entry-2>, ... <entry-n>]
+        On error:
+            { "status": "error", "msg": string }
+
+    Status codes:
+        - 200: success
+        - 401: user is not logged in
     """
     code = 200
     entries = backend.get_entries(db.session, session["user_id"])
@@ -114,15 +142,13 @@ def get_entries_api():
 @requires_csrf_check
 def api_v1_delete_entry(entry_id):
     """Delete the entry with the given ID.
+
     Arguments:
         none
+
     Response:
-        { "status": string, "msg": string }
-    On success:
-        - delete the entry
-        - set status code 200
-    On error:
-        - set status code 4xx
+        { "status": "success"|"error", "msg": string }
+
     Status codes:
         - 200: success
         - 400: entry does not exist or does not belong to logged-in user
@@ -320,9 +346,9 @@ def api_v1_user_recover(request_data):
     return write_json(code, data)
 
 
-@api_v1.route("/api/v1/user/recover/confirm", methods=["POST"])
-@api_v1.route("/api/v1/recover/confirm", methods=["POST"])
 @api_v1.route("/recover/confirm", methods=["POST"])
+@api_v1.route("/api/v1/recover/confirm", methods=["POST"])
+@api_v1.route("/api/v1/user/recover/confirm", methods=["POST"])
 @requires_json_form_validation(ConfirmRecoverPasswordForm)
 def recover_password_confirm_api(request_data):
     """
@@ -366,9 +392,9 @@ def recover_password_confirm_api(request_data):
     return write_json(code, data)
 
 
-@api_v1.route("/api/v1/entries/nuclear", methods=["POST"])
-@api_v1.route("/api/entries/nuclear", methods=["POST"])
 @api_v1.route("/entries/nuclear", methods=["POST"])
+@api_v1.route("/api/entries/nuclear", methods=["POST"])
+@api_v1.route("/api/v1/entries/nuclear", methods=["POST"])
 @requires_json_auth
 @requires_csrf_check
 def nuke_entries_api():
@@ -391,9 +417,9 @@ def nuke_entries_api():
     return write_json(code, data)
 
 
-@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["POST", "UPDATE"])
-@api_v1.route("/api/entries/<int:entry_id>", methods=["POST"])
 @api_v1.route("/entries/<int:entry_id>", methods=["POST"])
+@api_v1.route("/api/entries/<int:entry_id>", methods=["POST"])
+@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["POST", "UPDATE"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
@@ -436,10 +462,10 @@ def api_v1_update_entry(request_data, entry_id):
     return write_json(code, data)
 
 
+@api_v1.route("/advanced/password", methods=["PUT", "UPDATE"])
+@api_v1.route("/api/advanced/password", methods=["PUT", "UPDATE"])
 @api_v1.route("/api/v1/advanced/password", methods=["PUT", "UPDATE"])
 @api_v1.route("/api/v1/user/password", methods=["PUT", "UPDATE"])
-@api_v1.route("/api/advanced/password", methods=["PUT", "UPDATE"])
-@api_v1.route("/advanced/password", methods=["PUT", "UPDATE"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(UpdatePasswordForm)
