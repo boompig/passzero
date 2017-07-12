@@ -50,7 +50,9 @@ def api_logout():
         none
 
     Response:
+        ```
         { "status": "success", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -76,7 +78,9 @@ def api_login(request_data):
         - password: string (required)
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -121,9 +125,13 @@ def get_entries_api():
 
     Response:
         On success:
+            ```
             [<entry-1>, <entry-2>, ... <entry-n>]
+            ```
         On error:
+            ```
             { "status": "error", "msg": string }
+            ```
 
     Status codes:
         - 200: success
@@ -147,7 +155,9 @@ def api_v1_delete_entry(entry_id):
         none
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -177,17 +187,21 @@ def api_v1_new_entry(request_data):
     """Create a new entry for the logged-in user.
 
     Arguments:
-        - account (required)
-        - username (required)
-        - password (required)
-        - extra (optional)
-        - has_2fa (required)
+        - account: string (required)
+        - username: string (required)
+        - password: string(required)
+        - extra: string (optional)
+        - has_2fa: boolean (required)
 
     Response:
         on success:
+            ```
             { "entry_id": number }
+            ```
         on error:
+            ```
             { "status": "error", "msg": string }
+            ```
 
     Status codes:
         - 200: success
@@ -228,7 +242,9 @@ def signup_api(request_data):
         - confirm_password: string (required)
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -279,7 +295,9 @@ def confirm_signup_api(request_data):
         - token: string (required)
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -321,7 +339,9 @@ def api_v1_user_recover(request_data):
         - email: string (required)
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -362,7 +382,9 @@ def recover_password_confirm_api(request_data):
         - confirm_password: string (required)
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -404,7 +426,9 @@ def nuke_entries_api():
         none
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -427,14 +451,16 @@ def api_v1_update_entry(request_data, entry_id):
     """Update the specified entry.
 
     Arguments:
-        - account:string (required)
-        - username:string (required)
-        - password:string (required)
-        - extra:string (optional)
-        - has_2fa:boolean (required)
+        - account: string (required)
+        - username: string (required)
+        - password: string (required)
+        - extra: string (optional)
+        - has_2fa: boolean (required)
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
@@ -478,7 +504,9 @@ def api_v1_update_user_password(request_data):
         - confirm_new_password: string (required)
 
     Response:
+        ```
         { "status": "success"|"error", "msg": string }
+        ```
 
     Status codes:
         - 200: success
