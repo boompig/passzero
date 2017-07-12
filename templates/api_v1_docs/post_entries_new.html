@@ -3,34 +3,29 @@
         <span class="http-method">POST</span>
         <span class="uri">/api/v1/entries/new</span>
     </h2>
-    <p class="about">Create a new entry for the logged-in user</p>
+    <p class="about">Create a new entry for the logged-in user.</p>
 
     <h3>Arguments</h3>
-    <pre>
-        <code data-lang="javascript">
+    <pre><code data-lang="javascript">
 {
-    // entry data
+    "csrf_token": string (required),
     "account": string (required),
     "username": string (required),
     "password": string (required),
     "extra": string (optional),
-    "has_2fa": boolean (optional),
-    // metadata
-    "csrf_token": string (required)
+    "has_2fa": boolean (required)
 }
 </code></pre>
 
     <h3>Response</h3>
 
     Success:
-    <pre>
-        <code data-lang="javascript">
+    <pre><code data-lang="javascript">
 { "entry_id": int }
 </code></pre>
 
     Error:
-    <pre>
-        <code data-lang="javascript">
+    <pre><code data-lang="javascript">
 {
     "status": "error",
     "msg": string

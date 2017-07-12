@@ -230,6 +230,7 @@ def api_v1_new_entry(request_data):
 
 @api_v1.route("/api/signup", methods=["POST"])
 @api_v1.route("/api/v1/signup", methods=["POST"])
+@api_v1.route("/api/v1/user/signup", methods=["POST"])
 @requires_json_form_validation(SignupForm)
 def signup_api(request_data):
     """First step of user registration.
@@ -432,7 +433,7 @@ def nuke_entries_api():
 
     Status codes:
         - 200: success
-        - 401: failed to authenticate
+        - 401: not authenticated
         - 403: CSRF token validation failed
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
@@ -441,9 +442,9 @@ def nuke_entries_api():
     return write_json(code, data)
 
 
-@api_v1.route("/entries/<int:entry_id>", methods=["POST"])
-@api_v1.route("/api/entries/<int:entry_id>", methods=["POST"])
-@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["POST", "UPDATE"])
+@api_v1.route("/entries/<int:entry_id>", methods=["UPDATE", "POST"])
+@api_v1.route("/api/entries/<int:entry_id>", methods=["UPDATE", "POST"])
+@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["UPDATE", "POST"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
@@ -464,8 +465,8 @@ def api_v1_update_entry(request_data, entry_id):
 
     Status codes:
         - 200: success
+        - 400: various input validation errors
         - 401: not authenticated
-        - 400: error in POST parameters
         - 403: CSRF check failed
     """
     code = 200
@@ -488,10 +489,10 @@ def api_v1_update_entry(request_data, entry_id):
     return write_json(code, data)
 
 
-@api_v1.route("/advanced/password", methods=["PUT", "UPDATE"])
-@api_v1.route("/api/advanced/password", methods=["PUT", "UPDATE"])
-@api_v1.route("/api/v1/advanced/password", methods=["PUT", "UPDATE"])
-@api_v1.route("/api/v1/user/password", methods=["PUT", "UPDATE"])
+@api_v1.route("/advanced/password", methods=["UPDATE", "PUT"])
+@api_v1.route("/api/advanced/password", methods=["UPDATE", "PUT"])
+@api_v1.route("/api/v1/advanced/password", methods=["UPDATE", "PUT"])
+@api_v1.route("/api/v1/user/password", methods=["UPDATE", "PUT"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(UpdatePasswordForm)
@@ -513,7 +514,7 @@ def api_v1_update_user_password(request_data):
         - 400: failed to validate parameters
         - 401: user is not authenticated, or old password is incorrect
         - 403: CSRF check failed
-        - 400: server error, or old password is incorrect
+        - 500: server error, or old password is incorrect
     """
     entries = backend.get_entries(db.session, session["user_id"])
     try:
