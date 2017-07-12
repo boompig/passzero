@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, escape, session
+from flask import Blueprint, escape, session, render_template
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend
@@ -16,6 +16,11 @@ from .mailgun import send_confirmation_email, send_recovery_email
 from .models import AuthToken, Entry, User, db
 
 api_v1 = Blueprint("api_v1", __name__)
+
+@api_v1.route("/api", methods=["GET"])
+def show_api():
+    """Display all available APIs"""
+    return render_template("api_v1.html", title="PassZero &middot; API v1")
 
 @api_v1.route("/api/csrf_token", methods=["GET"])
 @api_v1.route("/api/v1/csrf_token", methods=["GET"])
@@ -42,15 +47,20 @@ def api_logout():
 @api_v1.route("/api/v1/login", methods=["POST"])
 @requires_json_form_validation(LoginForm)
 def api_login(request_data):
-    """Try to log in using JSON post data.
-    Respond with JSON data and set HTTP status code.
-    On success:
-        - fetch user from database
-        - set session cookies
-        - update last login info in database
-        - return 200 code and success msg in JSON
-    On error:
-        - return 4xx code and error msg in JSON
+    """Login. On success, update session cookie.
+
+    Arguments:
+        - email: string (required)
+        - password: string (required)
+
+    Response:
+        { "status": "success"|"error", "msg": string }
+
+    Status codes:
+        - 200: success
+        - 400: failed to validate arguments
+        - 401: bad username-password combo or account doesn't exist or account isn't activated
+        - 403: CSRF check failed
     """
     try:
         user = backend.get_account_with_email(db.session, request_data["email"])
@@ -102,9 +112,23 @@ def get_entries_api():
 @api_v1.route("/api/v1/entries/<int:entry_id>", methods=["DELETE"])
 @requires_json_auth
 @requires_csrf_check
-def delete_entry_api(entry_id):
-    """Delete the entry with the given ID. Return JSON.
-    Provide success/failure via HTTP status code."""
+def api_v1_delete_entry(entry_id):
+    """Delete the entry with the given ID.
+    Arguments:
+        none
+    Response:
+        { "status": string, "msg": string }
+    On success:
+        - delete the entry
+        - set status code 200
+    On error:
+        - set status code 4xx
+    Status codes:
+        - 200: success
+        - 400: entry does not exist or does not belong to logged-in user
+        - 401: not authenticated
+        - 403: CSRF check failed
+    """
     try:
         entry = db.session.query(Entry).filter_by(id=entry_id).one()
         assert entry.user_id == session['user_id']
@@ -123,19 +147,27 @@ def delete_entry_api(entry_id):
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
-def new_entry_api(request_data):
+def api_v1_new_entry(request_data):
     """Create a new entry for the logged-in user.
-    POST parameters:
+
+    Arguments:
         - account (required)
+        - username (required)
         - password (required)
-        - confirm_password (required)
         - extra (optional)
         - has_2fa (required)
-    Respond with JSON message on success, and 4xx codes and message on failure.
-        - 401: not authenticated
-        - 400: error in POST parameters
-        - 403: CSRF check failed
+
+    Response:
+        on success:
+            { "entry_id": number }
+        on error:
+            { "status": "error", "msg": string }
+
+    Status codes:
         - 200: success
+        - 400: various input validation errors
+        - 401: not authenticated
+        - 403: CSRF check failed
     """
     # token has been spent here
     dec_entry = {
@@ -160,6 +192,24 @@ def new_entry_api(request_data):
 @api_v1.route("/api/v1/signup", methods=["POST"])
 @requires_json_form_validation(SignupForm)
 def signup_api(request_data):
+    """First step of user registration.
+    Create an inactive user and send an email to the specified email address.
+    The account cannot be logged-into until it has been activated via the activation link in the email.
+
+    Arguments:
+        - email: string (required)
+        - password: string (required)
+        - confirm_password: string (required)
+
+    Response:
+        { "status": "success"|"error", "msg": string }
+
+    Status codes:
+        - 200: success
+        - 400: account already exists
+        - 403: CSRF token validation failed
+        - 500: failed to send email
+    """
     try:
         user = backend.get_account_with_email(db.session, request_data["email"])
     except NoResultFound:
@@ -195,6 +245,22 @@ def signup_api(request_data):
 @api_v1.route("/api/v1/user/activate", methods=["POST"])
 @requires_json_form_validation(ActivateAccountForm)
 def confirm_signup_api(request_data):
+    """Second and final step of user registration.
+    Activate the previously created inactive account.
+    This API is meant to be hit when a user clicks a link in their email.
+
+    Arguments:
+        - token: string (required)
+
+    Response:
+        { "status": "success"|"error", "msg": string }
+
+    Status codes:
+        - 200: success
+        - 400: account already activated
+        - 401: token is invalid
+        - 403: CSRF token validation failed
+    """
     try:
         token = request_data['token']
         token_obj = db.session.query(AuthToken).filter_by(token=token).one()
@@ -221,9 +287,22 @@ def confirm_signup_api(request_data):
 @api_v1.route("/api/v1/recover", methods=["POST"])
 @api_v1.route("/api/v1/user/recover", methods=["POST"])
 @requires_json_form_validation(RecoverPasswordForm)
-def recover_password_api(request_data):
-    """This method sends a recovery email to the user's email address.
-    It does not require any authentication."""
+def api_v1_user_recover(request_data):
+    """First step of account recovery for the specied user.
+    Send an account recovery token to the user's email address.
+
+    Arguments:
+        - email: string (required)
+
+    Response:
+        { "status": "success"|"error", "msg": string }
+
+    Status codes:
+        - 200: success
+        - 400: failed to validated parameters
+        - 401: no account for this email
+        - 500: internal server error, or email failed to send
+    """
     try:
         user = db.session.query(User).filter_by(email=request_data['email']).one()
         # send a reset token to the email
@@ -246,9 +325,22 @@ def recover_password_api(request_data):
 @api_v1.route("/recover/confirm", methods=["POST"])
 @requires_json_form_validation(ConfirmRecoverPasswordForm)
 def recover_password_confirm_api(request_data):
-    """This is the API that is hit by a link from an email.
-    Check the token that is sent with the email, then nuke all the entries.
-    Return JSON. HTTP status codes indicate success or failure.
+    """
+    Second and final step of account recovery for the specified user.
+    This API is meant to be hit when the user clicks the link in a recovery email.
+    Check the token is valid, then nuke all the entries and reset the password.
+
+    Arguments:
+        - token: string (required)
+        - password: string (required)
+        - confirm_password: string (required)
+
+    Response:
+        { "status": "success"|"error", "msg": string }
+
+    Status codes:
+        - 200: success
+        - 400: token is invalid
     """
     token = db.session.query(AuthToken).filter_by(token=request_data['token']).one()
     if token.is_expired():
@@ -280,11 +372,18 @@ def recover_password_confirm_api(request_data):
 @requires_json_auth
 @requires_csrf_check
 def nuke_entries_api():
-    """Delete all entries. Return JSON. Success is measured by HTTP status code.
-    Possible values:
+    """Delete <b>all</b> entries for the logged-in user.
+
+    Arguments:
+        none
+
+    Response:
+        { "status": "success"|"error", "msg": string }
+
+    Status codes:
+        - 200: success
         - 401: failed to authenticate
         - 403: CSRF token validation failed
-        - 200: success
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     backend.delete_all_entries(db.session, user)
@@ -292,13 +391,31 @@ def nuke_entries_api():
     return write_json(code, data)
 
 
-@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["POST"])
+@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["POST", "UPDATE"])
 @api_v1.route("/api/entries/<int:entry_id>", methods=["POST"])
 @api_v1.route("/entries/<int:entry_id>", methods=["POST"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
-def edit_entry_api(request_data, entry_id):
+def api_v1_update_entry(request_data, entry_id):
+    """Update the specified entry.
+
+    Arguments:
+        - account:string (required)
+        - username:string (required)
+        - password:string (required)
+        - extra:string (optional)
+        - has_2fa:boolean (required)
+
+    Response:
+        { "status": "success"|"error", "msg": string }
+
+    Status codes:
+        - 200: success
+        - 401: not authenticated
+        - 400: error in POST parameters
+        - 403: CSRF check failed
+    """
     code = 200
     data = {}
     try:
@@ -326,9 +443,24 @@ def edit_entry_api(request_data, entry_id):
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(UpdatePasswordForm)
-def update_password_api(request_data):
-    """Change the master password. Return values are JSON.
-    Success is marked by HTTP status code."""
+def api_v1_update_user_password(request_data):
+    """Change the master password for the logged-in user.
+
+    Arguments:
+        - old_password: string (required)
+        - new_password: string (required)
+        - confirm_new_password: string (required)
+
+    Response:
+        { "status": "success"|"error", "msg": string }
+
+    Status codes:
+        - 200: success
+        - 400: failed to validate parameters
+        - 401: user is not authenticated, or old password is incorrect
+        - 403: CSRF check failed
+        - 400: server error, or old password is incorrect
+    """
     entries = backend.get_entries(db.session, session["user_id"])
     try:
         backend.decrypt_entries(entries, session['password'])

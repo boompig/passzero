@@ -43,7 +43,6 @@ class UpdatePasswordForm(Form):
         validators.EqualTo("confirm_new_password", message="Passwords must match")
     ])
     confirm_new_password = PasswordField("confirm new password", [validators.DataRequired()])
-    extra = TextField("extra")
 
 class RecoverPasswordForm(Form):
     email = TextField("email", [

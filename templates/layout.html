@@ -7,7 +7,13 @@
         <!-- for IE - use latest engine -->
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
-        <title>PassZero</title>
+        <title>
+            {% if title %}
+                {{ title|safe }}
+            {%- else -%}
+                PassZero
+            {%- endif -%}
+        </title>
 
         <link rel="manifest" href="/manifest.json">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
