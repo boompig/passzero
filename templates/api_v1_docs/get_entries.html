@@ -3,21 +3,19 @@
         <span class="http-method">GET</span>
         <span class="uri">/api/v1/entries</span>
     </h2>
-    <p class="about">Retrieve all decrypted entries for logged-in user</p>
+    <p class="about">Retrieve all decrypted entries for the logged-in user</p>
     <h3>Arguments</h3>
-    <p>none</p>
+    <p>None</p>
 
     <h3>Response</h3>
 
     Success:
-    <pre>
-        <code>
+    <pre><code data-lang="javascript">
 [ &lt;entry-1&gt;, &lt;entry-2&gt;, ... ]
 </code></pre>
 
     Error:
-    <pre>
-        <code>
+    <pre><code data-lang="javascript">
 {
     "status": "error",
     "msg": string

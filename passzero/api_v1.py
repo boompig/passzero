@@ -126,8 +126,10 @@ def get_entries_api():
     Response:
         On success:
             ```
-            [<entry-1>, <entry-2>, ... <entry-n>]
+            [entry-1, entry-2, ... entry-n]
             ```
+            The entry details depend on which version entries the user has.
+            For details see passzero/models.py.
         On error:
             ```
             { "status": "error", "msg": string }
@@ -333,7 +335,7 @@ def confirm_signup_api(request_data):
 @api_v1.route("/api/v1/user/recover", methods=["POST"])
 @requires_json_form_validation(RecoverPasswordForm)
 def api_v1_user_recover(request_data):
-    """First step of account recovery for the specied user.
+    """First step of account recovery for the specified user.
     Send an account recovery token to the user's email address.
 
     Arguments:
