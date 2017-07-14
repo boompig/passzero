@@ -57,23 +57,57 @@ def create_entry(app, entry, token, check_status=True):
         return r
 
 
-def delete_entry(app, entry_id, token):
+def delete_entry(app, entry_id, csrf_token, check_status=True):
+    assert isinstance(entry_id, int)
+    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(check_status, bool)
     url = "/api/v1/entries/{}?csrf_token={}".format(
-        entry_id, token)
+        entry_id, csrf_token)
     r = app.delete(url,
         headers=json_header, follow_redirects=True)
     print(r.data)
-    assert r.status_code == 200
+    if check_status:
+        assert r.status_code == 200
     return r
 
 
-def edit_entry(app, entry_id, entry, token):
-    url = "/api/v1/entries/{}".format(entry_id)
-    data = entry
-    data["csrf_token"] = token
-    return app.post(url,
+def delete_all_entries(app, csrf_token, check_status=True):
+    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(check_status, bool)
+    url = "/api/v1/entries/nuclear"
+    data = { "csrf_token": csrf_token }
+    r = app.post(url,
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
+    print(r.data)
+    if check_status:
+        assert r.status_code == 200
+    return r
+
+
+def delete_user(app, csrf_token, check_status=True):
+    url = "/api/v1/user?csrf_token={}".format(csrf_token)
+    r = app.delete(url,
+        headers=json_header, follow_redirects=True)
+    print(r.data)
+    if check_status:
+        assert r.status_code == 200
+    return r
+
+
+def edit_entry(app, entry_id, entry, csrf_token, check_status=True):
+    assert isinstance(entry_id, int)
+    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(check_status, bool)
+    url = "/api/v1/entries/{}".format(entry_id)
+    data = entry
+    data["csrf_token"] = csrf_token
+    r = app.post(url,
+        data=json.dumps(data),
+        headers=json_header, follow_redirects=True)
+    if check_status:
+        assert r.status_code == 200
+    return r
 
 
 def signup(app, email, password):
@@ -102,7 +136,7 @@ def recover_account(app, email, csrf_token):
     return r
 
 
-def recover_account_confirm(app, password, recovery_token, csrf_token):
+def recover_account_confirm(app, password, recovery_token, csrf_token, check_status=True):
     url = "/api/v1/user/recover/confirm"
     data = {
         "password": password,
@@ -114,7 +148,8 @@ def recover_account_confirm(app, password, recovery_token, csrf_token):
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
     print(r.data)
-    assert r.status_code == 200
+    if check_status:
+        assert r.status_code == 200
     return r
 
 

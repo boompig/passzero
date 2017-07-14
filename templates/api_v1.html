@@ -18,14 +18,20 @@ pre::first-line {
 
     {%- include "api_v1_docs/method_table.html" -%}
 
+    <!-- basic functions -->
     {%- include "api_v1_docs/get_csrf_token.html" -%}
     {%- include "api_v1_docs/post_login.html" -%}
     {%- include "api_v1_docs/post_logout.html" -%}
+
+    <!-- entries -->
     {%- include "api_v1_docs/get_entries.html" -%}
     {%- include "api_v1_docs/post_entries_new.html" -%}
     {%- include "api_v1_docs/update_entries_id.html" -%}
     {%- include "api_v1_docs/delete_entries_id.html" -%}
     {%- include "api_v1_docs/post_entries_nuclear.html" -%}
+
+    <!-- user -->
+    {%- include "api_v1_docs/delete_user.html" -%}
     {%- include "api_v1_docs/post_user_signup.html" -%}
     {%- include "api_v1_docs/post_user_activate.html" -%}
     {%- include "api_v1_docs/update_user_password.html" -%}

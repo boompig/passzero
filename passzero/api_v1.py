@@ -42,6 +42,15 @@ def api_get_csrf_token():
     return write_json(200, token)
 
 
+def __logout():
+    if 'email' in session:
+        session.pop("email")
+    if 'password' in session:
+        session.pop("password")
+    if 'user_id' in session:
+        session.pop("user_id")
+
+
 @api_v1.route("/api/logout", methods=["POST"])
 @api_v1.route("/api/v1/logout", methods=["POST"])
 def api_logout():
@@ -58,12 +67,7 @@ def api_logout():
     Status codes:
         - 200: success
     """
-    if 'email' in session:
-        session.pop("email")
-    if 'password' in session:
-        session.pop("password")
-    if 'user_id' in session:
-        session.pop("user_id")
+    __logout()
     code, data = json_success("Successfully logged out")
     return write_json(code, data)
 
@@ -389,14 +393,9 @@ def recover_password_confirm_api(request_data):
         - 200: success
         - 400: token is invalid
     """
-    token = db.session.query(AuthToken).filter_by(token=request_data['token']).one()
-    if token.is_expired():
-        # delete old token
-        db.session.delete(token)
-        db.session.commit()
-        # return error via JSON
-        code, data = json_error(400, "token has expired")
-    else:
+    try:
+        token = db.session.query(AuthToken).filter_by(token=request_data['token']).one()
+        assert not token.is_expired()
         user = db.session.query(User).filter_by(id=token.user_id).one()
         # 1) change the user's password
         user.change_password(request_data['password'])
@@ -410,6 +409,14 @@ def recover_password_confirm_api(request_data):
         db.session.delete(token)
         db.session.commit()
         code, data = json_success("successfully changed password")
+    except NoResultFound:
+        code, data = json_error(400, "token is invalid")
+    except AssertionError:
+        # delete old token
+        db.session.delete(token)
+        db.session.commit()
+        # return error via JSON
+        code, data = json_error(400, "token has expired")
     return write_json(code, data)
 
 
@@ -435,6 +442,44 @@ def nuke_entries_api():
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     backend.delete_all_entries(db.session, user)
     code, data = json_success("Deleted all entries")
+    return write_json(code, data)
+
+
+@api_v1.route("/api/v1/user", methods=["DELETE"])
+@requires_json_auth
+@requires_csrf_check
+def delete_user_api():
+    """Delete all information about the currently logged-in user.
+
+    Arguments:
+        none
+
+    Response:
+        ```
+        { "status": "success"|"error", "msg": string }
+        ```
+
+    Status codes:
+        - 200: success
+        - 401: not authenticated
+        - 403: CSRF token validation failed
+    """
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    # delete all entries
+    entries = db.session.query(Entry).filter_by(user_id=user.id).all()
+    for entry in entries:
+        db.session.delete(entry)
+    # delete all auth tokens
+    tokens = db.session.query(AuthToken).filter_by(user_id=user.id).all()
+    for token in tokens:
+        db.session.delete(token)
+    # delete the user
+    db.session.delete(user)
+    db.session.commit()
+    code, data = json_success(
+        "The user and all associated information has been deleted. You have been logged out.")
+    # have to log out
+    __logout()
     return write_json(code, data)
 
 
