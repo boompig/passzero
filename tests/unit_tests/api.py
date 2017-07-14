@@ -8,7 +8,7 @@ def login(app, email, password, check_status=True):
         "email": email,
         "password": password
     }
-    r = app.post("/api/login",
+    r = app.post("/api/v1/login",
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
     if check_status:
@@ -17,12 +17,12 @@ def login(app, email, password, check_status=True):
 
 
 def logout(app):
-    return app.post("/api/logout",
+    return app.post("/api/v1/logout",
         headers=json_header, follow_redirects=True)
 
 
 def get_csrf_token(app):
-    r = app.get("/api/csrf_token",
+    r = app.get("/api/v1/csrf_token",
         headers=json_header, follow_redirects=True)
     assert r.status_code == 200
     token = json.loads(r.data)
@@ -31,7 +31,7 @@ def get_csrf_token(app):
 
 
 def get_entries(app, check_status=True):
-    r = app.get("/api/entries",
+    r = app.get("/api/v1/entries",
         headers=json_header, follow_redirects=True)
     if check_status:
         assert r.status_code == 200
@@ -46,7 +46,7 @@ def create_entry(app, entry, token, check_status=True):
     """
     data = entry
     data["csrf_token"] = token
-    r = app.post("/api/entries/new",
+    r = app.post("/api/v1/entries/new",
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)
     if check_status:
@@ -58,7 +58,7 @@ def create_entry(app, entry, token, check_status=True):
 
 
 def delete_entry(app, entry_id, token):
-    url = "/api/entries/{}?csrf_token={}".format(
+    url = "/api/v1/entries/{}?csrf_token={}".format(
         entry_id, token)
     r = app.delete(url,
         headers=json_header, follow_redirects=True)
@@ -68,7 +68,7 @@ def delete_entry(app, entry_id, token):
 
 
 def edit_entry(app, entry_id, entry, token):
-    url = "/api/entries/{}".format(entry_id)
+    url = "/api/v1/entries/{}".format(entry_id)
     data = entry
     data["csrf_token"] = token
     return app.post(url,
@@ -77,7 +77,7 @@ def edit_entry(app, entry_id, entry, token):
 
 
 def signup(app, email, password):
-    url = "/api/signup"
+    url = "/api/v1/user/signup"
     data = {
         "email": email,
         "password": password,
@@ -119,7 +119,7 @@ def recover_account_confirm(app, password, recovery_token, csrf_token):
 
 
 def activate_account(app, token):
-    return app.post("/api/v1/signup/confirm",
+    return app.post("/api/v1/user/activate",
         data=json.dumps({"token": token}),
         headers=json_header, follow_redirects=True)
 

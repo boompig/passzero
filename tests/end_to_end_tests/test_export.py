@@ -47,7 +47,8 @@ class PassZeroApiTester(unittest.TestCase):
                 "account": "fake account %d" % i,
                 "username": "username %d" % i,
                 "password": "password %d" % i,
-                "extra": "extra field %d" % i
+                "extra": "extra field %d" % i,
+                "has_2fa": True
             }
             backend.insert_entry_for_user(
                     session, dec_entry, user.id, DEFAULT_MASTER_KEY)

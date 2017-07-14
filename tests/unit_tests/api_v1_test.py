@@ -77,10 +77,10 @@ class PassZeroApiTester(unittest.TestCase):
             "password": password,
             "confirm_password": password
         }
-        return self.json_post("/api/v1/signup", data)
+        return self.json_post("/api/v1/user/signup", data)
 
     def activate_account(self, token):
-        return self.json_post("/api/v1/signup/confirm", {"token": token})
+        return self.json_post("/api/v1/user/activate", {"token": token})
 
     @mock.patch("passzero.mailgun.send_email")
     def test_signup(self, m1):

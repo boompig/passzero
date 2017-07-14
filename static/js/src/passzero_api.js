@@ -64,7 +64,7 @@ var pzAPI = {
     },
 
     login: function(email, password) {
-        var url = pzAPI.base_url + "/api/login";
+        var url = pzAPI.base_url + "/api/v1/login";
         var data = {
             email: email,
             password: password
@@ -73,12 +73,12 @@ var pzAPI = {
     },
 
     logout: function() {
-        var url = pzAPI.base_url + "/api/logout";
+        var url = pzAPI.base_url + "/api/v1/logout";
         return $.postJSON(url);
     },
 
     signup: function(email, password, confirm_password) {
-        var url = pzAPI.base_url + "/api/signup";
+        var url = pzAPI.base_url + "/api/v1/user/signup";
         var data = {
             email: email,
             password: password,
@@ -88,7 +88,7 @@ var pzAPI = {
     },
 
     getCSRFToken: function() {
-        var url = pzAPI.base_url + "/api/csrf_token";
+        var url = pzAPI.base_url + "/api/v1/csrf_token";
         return $.getJSON(url);
     },
 
@@ -103,7 +103,7 @@ var pzAPI = {
     },
 
     _createEntry: function(entry, csrf_token) {
-        var url = pzAPI.base_url + "/api/entries/new";
+        var url = pzAPI.base_url + "/api/v1/entries/new";
         var data = pzAPI._copyObject(entry);
         data.csrf_token = csrf_token;
         return $.postJSON(url, data);
@@ -117,7 +117,7 @@ var pzAPI = {
     },
 
     _editEntry: function(entry_id, entry, csrf_token) {
-        var url = "/api/entries/" + entry_id;
+        var url = "/api/v1/entries/" + entry_id;
         var data = pzAPI._copyObject(entry);
         data.csrf_token = csrf_token;
         return $.postJSON(url, data);
@@ -129,7 +129,7 @@ var pzAPI = {
         });
     },
     _deleteEntry: function(csrf_token, entry_id) {
-        var url = "/api/entries/" + entry_id;
+        var url = "/api/v1/entries/" + entry_id;
         data.csrf_token = csrf_token;
         return $.deleteJSON(url, { "csrf_token": csrf_token });
     },
@@ -140,7 +140,7 @@ var pzAPI = {
         });
     },
     _recoverAccount: function(email, token) {
-        var url = "/api/recover";
+        var url = "/api/v1/user/recover";
         var data = { "csrf_token": token, "email": email };
         return $.postJSON(url, data);
     },

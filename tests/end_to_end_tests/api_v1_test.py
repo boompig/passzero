@@ -31,7 +31,7 @@ def create_active_account(email, password):
     return user, db_session
 
 
-class PassZeroApiTester(unittest.TestCase):
+class PassZeroApiV1Tester(unittest.TestCase):
     @property
     def base_url(self):
         return "https://127.0.0.1:5050"
@@ -189,7 +189,7 @@ class PassZeroApiTester(unittest.TestCase):
                 "username": "entry_username",
                 "password": "entry_pass",
             }
-            entry_create_response = s.post(self.base_url + "/api/entries/new",
+            entry_create_response = s.post(self.base_url + "/api/v1/entries/new",
                 data=json.dumps(entry),
                 headers=self.json_header, verify=False)
             self.assertIsNotNone(entry_create_response)
@@ -261,7 +261,7 @@ class PassZeroApiTester(unittest.TestCase):
                 "extra": "entry_extra",
             }
             entry_id = self._create_entry(s, entry, token)
-            url = self.base_url + "/api/entries/{}".format(
+            url = self.base_url + "/api/v1/entries/{}".format(
                 entry_id)
             entry_delete_response = s.delete(url,
                 headers=self.json_header, verify=False)
@@ -283,7 +283,7 @@ class PassZeroApiTester(unittest.TestCase):
             }
             entry_id = self._create_entry(s, entry, create_token)
             delete_token = self._get_csrf_token(s)
-            url = self.base_url + "/api/entries/{}?csrf_token={}".format(
+            url = self.base_url + "/api/v1/entries/{}?csrf_token={}".format(
                 entry_id + 1, delete_token)
             entry_delete_response = s.delete(url,
                 headers=self.json_header, verify=False)
@@ -347,6 +347,8 @@ class PassZeroApiTester(unittest.TestCase):
         with requests.Session() as s:
             token = self._get_csrf_token(s)
             recover_result = api.recover(s, email, token)
+            # not actually printed unless there is failure
+            print(recover_result)
             self.assertEqual(recover_result.status_code, 401)
 
     def test_recover_account_valid_email(self):
@@ -356,6 +358,8 @@ class PassZeroApiTester(unittest.TestCase):
         with requests.Session() as s:
             token = self._get_csrf_token(s)
             recover_result = api.recover(s, email, token)
+            # not actually printed unless there is failure
+            print(recover_result.text)
             self.assertEqual(recover_result.status_code, 200)
 
 

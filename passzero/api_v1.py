@@ -1,7 +1,7 @@
+import logging
 from datetime import datetime
 
 from flask import Blueprint, escape, render_template, session
-
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend, change_password
@@ -231,8 +231,6 @@ def api_v1_new_entry(request_data):
     return write_json(code, data)
 
 
-@api_v1.route("/api/signup", methods=["POST"])
-@api_v1.route("/api/v1/signup", methods=["POST"])
 @api_v1.route("/api/v1/user/signup", methods=["POST"])
 @requires_json_form_validation(SignupForm)
 def signup_api(request_data):
@@ -287,7 +285,6 @@ def signup_api(request_data):
     return write_json(code, data)
 
 
-@api_v1.route("/api/v1/signup/confirm", methods=["POST"])
 @api_v1.route("/api/v1/user/activate", methods=["POST"])
 @requires_json_form_validation(ActivateAccountForm)
 def confirm_signup_api(request_data):
@@ -331,9 +328,8 @@ def confirm_signup_api(request_data):
     return write_json(code, data)
 
 
-@api_v1.route("/api/recover", methods=["POST"])
-@api_v1.route("/api/v1/recover", methods=["POST"])
 @api_v1.route("/api/v1/user/recover", methods=["POST"])
+@requires_csrf_check
 @requires_json_form_validation(RecoverPasswordForm)
 def api_v1_user_recover(request_data):
     """First step of account recovery for the specified user.
@@ -364,14 +360,13 @@ def api_v1_user_recover(request_data):
         if send_recovery_email(user.email, token.token):
             code, data = json_success("Recovery email sent to your email address")
         else:
+            logging.error("Failed to send email")
             code, data = json_internal_error("Failed to send email")
     except NoResultFound:
         code, data = json_error(401, "no such email")
     return write_json(code, data)
 
 
-@api_v1.route("/recover/confirm", methods=["POST"])
-@api_v1.route("/api/v1/recover/confirm", methods=["POST"])
 @api_v1.route("/api/v1/user/recover/confirm", methods=["POST"])
 @requires_json_form_validation(ConfirmRecoverPasswordForm)
 def recover_password_confirm_api(request_data):
@@ -418,8 +413,6 @@ def recover_password_confirm_api(request_data):
     return write_json(code, data)
 
 
-@api_v1.route("/entries/nuclear", methods=["POST"])
-@api_v1.route("/api/entries/nuclear", methods=["POST"])
 @api_v1.route("/api/v1/entries/nuclear", methods=["POST"])
 @requires_json_auth
 @requires_csrf_check
@@ -445,7 +438,6 @@ def nuke_entries_api():
     return write_json(code, data)
 
 
-@api_v1.route("/entries/<int:entry_id>", methods=["UPDATE", "POST"])
 @api_v1.route("/api/entries/<int:entry_id>", methods=["UPDATE", "POST"])
 @api_v1.route("/api/v1/entries/<int:entry_id>", methods=["UPDATE", "POST"])
 @requires_json_auth
@@ -492,9 +484,6 @@ def api_v1_update_entry(request_data, entry_id):
     return write_json(code, data)
 
 
-@api_v1.route("/advanced/password", methods=["UPDATE", "PUT"])
-@api_v1.route("/api/advanced/password", methods=["UPDATE", "PUT"])
-@api_v1.route("/api/v1/advanced/password", methods=["UPDATE", "PUT"])
 @api_v1.route("/api/v1/user/password", methods=["UPDATE", "PUT"])
 @requires_json_auth
 @requires_csrf_check

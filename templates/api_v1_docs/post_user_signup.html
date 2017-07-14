@@ -1,44 +1,50 @@
 <div class="method-section">
-    <h2 id="post_user_signup">
-        <span class="http-method">POST</span>
-        <span class="uri">/api/v1/user/signup</span>
-    </h2>
-    <p class="about">First step of user registration.
-        Create an inactive user and send an email to the specified email address.
-        The account cannot be logged-into until it has been activated via the activation link in the email.</p>
-
-    <h3>Arguments</h3>
-    <pre><code data-lang="javascript">
+ <h2 id="post_user_signup">
+  <span class="http-method">
+   POST
+  </span>
+  <span class="uri">
+   /api/v1/user/signup
+  </span>
+ </h2>
+ <p class="about">
+  First step of user registration.
+Create an inactive user and send an email to the specified email address.
+The account cannot be logged-into until it has been activated via the activation link in the email.
+ </p>
+ <h3>
+  Arguments
+ </h3>
+ <pre><code data-lang="javascript">
 {
-    "email": string (required),
-    "password": string (required),
-    "confirm_password": string (required)
+	"email": string (required),
+	"password": string (required),
+	"confirm_password": string (required)
 }
 </code></pre>
-
-    <h3>Response</h3>
-
-    Success:
-    <pre><code data-lang="javascript">
-{
-    "status": "success",
-    "msg": string
-}
+ <h3>
+  Response
+ </h3>
+ <div>
+  <pre><code data-lang="javascript">
+{ "status": "success"|"error", "msg": string }
 </code></pre>
-
-    Error:
-    <pre><code data-lang="javascript">&nbsp;
-{
-    "status": "error",
-    "msg": string
-}
-</code></pre>
-
-    <h3>Status codes</h3>
-    <ul>
-        <li>200 - success
-        <li>400 - account already exists
-        <li>403 - CSRF token validation failed
-        <li>500 - failed to send email
-    </ul>
+ </div>
+ <h3>
+  Status codes
+ </h3>
+ <ul>
+  <li>
+   200 - success
+   <li>
+    400 - account already exists
+    <li>
+     403 - CSRF token validation failed
+     <li>
+      500 - failed to send email
+     </li>
+    </li>
+   </li>
+  </li>
+ </ul>
 </div>

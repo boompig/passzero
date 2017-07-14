@@ -1,30 +1,49 @@
 <div class="method-section">
-    <h2 id="get_entries">
-        <span class="http-method">GET</span>
-        <span class="uri">/api/v1/entries</span>
-    </h2>
-    <p class="about">Retrieve all decrypted entries for the logged-in user</p>
-    <h3>Arguments</h3>
-    <p>None</p>
-
-    <h3>Response</h3>
-
-    Success:
-    <pre><code data-lang="javascript">
-[ &lt;entry-1&gt;, &lt;entry-2&gt;, ... ]
+ <h2 id="get_entries">
+  <span class="http-method">
+   GET
+  </span>
+  <span class="uri">
+   /api/v1/entries
+  </span>
+ </h2>
+ <p class="about">
+  Retrieve all decrypted entries for the logged-in user
+ </p>
+ <h3>
+  Arguments
+ </h3>
+ <p>
+  None
+ </p>
+ <h3>
+  Response
+ </h3>
+ <div>
+  <p>
+   On success:
+  </p>
+  <pre><code data-lang="javascript">
+[entry-1, entry-2, ... entry-n]
 </code></pre>
-
-    Error:
-    <pre><code data-lang="javascript">
-{
-    "status": "error",
-    "msg": string
-}
+  <p>
+   The entry details depend on which version entries the user has.
+For details see passzero/models.py.
+On error:
+  </p>
+  <pre><code data-lang="javascript">
+{ "status": "error", "msg": string }
 </code></pre>
-
-    <h3>Status codes</h3>
-    <ul>
-        <li>200 - success
-        <li>401 - user is not logged in
-    </ul>
+ </div>
+ <h3>
+  Status codes
+ </h3>
+ <ul>
+  <li>
+   200 - success
+   <li>
+    401 - user is not logged in
+   </li>
+  </li>
+ </ul>
 </div>

@@ -1,38 +1,47 @@
 <div class="method-section">
-    <h2 id="post_entries_nuclear">
-        <span class="http-method">POST</span>
-        <span class="uri">/api/v1/entries/nuclear</span>
-    </h2>
-    <p class="about">Delete <b>all</b> entries for the logged-in user.</p>
-    <h3>Arguments</h3>
-    <pre><code data-lang="javascript">
+ <h2 id="post_entries_nuclear">
+  <span class="http-method">
+   POST
+  </span>
+  <span class="uri">
+   /api/v1/entries/nuclear
+  </span>
+ </h2>
+ <p class="about">
+  Delete
+  <b>
+   all
+  </b>
+  entries for the logged-in user.
+ </p>
+ <h3>
+  Arguments
+ </h3>
+ <pre><code data-lang="javascript">
 {
-    "csrf_token": string (required)
+	"csrf_token": string (required)
 }
 </code></pre>
-
-    <h3>Response</h3>
-
-    Success:
-    <pre><code data-lang="javascript">
-{
-    "status": "success",
-    "msg": string
-}
+ <h3>
+  Response
+ </h3>
+ <div>
+  <pre><code data-lang="javascript">
+{ "status": "success"|"error", "msg": string }
 </code></pre>
-
-    Error:
-    <pre><code data-lang="javascript">&nbsp;
-{
-    "status": "error",
-    "msg": string
-}
-</code></pre>
-
-    <h3>Status codes</h3>
-    <ul>
-        <li>200 - success
-        <li>401 - not authenticated
-        <li>403 - CSRF token validation failed
-    </ul>
+ </div>
+ <h3>
+  Status codes
+ </h3>
+ <ul>
+  <li>
+   200 - success
+   <li>
+    401 - not authenticated
+    <li>
+     403 - CSRF token validation failed
+    </li>
+   </li>
+  </li>
+ </ul>
 </div>
