@@ -24,12 +24,19 @@
             </button>
             <a class="navbar-brand" href="/">PassZero</a>
         </div>
+        <form method="POST" action="/logout" id="logout-form" style="display: none;">
+        </form>
 
         <div class="collapse navbar-collapse navbar-right" id="bs-example-navbar-collapse-1">
             <ul class="nav navbar-nav">
                 {% for href, id, caption in navbar %}
                     <li {% if href == request.path %} class="active" {% endif %}>
+                        {%- if id == "logout" -%}
+                        <!-- this allows the logout process to happen via POST -->
+                        <a href="#" onclick="document.getElementById('logout-form').submit();">
+                        {% else %}
                         <a href="{{ href|e }}">
+                        {%- endif -%}
                             {%- if id == "index" -%}
                                 <span class="glyphicon glyphicon-home"></span>
                             {%- elif id == "about" -%}
@@ -55,3 +62,5 @@
         </div><!-- /.navbar-collapse -->
     </div><!-- /.container-fluid -->
 </nav>
+
+<!-- vim: set ft=jinja: -->

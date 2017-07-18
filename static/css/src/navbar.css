@@ -46,3 +46,7 @@ nav:after {
         padding: 10px;
     }
 }
+
+form#logout-form {
+    display: none;
+}
