@@ -82,6 +82,12 @@ def logout():
     return redirect(url_for("login"))
 
 
+@app.route("/post_account_delete", methods=["GET", "POST"])
+def post_account_delete():
+    flash("Account successfully deleted")
+    return redirect(url_for("logout"))
+
+
 @app.route("/entries/new", methods=["GET"])
 def new_entry_view():
     if not check_auth():

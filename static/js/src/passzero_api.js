@@ -40,11 +40,12 @@ $.getJSON = function(url, data) {
 
 $.deleteJSON = function(url, data) {
     data = data || {};
-    if (Object.keys(data).length > 0) {
-        url += "?" + $.param(data);
-    }
+    //if (Object.keys(data).length > 0) {
+        //url += "?" + $.param(data);
+    //}
     return $.ajax({
         url: url,
+        data: JSON.stringify(data),
         method: "DELETE",
         contentType: "application/json",
         dataType: "json"
@@ -191,6 +192,17 @@ var pzAPI = {
         return pzAPI.getCSRFToken()
         .then(function(response) {
             return pzAPI._updateUserPreferences(response, prefs);
+        });
+    },
+    _deleteUser: function(csrfToken, password) {
+        var url = "/api/v1/user";
+        data = { "password": password, "csrf_token": csrfToken };
+        return $.deleteJSON(url, data);
+    },
+    deleteUser: function(password) {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._deleteUser(response, password);
         });
     }
 };

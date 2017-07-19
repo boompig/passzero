@@ -11,23 +11,29 @@
 {% block body %}
 <h1 class="title">Profile</h1>
 
-<div class="alert alert-danger" role="alert" style="display: none;"></div>
+<div id="global-error-msg" class="alert alert-danger" role="alert" style="display: none;">
+    <strong>Error</strong>
+    <span class="text"></span>
+</div>
 <div class="alert alert-success" role="alert" style="display: none;"></div>
 
 <div id="advanced-tabpanel" role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
         <li role="presentation" class="active">
-            <a href="#prefs" aria-controls="prefs" role="tab" data-toggle="tab">Preferences</a>
+            <a href="#user-prefs" aria-controls="user-prefs" role="tab" data-toggle="tab">Preferences</a>
         </li>
         <li role="presentation">
             <a href="#change-password" aria-controls="change-password" role="tab" data-toggle="tab">Change Password</a>
         </li>
+        <li role="presentation">
+            <a href="#delete-user" aria-controls="delete-user" role="tab" data-toggle="tab">Delete Account</a>
+        </li>
     </ul>
-    <div class="tab-content">
-        <div id="prefs" class="tab-pane active" role="tabpanel">
+    <div class="tab-content" id="profile-tab-content">
+        <div id="user-prefs" class="tab-pane active" role="tabpanel">
             <div id="user-prefs-container">
                 <h3 class="title">Random password generation preferences</h3>
-                <form role="form" id="user-prefs-form" onsubmit="savePrefs(event)">
+                <form role="form" id="user-prefs-form" onsubmit="updatePrefs(event)">
                     <label>Default number of characters in random password</label>
                     <input type="number" name="default_random_password_length" 
                         class="form-control"
@@ -42,12 +48,24 @@
                 </form>
             </div>
         </div>
+        <div id="delete-user" class="tab-pane" role="tabpanel">
+            <h3 class="title">Delete Account</h3>
+			<div class="alert alert-danger" role="alert">
+				<strong>Warning!</strong> This action cannot be undone.
+			</div>
+	        <form role="form" id="delete-user-form" onsubmit="deleteUser(event)">
+                <p>Type your master password to proceed</p>
+                <input type="password" name="password" class="form-control" required="true"
+                    placeholder="master password">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger form-control">Delete my account forever</button>
+            </form>
+        </div>
         <div id="change-password" class="tab-pane" role="presentation">
             <div class="progress-alert alert alert-info" role="alert"style="display: none;"></div>
-            <!-- error msg for change password -->
             <div id="change-password-container">
                 <h3 class="title">Change Password</h3>
-                <form role="form" id="change-password-form" onsubmit="changePassword(event)"
+                <form role="form" id="change-password-form" onsubmit="updatePassword(event)"
                     action="/advanced/password" method="UPDATE">
                     <div class="error-msg"></div>
                     <label for="old_password">Old Password</label>

@@ -112,13 +112,26 @@ class PassZeroApiTester(unittest.TestCase):
         entries = api.get_entries(self.app)
         assert len(entries) == 1
         token = api.get_csrf_token(self.app)
-        api.delete_user(self.app, token)
+        api.delete_user(self.app, password, token)
         r = api.get_entries(self.app, check_status=False)
         # this should fail
         assert r.status_code == 401
         # now try to login
         r = api.login(self.app, email, password, check_status=False)
         assert r.status_code == 401
+
+    def test_delete_user_bad_password(self):
+        email = DEFAULT_EMAIL
+        password = "right_pass"
+        self._create_active_account(email, password)
+        api.login(self.app, email, password)
+        token = api.get_csrf_token(self.app)
+        r = api.delete_user(self.app, "bad password", token, check_status=False)
+        assert r.status_code != 200
+        # make sure that I can still get back profile information
+        # which would be impossible if account was deleted
+        prefs = api.get_user_preferences(self.app, check_status=True)
+        assert prefs is not None
 
     #TODO for some reason can't mock out send_confirmation_email so mocking this instead
     @mock.patch("passzero.mailgun.send_email", return_value=True)
@@ -132,7 +145,7 @@ class PassZeroApiTester(unittest.TestCase):
         recovery_token = self._extract_token_from_send_email_call(m1)
         assert recovery_token != ""
         delete_token = api.get_csrf_token(self.app)
-        api.delete_user(self.app, delete_token, check_status=True)
+        api.delete_user(self.app, password, delete_token, check_status=True)
         # now we want to use that token to complete account recovery
         confirm_csrf_token = api.get_csrf_token(self.app)
         r = api.recover_account_confirm(self.app, "new password", recovery_token, confirm_csrf_token,

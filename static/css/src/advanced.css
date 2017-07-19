@@ -48,16 +48,16 @@ form .form-error {
 
 #user-prefs-form, #change-password-form {
     padding: 1em;
-    /*border: 1px solid #aaa;*/
-    margin-top: 0.5em;
-    /*border-radius: 10px;*/
 }
 
-#user-prefs-container .title, #change-password-container .title {
+#profile-tab-content .title {
     text-align: center;
-    margin: 0 auto;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 1em;
+    margin-bottom: 0;
 }
 
-#user-prefs-form button, #change-password-form button {
+#profile-tab-content button {
     margin-top: 0.5em;
 }

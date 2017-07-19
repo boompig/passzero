@@ -115,9 +115,16 @@ def delete_all_entries(app, csrf_token, check_status=True):
     return r
 
 
-def delete_user(app, csrf_token, check_status=True):
-    url = "/api/v1/user?csrf_token={}".format(csrf_token)
+def delete_user(app, password, csrf_token, check_status=True):
+    assert isinstance(password, str) or isinstance(password, unicode)
+    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(check_status, bool)
+    url = "/api/v1/user".format(password, csrf_token)
     r = app.delete(url,
+        data=json.dumps({
+            "csrf_token": csrf_token,
+            "password": password
+        }),
         headers=json_header, follow_redirects=True)
     print(r.data)
     if check_status:

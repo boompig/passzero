@@ -8,9 +8,10 @@ from . import backend, change_password
 from .api_utils import (generate_csrf_token, json_error, json_internal_error,
                         json_success, requires_csrf_check, requires_json_auth,
                         requires_json_form_validation, write_json)
-from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm, LoginForm,
-                    NewEntryForm, RecoverPasswordForm, SignupForm,
-                    UpdatePasswordForm, UpdatePreferencesForm)
+from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
+                    DeleteUserForm, LoginForm, NewEntryForm,
+                    RecoverPasswordForm, SignupForm, UpdatePasswordForm,
+                    UpdatePreferencesForm)
 from .mailgun import send_confirmation_email, send_recovery_email
 from .models import AuthToken, Entry, User, db
 
@@ -448,11 +449,12 @@ def nuke_entries_api():
 @api_v1.route("/api/v1/user", methods=["DELETE"])
 @requires_json_auth
 @requires_csrf_check
-def delete_user_api():
+@requires_json_form_validation(DeleteUserForm)
+def delete_user_api(request_data):
     """Delete all information about the currently logged-in user.
 
     Arguments:
-        none
+        - password: string (required)
 
     Response:
         ```
@@ -461,25 +463,29 @@ def delete_user_api():
 
     Status codes:
         - 200: success
-        - 401: not authenticated
+        - 400: parameter validation error
+        - 401: not authenticated, or password incorrect
         - 403: CSRF token validation failed
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    # delete all entries
-    entries = db.session.query(Entry).filter_by(user_id=user.id).all()
-    for entry in entries:
-        db.session.delete(entry)
-    # delete all auth tokens
-    tokens = db.session.query(AuthToken).filter_by(user_id=user.id).all()
-    for token in tokens:
-        db.session.delete(token)
-    # delete the user
-    db.session.delete(user)
-    db.session.commit()
-    code, data = json_success(
-        "The user and all associated information has been deleted. You have been logged out.")
-    # have to log out
-    __logout()
+    if user.authenticate(request_data["password"]):
+        # delete all entries
+        entries = db.session.query(Entry).filter_by(user_id=user.id).all()
+        for entry in entries:
+            db.session.delete(entry)
+        # delete all auth tokens
+        tokens = db.session.query(AuthToken).filter_by(user_id=user.id).all()
+        for token in tokens:
+            db.session.delete(token)
+        # delete the user
+        db.session.delete(user)
+        db.session.commit()
+        code, data = json_success(
+            "The user and all associated information has been deleted. You have been logged out.")
+        # have to log out
+        __logout()
+    else:
+        code, data = json_error(401, "Invalid master password")
     return write_json(code, data)
 
 
