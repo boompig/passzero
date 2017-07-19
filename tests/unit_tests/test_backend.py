@@ -1,7 +1,6 @@
 import logging
 import os
 
-import pytest
 from mock import MagicMock
 from nose.tools import assert_equal
 from sqlalchemy import create_engine
@@ -238,8 +237,3 @@ def test_get_services_map():
     service_map = get_services_map(db_session)
     assert len(service_map) == 1
     service_map.get("MyService", None) is not None
-
-
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    pytest.main()
