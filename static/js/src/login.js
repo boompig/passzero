@@ -46,6 +46,22 @@ function createAccount(e) {
     return false;
 }
 
+var loginPageState = {
+    "errorMsg": null,
+};
+
+/**
+ * This is for the login page only
+ */
+function renderState() {
+    if(loginPageState.errorMsg) {
+        $("#error-msg").show().text(loginPageState.errorMsg);
+        $("#error-msg-container").show();
+    } else {
+        $("#error-msg-container").hide();
+    }
+}
+
 function login(e) {
     "use strict";
     e.preventDefault();
@@ -54,7 +70,11 @@ function login(e) {
     .then(function(response) {
         //console.log(data);
         console.log(response);
-        $("#error-msg-container").hide();
+
+        loginPageState.errorMsg = null;
+
+        renderState();
+
         if(data.remember) {
             // create a cookie on successful login
             Cookies.set("email", data.email, {
@@ -70,13 +90,15 @@ function login(e) {
         console.log(obj);
         if (textCode === "UNAUTHORIZED" || textCode === "BAD REQUEST") {
             var response = JSON.parse(obj.responseText);
-            $("#error-msg").text(response.msg);
+            loginPageState.errorMsg = response.msg;
+        } else if (textCode === "INTERNAL SERVER ERROR") {
+            loginPageState.errorMsg = "Sorry about this! Internal server error. Site maintainer has been alerted.";
         } else {
             console.log(obj);
             console.log(textStatus);
             console.log(textCode);
         }
-        $("#error-msg-container").show();
+        renderState();
     });
     return false;
 }

@@ -1,0 +1,47 @@
+<div class="method-section">
+ <h2 id="get_user_preferences">
+  <span class="http-method">
+   GET
+  </span>
+  <span class="uri">
+   /api/v1/user/preferences
+  </span>
+ </h2>
+ <p class="about">
+  Get various account preferences for the logged-in user.
+ </p>
+ <h3>
+  Arguments
+ </h3>
+ <p>
+  None
+ </p>
+ <h3>
+  Response
+ </h3>
+ <div>
+  <pre><code data-lang="javascript">
+{ pref-1-key: pref-1-value, ... }
+</code></pre>
+  <p>
+   For specific preference values look in models.py
+  </p>
+ </div>
+ <h3>
+  Status codes
+ </h3>
+ <ul>
+  <li>
+   <span class="http-status-code">
+    200
+   </span>
+   - success
+  </li>
+  <li>
+   <span class="http-status-code">
+    401
+   </span>
+   - user is not authenticated
+  </li>
+ </ul>
+</div>

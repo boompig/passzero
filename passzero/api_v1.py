@@ -10,7 +10,7 @@ from .api_utils import (generate_csrf_token, json_error, json_internal_error,
                         requires_json_form_validation, write_json)
 from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm, LoginForm,
                     NewEntryForm, RecoverPasswordForm, SignupForm,
-                    UpdatePasswordForm)
+                    UpdatePasswordForm, UpdatePreferencesForm)
 from .mailgun import send_confirmation_email, send_recovery_email
 from .models import AuthToken, Entry, User, db
 
@@ -568,8 +568,70 @@ def api_v1_update_user_password(request_data):
     )
     if status:
         session['password'] = request_data['new_password']
-        code, data = json_success("successfully changed password")
+        code, data = json_success("Successfully changed password")
     else:
-        code, data = json_error(401, "old password is incorrect")
+        code, data = json_error(401, "Old password is incorrect")
+    return write_json(code, data)
+
+
+@api_v1.route("/api/v1/user/preferences", methods=["GET"])
+@requires_json_auth
+def api_v1_get_user_preferences():
+    """Get various account preferences for the logged-in user.
+
+    Arguments:
+        none
+
+    Response:
+        ```
+        { pref-1-key: pref-1-value, ... }
+        ```
+        For specific preference values look in models.py
+
+    Status codes:
+        - 200: success
+        - 401: user is not authenticated
+    """
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    data = {
+        "default_random_password_length": user.default_random_password_length,
+        "default_random_passphrase_length": user.default_random_passphrase_length
+    }
+    return write_json(200, data)
+
+
+@api_v1.route("/api/v1/user/preferences", methods=["UPDATE", "PUT"])
+@requires_json_auth
+@requires_csrf_check
+@requires_json_form_validation(UpdatePreferencesForm)
+def api_v1_update_user_preferences(request_data):
+    """Update various account preferences for the logged-in user.
+    Only have to specify those preferences that you want to change.
+    Preferences which are not specified will not change.
+
+    Arguments:
+        - default_random_password_length: string (optional)
+        - default_random_passphrase_length: string (optional)
+
+    Response:
+        ```
+        { "status": "success"|"error", "msg": string }
+        ```
+
+    Status codes:
+        - 200: success
+        - 400: failed to validate parameters
+        - 401: user is not authenticated
+        - 403: CSRF check failed
+        - 500: internal server error
+    """
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    if request_data.get("default_random_password_length", None):
+        user.default_random_password_length = int(request_data["default_random_password_length"])
+    if request_data.get("default_random_passphrase_length", None):
+        user.default_random_passphrase_length = int(request_data["default_random_passphrase_length"])
+    db.session.add(user)
+    db.session.commit()
+    code, data = json_success("Preferences have been updated")
     return write_json(code, data)
 

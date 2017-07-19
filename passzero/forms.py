@@ -1,4 +1,6 @@
-from wtforms import BooleanField, Form, PasswordField, TextField, validators
+from wtforms import BooleanField, Form, PasswordField, TextField, validators, IntegerField
+
+from passzero.limits import MAX_ENTRY_PASSWORD_LENGTH, MAX_GEN_PASSPHRASE_WORDS
 
 
 class SignupForm(Form):
@@ -29,7 +31,8 @@ class NewEntryForm(Form):
         validators.DataRequired()
     ])
     password = PasswordField("password", [
-        validators.DataRequired()
+        validators.DataRequired(),
+        validators.Length(max=MAX_ENTRY_PASSWORD_LENGTH)
     ])
     extra = TextField("extra")
     has_2fa = BooleanField("has_2fa", [
@@ -48,6 +51,16 @@ class RecoverPasswordForm(Form):
     email = TextField("email", [
         validators.DataRequired(),
         validators.Email()
+    ])
+
+class UpdatePreferencesForm(Form):
+    default_random_password_length = IntegerField("default_random_password_length", [
+        validators.Optional(),
+        validators.NumberRange(1, MAX_ENTRY_PASSWORD_LENGTH),
+    ])
+    default_random_passphrase_length = IntegerField("default_random_passphrase_length", [
+        validators.Optional(),
+        validators.NumberRange(1, MAX_GEN_PASSPHRASE_WORDS),
     ])
 
 class ActivateAccountForm(Form):

@@ -3,6 +3,7 @@
             ("/", "index", "Home"),
             ("/view", "entries", "View Entries"),
             ("/entries/new", "new", "New Entry"),
+            ("/profile", "profile", "Profile"),
             ("/advanced", "advanced", "Advanced"),
             ("/logout", "logout", "Sign Out")
         ] if ("user_id" in session) else [
@@ -49,6 +50,8 @@
                                 <span class="glyphicon glyphicon-th-list"></span>
                             {%- elif id == "new" -%}
                                 <span class="glyphicon glyphicon-plus"></span>
+                            {%- elif id == "profile" -%}
+                                <span class="glyphicon glyphicon-user"></span>
                             {%- elif id == "advanced" -%}
                                 <span class="glyphicon glyphicon-wrench"></span>
                             {%- elif id == "logout" -%}

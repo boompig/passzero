@@ -222,6 +222,44 @@ This API is meant to be hit when a user clicks a link in their email.
   </tr>
   <tr>
    <td>
+    <a href="#get_user_preferences">
+     GET /api/v1/user/preferences
+    </a>
+   </td>
+   <td class="about">
+    Get various account preferences for the logged-in user.
+   </td>
+   <td class="requires-login">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+   <td class="requires-csrf-token">
+    <span class="glyphicon glyphicon-remove">
+    </span>
+   </td>
+  </tr>
+  <tr>
+   <td>
+    <a href="#update_user_preferences">
+     UPDATE /api/v1/user/preferences
+    </a>
+   </td>
+   <td class="about">
+    Update various account preferences for the logged-in user.
+Only have to specify those preferences that you want to change.
+Preferences which are not specified will not change.
+   </td>
+   <td class="requires-login">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+   <td class="requires-csrf-token">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+  </tr>
+  <tr>
+   <td>
     <a href="#post_user_recover">
      POST /api/v1/user/recover
     </a>

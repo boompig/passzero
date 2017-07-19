@@ -12,16 +12,13 @@
 <h1 class="title">Advanced Options</h1>
 <div id="advanced-tabpanel" role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="active">
-            <a href="#settings" aria-controls="settings" role="tab" data-toggle="tab">Account Settings</a>
-        </li>
         <li role="presentation">
             <a href="#password-strength" aria-controls="password-strength" role="tab" data-toggle="tab">Password Strength</a>
         </li>
         <li role="presentation">
             <a href="#2fa-audit" aria-controls="2fa-audit" role="tab" data-toggle="tab">2FA Audit</a>
         </li>
-        <li role="presentation">
+        <li role="presentation" class="active">
             <a href="#export" aria-controls="export" role="tab" data-toggle="tab">Export</a>
         </li>
         <li role="presentation">
@@ -35,36 +32,13 @@
         <div id="2fa-audit" class="tab-pane" role="tabpanel">
             <p><a href="/entries/2fa">Click here</a> to see whether 2FA is enabled for all your entries</p>
         </div>
-        <div id="export" class="tab-pane" role="tabpanel">
+        <div id="export" class="tab-pane active" role="tabpanel">
             <div id="export-container">
                 <p>Generate a CSV file of all your entries, still encrypted. Read about how your data is encrypted so you can decrypt it locally.</p>
 
                 <button type="submit" id="export-btn" class="btn btn-success"
                     onclick="window.location.href='/advanced/export'">Export Entries</button>
             </div>
-        </div>
-        <div id="settings" class="tab-pane active" role="tabpanel">
-            <div class="alert alert-success" role="alert" style="display: none;"></div>
-            <form role="form" id="change-password-form" onsubmit="changePassword(event)"
-                action="/advanced/password" method="UPDATE">
-                <h3>Change Password</h3>
-                <div class="error-msg"></div>
-                <label for="old_password">Old Password</label>
-                <span class="form-error" id="form-error-old_password"></span>
-                <input type="password" name="old_password" class="form-control"
-                    placeholder="old password" required="true" />
-                <label for="new_password">New Password</label>
-                <span class="form-error" id="form-error-new_password"></span>
-                <input type="password" name="new_password" class="form-control"
-                    placeholder="new password" required="true" />
-                <label for="confirm_new_password">Confirm New Password</label>
-                <span class="form-error" id="form-error-confirm_new_password"></span>
-                <input type="password" name="confirm_new_password" class="form-control"
-                    placeholder="confirm new password" required="true" />
-                <input type="hidden" name="csrf_token" value={{ csrf_token() }} />
-                <button type="submit" class="btn btn-success"
-                        id="change-password-btn">Change Password</button>
-            </form>
         </div>
         <div id="nuke" class="tab-pane" role="tabpanel">
             <div class="alert alert-warning"><strong>Warning</strong> This action deletes all your entries and cannot be undone</div>
@@ -78,3 +52,5 @@
     </div>
 </div>
 {% endblock %}
+
+<!-- vim: set filetype=jinja: -->

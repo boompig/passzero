@@ -1,4 +1,6 @@
+import copy
 import json
+
 json_header = { "Content-Type": "application/json" }
 
 ### v1 API starts here
@@ -40,12 +42,40 @@ def get_entries(app, check_status=True):
         return r
 
 
-def create_entry(app, entry, token, check_status=True):
+def get_user_preferences(app, check_status=True):
+    assert isinstance(check_status, bool)
+    r = app.get("/api/v1/user/preferences",
+        headers=json_header, follow_redirects=True)
+    if check_status:
+        assert r.status_code == 200
+        return json.loads(r.data)
+    else:
+        return r
+
+
+def update_user_preferences(app, prefs, csrf_token, check_status=True):
+    assert isinstance(prefs, dict)
+    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(check_status, bool)
+    url = "/api/v1/user/preferences"
+    data = copy.copy(prefs)
+    data["csrf_token"] = csrf_token
+    r = app.put(url,
+        data=json.dumps(data),
+        headers=json_header,
+        follow_redirects=True)
+    if check_status:
+        print(r.data)
+        assert r.status_code == 200
+    return r
+
+
+def create_entry(app, entry, csrf_token, check_status=True):
     """
     :return entry_id:       The entry ID of the newly created entry
     """
     data = entry
-    data["csrf_token"] = token
+    data["csrf_token"] = csrf_token
     r = app.post("/api/v1/entries/new",
         data=json.dumps(data),
         headers=json_header, follow_redirects=True)

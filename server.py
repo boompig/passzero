@@ -86,7 +86,13 @@ def logout():
 def new_entry_view():
     if not check_auth():
         return redirect(url_for("login"))
-    return render_template("new.html", error=None)
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    user_prefs = {
+        "default_random_password_length": user.default_random_password_length,
+        "default_random_passphrase_length": user.default_random_passphrase_length
+    }
+    return render_template("new.html", title="PassZero &middot; New Entry",
+            user_prefs=user_prefs, error=None)
 
 
 @app.route("/done_signup/<email>", methods=["GET"])
@@ -220,10 +226,22 @@ def two_factor():
 
 @app.route("/advanced")
 def advanced():
-    if check_auth():
-        return render_template("advanced.html")
-    else:
+    if not check_auth():
         return redirect(url_for("login"))
+    return render_template("advanced.html")
+
+
+@app.route("/profile")
+def profile():
+    if not check_auth():
+        return redirect(url_for("login"))
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    user_prefs = {
+        "default_random_password_length": user.default_random_password_length,
+        "default_random_passphrase_length": user.default_random_passphrase_length,
+    }
+    return render_template("profile.html",
+        title="PassZero &middot; Profile", user_prefs=user_prefs)
 
 
 @app.route("/recover")

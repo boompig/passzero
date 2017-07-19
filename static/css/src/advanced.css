@@ -28,14 +28,6 @@ form .form-error {
     display: block;
 }
 
-#change-password-form label {
-    margin-top: 0.5em;
-}
-
-#change-password-btn {
-    margin-top: 0.5em;
-}
-
 #export-container {
     margin-left: 2em;
     margin-top: 2em;
@@ -44,4 +36,28 @@ form .form-error {
 #advanced-tabpanel {
     max-width: 600px;
     margin: 0 auto;
+}
+
+
+/* change-passsword */
+
+/* user-prefs */
+#user-prefs-container, #change-password-container {
+    margin-top: 1em;
+}
+
+#user-prefs-form, #change-password-form {
+    padding: 1em;
+    /*border: 1px solid #aaa;*/
+    margin-top: 0.5em;
+    /*border-radius: 10px;*/
+}
+
+#user-prefs-container .title, #change-password-container .title {
+    text-align: center;
+    margin: 0 auto;
+}
+
+#user-prefs-form button, #change-password-form button {
+    margin-top: 0.5em;
 }

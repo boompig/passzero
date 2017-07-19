@@ -165,7 +165,7 @@ var pzAPI = {
             return pzAPI._recoverAccountConfirm(response, token, password, confirmPassword);
         });
     },
-    _changeAccountPassword: function(csrfToken, oldPassword, newPassword, confirmNewPassword) {
+    _updateUserPassword: function(csrfToken, oldPassword, newPassword, confirmNewPassword) {
         var url = "/api/v1/user/password";
         var data = {
             "csrf_token": csrfToken,
@@ -175,12 +175,24 @@ var pzAPI = {
         };
         return $.putJSON(url, data);
     },
-    changeAccountPassword: function(oldPassword, newPassword, confirmNewPassword) {
+    updateUserPassword: function(oldPassword, newPassword, confirmNewPassword) {
         return pzAPI.getCSRFToken()
         .then(function(response) {
-            return pzAPI._changeAccountPassword(response, oldPassword, newPassword, confirmNewPassword);
+            return pzAPI._updateUserPassword(response, oldPassword, newPassword, confirmNewPassword);
         });
     },
+    _updateUserPreferences: function(csrfToken, prefs) {
+        var url = "/api/v1/user/preferences";
+        var data = pzAPI._copyObject(prefs);
+        data.csrf_token = csrfToken;
+        return $.putJSON(url, data);
+    },
+    updateUserPreferences: function(prefs) {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._updateUserPreferences(response, prefs);
+        });
+    }
 };
 
 if (typeof module !== 'undefined' && module.exports) {

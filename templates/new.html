@@ -50,11 +50,18 @@
             <span class="glyphicon glyphicon-cog"></span>Settings
         </button>
         <div id="len-container" style="display: none;">
+            <div class="alert alert-info alert-dismissible">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <span class="glyphicon glyphicon-alert"></span>
+                The default values can be changed permanently by editing <a href="/profile">your profile</a>.
+            </div>
             <div class="password-settings">
                 <span id="pass-len-text" class="text">Length</span>
                 <button type="button" class="minus-btn"
                     aria-hidden="true" onclick="changeLen(-1)">-</button>
-                <span id="passLen" class="text">12</span>
+                <span id="passLen" class="text">{{ user_prefs["default_random_password_length"] }}</span>
                 <button type="button" 
                     aria-hidden="true" onclick="changeLen(+1)">+</button>
                 <div>
@@ -68,7 +75,7 @@
             <div class="passphrase-settings">
                 <span class="text">Number of Words</span>
                 <button type="button" class="minus-btn" aria-hidden="true" onclick="changePhraseLen(-1)">-</button>
-                <span id="phraseLen" class="text">4</span>
+                <span id="phraseLen" class="text">{{ user_prefs["default_random_passphrase_length"] }}</span>
                 <button type="button" aria-hidden="true" onclick="changePhraseLen(+1)">+</button>
             </div>
         </div>

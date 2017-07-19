@@ -1,4 +1,5 @@
 import binascii
+import hmac
 from datetime import datetime
 
 from flask_sqlalchemy import SQLAlchemy
@@ -26,10 +27,24 @@ class User(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=False)
     last_login = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
+    # password generation preferences
+    # number of characters in password
+    default_random_password_length = db.Column(db.Integer, nullable=False, default=12)
+    # number of words in passphrase
+    default_random_passphrase_length = db.Column(db.Integer, nullable=False, default=4)
+
     def authenticate(self, form_password):
-        """Return True on success, False on failure."""
+        """
+        :param form_password:   user-submitted password
+        :type form_password:    unicode
+        :return:                True on success, False on failure.
+        :rtype:                 bool"""
         hashed_password = get_hashed_password(form_password, self.salt)
-        return self.password == hashed_password
+        # prevent timing attacks by using constant-time comparison
+        # can't use compare_digest directly because args can't be unicode strings
+        d1 = hmac.new(self.password).digest()
+        d2 = hmac.new(hashed_password).digest()
+        return hmac.compare_digest(d1, d2)
 
     def change_password(self, new_password):
         hashed_password = get_hashed_password(new_password, self.salt)
@@ -53,34 +68,15 @@ class AuthToken(db.Model):
         self.token = random_hex(TOKEN_SIZE)
 
     def is_expired(self):
+        """
+        :return:                True iff expired
+        :rtype:                 bool
+        """
         delta = datetime.utcnow() - self.issue_time
         return delta.seconds > self.MAX_AGE
 
     def __repr__(self):
         return "<AuthToken(user_id=%d, token=%s)>" % (self.user_id, self.token)
-
-
-class EncryptedEntry(db.Model):
-    __tablename__ = "enc_entries"
-    id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    account = db.Column(db.String, nullable=False)
-    username = db.Column(db.String, nullable=False)
-    password = db.Column(db.String, nullable=False)
-    extra = db.Column(db.String, nullable=False)
-    key_salt = db.Column(db.String)
-    iv = db.Column(db.String)
-
-    def to_json(self):
-        return {
-            "id": self.id,
-            "account": self.account,
-            "username": self.username,
-            "password": self.password,
-            "extra": self.extra,
-            "key_salt": self.key_salt,
-            "iv": self.iv
-        }
 
 
 class Entry(db.Model):
@@ -108,7 +104,8 @@ class Entry(db.Model):
 
     def to_json(self):
         """
-        :return             All fields of the entry, some possibly still encrypted
+        :return:            All fields of the entry, some possibly still encrypted
+        :rtype:             dict
         """
         assert self.version >= 4, "to_json is not well-defined for entries older than version 4"
         return {
@@ -123,7 +120,9 @@ class Entry(db.Model):
         }
 
     def decrypt(self, key):
-        """Return a dictionary mapping fields to their decrypted values."""
+        """
+        :return:            a dictionary mapping fields to their decrypted values.
+        :rtype:             dict"""
         assert key is not None
         if self.version == 1:
             return self._decrypt_version_1(key)
@@ -336,4 +335,4 @@ class Service(db.Model):
     name = db.Column(db.String, primary_key=True, nullable=False)
     link = db.Column(db.String)
     has_two_factor = db.Column(db.Boolean)
-    
+
