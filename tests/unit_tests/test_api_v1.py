@@ -134,7 +134,7 @@ class PassZeroApiTester(unittest.TestCase):
         assert prefs is not None
 
     #TODO for some reason can't mock out send_confirmation_email so mocking this instead
-    @mock.patch("passzero.mailgun.send_email", return_value=True)
+    @mock.patch("passzero.email.send_email", return_value=True)
     def test_delete_user_with_recovery_token(self, m1):
         email = DEFAULT_EMAIL
         password = "right_pass"
@@ -158,7 +158,7 @@ class PassZeroApiTester(unittest.TestCase):
         return token
 
     #TODO for some reason can't mock out send_confirmation_email so mocking this instead
-    @mock.patch("passzero.mailgun.send_email", return_value=True)
+    @mock.patch("passzero.email.send_email", return_value=True)
     def test_signup(self, m1):
         email = DEFAULT_EMAIL
         password = "fake password"
@@ -188,7 +188,7 @@ class PassZeroApiTester(unittest.TestCase):
         print(r.data)
         assert r.status_code == 401
 
-    @mock.patch("passzero.mailgun.send_email")
+    @mock.patch("passzero.email.send_email")
     def _create_active_account(self, email, password, m1):
         # signup, etc etc
         #TODO for some reason can't mock out send_confirmation_email so mocking this instead
@@ -455,7 +455,7 @@ class PassZeroApiTester(unittest.TestCase):
         # should not be able to get entries
         assert r.status_code == 401
 
-    @mock.patch("passzero.mailgun.send_email")
+    @mock.patch("passzero.email.send_email")
     def test_recover_account_valid_email(self, m1):
         email = DEFAULT_EMAIL
         old_password = "a_password"

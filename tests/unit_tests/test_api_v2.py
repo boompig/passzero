@@ -39,7 +39,7 @@ class PassZeroApiTester(unittest.TestCase):
         db.init_app(app)
         db.create_all()
 
-    @mock.patch("passzero.mailgun.send_email")
+    @mock.patch("passzero.email.send_email")
     def _create_active_account(self, email, password, m1):
         # signup, etc etc
         #TODO for some reason can't mock out send_confirmation_email so mocking this instead
