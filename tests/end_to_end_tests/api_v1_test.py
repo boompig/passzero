@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import json
+import os
 import unittest
 
 import requests
@@ -34,7 +34,9 @@ def create_active_account(email, password):
 class PassZeroApiV1Tester(unittest.TestCase):
     @property
     def base_url(self):
-        return "https://127.0.0.1:5050"
+        assert 'LIVE_TEST_HOST' in os.environ, \
+            "Did not find 'LIVE_TEST_HOST' among environment variables"
+        return os.environ['LIVE_TEST_HOST']
 
     @property
     def entry_fields(self):
@@ -189,9 +191,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
                 "username": "entry_username",
                 "password": "entry_pass",
             }
-            entry_create_response = s.post(self.base_url + "/api/v1/entries/new",
-                data=json.dumps(entry),
-                headers=self.json_header, verify=False)
+            entry_create_response = api.create_entry(s, entry, "")
             self.assertIsNotNone(entry_create_response)
             assert entry_create_response.status_code == 403
             entries = self._get_entries(s)
@@ -251,6 +251,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
         email = "sample@fake.com"
         password = "right_pass"
         user, db_session = create_active_account(email, password)
+        assert user.email == email
         with requests.Session() as s:
             self._login(s, email, password)
             token = self._get_csrf_token(s)
@@ -261,10 +262,11 @@ class PassZeroApiV1Tester(unittest.TestCase):
                 "extra": "entry_extra",
             }
             entry_id = self._create_entry(s, entry, token)
-            url = self.base_url + "/api/v1/entries/{}".format(
-                entry_id)
-            entry_delete_response = s.delete(url,
-                headers=self.json_header, verify=False)
+            # only printed on error
+            print(entry_id)
+            entries = self._get_entries(s)
+            assert len(entries) == 1
+            entry_delete_response = api.delete_entry(s, entry_id, "")
             assert entry_delete_response is not None
             assert entry_delete_response.status_code == 403
 
@@ -272,6 +274,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
         email = "sample@fake.com"
         password = "right_pass"
         user, db_session = create_active_account(email, password)
+        assert user.email == email
         with requests.Session() as s:
             self._login(s, email, password)
             create_token = self._get_csrf_token(s)
@@ -283,10 +286,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             }
             entry_id = self._create_entry(s, entry, create_token)
             delete_token = self._get_csrf_token(s)
-            url = self.base_url + "/api/v1/entries/{}?csrf_token={}".format(
-                entry_id + 1, delete_token)
-            entry_delete_response = s.delete(url,
-                headers=self.json_header, verify=False)
+            entry_delete_response = api.delete_entry(s, entry_id + 100, delete_token)
             assert entry_delete_response is not None
             assert entry_delete_response.status_code == 400
 
