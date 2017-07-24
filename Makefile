@@ -45,8 +45,11 @@ test: $(SRC) $(UNIT_TEST_SRC) lint
 test-cov: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html $(UNIT_TEST_SRC)
 
-live-test: $(SRC) $(E2E_TEST_SRC) lint
-	PYTHONPATH=$(CWD) pytest $(E2E_TEST_SRC)
+live-test-local: $(SRC) $(E2E_TEST_SRC) lint
+	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5050' pytest tests/end_to_end_tests/api_v1_test.py
+
+live-test-prod: $(SRC) $(E2E_TEST_SRC) lint
+	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://passzero.herokuapp.com' pytest tests/end_to_end_tests/api_v1_test.py
 
 lint: $(SRC) $(js_src)
 	jshint $(js_src)

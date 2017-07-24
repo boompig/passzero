@@ -12,7 +12,7 @@ from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
                     DeleteUserForm, LoginForm, NewEntryForm,
                     RecoverPasswordForm, SignupForm, UpdatePasswordForm,
                     UpdatePreferencesForm)
-from .mailgun import send_confirmation_email, send_recovery_email
+from .email import send_confirmation_email, send_recovery_email
 from .models import AuthToken, Entry, User, db
 
 api_v1 = Blueprint("api_v1", __name__)

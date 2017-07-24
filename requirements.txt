@@ -21,3 +21,4 @@ Werkzeug==0.9.6
 WTForms==2.0.2
 mock==2.0.0
 zxcvbn-python==4.4.15
+sendgrid==4.2.0

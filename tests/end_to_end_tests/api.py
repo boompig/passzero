@@ -1,7 +1,11 @@
 import json
+import os
 
 json_header = { "Content-Type": "application/json" }
-base_url = "https://127.0.0.1:5050"
+
+assert 'LIVE_TEST_HOST' in os.environ, \
+    "Did not find 'LIVE_TEST_HOST' among environment variables"
+base_url = os.environ['LIVE_TEST_HOST']
 
 ### v1 API starts here
 

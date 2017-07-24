@@ -24,7 +24,7 @@ PassZero is implemented as a simple web app with results held in a database, the
     - instructions [here](https://stackoverflow.com/questions/10175812/how-to-create-a-self-signed-certificate-with-openssl)
 * set environment variables
     - `DATABASE_URL`
-    - `MAILGUN_API_KEY`
+    - `SENDGRID_API_KEY`
     - alternatively create file `passzero/my_env.py` with method `setup_env` which sets above environment variables
 * `foreman start local`
 
