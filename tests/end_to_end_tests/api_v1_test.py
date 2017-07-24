@@ -336,6 +336,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
             response = api.get_entries(s)
             self.assertEqual(response.status_code, 401)
 
+    """
+    These tests require sending emails
+
     def test_signup(self):
         email = "sample@fake.com"
         password = "right_pass"
@@ -371,6 +374,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             token = self._get_csrf_token(s)
             recover_result = api.recover(s, email, token)
             assert recover_result.status_code == 200
+    """
 
 
 if __name__ == '__main__':

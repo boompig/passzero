@@ -190,6 +190,7 @@ def post_export():
 def edit_entry(entry_id):
     if not check_auth():
         return redirect(url_for("login"))
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
     entries = get_entries(db.session, session["user_id"])
     my_entries = [e for e in entries if e.id == entry_id]
     if len(my_entries) == 0:
@@ -197,8 +198,12 @@ def edit_entry(entry_id):
         return redirect(url_for("login"))
     else:
         fe = decrypt_entries(my_entries, session['password'])
-        print(fe[0])
-        return render_template("new.html", e_id=entry_id, entry=fe[0], error=None)
+        user_prefs = {
+            "default_random_password_length": user.default_random_password_length,
+            "default_random_passphrase_length": user.default_random_passphrase_length
+        }
+        return render_template("new.html", user_prefs=user_prefs,
+            e_id=entry_id, entry=fe[0], error=None)
 
 
 @app.route("/entries/strength")
