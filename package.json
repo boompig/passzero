@@ -11,6 +11,8 @@
     "postinstall": "make minify && make copy-deps"
   },
   "dependencies": {
+    "@types/jquery": "^3.2.9",
+    "@types/js-cookie": "^2.0.28",
     "angular": "1.6.4",
     "angular-mocks": "^1.6.4",
     "bootstrap": "3.3.7",
@@ -21,6 +23,7 @@
     "jquery": "3.2.1",
     "js-cookie": "2.1.4",
     "tablesort": "5.0.1",
+    "typescript": "^2.4.2",
     "uglify-js": "^3.0.15"
   }
 }

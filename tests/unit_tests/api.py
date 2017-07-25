@@ -53,7 +53,7 @@ def get_user_preferences(app, check_status=True):
         return r
 
 
-def update_user_preferences(app, prefs, csrf_token, check_status=True):
+def put_user_preferences(app, prefs, csrf_token, check_status=True):
     assert isinstance(prefs, dict)
     assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
     assert isinstance(check_status, bool)

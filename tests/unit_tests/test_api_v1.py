@@ -370,7 +370,7 @@ class PassZeroApiTester(unittest.TestCase):
         assert len(entries) == 1
         self._check_entries_equal(entry, entries[0])
 
-    def test_update_user_prefs(self):
+    def test_put_user_prefs(self):
         """Check that you can update preferences"""
         email = DEFAULT_EMAIL
         password = "old_password"
@@ -381,14 +381,14 @@ class PassZeroApiTester(unittest.TestCase):
             "default_random_password_length": 10,
             "default_random_passphrase_length": 10,
         }
-        api.update_user_preferences(self.app, prefs, create_token, check_status=True)
+        api.put_user_preferences(self.app, prefs, create_token, check_status=True)
         real_prefs = api.get_user_preferences(self.app, check_status=True)
         assert len(real_prefs) >= len(prefs)
         for k in real_prefs:
             assert k in prefs
             assert prefs[k] == real_prefs[k]
 
-    def test_update_user_prefs_single(self):
+    def test_put_user_prefs_single(self):
         """Check that you can update only a single preference"""
         email = DEFAULT_EMAIL
         password = "old_password"
@@ -400,7 +400,7 @@ class PassZeroApiTester(unittest.TestCase):
         prefs_to_update = {
             "default_random_password_length": 1,
         }
-        api.update_user_preferences(self.app, prefs_to_update, create_token, check_status=True)
+        api.put_user_preferences(self.app, prefs_to_update, create_token, check_status=True)
         new_prefs = api.get_user_preferences(self.app, check_status=True)
         assert len(new_prefs) == len(old_prefs)
         for k in old_prefs:

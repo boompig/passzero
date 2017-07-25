@@ -1,172 +1,155 @@
-if (typeof require !== 'undefined') {
-    var $ = require("jquery");
-}
-
-$.postJSON = function(url, data) {
-    data = data || {};
-    return $.ajax({
-        url: url,
-        data: JSON.stringify(data),
-        method: "POST",
-        contentType: "application/json",
-        dataType: "json"
-    });
-};
-
-$.putJSON = function(url, data) {
-    data = data || {};
-    return $.ajax({
-        url: url,
-        data: JSON.stringify(data),
-        method: "PUT",
-        contentType: "application/json",
-        dataType: "json"
-    });
-};
-
-
-$.getJSON = function(url, data) {
-    data = data || {};
-    if (Object.keys(data).length > 0) {
-        url += "?" + $.param(data);
+//import * as $ from "jquery";
+var myJQ = (function () {
+    function myJQ() {
     }
-    return $.ajax({
-        url: url,
-        method: "GET",
-        contentType: "application/json",
-        dataType: "json"
-    });
-};
-
-$.deleteJSON = function(url, data) {
-    data = data || {};
-    //if (Object.keys(data).length > 0) {
-        //url += "?" + $.param(data);
-    //}
-    return $.ajax({
-        url: url,
-        data: JSON.stringify(data),
-        method: "DELETE",
-        contentType: "application/json",
-        dataType: "json"
-    });
-};
-
-
-var pzAPI = {
-    base_url: window.location.protocol + "//" + window.location.host,
-
-    _copyObject: function(o) {
+    myJQ.postJSON = function (url, data) {
+        data = data || {};
+        return $.ajax({
+            url: url,
+            data: JSON.stringify(data),
+            method: "POST",
+            contentType: "application/json",
+            dataType: "json"
+        });
+    };
+    myJQ.putJSON = function (url, data) {
+        data = data || {};
+        return $.ajax({
+            url: url,
+            data: JSON.stringify(data),
+            method: "PUT",
+            contentType: "application/json",
+            dataType: "json"
+        });
+    };
+    myJQ.getJSON = function (url, data) {
+        data = data || {};
+        if (Object.keys(data).length > 0) {
+            url += "?" + $.param(data);
+        }
+        return $.ajax({
+            url: url,
+            method: "GET",
+            contentType: "application/json",
+            dataType: "json"
+        });
+    };
+    myJQ.deleteJSON = function (url, data) {
+        return $.ajax({
+            url: url,
+            data: JSON.stringify(data),
+            method: "DELETE",
+            contentType: "application/json",
+            dataType: "json"
+        });
+    };
+    return myJQ;
+}());
+//export default class pzAPI {
+var pzAPI = (function () {
+    function pzAPI() {
+    }
+    pzAPI._copyObject = function (o) {
         var newObj = {};
         for (var k in o) {
             newObj[k] = o[k];
         }
         return newObj;
-    },
-
-    login: function(email, password) {
+    };
+    pzAPI.login = function (email, password) {
         var url = pzAPI.base_url + "/api/v1/login";
         var data = {
             email: email,
             password: password
         };
-        return $.postJSON(url, data);
-    },
-
-    logout: function() {
+        return myJQ.postJSON(url, data);
+    };
+    pzAPI.logout = function () {
         var url = pzAPI.base_url + "/api/v1/logout";
-        return $.postJSON(url);
-    },
-
-    signup: function(email, password, confirm_password) {
+        return myJQ.postJSON(url);
+    };
+    pzAPI.signup = function (email, password, confirm_password) {
         var url = pzAPI.base_url + "/api/v1/user/signup";
         var data = {
             email: email,
             password: password,
             confirm_password: confirm_password
         };
-        return $.postJSON(url, data);
-    },
-
-    getCSRFToken: function() {
+        return myJQ.postJSON(url, data);
+    };
+    pzAPI.getCSRFToken = function () {
         var url = pzAPI.base_url + "/api/v1/csrf_token";
-        return $.getJSON(url);
-    },
-
-    getEntries: function() {
+        return myJQ.getJSON(url);
+    };
+    pzAPI.getEntries = function () {
         var url = pzAPI.base_url + "/api/v1/entries";
-        return $.getJSON(url);
-    },
-
-    getEntriesV2: function() {
+        return myJQ.getJSON(url);
+    };
+    pzAPI.getEntriesV2 = function () {
         var url = pzAPI.base_url + "/api/v2/entries";
-        return $.getJSON(url);
-    },
-
-    _createEntry: function(entry, csrf_token) {
+        return myJQ.getJSON(url);
+    };
+    pzAPI._createEntry = function (entry, csrf_token) {
         var url = pzAPI.base_url + "/api/v1/entries/new";
         var data = pzAPI._copyObject(entry);
         data.csrf_token = csrf_token;
-        return $.postJSON(url, data);
-    },
-
-    createEntry: function(entry) {
+        return myJQ.postJSON(url, data);
+    };
+    pzAPI.createEntry = function (entry) {
         return pzAPI.getCSRFToken()
-        .then(function(response) {
+            .then(function (response) {
             return pzAPI._createEntry(entry, response);
         });
-    },
-
-    _editEntry: function(entry_id, entry, csrf_token) {
+    };
+    pzAPI._editEntry = function (entry_id, entry, csrf_token) {
         var url = "/api/v1/entries/" + entry_id;
         var data = pzAPI._copyObject(entry);
         data.csrf_token = csrf_token;
-        return $.postJSON(url, data);
-    },
-    editEntry: function(entry_id, entry) {
+        return myJQ.postJSON(url, data);
+    };
+    pzAPI.editEntry = function (entry_id, entry) {
         return pzAPI.getCSRFToken()
-        .then(function(response) {
+            .then(function (response) {
             return pzAPI._editEntry(entry_id, entry, response);
         });
-    },
-    _deleteEntry: function(csrf_token, entry_id) {
+    };
+    pzAPI._deleteEntry = function (csrf_token, entry_id) {
         var url = "/api/v1/entries/" + entry_id;
-        data.csrf_token = csrf_token;
-        return $.deleteJSON(url, { "csrf_token": csrf_token });
-    },
-    deleteEntry: function(entry_id) {
+        return myJQ.deleteJSON(url, { "csrf_token": csrf_token });
+    };
+    pzAPI.deleteEntry = function (entry_id) {
         return pzAPI.getCSRFToken()
-        .then(function(response) {
+            .then(function (response) {
             return pzAPI._deleteEntry(response, entry_id);
         });
-    },
-    _recoverAccount: function(email, token) {
+    };
+    pzAPI._recoverAccount = function (email, token) {
         var url = "/api/v1/user/recover";
         var data = { "csrf_token": token, "email": email };
-        return $.postJSON(url, data);
-    },
-    recoverAccount: function(email) {
+        return myJQ.postJSON(url, data);
+    };
+    pzAPI.recoverAccount = function (email) {
         return pzAPI.getCSRFToken()
-        .then(function(response) {
+            .then(function (response) {
             return pzAPI._recoverAccount(email, response);
         });
-    },
-    _recoverAccountConfirm: function(csrfToken, token, password, confirmPassword) {
+    };
+    pzAPI._recoverAccountConfirm = function (csrfToken, token, password, confirmPassword) {
         var url = "/api/v1/user/recover/confirm";
         var data = {
             "token": token,
             "password": password,
             "confirm_password": confirmPassword
         };
-        return $.postJSON(url, data);
-    },
-    recoverAccountConfirm: function(token, password, confirmPassword) {
+        return myJQ.postJSON(url, data);
+    };
+    pzAPI.recoverAccountConfirm = function (token, password, confirmPassword) {
         return pzAPI.getCSRFToken()
-        .then(function(response) {
+            .then(function (response) {
             return pzAPI._recoverAccountConfirm(response, token, password, confirmPassword);
         });
-    },
-    _updateUserPassword: function(csrfToken, oldPassword, newPassword, confirmNewPassword) {
+    };
+    pzAPI._updateUserPassword = function (csrfToken, oldPassword, newPassword, confirmNewPassword) {
         var url = "/api/v1/user/password";
         var data = {
             "csrf_token": csrfToken,
@@ -174,39 +157,46 @@ var pzAPI = {
             "new_password": newPassword,
             "confirm_new_password": confirmNewPassword
         };
-        return $.putJSON(url, data);
-    },
-    updateUserPassword: function(oldPassword, newPassword, confirmNewPassword) {
+        return myJQ.putJSON(url, data);
+    };
+    pzAPI.updateUserPassword = function (oldPassword, newPassword, confirmNewPassword) {
         return pzAPI.getCSRFToken()
-        .then(function(response) {
+            .then(function (response) {
             return pzAPI._updateUserPassword(response, oldPassword, newPassword, confirmNewPassword);
         });
-    },
-    _updateUserPreferences: function(csrfToken, prefs) {
+    };
+    pzAPI._updateUserPreferences = function (csrfToken, prefs) {
+        if (Object.keys(prefs).length === 0) {
+            throw "User preferences cannot be an empty object";
+        }
         var url = "/api/v1/user/preferences";
         var data = pzAPI._copyObject(prefs);
         data.csrf_token = csrfToken;
-        return $.putJSON(url, data);
-    },
-    updateUserPreferences: function(prefs) {
+        return myJQ.putJSON(url, data);
+    };
+    pzAPI.updateUserPreferences = function (prefs) {
+        if (Object.keys(prefs).length === 0) {
+            throw "User preferences cannot be an empty object";
+        }
         return pzAPI.getCSRFToken()
-        .then(function(response) {
+            .then(function (response) {
             return pzAPI._updateUserPreferences(response, prefs);
         });
-    },
-    _deleteUser: function(csrfToken, password) {
+    };
+    pzAPI._deleteUser = function (csrfToken, password) {
         var url = "/api/v1/user";
-        data = { "password": password, "csrf_token": csrfToken };
-        return $.deleteJSON(url, data);
-    },
-    deleteUser: function(password) {
+        var data = { "password": password, "csrf_token": csrfToken };
+        return myJQ.deleteJSON(url, data);
+    };
+    pzAPI.deleteUser = function (password) {
         return pzAPI.getCSRFToken()
-        .then(function(response) {
+            .then(function (response) {
             return pzAPI._deleteUser(response, password);
         });
-    }
-};
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = pzAPI;
-}
+    };
+    return pzAPI;
+}());
+pzAPI.base_url = window.location.protocol + "//" + window.location.host;
+//if (typeof module !== 'undefined' && module.exports) {
+//module.exports = pzAPI;
+//}
