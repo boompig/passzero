@@ -6,7 +6,7 @@ function nukeEntries(e) {
         var url = $elem.attr("action");
         var csrf_token = $elem.find("[name='csrf_token']").val();
         var data = { "csrf_token": csrf_token };
-        $.post(url, data, function(response) {
+        $.post(url, data, function (response) {
             $("#nuke-success-msg").text(response.msg).show();
         }, "json");
     }

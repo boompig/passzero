@@ -12,10 +12,10 @@
 {% block body %}
     {% if entry %}
         <form method="POST" action="/entries/{{ e_id }}" role="form"
-            onsubmit="makeEdit(event)">
+            onsubmit="NewEntry.makeEdit(event)">
     {% else %}
         <form method="POST" action="api/v1/entries/new" role="form"
-            onsubmit="createNew(event)">
+            onsubmit="NewEntry.createNew(event)">
     {% endif %}
         <h3 class="title">
             {%- if entry -%}
@@ -40,13 +40,13 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
         <button type="button" class="btn btn-info"
-            id="show-hide-btn" onclick="showHidePassword(event)">Show</button>
+            id="show-hide-btn" onclick="NewEntry.showHidePassword(event)">Show</button>
         <button type="button" class="btn btn-info gen-pass-btn" id="gen-password-btn"
-            onclick="genPassword(event)">Random Password</button>
+            onclick="NewEntry.genPassword(event)">Random Password</button>
         <button type="button" class="btn btn-info gen-pass-btn" id="gen-passphrase-btn"
-            onclick="genPassphrase(event)">Random Phrase</button>
+            onclick="NewEntry.genPassphrase(event)">Random Phrase</button>
 
-        <button type="button" class="btn btn-settings" onclick="showHideSettings()">
+        <button type="button" class="btn btn-settings" onclick="NewEntry.showHideSettings()">
 			<span class="glyphicon glyphicon-cog"></span><!-- Settings -->
         </button>
         <div id="len-container" style="display: none;">
@@ -60,15 +60,15 @@
             <div class="password-settings">
                 <span id="pass-len-text" class="text">Length</span>
                 <button type="button" class="minus-btn" id="password-minus-btn"
-                    aria-hidden="true" onclick="changeLen(-1)">-</button>
+                    aria-hidden="true" onclick="NewEntry.changeLen(-1)">-</button>
                 <span id="password-length" class="text">
 					{{ user_prefs["default_random_password_length"] }}</span>
                 <button type="button" 
-                    aria-hidden="true" onclick="changeLen(+1)">+</button>
+                    aria-hidden="true" onclick="NewEntry.changeLen(+1)">+</button>
                 <div>
                     <!--<input type="checkbox" name="specialChar" id="specialChar" value="1" checked="checked" />-->
                     <button type="button" class="active" id="toggle-special-chars-btn"
-						onclick="toggleSpecialChars(event)">
+						onclick="NewEntry.toggleSpecialChars(event)">
                         <span class="glyphicon glyphicon-ok"></span>
                         <span>Use special characters</span>
                     </button>
@@ -77,10 +77,10 @@
             <div class="passphrase-settings">
                 <span class="text">Number of Words</span>
                 <button type="button" class="minus-btn" aria-hidden="true" id="passphrase-minus-btn"
-					onclick="changePhraseLen(-1)">-</button>
+					onclick="NewEntry.changePhraseLen(-1)">-</button>
                 <span id="passphrase-length" class="text">
 					{{ user_prefs["default_random_passphrase_length"] }}</span>
-                <button type="button" aria-hidden="true" onclick="changePhraseLen(+1)">+</button>
+                <button type="button" aria-hidden="true" onclick="NewEntry.changePhraseLen(+1)">+</button>
             </div>
         </div>
 
