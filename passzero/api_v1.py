@@ -489,8 +489,9 @@ def delete_user_api(request_data):
     return write_json(code, data)
 
 
-@api_v1.route("/api/entries/<int:entry_id>", methods=["UPDATE", "POST"])
-@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["UPDATE", "POST"])
+# NOTE: POST is legacy
+@api_v1.route("/api/entries/<int:entry_id>", methods=["PATCH", "POST"])
+@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["PATCH", "PUT", "POST"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
@@ -535,7 +536,7 @@ def api_v1_update_entry(request_data, entry_id):
     return write_json(code, data)
 
 
-@api_v1.route("/api/v1/user/password", methods=["UPDATE", "PUT"])
+@api_v1.route("/api/v1/user/password", methods=["PATCH", "PUT"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(UpdatePasswordForm)
@@ -606,7 +607,7 @@ def api_v1_get_user_preferences():
     return write_json(200, data)
 
 
-@api_v1.route("/api/v1/user/preferences", methods=["UPDATE", "PUT"])
+@api_v1.route("/api/v1/user/preferences", methods=["PATCH", "PUT"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(UpdatePreferencesForm)

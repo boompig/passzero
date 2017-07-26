@@ -1,14 +1,16 @@
 <div class="method-section">
- <h2 id="update_user_password">
+ <h2 id="patch_user_preferences">
   <span class="http-method">
-   UPDATE
+   PATCH
   </span>
   <span class="uri">
-   /api/v1/user/password
+   /api/v1/user/preferences
   </span>
  </h2>
  <p class="about">
-  Change the master password for the logged-in user.
+  Update various account preferences for the logged-in user.
+Only have to specify those preferences that you want to change.
+Preferences which are not specified will not change.
  </p>
  <h3>
   Arguments
@@ -16,9 +18,8 @@
  <pre><code data-lang="javascript">
 {
 	"csrf_token": string (required),
-	"old_password": string (required),
-	"new_password": string (required),
-	"confirm_new_password": string (required)
+	"default_random_password_length": string (optional),
+	"default_random_passphrase_length": string (optional)
 }
 </code></pre>
  <h3>
@@ -49,7 +50,7 @@
    <span class="http-status-code">
     401
    </span>
-   - user is not authenticated, or old password is incorrect
+   - user is not authenticated
   </li>
   <li>
    <span class="http-status-code">
@@ -61,7 +62,7 @@
    <span class="http-status-code">
     500
    </span>
-   - server error, or old password is incorrect
+   - internal server error
   </li>
  </ul>
 </div>

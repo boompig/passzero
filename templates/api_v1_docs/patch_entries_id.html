@@ -1,16 +1,14 @@
 <div class="method-section">
- <h2 id="update_user_preferences">
+ <h2 id="patch_entries_id">
   <span class="http-method">
-   UPDATE
+   PATCH
   </span>
   <span class="uri">
-   /api/v1/user/preferences
+   /api/v1/entries/&lt;int:entry_id&gt;
   </span>
  </h2>
  <p class="about">
-  Update various account preferences for the logged-in user.
-Only have to specify those preferences that you want to change.
-Preferences which are not specified will not change.
+  Update the specified entry.
  </p>
  <h3>
   Arguments
@@ -18,8 +16,11 @@ Preferences which are not specified will not change.
  <pre><code data-lang="javascript">
 {
 	"csrf_token": string (required),
-	"default_random_password_length": string (optional),
-	"default_random_passphrase_length": string (optional)
+	"account": string (required),
+	"username": string (required),
+	"password": string (required),
+	"extra": string (optional),
+	"has_2fa": boolean (required)
 }
 </code></pre>
  <h3>
@@ -44,25 +45,19 @@ Preferences which are not specified will not change.
    <span class="http-status-code">
     400
    </span>
-   - failed to validate parameters
+   - various input validation errors
   </li>
   <li>
    <span class="http-status-code">
     401
    </span>
-   - user is not authenticated
+   - not authenticated
   </li>
   <li>
    <span class="http-status-code">
     403
    </span>
    - CSRF check failed
-  </li>
-  <li>
-   <span class="http-status-code">
-    500
-   </span>
-   - internal server error
   </li>
  </ul>
 </div>
