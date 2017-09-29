@@ -11,6 +11,11 @@
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/entries.min.css") + "?build=" + config['BUILD_ID'] }}" />
+	<style>
+	[ng-cloak] {
+		display: none !important;
+	}
+	</style>
 {% endblock %}
 
 {% block body %}
