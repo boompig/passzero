@@ -1,5 +1,11 @@
 {
     "compilerOptions": {
-        "noUnusedLocals": true
-    }
+        "noUnusedLocals": true,
+        "lib": ["es2015", "es2015.iterable", "dom"],
+        "outDir": "static/js/src",
+        "module": "none"
+    },
+    "include": [
+        "typescript/*.ts"
+    ]
 }
