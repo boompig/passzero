@@ -2,19 +2,19 @@ import os
 
 from flask import (Flask, escape, flash, make_response, redirect,
                    render_template, request, session, url_for)
-from flask.ext.compress import Compress
+from flask_compress import Compress
+from flask_sslify import SSLify
+from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.contrib.fixers import ProxyFix
 
 import passzero.config as pz_config
-from flask_sslify import SSLify
 from passzero.api_utils import check_auth, generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
 from passzero.backend import (activate_account, decrypt_entries, get_entries,
-                              password_strength_scores, get_services_map)
+                              get_services_map, password_strength_scores)
 from passzero.datastore_postgres import db_export
 from passzero.models import AuthToken, User, db
-from sqlalchemy.orm.exc import NoResultFound
 
 if os.path.exists("passzero/my_env.py"):
     from passzero.my_env import setup_env
@@ -26,6 +26,7 @@ compress.init_app(app)
 app.config.from_object(pz_config)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['DUMP_FILE'] = "passzero_dump.csv"
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.register_blueprint(api_v1)
 app.register_blueprint(api_v2, prefix="/api/v2")
 
