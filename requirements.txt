@@ -43,3 +43,5 @@ trollius==2.1
 Werkzeug==0.12.2
 WTForms==2.0.2
 zxcvbn-python==4.4.15
+aead==0.2
+Flask-WTF==0.14.2

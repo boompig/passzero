@@ -10,10 +10,10 @@ from sqlalchemy.orm.session import sessionmaker
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries,
                               get_account_with_email, get_entries,
-                              get_services_map, insert_entry_for_user,
-                              password_strength_scores)
+                              get_services_map, insert_document_for_user,
+                              insert_entry_for_user, password_strength_scores)
 from passzero.change_password import change_password
-from passzero.models import Entry, Service, User
+from passzero.models import DecryptedDocument, Entry, Service, User
 
 DB_FILENAME = "passzero.db"
 
@@ -81,6 +81,12 @@ def test_delete_account():
         "has_2fa": True
     }
     insert_entry_for_user(session, dec_entry_in, user.id, user_key)
+    # add a document to that account
+    dec_doc = DecryptedDocument(
+        name="test doc",
+        contents="hello"
+    )
+    insert_document_for_user(session, dec_doc, user.id, user_key)
     delete_account(session, user)
     try:
         u2 = get_account_with_email(session, email)
