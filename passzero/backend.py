@@ -4,7 +4,10 @@ from sqlalchemy.sql.expression import asc
 from passzero import audit
 from passzero.config import SALT_SIZE
 from passzero.crypto_utils import get_hashed_password, get_salt
-from passzero.models import AuthToken, Entry, Service, User
+from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
+                             Entry, Service, User)
+
+from .utils import base64_encode
 
 
 def activate_account(db_session, user):
@@ -79,6 +82,13 @@ def delete_all_entries(db_session, user):
     db_session.commit()
 
 
+def delete_all_documents(db_session, user):
+    docs = db_session.query(EncryptedDocument).filter_by(user_id=user.id).all()
+    for doc in docs:
+        db_session.delete(doc)
+    db_session.commit()
+
+
 def delete_all_auth_tokens(db_session, user):
     auth_tokens = db_session.query(AuthToken).filter_by(user_id=user.id).all()
     for token in auth_tokens:
@@ -89,6 +99,7 @@ def delete_all_auth_tokens(db_session, user):
 def delete_account(db_session, user):
     """Delete the given user from the database.
     Also delete all entries associated with that user
+    Also delete all documents associated with that user
     Delete all data for that user across all tables"""
     entries = db_session.query(Entry).filter_by(user_id=user.id).all()
     for entry in entries:
@@ -96,6 +107,9 @@ def delete_account(db_session, user):
     auth_tokens = db_session.query(AuthToken).filter_by(user_id=user.id).all()
     for token in auth_tokens:
         db_session.delete(token)
+    docs = db_session.query(EncryptedDocument).filter_by(user_id=user.id).all()
+    for doc in docs:
+        db_session.delete(doc)
     db_session.delete(user)
     db_session.commit()
 
@@ -191,3 +205,29 @@ def get_services_map(session):
             "link": service.link
         }
     return d
+
+
+def encrypt_document(session, user_id, master_key, document_name, document):
+    """
+    Create an encrypted document, fill in the fields, and save in the database
+    :param session: database session, NOT flask session
+    :param document: contents of the document
+    """
+    doc = DecryptedDocument(document_name, document)
+    return insert_document_for_user(session, doc, user_id, master_key)
+
+
+def insert_document_for_user(session, decrypted_document, user_id, master_key):
+    """
+    :param session: database session, NOT flask session
+    :param decrypted_document: DecryptedDocument
+    :param master_key: unicode
+    :param user_id: int
+    """
+    extended_key, extension_params = DecryptedDocument.extend_key(master_key)
+    enc_doc = decrypted_document.encrypt(extended_key)
+    enc_doc.key_salt = base64_encode(extension_params["kdf_salt"])
+    enc_doc.user_id = user_id
+    session.add(enc_doc)
+    session.commit()
+    return enc_doc

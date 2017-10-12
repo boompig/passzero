@@ -2,6 +2,7 @@ import binascii
 import hmac
 from datetime import datetime
 
+from aead import AEAD
 from flask_sqlalchemy import SQLAlchemy
 
 from passzero.config import TOKEN_SIZE
@@ -336,3 +337,97 @@ class Service(db.Model):
     link = db.Column(db.String)
     has_two_factor = db.Column(db.Boolean)
 
+
+class EncryptedDocument(db.Model):
+    __tablename__ = "documents"
+    id = db.Column(db.Integer, db.Sequence("documents_id_seq"), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    name = db.Column(db.String, nullable=False)
+    # encrypted and base64-encoded
+    document = db.Column(db.LargeBinary, nullable=False)
+    # base64-encoded
+    key_salt = db.Column(db.String, nullable=False)
+
+    KEY_LENGTH = 32
+
+    def extend_key(self, master_key):
+        """Helper method.
+        Call extend_key with the right parameters"""
+        return extend_key(master_key, binascii.a2b_base64(self.key_salt),
+            EncryptedDocument.KEY_LENGTH)
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "contents": self.document
+        }
+
+    def decrypt(self, master_key):
+        extended_key = self.extend_key(master_key)
+        cryptor = AEAD(base64_encode(extended_key))
+        assert type(self.name) == unicode
+        assert type(self.document) == str
+        pt = cryptor.decrypt(self.document, self.name.encode('utf-8'))
+        return DecryptedDocument(
+            name=self.name,
+            contents=pt
+        )
+
+class DecryptedDocument:
+    def __init__(self, name, contents):
+        """
+        :param name: String, the user's name for the file. Not a filename.
+        :param document: object for the file
+        """
+        assert isinstance(name, unicode) or isinstance(name, str)
+        if isinstance(name, unicode):
+            self.name = name.encode('utf-8')
+        else:
+            # str
+            self.name = name
+        if isinstance(contents, str):
+            self.contents = contents
+        else:
+            # some kind of streaming object
+            self.contents = contents.stream.getvalue()
+
+    @staticmethod
+    def extend_key(master_key):
+        """
+        Helper method.
+
+        :return extended_key, params
+
+        params:
+            kdf_salt -> bytes
+        """
+        key_salt = get_kdf_salt()
+        # need a 32-byte key (256 bits)
+        extended_key = extend_key(master_key, key_salt, 32)
+        return (extended_key, { "kdf_salt": key_salt } )
+
+    def encrypt(self, key):
+        """
+        :param key: bytes
+        :return encrypted document with the content fields set
+        """
+        #AES_128_CBC_HMAC_SHA_256
+        assert len(key) == 32, \
+            "key must be 32 bytes long, actually %d bytes" % len(key)
+        assert isinstance(self.name, str), "Name must be a byte string"
+        assert isinstance(self.contents, str), "Contents must be bytes"
+        cryptor = AEAD(base64_encode(key))
+        ct = cryptor.encrypt(self.contents, self.name)
+        assert isinstance(ct, str), "base-64 ciphertext"
+        return EncryptedDocument(
+            # contents
+            name=self.name,
+            document=ct
+        )
+
+    def to_json(self):
+        return {
+            "name": self.name,
+            "contents": self.contents
+        }

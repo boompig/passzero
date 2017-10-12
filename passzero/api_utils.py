@@ -39,11 +39,23 @@ def requires_csrf_check(function):
     return inner
 
 
+def get_request_data():
+    data = request.get_json(silent=True)
+    if data:
+        return data
+    elif request.method == "POST" or request.method == "UPDATE":
+        return request.form
+    elif request.method == "DELETE" or request.method == "GET":
+        return request.args
+    else:
+        abort(500)
+
+
 def requires_json_form_validation(form_class):
     def real_function(function):
         @wraps(function)
         def inner(*args, **kwargs):
-            request_data = request.get_json()
+            request_data = get_request_data()
             form = form_class(data=request_data)
             if form.validate():
                 return function(form.data, *args, **kwargs)
@@ -111,15 +123,8 @@ def json_noauth():
 
 def check_all_csrf():
     """Check CSRF token differently depending on the request method"""
-    data = request.get_json(silent=True)
-    if data:
-        return check_csrf(data)
-    elif request.method == "POST" or request.method == "UPDATE":
-        return check_csrf(request.form)
-    elif request.method == "DELETE" or request.method == "GET":
-        return check_csrf(request.args)
-    else:
-        return abort(500)
+    data = get_request_data()
+    return check_csrf(data)
 
 
 def check_csrf(form):

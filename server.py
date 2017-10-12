@@ -27,6 +27,7 @@ app.config.from_object(pz_config)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
 app.config['DUMP_FILE'] = "passzero_dump.csv"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['WTF_CSRF_ENABLED'] = False
 app.register_blueprint(api_v1)
 app.register_blueprint(api_v2, prefix="/api/v2")
 

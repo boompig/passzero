@@ -80,6 +80,9 @@ def decrypt_messages(extended_key, iv, messages):
 
 
 def random_bytes(length):
+    """
+    :return bytes
+    """
     return Random.new().read(length)
 
 
@@ -89,20 +92,18 @@ def random_string(length):
 
 
 def get_kdf_salt(num_bytes=32):
+    """
+    :return bytes
+    """
     return random_bytes(num_bytes)
 
 
-def extend_key(key, salt):
-    """Extend the given key into a key of length suitable for AES."""
-    return KDF.PBKDF2(key, salt, count=1000)
-
-
-def extend_key_fast(key, salt):
+def extend_key(key, salt, key_length=16):
     """Extend the given key into a key of length suitable for AES.
-    We use a low count because the derived key is never stored or transmitted.
-    We only use this function in order to derive a different key for each entry.
-    This is OK because our encryption is known-plaintext-attack resistant"""
-    return KDF.PBKDF2(key, salt, count=1)
+    :param key: type bytes
+    :param salt: type bytes
+    """
+    return KDF.PBKDF2(key, salt, count=1000, dkLen=key_length)
 
 
 def get_iv():

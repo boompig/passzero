@@ -1,3 +1,5 @@
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileRequired
 from wtforms import BooleanField, Form, PasswordField, TextField, validators, IntegerField
 
 from passzero.limits import MAX_ENTRY_PASSWORD_LENGTH, MAX_GEN_PASSPHRASE_WORDS
@@ -78,3 +80,13 @@ class ConfirmRecoverPasswordForm(Form):
     confirm_password = PasswordField("confirm password", [
         validators.DataRequired()
     ])
+
+
+class NewDocumentForm(FlaskForm):
+    name = TextField("name", [
+        validators.DataRequired()
+    ])
+    document = FileField("document", [
+        FileRequired()
+    ])
+

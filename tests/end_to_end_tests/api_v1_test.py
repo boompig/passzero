@@ -4,6 +4,7 @@ import os
 import unittest
 
 import requests
+from six import BytesIO
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
@@ -26,6 +27,11 @@ def create_active_account(email, password):
     Use this function instead of API because we do email verification in real API
     """
     db_session = get_db_session()
+    try:
+        pz_backend.get_account_with_email(db_session, email)
+        raise Exception("User with email %s already exists" % email)
+    except NoResultFound:
+        pass
     user = pz_backend.create_inactive_user(db_session, email, password)
     pz_backend.activate_account(db_session, user)
     return user, db_session
@@ -56,8 +62,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
         try:
             db_session = get_db_session()
             user = pz_backend.get_account_with_email(db_session, email)
-            self.assertIsNotNone(user)
+            assert user is not None
             pz_backend.delete_all_entries(db_session, user)
+            pz_backend.delete_all_documents(db_session, user)
             pz_backend.delete_all_auth_tokens(db_session, user)
             pz_backend.delete_account(db_session, user)
         except NoResultFound:
@@ -65,8 +72,8 @@ class PassZeroApiV1Tester(unittest.TestCase):
 
     def _login(self, session, email, password):
         auth_response = api.login(session, email, password)
-        self.assertIsNotNone(auth_response)
-        self.assertEqual(auth_response.status_code, 200)
+        assert auth_response is not None
+        assert auth_response.status_code == 200
 
     def _logout(self, session):
         auth_response = api.logout(session)
@@ -375,6 +382,72 @@ class PassZeroApiV1Tester(unittest.TestCase):
             recover_result = api.recover(s, email, token)
             assert recover_result.status_code == 200
     """
+
+    def test_no_docs(self):
+        with requests.Session() as s:
+            create_active_account(DEFAULT_EMAIL, "pass")
+            api.login(s, DEFAULT_EMAIL, "pass")
+            docs_before = api.get_documents(s).json()
+            assert docs_before == []
+
+    def test_upload_then_decrypt(self):
+        with requests.Session() as s:
+            create_active_account(DEFAULT_EMAIL, "pass")
+            api.login(s, DEFAULT_EMAIL, "pass")
+            upload_doc_token = api.get_csrf_token(s).json()
+            docs_before = api.get_documents(s).json()
+            assert docs_before == []
+            r = api.post_document(s, "test document",
+                    { "document": BytesIO(b"hello world\n") },
+                upload_doc_token)
+            assert r.status_code == 200
+            doc_id = r.json()["document_id"]
+            assert isinstance(doc_id, int)
+            doc = api.get_document(s, doc_id).json()
+            assert doc["contents"] == "hello world\n"
+            assert doc["name"] == "test document"
+
+    def test_upload_and_get_docs(self):
+        with requests.Session() as s:
+            create_active_account(DEFAULT_EMAIL, "pass")
+            api.login(s, DEFAULT_EMAIL, "pass")
+            upload_doc_token = api.get_csrf_token(s).json()
+            docs_before = api.get_documents(s).json()
+            assert docs_before == []
+            r = api.post_document(s, "test document",
+                    { "document": BytesIO(b"hello world\n") },
+                upload_doc_token)
+            assert r.status_code == 200
+            docs_after = api.get_documents(s).json()
+            assert len(docs_after) == 1
+            assert docs_after[0]["name"] == "test document"
+
+    def test_upload_then_delete(self):
+        with requests.Session() as s:
+            create_active_account(DEFAULT_EMAIL, "pass")
+            api.login(s, DEFAULT_EMAIL, "pass")
+            docs_before = api.get_documents(s).json()
+            assert docs_before == []
+            upload_doc_token = api.get_csrf_token(s).json()
+            r = api.post_document(s, "test document",
+                    { "document": BytesIO(b"hello world\n") },
+                upload_doc_token)
+            assert r.status_code == 200
+            doc_id = r.json()["document_id"]
+            delete_token = api.get_csrf_token(s).json()
+            r = api.delete_document(s, doc_id, delete_token)
+            assert r.status_code == 200
+            docs_after_delete = api.get_documents(s).json()
+            assert docs_after_delete == []
+
+    def test_no_such_doc(self):
+        with requests.Session() as s:
+            create_active_account(DEFAULT_EMAIL, "pass")
+            api.login(s, DEFAULT_EMAIL, "pass")
+            docs_before = api.get_documents(s).json()
+            assert docs_before == []
+            r = api.get_document(s, 1)
+            assert r.status_code == 400
 
 
 if __name__ == '__main__':
