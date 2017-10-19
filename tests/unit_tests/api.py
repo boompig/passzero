@@ -34,18 +34,23 @@ def json_delete(session, relative_url):
 ### v1 API starts here
 
 def login(app, email, password, check_status=True):
+    assert isinstance(email, str)
+    assert isinstance(password, str)
     data={
         "email": email,
         "password": password
     }
     r = json_post(app, "/api/v1/login", data)
     if check_status:
-        assert r.status_code == 200
+        assert r.status_code == 200, "Failed to login with email '%s' and password '%s'" % (email, password)
     return r
 
 
-def logout(app):
-    return json_post(app, "/api/v1/logout")
+def logout(app, check_status=False):
+    r = json_post(app, "/api/v1/logout")
+    if check_status:
+        assert r.status_code == 200
+    return r
 
 
 def get_csrf_token(app):

@@ -344,6 +344,43 @@ class PassZeroApiTester(unittest.TestCase):
         assert len(entries) == 1
         self._check_entries_equal(new_entry, entries[0])
 
+    def test_edit_not_your_entry(self):
+        emails = ["email1@fake.com", "email2@fake.com"]
+        password = "right_pass"
+        for email in emails:
+            self._create_active_account(email, password)
+        api.login(self.app, emails[0], password, check_status=True)
+        create_token = api.get_csrf_token(self.app)
+        old_entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+            "has_2fa": False
+        }
+        entry_id = api.create_entry(self.app, old_entry, create_token, check_status=True)
+        api.logout(self.app, check_status=True)
+        api.login(self.app, emails[1], password, check_status=True)
+        entries = api.get_entries(self.app, check_status=True)
+        assert entries == []
+        edit_token = api.get_csrf_token(self.app)
+        new_entry = {
+            "account": "new account",
+            "username": "new username",
+            "password": "new password",
+            "extra": "new extra",
+            "has_2fa": True
+        }
+        r = api.edit_entry(self.app, entry_id, new_entry, edit_token, check_status=False)
+        assert r.status_code == 400
+        e2 = api.get_entries(self.app, check_status=True)
+        assert e2 == []
+        api.logout(self.app)
+        api.login(self.app, emails[0], password)
+        actual_entries = api.get_entries(self.app)
+        self._check_entries_equal(actual_entries[0], old_entry)
+
+
     def test_change_master_password(self):
         email = DEFAULT_EMAIL
         password = "old_password"
