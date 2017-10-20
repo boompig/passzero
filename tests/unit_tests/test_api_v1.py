@@ -12,11 +12,13 @@ from passzero.models import db
 
 from . import api
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="../../templates")
 app.secret_key = 'foo'
 app.register_blueprint(api_v1, prefix="")
+
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["BUILD_ID"] = "test"
 
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"
@@ -541,3 +543,7 @@ class PassZeroApiTester(unittest.TestCase):
         entries = api.get_entries(self.app)
         assert len(entries) == 0
 
+    def test_get_api_docs_template(self):
+        # just make sure this renders without errors
+        r = self.app.get("/api/v1")
+        assert r.status_code == 200
