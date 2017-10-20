@@ -1,6 +1,7 @@
 import os
+from functools import wraps
 
-from flask import (Flask, escape, flash, make_response, redirect,
+from flask import (Flask, abort, escape, flash, make_response, redirect,
                    render_template, request, session, url_for)
 from flask_compress import Compress
 from flask_sslify import SSLify
@@ -48,21 +49,49 @@ db.app = app
 db.init_app(app)
 
 
+def auth_or_redirect_login(function):
+    """This is a decorator which does authentication for GET requests to templates.
+    If not authenticated, return a redirect to the login screen.
+    If authenticated, call the function."""
+    @wraps(function)
+    def inner(*args, **kwargs):
+        if check_auth():
+            return function(*args, **kwargs)
+        else:
+            return redirect(url_for("login"))
+    return inner
+
+
+def auth_or_abort(function):
+    """This is a decorator which does authentication for GET requests to templates.
+    If not authenticated, show the 401 screen.
+    If authenticated, call the function."""
+    @wraps(function)
+    def inner(*args, **kwargs):
+        if check_auth():
+            return function(*args, **kwargs)
+        else:
+            return abort(401)
+    return inner
+
+
 @app.route("/", methods=["GET"])
 def index():
     if check_auth():
         return redirect(url_for("view_entries"))
     else:
         return render_template("landing.html")
-
+    
 
 @app.route("/entries/post_delete/<account_name>", methods=["GET"])
+@auth_or_abort
 def post_delete(account_name):
     flash("Successfully deleted account %s" % escape(account_name))
     return redirect(url_for("view_entries"))
 
 
 @app.route("/done_login", methods=["GET"])
+@auth_or_abort
 def post_login():
     flash("Successfully logged in as %s" % escape(session['email']))
     return redirect(url_for("view_entries"))
@@ -91,9 +120,8 @@ def post_account_delete():
 
 
 @app.route("/entries/new", methods=["GET"])
+@auth_or_redirect_login
 def new_entry_view():
-    if not check_auth():
-        return redirect(url_for("login"))
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     user_prefs = {
         "default_random_password_length": user.default_random_password_length,
@@ -110,29 +138,28 @@ def post_signup(email):
 
 
 @app.route("/entries/done_edit/<account_name>")
+@auth_or_abort
 def post_edit(account_name):
     flash("Successfully changed entry for account %s" % escape(account_name))
     return redirect(url_for("view_entries"))
 
 
 @app.route("/entries/done_new/<account_name>")
+@auth_or_abort
 def post_create(account_name):
     flash("Successfully created entry for account %s" % escape(account_name))
     return redirect(url_for("view_entries"))
 
 
 @app.route("/view", methods=["GET"])
+@auth_or_redirect_login
 def view_entries():
-    if not check_auth():
-        #TODO flash some kind of error here
-        return redirect(url_for("login"))
     return render_template("entries.html")
 
 
 @app.route("/signup", methods=["GET"])
 def signup():
     error = None
-    #flash("Successfully created account with email %s" % request.form['email'])
     return render_template("login.html", login=False, error=error)
 
 
@@ -168,10 +195,8 @@ def confirm_signup():
 
 
 @app.route("/advanced/export", methods=["GET"])
+@auth_or_abort
 def export_entries():
-    if not check_auth():
-        #TODO
-        return "unauthorized"
     export_contents = db_export(db.session, session['user_id'])
     if export_contents:
         response = make_response(export_contents)
@@ -183,15 +208,15 @@ def export_entries():
 
 
 @app.route("/advanced/done_export")
-def post_export():
+@auth_or_abort
+def done_export():
     flash("database successfully dumped to file %s" % app.config['DUMP_FILE'])
     return redirect("/advanced")
 
 
 @app.route("/edit/<int:entry_id>", methods=["GET"])
+@auth_or_redirect_login
 def edit_entry(entry_id):
-    if not check_auth():
-        return redirect(url_for("login"))
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     entries = get_entries(db.session, session["user_id"])
     my_entries = [e for e in entries if e.id == entry_id]
@@ -209,45 +234,39 @@ def edit_entry(entry_id):
 
 
 @app.route("/entries/strength")
+@auth_or_redirect_login
 def password_strength():
-    if check_auth():
-        entries = get_entries(db.session, session["user_id"])
-        dec_entries = decrypt_entries(entries, session['password'])
-        entry_scores = password_strength_scores(session["email"], dec_entries)
-        return render_template("password_strength.html", entry_scores=entry_scores)
-    else:
-        return redirect(url_for("login"))
+    entries = get_entries(db.session, session["user_id"])
+    dec_entries = decrypt_entries(entries, session['password'])
+    entry_scores = password_strength_scores(session["email"], dec_entries)
+    return render_template("password_strength.html", entry_scores=entry_scores)
 
 
 @app.route("/entries/2fa")
+@auth_or_redirect_login
 def two_factor():
-    if check_auth():
-        entries = get_entries(db.session, session["user_id"])
-        services_map = get_services_map(db.session)
-        two_factor_map = {}
-        for entry in entries:
-            account = entry.account.lower()
-            two_factor_map[entry.account] = {
-                "service_has_2fa": services_map.get(account, {}).get("has_two_factor", False),
-                "entry_has_2fa": entry.has_2fa,
-                "entry_id": entry.id
-            }
-        return render_template("entries_2fa.html", two_factor_map=two_factor_map)
-    else:
-        return redirect(url_for("login"))
+    entries = get_entries(db.session, session["user_id"])
+    services_map = get_services_map(db.session)
+    two_factor_map = {}
+    for entry in entries:
+        account = entry.account.lower()
+        two_factor_map[entry.account] = {
+            "service_has_2fa": services_map.get(account, {}).get("has_two_factor", False),
+            "entry_has_2fa": entry.has_2fa,
+            "entry_id": entry.id
+        }
+    return render_template("entries_2fa.html", two_factor_map=two_factor_map)
 
 
 @app.route("/advanced")
+@auth_or_redirect_login
 def advanced():
-    if not check_auth():
-        return redirect(url_for("login"))
     return render_template("advanced.html")
 
 
 @app.route("/profile")
+@auth_or_redirect_login
 def profile():
-    if not check_auth():
-        return redirect(url_for("login"))
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     user_prefs = {
         "default_random_password_length": user.default_random_password_length,

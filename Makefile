@@ -43,7 +43,7 @@ test: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest $(UNIT_TEST_SRC)
 
 test-cov: $(SRC) $(UNIT_TEST_SRC) lint
-	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html $(UNIT_TEST_SRC)
+	PYTHONPATH=$(CWD) pytest --cov=passzero --cov=server --cov-report=html $(UNIT_TEST_SRC)
 
 live-test-local: $(SRC) $(E2E_TEST_SRC) lint
 	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5050' pytest tests/end_to_end_tests/api_v1_test.py

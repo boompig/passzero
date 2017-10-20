@@ -42,7 +42,7 @@ def login(app, email, password, check_status=True):
     }
     r = json_post(app, "/api/v1/login", data)
     if check_status:
-        assert r.status_code == 200, "Failed to login with email '%s' and password '%s'" % (email, password)
+        assert r.status_code == 200, "Failed to login with email '%s' and password '%s' (code %d)" % (email, password, r.status_code)
     return r
 
 
@@ -168,14 +168,17 @@ def edit_entry(app, entry_id, entry, csrf_token, check_status=True):
     return r
 
 
-def signup(app, email, password):
+def signup(app, email, password, check_status=False):
     url = "/api/v1/user/signup"
     data = {
         "email": email,
         "password": password,
         "confirm_password": password
     }
-    return json_post(app, url, data)
+    r = json_post(app, url, data)
+    if check_status:
+        assert r.status_code == 200
+    return r
 
 
 def recover_account(app, email, csrf_token):
