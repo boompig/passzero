@@ -23,26 +23,28 @@
   <p>
    on success:
   </p>
-  <pre><code data-lang="javascript">
-[ entry-1, entry-2, ..., entry-n ]
-</code></pre>
+  <pre><code data-lang="javascript">[ entry-1, entry-2, ..., entry-n ]</code></pre>
   <p>
    exactly what information is returned depends on the entry version
 on error:
   </p>
-  <pre><code data-lang="javascript">
-{ "status": "error", "msg": string }
-</code></pre>
+  <pre><code data-lang="javascript">{ "status": "error", "msg": string }</code></pre>
  </div>
  <h3>
   Status codes
  </h3>
  <ul>
   <li>
-   200 - success
-   <li>
-    500 - there are some old entries (version &lt; 4) so this method cannot work
-   </li>
+   <span class="http-status-code">
+    200
+   </span>
+   - success
+  </li>
+  <li>
+   <span class="http-status-code">
+    500
+   </span>
+   - there are some old entries (version &lt; 4) so this method cannot work
   </li>
  </ul>
 </div>

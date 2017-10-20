@@ -36,6 +36,79 @@
   </tr>
   <tr>
    <td>
+    <a href="#get_docs">
+     GET /api/v1/docs
+    </a>
+   </td>
+   <td class="about">
+    Retrieve all saved documents for the logged-in user
+The document contents will be encrypted.
+   </td>
+   <td class="requires-login">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+   <td class="requires-csrf-token">
+    <span class="glyphicon glyphicon-remove">
+    </span>
+   </td>
+  </tr>
+  <tr>
+   <td>
+    <a href="#post_docs">
+     POST /api/v1/docs
+    </a>
+   </td>
+   <td class="about">
+    Upload a new document for the logged-in user
+   </td>
+   <td class="requires-login">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+   <td class="requires-csrf-token">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+  </tr>
+  <tr>
+   <td>
+    <a href="#get_docs_id">
+     GET /api/v1/docs/&lt;int:doc_id&gt;
+    </a>
+   </td>
+   <td class="about">
+    Decrypt the specified document
+   </td>
+   <td class="requires-login">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+   <td class="requires-csrf-token">
+    <span class="glyphicon glyphicon-remove">
+    </span>
+   </td>
+  </tr>
+  <tr>
+   <td>
+    <a href="#delete_docs_id">
+     DELETE /api/v1/docs/&lt;int:doc_id&gt;
+    </a>
+   </td>
+   <td class="about">
+    Delete the document with the given ID.
+   </td>
+   <td class="requires-login">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+   <td class="requires-csrf-token">
+    <span class="glyphicon glyphicon-ok">
+    </span>
+   </td>
+  </tr>
+  <tr>
+   <td>
     <a href="#get_entries">
      GET /api/v1/entries
     </a>

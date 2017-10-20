@@ -136,7 +136,6 @@ def get_docs_api():
             ```
             [doc-1, doc-2, ... doc-n]
             ```
-            
             a document's object looks like this:
             ```
             {
@@ -145,9 +144,7 @@ def get_docs_api():
                 "contents": binary
             }
             ```
-
             The contents will be encrypted
-
         on error:
             ```
             { "status": "error", "msg": string }
@@ -173,14 +170,13 @@ def decrypt_doc_api(doc_id):
 
     Response:
         on success:
-        
-        ```
-        {
-            "name": string,
-            "contents": binary
-        }
+            ```
+            {
+                "name": string,
+                "contents": binary
+            }
 
-        ```
+            ```
         on error:
             ```
             { "status": "error", "msg": string }
@@ -212,7 +208,8 @@ def create_doc_api(form_data):
     """Upload a new document for the logged-in user
 
     Arguments:
-        - TODO
+        - name: string (required)
+        - document: file (required)
 
     Response:
         on success:
@@ -226,10 +223,12 @@ def create_doc_api(form_data):
 
     Status codes:
         - 200: success
-        - 400: various input validation errors
+        - 400: various input validation errors (including unsupported file types and sizes)
         - 401: not authenticated
         - 403: CSRF check failed
     """
+    #TODO reject large files
+    #TODO enforce per-user quota of files
     encrypted_file = backend.encrypt_document(
         db.session,
         session["user_id"],
