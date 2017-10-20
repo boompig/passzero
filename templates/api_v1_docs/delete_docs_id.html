@@ -1,0 +1,55 @@
+<div class="method-section">
+ <h2 id="delete_docs_id">
+  <span class="http-method">
+   DELETE
+  </span>
+  <span class="uri">
+   /api/v1/docs/&lt;int:doc_id&gt;
+  </span>
+ </h2>
+ <p class="about">
+  Delete the document with the given ID.
+ </p>
+ <h3>
+  Arguments
+ </h3>
+ <pre><code data-lang="javascript">{
+	"csrf_token": string (required)
+}
+</code></pre>
+ <h3>
+  Response
+ </h3>
+ <div>
+  <pre><code data-lang="javascript">{ "status": "success"|"error", "msg": string }</code></pre>
+ </div>
+ <h3>
+  Status codes
+ </h3>
+ <ul>
+  <li>
+   <span class="http-status-code">
+    200
+   </span>
+   - success
+  </li>
+  <li>
+   <span class="http-status-code">
+    400
+   </span>
+   - document does not exist or does not belong to logged-in user
+  </li>
+  <li>
+   <span class="http-status-code">
+    401
+   </span>
+   - not authenticated
+  </li>
+  <li>
+   <span class="http-status-code">
+    403
+   </span>
+   - CSRF check failed
+  </li>
+ </ul>
+</div>

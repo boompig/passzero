@@ -1,0 +1,59 @@
+<div class="method-section">
+ <h2 id="get_docs">
+  <span class="http-method">
+   GET
+  </span>
+  <span class="uri">
+   /api/v1/docs
+  </span>
+ </h2>
+ <p class="about">
+  Retrieve all saved documents for the logged-in user
+The document contents will be encrypted.
+ </p>
+ <h3>
+  Arguments
+ </h3>
+ <p>
+  None
+ </p>
+ <h3>
+  Response
+ </h3>
+ <div>
+  <p>
+   on success:
+  </p>
+  <pre><code data-lang="javascript">[doc-1, doc-2, ... doc-n]</code></pre>
+  <p>
+   a document's object looks like this:
+  </p>
+  <pre><code data-lang="javascript">{
+"id": number,
+"name": string,
+"contents": binary
+}</code></pre>
+  <p>
+   The contents will be encrypted
+on error:
+  </p>
+  <pre><code data-lang="javascript">{ "status": "error", "msg": string }</code></pre>
+ </div>
+ <h3>
+  Status codes
+ </h3>
+ <ul>
+  <li>
+   <span class="http-status-code">
+    200
+   </span>
+   - success
+  </li>
+  <li>
+   <span class="http-status-code">
+    401
+   </span>
+   - user is not logged in
+  </li>
+ </ul>
+</div>

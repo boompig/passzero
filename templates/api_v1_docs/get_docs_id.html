@@ -1,0 +1,58 @@
+<div class="method-section">
+ <h2 id="get_docs_id">
+  <span class="http-method">
+   GET
+  </span>
+  <span class="uri">
+   /api/v1/docs/&lt;int:doc_id&gt;
+  </span>
+ </h2>
+ <p class="about">
+  Decrypt the specified document
+ </p>
+ <h3>
+  Arguments
+ </h3>
+ <p>
+  None
+ </p>
+ <h3>
+  Response
+ </h3>
+ <div>
+  <p>
+   on success:
+  </p>
+  <pre><code data-lang="javascript">{
+"name": string,
+"contents": binary
+}</code></pre>
+  <p>
+   on error:
+  </p>
+  <pre><code data-lang="javascript">{ "status": "error", "msg": string }</code></pre>
+ </div>
+ <h3>
+  Status codes
+ </h3>
+ <ul>
+  <li>
+   <span class="http-status-code">
+    200
+   </span>
+   - success
+  </li>
+  <li>
+   <span class="http-status-code">
+    400
+   </span>
+   - document does not exist or does not belong to logged-in user
+  </li>
+  <li>
+   <span class="http-status-code">
+    401
+   </span>
+   - user is not logged in
+  </li>
+ </ul>
+</div>
