@@ -1,0 +1,29 @@
+form input {
+	margin-bottom: 1em;
+}
+
+.doc-preview {
+	display: block;
+}
+
+.doc-container {
+	margin: 0 auto;
+	/*text-align: center;*/
+	/*width: 100%;*/
+	max-width: 600px;
+}
+
+.doc {
+	text-align: left;
+	border: 1px solid #333;
+	border-radius: 5px;
+	padding: 1em;
+}
+
+.doc-name {
+	font-weight: bold;
+}
+
+/*form button {*/
+	/*margin-top: 0.5em;*/
+/*}*/

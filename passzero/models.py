@@ -2,9 +2,10 @@ import binascii
 import hmac
 from datetime import datetime
 
+from werkzeug.datastructures import FileStorage
+
 from aead import AEAD
 from flask_sqlalchemy import SQLAlchemy
-
 from passzero.config import TOKEN_SIZE
 from passzero.crypto_utils import (byte_to_hex_legacy, decrypt_field_v1,
                                    decrypt_field_v2, decrypt_messages,
@@ -345,6 +346,8 @@ class EncryptedDocument(db.Model):
     name = db.Column(db.String, nullable=False)
     # encrypted and base64-encoded
     document = db.Column(db.LargeBinary, nullable=False)
+    # NOTE: this is not encrypted
+    content_type = db.Column(db.String, nullable=False)
     # base64-encoded
     key_salt = db.Column(db.String, nullable=False)
 
@@ -371,16 +374,23 @@ class EncryptedDocument(db.Model):
         pt = cryptor.decrypt(self.document, self.name.encode('utf-8'))
         return DecryptedDocument(
             name=self.name,
-            contents=pt
+            contents=pt,
+            id=self.id,
+            content_type=self.content_type
         )
 
 class DecryptedDocument:
-    def __init__(self, name, contents):
+    def __init__(self, name, contents, id=None, content_type=None):
         """
         :param name: String, the user's name for the file. Not a filename.
         :param document: object for the file
+        :param id: id if document already exists, None otherwise
         """
+        assert id is None or isinstance(id, int)
         assert isinstance(name, unicode) or isinstance(name, str)
+        assert isinstance(contents, FileStorage) or isinstance(contents, str)
+        assert isinstance(content_type, unicode) or isinstance(content_type, str)
+        self.id = id
         if isinstance(name, unicode):
             self.name = name.encode('utf-8')
         else:
@@ -389,8 +399,13 @@ class DecryptedDocument:
         if isinstance(contents, str):
             self.contents = contents
         else:
-            # some kind of streaming object
-            self.contents = contents.stream.getvalue()
+            # FileStorage
+            self.contents = contents.read()
+        if isinstance(content_type, unicode):
+            self.content_type = content_type.encode('utf-8')
+        else:
+            # str
+            self.content_type = content_type
 
     @staticmethod
     def extend_key(master_key):
@@ -409,8 +424,9 @@ class DecryptedDocument:
 
     def encrypt(self, key):
         """
+        Create a *new* encrypted document from this document
         :param key: bytes
-        :return encrypted document with the content fields set
+        :return: encrypted document with the content fields set
         """
         #AES_128_CBC_HMAC_SHA_256
         assert len(key) == 32, \
@@ -423,11 +439,13 @@ class DecryptedDocument:
         return EncryptedDocument(
             # contents
             name=self.name,
-            document=ct
+            document=ct,
+            content_type=self.content_type
         )
 
     def to_json(self):
         return {
             "name": self.name,
-            "contents": self.contents
+            "contents": base64_encode(self.contents),
+            "content_type": self.content_type
         }

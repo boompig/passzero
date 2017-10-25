@@ -1,7 +1,14 @@
-{% set navbar = (
+{# order is: href, id, caption #}
+{# href is the link #}
+{# id is used below in generation code to quickly identify the element #}
+{# caption is the text shown beside the link #}
+{%-
+	set navbar = (
         [
             ("/", "index", "Home"),
-            ("/view", "entries", "View Entries"),
+            ("/entries", "entries", "View Entries"),
+            ("/docs/new", "new_doc", "Upload Document"),
+            ("/docs", "view_docs", "View Documents"),
             ("/entries/new", "new", "New Entry"),
             ("/profile", "profile", "Profile"),
             ("/advanced", "advanced", "Advanced"),
@@ -48,12 +55,16 @@
                                 <span class="glyphicon glyphicon-edit"></span>
                             {%- elif id == "entries" -%}
                                 <span class="glyphicon glyphicon-th-list"></span>
+                            {%- elif id == "view_docs" -%}
+                                <span class="glyphicon glyphicon-briefcase"></span>
+                            {%- elif id == "new_doc" -%}
+                                <span class="glyphicon glyphicon-cloud-upload"></span>
                             {%- elif id == "new" -%}
                                 <span class="glyphicon glyphicon-plus"></span>
                             {%- elif id == "profile" -%}
                                 <span class="glyphicon glyphicon-user"></span>
                             {%- elif id == "advanced" -%}
-                                <span class="glyphicon glyphicon-wrench"></span>
+                                <span class="glyphicon glyphicon-cog"></span>
                             {%- elif id == "logout" -%}
                                 <span class="glyphicon glyphicon-log-out"></span>
                             {%- endif -%}

@@ -1,22 +1,24 @@
 from __future__ import print_function
 
-# import json
+import binascii
 import logging
+import os
 import unittest
-from six import BytesIO
 
 import mock
 from flask import Flask
+from six import BytesIO
 
-import os
 from passzero.api_v1 import api_v1
+from passzero.docs_api import docs_api
 from passzero.models import db
 
 from . import api
 
 app = Flask(__name__)
 app.secret_key = 'foo'
-app.register_blueprint(api_v1, prefix="")
+app.register_blueprint(docs_api)
+app.register_blueprint(api_v1)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['WTF_CSRF_ENABLED'] = False
@@ -53,47 +55,128 @@ class PassZeroDocTester(unittest.TestCase):
         # print(r.data)
         # assert r.status_code == 200
 
-
-    def create_test_doc(self):
-        fname = "/tmp/foo.txt"
-        if os.path.exists(fname):
-            os.remove(fname)
-        with open(fname, "w") as fp:
-            fp.write("hello world\n")
-
     def test_no_docs(self):
         self._create_active_account(DEFAULT_EMAIL, "pass")
         api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
-        docs_before = api.get_documents(self.app, check_status=True)
+        docs_before = api.get_docs(self.app, check_status=True)
         assert docs_before == []
 
     def test_upload_and_get_doc_then_delete(self):
         self._create_active_account(DEFAULT_EMAIL, "pass")
         api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
-        upload_doc_token = api.get_csrf_token(self.app)
         doc_params = {
             "name": "test document",
             "document": (BytesIO(b"hello world\n"), "hello_world.txt")
         }
-        docs_before = api.get_documents(self.app, check_status=True)
+        docs_before = api.get_docs(self.app, check_status=True)
         assert docs_before == []
-        api.post_document(self.app, doc_params, upload_doc_token, check_status=True)
-        docs_after = api.get_documents(self.app, check_status=True)
+        api.post_doc(self.app, doc_params, check_status=True)
+        docs_after = api.get_docs(self.app, check_status=True)
         assert len(docs_after) == 1
         assert type(docs_after[0]["id"]) == int
         assert docs_after[0]["name"] == "test document"
         # decrypt the document
-        doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
-        assert doc["contents"] == "hello world\n"
-        delete_token = api.get_csrf_token(self.app)
-        api.delete_document(self.app, docs_after[0]["id"], delete_token, check_status=True)
-        docs_after_delete = api.get_documents(self.app, check_status=True)
+        doc = api.get_doc(self.app, docs_after[0]["id"], check_status=True)
+        assert binascii.a2b_base64(doc["contents"]) == "hello world\n"
+        api.delete_doc(self.app, docs_after[0]["id"], check_status=True)
+        docs_after_delete = api.get_docs(self.app, check_status=True)
         assert docs_after_delete == []
 
-    def test_no_such_doc(self):
+    def test_get_doc_no_such_doc(self):
         self._create_active_account(DEFAULT_EMAIL, "pass")
         api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
-        docs_before = api.get_documents(self.app, check_status=True)
+        docs_before = api.get_docs(self.app, check_status=True)
         assert docs_before == []
-        r = api.get_document(self.app, 1, check_status=False)
+        r = api.get_doc(self.app, 1, check_status=False)
+        assert r.status_code == 400
+
+    def test_edit_doc(self):
+        # create a random 0.5KB file
+        contents = os.urandom(512)
+        doc_params = {
+            "name": "random stream",
+            "document": (BytesIO(contents), "foo.bin")
+        }
+        self._create_active_account(DEFAULT_EMAIL, "pass")
+        api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
+        doc_id = api.post_doc(self.app, doc_params, check_status=True)["document_id"]
+        assert isinstance(doc_id, int)
+        # get the document back
+        doc = api.get_doc(self.app, doc_id, check_status=True)
+        # make sure the content-type is set
+        assert doc["content_type"] == "application/octet-stream"
+        new_doc_params = {
+            "name": "new name",
+            "document": (BytesIO("foo\n"), "foo.txt")
+        }
+        api.edit_doc(self.app, doc_id, new_doc_params, check_status=True)
+        new_doc = api.get_doc(self.app, doc_id, check_status=True)
+        assert new_doc["name"] == new_doc_params["name"]
+        assert binascii.a2b_base64(new_doc["contents"]) == "foo\n"
+        assert new_doc["content_type"] == "text/plain"
+        
+    def test_edit_doc_no_such_doc(self):
+        contents = os.urandom(512)
+        doc_params = {
+            "name": "random stream",
+            "document": (BytesIO(contents), "foo.bin")
+        }
+        self._create_active_account(DEFAULT_EMAIL, "pass")
+        api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
+        docs_before = api.get_docs(self.app, check_status=True)
+        assert docs_before == []
+        r = api.edit_doc(self.app, 1, doc_params, check_status=False)
+        assert r.status_code == 400
+
+    def test_edit_doc_not_yours(self):
+        contents = os.urandom(512)
+        doc_params = {
+            "name": "random stream",
+            "document": (BytesIO(contents), "foo.bin")
+        }
+        self._create_active_account("fake1@foo.com", "pass")
+        self._create_active_account("fake2@foo.com", "pass")
+        # first guy creates a document
+        api.login(self.app, "fake1@foo.com", "pass", check_status=True)
+        doc_id = api.post_doc(self.app, doc_params, check_status=True)["document_id"]
+        assert isinstance(doc_id, int)
+        api.logout(self.app)
+        # second guy tries to edit document of first guy
+        api.login(self.app, "fake2@foo.com", "pass", check_status=True)
+        new_doc_params = {
+            "name": "new name",
+            "document": (BytesIO("foo\n"), "foo.txt")
+        }
+        r = api.edit_doc(self.app, doc_id, new_doc_params, check_status=False)
+        assert r.status_code == 400
+
+    def test_delete_doc_not_yours(self):
+        contents = os.urandom(512)
+        doc_params = {
+            "name": "random stream",
+            "document": (BytesIO(contents), "foo.bin")
+        }
+        self._create_active_account("fake1@foo.com", "pass")
+        self._create_active_account("fake2@foo.com", "pass")
+        # first guy creates a document
+        api.login(self.app, "fake1@foo.com", "pass", check_status=True)
+        doc_id = api.post_doc(self.app, doc_params, check_status=True)["document_id"]
+        assert isinstance(doc_id, int)
+        api.logout(self.app)
+        # second guy tries to delete document of first guy
+        api.login(self.app, "fake2@foo.com", "pass", check_status=True)
+        r = api.delete_doc(self.app, doc_id, check_status=False)
+        assert r.status_code == 400
+
+    def test_delete_doc_no_such_doc(self):
+        contents = os.urandom(512)
+        doc_params = {
+            "name": "random stream",
+            "document": (BytesIO(contents), "foo.bin")
+        }
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        doc_id = api.post_doc(self.app, doc_params, check_status=True)["document_id"]
+        assert isinstance(doc_id, int)
+        r = api.delete_doc(self.app, doc_id + 1, check_status=False)
         assert r.status_code == 400

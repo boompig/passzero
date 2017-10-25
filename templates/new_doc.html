@@ -1,0 +1,13 @@
+{% extends "clean_layout.html" -%}
+
+{% block js %}
+    <script src="{{ url_for("static", filename="js/dist/new_doc.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
+{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/src/docs.css") + "?build=" + config['BUILD_ID'] }}" />
+{% endblock %}
+
+{% block body %}
+	<div id="react-root"></div>
+{% endblock %}

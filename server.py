@@ -12,6 +12,8 @@ import passzero.config as pz_config
 from passzero.api_utils import check_auth, generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
+from passzero.docs_api import docs_api
+from passzero.doc_views import doc_views
 from passzero.backend import (activate_account, decrypt_entries, get_entries,
                               get_services_map, password_strength_scores)
 from passzero.datastore_postgres import db_export
@@ -31,6 +33,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['WTF_CSRF_ENABLED'] = False
 app.register_blueprint(api_v1)
 app.register_blueprint(api_v2, prefix="/api/v2")
+app.register_blueprint(docs_api)
+app.register_blueprint(doc_views)
 
 # define global callback for CSRF token"""
 app.jinja_env.globals["csrf_token"] = generate_csrf_token
@@ -151,7 +155,7 @@ def post_create(account_name):
     return redirect(url_for("view_entries"))
 
 
-@app.route("/view", methods=["GET"])
+@app.route("/entries", methods=["GET"])
 @auth_or_redirect_login
 def view_entries():
     return render_template("entries.html")

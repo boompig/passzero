@@ -1,13 +1,18 @@
-from sqlalchemy import func
-from sqlalchemy.sql.expression import asc
+import logging
 
 from passzero import audit
 from passzero.config import SALT_SIZE
 from passzero.crypto_utils import get_hashed_password, get_salt
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
                              Entry, Service, User)
+from sqlalchemy import func
+from sqlalchemy.sql.expression import asc
 
 from .utils import base64_encode
+
+
+class ServerError(Exception):
+    pass
 
 
 def activate_account(db_session, user):
@@ -213,8 +218,60 @@ def encrypt_document(session, user_id, master_key, document_name, document):
     :param session: database session, NOT flask session
     :param document: contents of the document
     """
-    doc = DecryptedDocument(document_name, document)
+    doc = DecryptedDocument(
+        name=document_name,
+        contents=document,
+        content_type=document.mimetype
+    )
     return insert_document_for_user(session, doc, user_id, master_key)
+
+
+def edit_document(session, user_id, master_key, document_id, document_name, document):
+    """
+    Try to edit the document with ID <document_id>. Commit changes to DB.
+    Check first if the entry belongs to the current user.
+
+    :param session: database session, NOT flask session
+    :param user_id: int
+    :param master_key: unicode
+    :param document_id: int
+    :param document_name: unicode
+    :param document: flask document object
+
+    :return: the (edited) encrypted document
+
+    :throws: NoResultFound -> when no such document
+    :throws: AssertionError -> when the entry does not belong to the current user
+    """
+    assert isinstance(user_id, int)
+    assert isinstance(master_key, unicode)
+    assert isinstance(document_id, int)
+    assert isinstance(document_name, unicode)
+    original_enc_doc = session.query(EncryptedDocument).\
+            filter_by(id=document_id).one()
+    assert original_enc_doc.user_id == user_id
+    new_dec_doc = DecryptedDocument(
+        name=document_name,
+        contents=document,
+        id=document_id,
+        content_type=document.mimetype
+    )
+    extended_key, extension_params = DecryptedDocument.extend_key(master_key)
+    # do NOT add new_enc_doc to session, it's just a placeholder 
+    try:
+        new_enc_doc = new_dec_doc.encrypt(extended_key)
+        new_enc_doc.key_salt = base64_encode(extension_params["kdf_salt"])
+    except Exception as e:
+        logging.error(e)
+        raise ServerError("Failed to decrypt document")
+    # instead make changes over the fields of the original
+    original_enc_doc.name = new_enc_doc.name
+    original_enc_doc.document = new_enc_doc.document
+    original_enc_doc.content_type = new_enc_doc.content_type
+    original_enc_doc.key_salt = new_enc_doc.key_salt
+    # commit the changes
+    session.commit()
+    return original_enc_doc
 
 
 def insert_document_for_user(session, decrypted_document, user_id, master_key):

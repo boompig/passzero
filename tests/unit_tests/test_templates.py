@@ -139,7 +139,25 @@ class PassZeroTemplateTester(unittest.TestCase):
 
     def test_view_entries_no_login(self):
         with self.app.test_client() as c:
-            response = c.get("/view", follow_redirects=True)
+            response = c.get("/entries", follow_redirects=True)
+            print(response.data)
+            assert flask.request.path == flask.url_for("login")
+
+    def test_view_docs_no_login(self):
+        with self.app.test_client() as c:
+            response = c.get("/docs", follow_redirects=True)
+            print(response.data)
+            assert flask.request.path == flask.url_for("login")
+
+    def test_new_doc_no_login(self):
+        with self.app.test_client() as c:
+            response = c.get("/docs/new", follow_redirects=True)
+            print(response.data)
+            assert flask.request.path == flask.url_for("login")
+
+    def test_edit_doc_no_login(self):
+        with self.app.test_client() as c:
+            response = c.get("/docs/1", follow_redirects=True)
             print(response.data)
             assert flask.request.path == flask.url_for("login")
 

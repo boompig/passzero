@@ -2,19 +2,19 @@ import logging
 from datetime import datetime
 
 from flask import Blueprint, escape, render_template, session
+
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend, change_password
 from .api_utils import (generate_csrf_token, json_error, json_internal_error,
                         json_success, requires_csrf_check, requires_json_auth,
                         requires_json_form_validation, write_json)
+from .email import send_confirmation_email, send_recovery_email
 from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
                     DeleteUserForm, LoginForm, NewEntryForm,
                     RecoverPasswordForm, SignupForm, UpdatePasswordForm,
-                    UpdatePreferencesForm,
-                    NewDocumentForm)
-from .email import send_confirmation_email, send_recovery_email
-from .models import AuthToken, Entry, User, db, EncryptedDocument
+                    UpdatePreferencesForm)
+from .models import AuthToken, EncryptedDocument, Entry, User, db
 
 api_v1 = Blueprint("api_v1", __name__)
 
@@ -121,158 +121,6 @@ def api_login(request_data):
     return write_json(code, data)
 
 #---------------- DOCUMENTS BEGIN
-
-@api_v1.route("/api/v1/docs", methods=["GET"])
-@requires_json_auth
-def get_docs_api():
-    """Retrieve all saved documents for the logged-in user
-    The document contents will be encrypted.
-
-    Arguments:
-        none
-
-    Response:
-        on success:
-            ```
-            [doc-1, doc-2, ... doc-n]
-            ```
-            
-            a document's object looks like this:
-            ```
-            {
-                "id": number,
-                "name": string,
-                "contents": binary
-            }
-            ```
-
-            The contents will be encrypted
-
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
-
-    Status codes:
-        - 200: success
-        - 401: user is not logged in
-    """
-    docs = db.session.query(EncryptedDocument).filter_by(user_id=session["user_id"]).all()
-    rval = [doc.to_json() for doc in docs]
-    return write_json(200, rval)
-
-
-@api_v1.route("/api/v1/docs/<int:doc_id>", methods=["GET"])
-@requires_json_auth
-def decrypt_doc_api(doc_id):
-    """
-    Decrypt the specified document
-
-    Arguments:
-        none
-
-    Response:
-        on success:
-        
-        ```
-        {
-            "name": string,
-            "contents": binary
-        }
-
-        ```
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
-
-    Status codes:
-        - 200: success
-        - 400: document does not exist or does not belong to logged-in user
-        - 401: user is not logged in
-    """
-    try:
-        enc_doc = db.session.query(EncryptedDocument).\
-            filter_by(id=doc_id, user_id=session["user_id"]).one()
-        dec_doc = enc_doc.decrypt(session["password"])
-        data = dec_doc.to_json()
-        code = 200
-    except NoResultFound:
-        code, data = json_error(400,
-            "Document ID does not correspond to the document" + \
-            "or the document does not belong to you")
-    return write_json(code, data)
-
-
-@api_v1.route("/api/v1/docs", methods=["POST"])
-@requires_json_auth
-@requires_csrf_check
-@requires_json_form_validation(NewDocumentForm)
-def create_doc_api(form_data):
-    """Upload a new document for the logged-in user
-
-    Arguments:
-        - TODO
-
-    Response:
-        on success:
-            ```
-            { "document_id": number }
-            ```
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
-
-    Status codes:
-        - 200: success
-        - 400: various input validation errors
-        - 401: not authenticated
-        - 403: CSRF check failed
-    """
-    encrypted_file = backend.encrypt_document(
-        db.session,
-        session["user_id"],
-        session["password"],
-        form_data["name"],
-        form_data["document"]
-    )
-    return write_json(200, {"document_id": encrypted_file.id})
-
-
-@api_v1.route("/api/v1/docs/<int:doc_id>", methods=["DELETE"])
-@requires_json_auth
-@requires_csrf_check
-def api_v1_delete_doc(doc_id):
-    """Delete the document with the given ID.
-
-    Arguments:
-        none
-
-    Response:
-        ```
-        { "status": "success"|"error", "msg": string }
-        ```
-
-    Status codes:
-        - 200: success
-        - 400: document does not exist or does not belong to logged-in user
-        - 401: not authenticated
-        - 403: CSRF check failed
-    """
-    try:
-        enc_doc = db.session.query(EncryptedDocument).filter_by(id=doc_id).one()
-        assert enc_doc.user_id == session['user_id']
-        db.session.delete(enc_doc)
-        db.session.commit()
-        code, data = json_success("successfully deleted document with ID {}".format(
-            doc_id))
-    except NoResultFound:
-        code, data = json_error(400, "no such document")
-    except AssertionError:
-        code, data = json_error(400, "the given document does not belong to you")
-    return write_json(code, data)
-
 #---------------- DOCUMENTS END
 
 @api_v1.route("/api/entries", methods=["GET"])

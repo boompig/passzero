@@ -84,7 +84,8 @@ def test_delete_account():
     # add a document to that account
     dec_doc = DecryptedDocument(
         name="test doc",
-        contents="hello"
+        contents="hello",
+        content_type="text/plain"
     )
     insert_document_for_user(session, dec_doc, user.id, user_key)
     delete_account(session, user)

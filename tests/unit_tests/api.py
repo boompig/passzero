@@ -231,7 +231,8 @@ def update_user_password(app, old_password, new_password, csrf_token, check_stat
     return r
 
 
-def get_documents(app, check_status=True):
+## --- start docs ----
+def get_docs(app, check_status=True):
     r = json_get(app, "/api/v1/docs")
     if check_status:
         print(r.data)
@@ -241,7 +242,17 @@ def get_documents(app, check_status=True):
         return r
 
 
-def post_document(app, doc_params, csrf_token, check_status=True):
+def post_doc(app, doc_params, check_status=True):
+    csrf_token = get_csrf_token(app)
+    return _post_doc(
+        app,
+        doc_params,
+        csrf_token,
+        check_status
+    )
+
+
+def _post_doc(app, doc_params, csrf_token, check_status=True):
     url = "/api/v1/docs"
     doc_params["csrf_token"] = csrf_token
     r = app.post(url,
@@ -252,9 +263,11 @@ def post_document(app, doc_params, csrf_token, check_status=True):
         print("status code = %d" % r.status_code)
         print(r.data)
         assert r.status_code == 200
-    return r
+        return json.loads(r.data)
+    else:
+        return r
 
-def get_document(app, doc_id, check_status=True):
+def get_doc(app, doc_id, check_status=True):
     url = "/api/v1/docs/%d" % doc_id
     r = json_get(app, url)
     if check_status:
@@ -264,7 +277,40 @@ def get_document(app, doc_id, check_status=True):
     else:
         return r
 
-def delete_document(app, doc_id, csrf_token, check_status=True):
+
+def edit_doc(app, doc_id, doc_params, check_status=True):
+    csrf_token = get_csrf_token(app)
+    return _edit_doc(
+        app,
+        doc_id,
+        doc_params,
+        csrf_token,
+        check_status
+    )
+
+
+def _edit_doc(app, doc_id, doc_params, csrf_token, check_status=True):
+    url = "/api/v1/docs/%d" % doc_id
+    doc_params["csrf_token"] = csrf_token
+    r = app.post(url,
+        data=doc_params,
+        headers=file_upload_headers,
+        follow_redirects=True)
+    if check_status:
+        print("status code = %d" % r.status_code)
+        print(r.data)
+        assert r.status_code == 200
+        return json.loads(r.data)
+    else:
+        return r
+
+
+def delete_doc(app, doc_id, check_status=True):
+    csrf_token = get_csrf_token(app)
+    return _delete_doc(app, doc_id, csrf_token, check_status)
+
+
+def _delete_doc(app, doc_id, csrf_token, check_status=True):
     url = "/api/v1/docs/{}".format(doc_id)
     r = app.delete(url,
         data=json.dumps({
@@ -275,6 +321,8 @@ def delete_document(app, doc_id, csrf_token, check_status=True):
     if check_status:
         assert r.status_code == 200
     return r
+
+### ----- end docs ---
 
 
 #### v2 API starts here
