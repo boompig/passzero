@@ -3,6 +3,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import pzAPI from "./passzero_api_module.js";
+import LogoutTimer from "./logoutTimer_module.js";
+
+const logoutTimer = new LogoutTimer();
 
 /**
  * Top-level component for document storage
@@ -22,6 +25,10 @@ class DocumentApp extends React.Component {
 		this.onSearch = this.onSearch.bind(this);
 		this.uploadToServer = this.uploadToServer.bind(this);
 		this.loadFromServer = this.loadFromServer.bind(this);
+	}
+
+	onMouseDown() {
+		this.logoutTimer.reset();
 	}
 
 	loadFromServer() {
@@ -66,6 +73,7 @@ class DocumentApp extends React.Component {
 	 */
 	componentDidMount() {
 		this.loadFromServer();
+		logoutTimer.start();
 	}
 
 	/**
@@ -91,10 +99,11 @@ class DocumentApp extends React.Component {
 		this.setState({
 			searchStr: searchStr
 		}, this.performSearch);
+		logoutTimer.reset();
 	}
 
 	render() {
-		return (<div>
+		return (<div onMouseDown={ this.onMouseDown }>
 			<h1 className="title">PassZero Documents</h1>
 
 			<DocCount docsLoaded={ this.state.docsLoaded }
@@ -192,3 +201,6 @@ ReactDOM.render(
 	<DocumentApp />,
 	document.getElementById("react-root")
 );
+
+// TODO not sure if there is a good way around this:
+window.onfocus = () => { logoutTimer.check(); };

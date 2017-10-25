@@ -2,6 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom";
 import Dropzone from "react-dropzone";
 import pzAPI from "./passzero_api_module.js";
+import LogoutTimer from "./logoutTimer_module.js";
+
+const logoutTimer = new LogoutTimer();
 
 /**
  * Top-level component for document storage
@@ -111,18 +114,18 @@ class DocumentUploadApp extends React.Component {
 	 * Documents loaded here
 	 */
 	componentDidMount() {
+		logoutTimer.start();
 		if(this.state.id) {
 			console.log("Loading document details from server...");
 			this.setState({
 				"loadingDoc": true
 			});
-			pzAPI.getDocument(this.state.id)
-				.then((response) => {
-					this.onDocumentLoad(response);
-					this.setState({
-						"loadingDoc": false
-					});
+			pzAPI.getDocument(this.state.id).then((response) => {
+				this.onDocumentLoad(response);
+				this.setState({
+					"loadingDoc": false
 				});
+			});
 		}
 	}
 
@@ -146,10 +149,14 @@ class DocumentUploadApp extends React.Component {
 		});
 	}
 
+	onMouseDown() {
+		logoutTimer.reset();
+	}
+
 	render() {
 		if(this.state.file) {
 			return (
-				<div>
+				<div onMouseDown={ this.onMouseDown }>
 					{ this.state.id ? null : 
 						<h1 className="title">New Document</h1> }
 					<UploadDocumentForm
@@ -163,7 +170,7 @@ class DocumentUploadApp extends React.Component {
 			return <div>Loading document...</div>;
 		} else {
 			return (
-				<div>
+				<div onMouseDown={ this.onMouseDown }>
 					<h1 className="title">New Document</h1>
 					<p>Please upload a document</p>
 					<Dropzone onDrop={ this.onDrop } />
@@ -241,13 +248,9 @@ class UploadDocumentForm extends React.Component {
 	}
 }
 
-class Document extends React.Component {
-	render() {
-		return <h1>hello</h1>;
-	}
-}
-
 ReactDOM.render(
 	<DocumentUploadApp />,
 	document.getElementById("react-root")
 );
+
+window.onfocus = () => { logoutTimer.check(); };

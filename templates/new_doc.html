@@ -1,7 +1,6 @@
 {% extends "clean_layout.html" -%}
 
 {% block js %}
-	<script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
 	<script src="{{ url_for("static", filename="js/dist/new_doc.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 

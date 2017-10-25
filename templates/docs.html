@@ -1,7 +1,6 @@
 {% extends "layout.html" -%}
 
 {% block js %}
-	<script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
 	<script src="{{ url_for("static", filename="js/dist/view_docs.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
