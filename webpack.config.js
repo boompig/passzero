@@ -1,10 +1,8 @@
 /* globals __dirname,  */
 /* eslint-env node */
 
-const path = require("path");
-
 module.exports = {
-	context: __dirname + "/static/js/src/",
+	context: __dirname + "/static/js/modules/",
 	entry: {
 		"view_docs": "./docs.jsx",
 		"new_doc": "./new_doc.jsx"

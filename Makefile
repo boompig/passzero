@@ -16,6 +16,7 @@ all: lint test build
 
 install: package.json
 	yarn
+	webpack
 	make copy-deps
 
 build: build/add_build_name.py passzero/config.py
