@@ -163,6 +163,7 @@ class SearchResults extends React.Component {
 		let docs = [];
 		for(let i = 0; i < this.props.filteredDocs.length; i++) {
 			docs[i] = <Document
+				key={ this.props.filteredDocs[i].id }
 				name={ this.props.filteredDocs[i].name }
 				id={ this.props.filteredDocs[i].id }
 			/>;
