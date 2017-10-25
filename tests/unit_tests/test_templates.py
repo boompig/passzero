@@ -161,6 +161,14 @@ class PassZeroTemplateTester(unittest.TestCase):
             print(response.data)
             assert flask.request.path == flask.url_for("login")
 
+    def test_done_doc_edit_redirect_no_login(self):
+        with self.app.test_client() as c:
+            response = c.get("/docs/done_edit/foo_bar_baz", follow_redirects=True)
+            print(response.data)
+            # just want to make sure this doesn't error out
+            assert (response.status_code == 200 or response.status_code == 401)
+
+
     def test_password_strength_no_login(self):
         with self.app.test_client() as c:
             response = c.get("/entries/strength", follow_redirects=True)
