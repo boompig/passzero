@@ -28,11 +28,13 @@
     "jasmine": "^2.6.0",
     "jquery": "3.2.1",
     "js-cookie": "2.1.4",
+    "npm-install-webpack-plugin": "^4.0.5",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "react-dropzone": "^4.2.0",
     "tablesort": "5.0.1",
     "typescript": "^2.4.2",
-    "uglify-js": "^3.0.15"
+    "uglify-js": "^3.0.15",
+    "webpack": "^3.8.1"
   }
 }

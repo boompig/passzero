@@ -1,6 +1,8 @@
 /* globals __dirname,  */
 /* eslint-env node */
 
+const CommonsChunkPlugin = require("webpack/lib/optimize/CommonsChunkPlugin");
+
 module.exports = {
 	context: __dirname + "/static/js/modules/",
 	entry: {
@@ -9,7 +11,7 @@ module.exports = {
 	},
 
 	output: {
-		filename: "[name].bundle.js",
+		filename: "[name].chunk.js",
 		path: __dirname + "/static/js/dist"
 	},
 
@@ -18,5 +20,9 @@ module.exports = {
 			{ test: /\.js$/, loader: "babel-loader", exclude: /node_modules/ },
 			{ test: /\.jsx$/, loader: "babel-loader", exclude: /node_modules/ },
 		]
-	}
+	},
+
+	plugins: [
+		new CommonsChunkPlugin("commons")
+	]
 };
