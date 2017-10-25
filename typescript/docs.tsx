@@ -1,16 +1,19 @@
 /* eslint-env node */
 
-import React from "react";
-import ReactDOM from "react-dom";
-import pzAPI from "./passzero_api_module.js";
-import LogoutTimer from "./logoutTimer_module.js";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import pzAPI from "./passzero_api";
+import LogoutTimer from "./logout_timer";
 
 const logoutTimer = new LogoutTimer();
+
+interface DocumentAppProps {};
 
 /**
  * Top-level component for document storage
  */
-class DocumentApp extends React.Component {
+class DocumentApp extends React.Component<DocumentAppProps, any> {
+
 	constructor(props) {
 		super(props);
 		this.state = {
@@ -25,10 +28,12 @@ class DocumentApp extends React.Component {
 		this.onSearch = this.onSearch.bind(this);
 		this.uploadToServer = this.uploadToServer.bind(this);
 		this.loadFromServer = this.loadFromServer.bind(this);
+		this.onDocuments = this.onDocuments.bind(this);
+		this.onMouseDown = this.onMouseDown.bind(this);
 	}
 
 	onMouseDown() {
-		this.logoutTimer.reset();
+		logoutTimer.reset();
 	}
 
 	loadFromServer() {
@@ -37,7 +42,8 @@ class DocumentApp extends React.Component {
 		});
 	}
 
-	uploadToServer(event) {
+	// TODO set the event type properly here
+	uploadToServer(event: any) {
 		console.log(event.target.value);
 		const options = {
 			method: "POST",
@@ -45,12 +51,6 @@ class DocumentApp extends React.Component {
 			credentials: "include",
 			body: event.target.value
 		};
-		window.fetch("/foo", options)
-			.then((response) => {
-				console.log(response);
-			});
-		console.log(event);
-		// TODO
 		event.preventDefault();
 	}
 
@@ -115,7 +115,16 @@ class DocumentApp extends React.Component {
 	}
 }
 
-class DocCount extends React.Component {
+interface DocCountProps {
+	docsLoaded: boolean;
+	docs: Array<MyFile>;
+}
+
+class DocCount extends React.Component<DocCountProps, any> {
+	constructor(props: any) {
+		super(props);
+	}
+
 	render() {
 		let doc = null;
 		if(this.props.docs) {
@@ -141,7 +150,11 @@ class DocCount extends React.Component {
 	}
 }
 
-class Search extends React.Component {
+interface SearchProps {
+	onSearch: (searchStr: string) => void;
+}
+
+class Search extends React.Component<SearchProps, any> {
 	constructor(props) {
 		super(props);
 		this.onSearch = this.onSearch.bind(this);
@@ -150,7 +163,8 @@ class Search extends React.Component {
 	/**
 	 * Bubble up the value in this component to a higher component
 	 */
-	onSearch(event) {
+	// TODO get the right event type here
+	onSearch(event: any) {
 		this.props.onSearch(event.target.value);
 	}
 
@@ -167,7 +181,16 @@ class Search extends React.Component {
 	}
 }
 
-class SearchResults extends React.Component {
+interface MyFile {
+	id: number;
+	name: string;
+}
+
+interface SearchResultsProps {
+	filteredDocs: Array<MyFile>;
+}
+
+class SearchResults extends React.Component<SearchResultsProps, any> {
 	render() {
 		let docs = [];
 		for(let i = 0; i < this.props.filteredDocs.length; i++) {
@@ -184,7 +207,15 @@ class SearchResults extends React.Component {
 	}
 }
 
-class Document extends React.Component {
+interface DocumentProps {
+	id: number;
+	name: string;
+	
+	// TODO not sure if this is necessary
+	key: any;
+}
+
+class Document extends React.Component<DocumentProps, any> {
 	render() {
 		return (<div className="doc" id={ "doc-" + this.props.id }>
 			<div className="doc-name">{ this.props.name }</div>

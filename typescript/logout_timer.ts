@@ -3,13 +3,19 @@
  * However, it *is* simple. It doesn't need to work perfectly, just well enough to log out after
  * approximately the right amount of time
  */
-class LogoutTimer {
+export default class LogoutTimer {
+	restart: boolean;
+	val: number;
+	lastActive: Date;
+	maxVal: number;
+
 	constructor() {
 		this.restart = true;
 		this.lastActive = null;
 		this.val = 0;
 		this.maxVal = 4 * 60;
 
+		// caveman method
 		this.reset = this.reset.bind(this);
 		this.start = this.start.bind(this);
 		this.check = this.check.bind(this);
@@ -56,8 +62,4 @@ class LogoutTimer {
 	logout() {
 		window.location.href = "/logout";
 	}
-}
-
-if(typeof module !== "undefined" && module.exports) {
-	module.exports = LogoutTimer;
 }

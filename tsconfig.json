@@ -1,0 +1,16 @@
+{
+	"compilerOptions": {
+		"lib": ["es2015", "es2015.iterable", "DOM"],
+		"types": ["node"],
+		"jsx": "preserve",
+		"target": "es2015",
+		"removeComments": true,
+		"outDir": "static/js/modules"
+	},
+	"files": [
+		"typescript/passzero_api.ts",
+		"typescript/logout_timer.ts",
+		"typescript/docs.tsx",
+		"typescript/new_doc.tsx"
+	]
+}

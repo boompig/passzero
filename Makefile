@@ -14,9 +14,10 @@ cleancss := node_modules/clean-css-cli/bin/cleancss
 
 all: lint test build
 
-install: package.json
+install: package.json webpack.config.js tsconfig.json
 	yarn
-	# this is short for a bunch of optimization options
+	tsc
+	# -p is short for a bunch of optimization options
 	webpack -p
 	make copy-deps
 

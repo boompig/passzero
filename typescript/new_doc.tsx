@@ -1,15 +1,17 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import Dropzone from "react-dropzone";
-import pzAPI from "./passzero_api_module.js";
-import LogoutTimer from "./logoutTimer_module.js";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
+import * as Dropzone from "react-dropzone";
+import pzAPI from "./passzero_api";
+import LogoutTimer from "./logout_timer";
 
 const logoutTimer = new LogoutTimer();
+
+interface DocumentUploadAppProps {};
 
 /**
  * Top-level component for document storage
  */
-class DocumentUploadApp extends React.Component {
+class DocumentUploadApp extends React.Component<DocumentUploadAppProps, any> {
 	getIdFromUrl() {
 		const parts = window.location.href.split("/");
 		if(parts.length === 0) {
@@ -101,9 +103,10 @@ class DocumentUploadApp extends React.Component {
 		console.log(blob);
 		const file = new File([blob], response.name, { "type": blob.type });
 		console.log(file);
-		file.preview = URL.createObjectURL(file);
+		const previewUrl = URL.createObjectURL(file);
 		this.setState({
-			"file": file
+			"file": file,
+			"previewUrl": previewUrl
 		}, () => {
 			console.log("new file:");
 			console.log(this.state.file);
@@ -161,6 +164,7 @@ class DocumentUploadApp extends React.Component {
 						<h1 className="title">New Document</h1> }
 					<UploadDocumentForm
 						file={ this.state.file }
+						previewUrl={ this.state.previewUrl }
 						onSubmit={ this.uploadToServer } 
 						resetDoc={ this.resetDoc }
 						existing={ this.state.id !== null } />
@@ -179,17 +183,15 @@ class DocumentUploadApp extends React.Component {
 	}
 }
 
-/**
- * Expects the following props:
- * - file: a File object
- *		- name
- *		- preview (a URL)
- *		- size (in bytes)
- *	- onSubmit: function to call when document is ready to submit
- *	- resetDoc: function to call when you want to discard this document
- *	- existing: bool (true -> document already exists)
- */
-class UploadDocumentForm extends React.Component {
+interface UploadDocumentFormProps {
+	file: File;
+	previewUrl: string;
+ 	onSubmit: (any) => void;
+ 	resetDoc: (any) => void;
+ 	existing: boolean;
+}
+
+class UploadDocumentForm extends React.Component<UploadDocumentFormProps, any> {
 	constructor(props) {
 		super(props);
 		this.state = {
@@ -216,10 +218,10 @@ class UploadDocumentForm extends React.Component {
 	render() {
 		let fileSizeKb = Math.ceil(this.props.file.size / 1024);
 		let doc = <iframe className="doc-preview"
-			src={ this.props.file.preview } width="1000" height="600"></iframe>;
+			src={ this.props.previewUrl } width="1000" height="600"></iframe>;
 		console.log(this.props.file.type);
 		if(this.props.file.type === "image/jpeg" || this.props.file.type === "image/png") {
-			doc = <img className="doc-preview" src={ this.props.file.preview } width="800" />;
+			doc = <img className="doc-preview" src={ this.props.previewUrl } width="800" />;
 		}
 		return (
 			<form id="doc-upload-form" role="form" onSubmit={ this.submitDoc }>
@@ -227,14 +229,14 @@ class UploadDocumentForm extends React.Component {
 					<label htmlFor="name">Name</label>
 					<input name="name" type="text"  className="form-control"
 						value={ this.state.fileName }
-						placeholder="name" required="true"
+						placeholder="name" required={ true }
 						onChange={ this.onNameChange } />
 				</fieldset>
 				{ doc }
 				<fieldset>
 					<label htmlFor="size">File Size</label>
 					<input name="size" type="text" className="form-control"
-						value={ fileSizeKb + " KB" } readOnly="true" />
+						value={ fileSizeKb + " KB" } readOnly={ true } />
 				</fieldset>
 				<div>
 					<button type="button" className="btn btn-warning"
