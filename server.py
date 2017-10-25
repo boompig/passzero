@@ -1,7 +1,7 @@
 import os
 from functools import wraps
 
-from flask import (Flask, abort, escape, flash, make_response, redirect,
+from flask import (Flask, escape, flash, make_response, redirect,
                    render_template, request, session, url_for)
 from flask_compress import Compress
 from flask_sslify import SSLify
@@ -9,14 +9,14 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.contrib.fixers import ProxyFix
 
 import passzero.config as pz_config
-from passzero.api_utils import check_auth, generate_csrf_token
+from passzero.api_utils import auth_or_abort, check_auth, generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
-from passzero.docs_api import docs_api
-from passzero.doc_views import doc_views
 from passzero.backend import (activate_account, decrypt_entries, get_entries,
                               get_services_map, password_strength_scores)
 from passzero.datastore_postgres import db_export
+from passzero.doc_views import doc_views
+from passzero.docs_api import docs_api
 from passzero.models import AuthToken, User, db
 
 if os.path.exists("passzero/my_env.py"):
@@ -63,19 +63,6 @@ def auth_or_redirect_login(function):
             return function(*args, **kwargs)
         else:
             return redirect(url_for("login"))
-    return inner
-
-
-def auth_or_abort(function):
-    """This is a decorator which does authentication for GET requests to templates.
-    If not authenticated, show the 401 screen.
-    If authenticated, call the function."""
-    @wraps(function)
-    def inner(*args, **kwargs):
-        if check_auth():
-            return function(*args, **kwargs)
-        else:
-            return abort(401)
     return inner
 
 

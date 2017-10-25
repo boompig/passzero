@@ -1,21 +1,14 @@
 {% extends "layout.html" -%}
 
 {% block js %}
-    <!-- load libraries from CDN to decrease page load time -->
-    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.4/angular.min.js" integrity="sha256-jFCqhWdzGFjoG8/SAncY2afI/Xv1TPSWSZrb9dpXQbk=" crossorigin="anonymous"></script>-->
     <!-- custom JS -->
+	<!-- TODO add this back in -->
     <!--<script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>-->
     <script src="{{ url_for("static", filename="js/dist/view_docs.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/entries.min.css") + "?build=" + config['BUILD_ID'] }}" />
     <link rel="stylesheet" href="{{ url_for("static", filename="css/src/docs.css") + "?build=" + config['BUILD_ID'] }}" />
-	<style>
-	[ng-cloak] {
-		display: none !important;
-	}
-	</style>
 {% endblock %}
 
 {% block body %}

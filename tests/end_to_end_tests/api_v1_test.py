@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import binascii
 import os
 import unittest
 
@@ -404,7 +405,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             doc_id = r.json()["document_id"]
             assert isinstance(doc_id, int)
             doc = api.get_document(s, doc_id).json()
-            assert doc["contents"] == "hello world\n"
+            assert binascii.a2b_base64(doc["contents"]) == "hello world\n"
             assert doc["name"] == "test document"
 
     def test_upload_and_get_docs(self):

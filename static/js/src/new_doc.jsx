@@ -61,6 +61,7 @@ class DocumentUploadApp extends React.Component {
 		pzAPI.editDocument(this.state.id, props.fileName, props.file)
 			.then((response) => {
 				console.log(response);
+				window.location.href = "/docs/done_edit/" + props.fileName;
 			}).catch((response) => {
 				console.error("Failed to edit existing document");
 				console.error(response);
@@ -93,7 +94,7 @@ class DocumentUploadApp extends React.Component {
 		console.log("Received file:");
 		console.log(response);
 		//TODO content-type hard-coded for now
-		const blob = this.blobFromBase64(response.contents, "image/jpeg");
+		const blob = this.blobFromBase64(response.contents, response.content_type);
 		console.log(blob);
 		const file = new File([blob], response.name, { "type": blob.type });
 		console.log(file);
@@ -149,7 +150,8 @@ class DocumentUploadApp extends React.Component {
 		if(this.state.file) {
 			return (
 				<div>
-					<h1 className="title">New Document</h1>
+					{ this.state.id ? null : 
+						<h1 className="title">New Document</h1> }
 					<UploadDocumentForm
 						file={ this.state.file }
 						onSubmit={ this.uploadToServer } 
@@ -208,21 +210,25 @@ class UploadDocumentForm extends React.Component {
 		let fileSizeKb = Math.ceil(this.props.file.size / 1024);
 		let doc = <iframe className="doc-preview"
 			src={ this.props.file.preview } width="1000" height="600"></iframe>;
-		if(this.props.file.type === "image/jpeg") {
+		console.log(this.props.file.type);
+		if(this.props.file.type === "image/jpeg" || this.props.file.type === "image/png") {
 			doc = <img className="doc-preview" src={ this.props.file.preview } width="800" />;
 		}
 		return (
-			<form role="form" onSubmit={ this.submitDoc }>
-				<label htmlFor="name">Name</label>
-				<input name="name" type="text" className="form-control" 
-					value={ this.state.fileName }
-					placeholder="name" required="true"
-					onChange={ this.onNameChange } />
-				<label htmlFor="size">File Size</label>
-				<input name="size" type="text" className="form-control"
-					value={ fileSizeKb + " KB" } readOnly="true" />
-				<label htmlFor="doc">Preview</label>
+			<form id="doc-upload-form" role="form" onSubmit={ this.submitDoc }>
+				<fieldset>
+					<label htmlFor="name">Name</label>
+					<input name="name" type="text"  className="form-control"
+						value={ this.state.fileName }
+						placeholder="name" required="true"
+						onChange={ this.onNameChange } />
+				</fieldset>
 				{ doc }
+				<fieldset>
+					<label htmlFor="size">File Size</label>
+					<input name="size" type="text" className="form-control"
+						value={ fileSizeKb + " KB" } readOnly="true" />
+				</fieldset>
 				<div>
 					<button type="button" className="btn btn-warning"
 						onClick={ this.props.resetDoc }>Change Document</button>

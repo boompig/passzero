@@ -8,6 +8,19 @@ from .config import CSRF_TOKEN_LENGTH
 from .crypto_utils import random_hex
 
 
+def auth_or_abort(function):
+    """This is a decorator which does authentication for GET requests to templates.
+    If not authenticated, show the 401 screen.
+    If authenticated, call the function."""
+    @wraps(function)
+    def inner(*args, **kwargs):
+        if check_auth():
+            return function(*args, **kwargs)
+        else:
+            return abort(401)
+    return inner
+
+
 def requires_json_auth(function):
     """This is a decorator which does authentication for JSON requests.
     If not authenticated, return json_noauth.

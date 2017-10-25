@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, redirect, url_for
-from passzero.api_utils import check_auth
+from flask import Blueprint, escape, flash, redirect, render_template, url_for
+
+from passzero.api_utils import auth_or_abort, check_auth
 
 doc_views = Blueprint("doc_views", __name__)
 
@@ -24,3 +25,9 @@ def existing_doc(doc_id):
         return redirect(url_for("login"))
     return render_template("new_doc.html", doc_id=doc_id)
 
+
+@doc_views.route("/docs/done_edit/<doc_name>")
+@auth_or_abort
+def done_doc_edit_redirect(doc_name):
+    flash("Successfully changed document %s" % escape(doc_name))
+    return redirect(url_for("doc_views.view_docs"))

@@ -2,28 +2,74 @@ form input {
 	margin-bottom: 1em;
 }
 
+/*
+ * This is the preview window when a document is shown
+ */
 .doc-preview {
 	display: block;
 }
 
-.doc-container {
+img.doc-preview {
 	margin: 0 auto;
-	/*text-align: center;*/
-	/*width: 100%;*/
+}
+
+/* same style as #entry-container */
+#doc-container {
 	max-width: 600px;
+	margin: 0 auto;
 }
 
+/* same style as .entry */
 .doc {
-	text-align: left;
-	border: 1px solid #333;
-	border-radius: 5px;
-	padding: 1em;
+    border: 1px solid #999;
+    border-radius: 3px;
+
+    padding-left: 2em;
+    padding-top: 10px;
+    padding-bottom: 10px;
+
+    margin-top: .5em;
 }
 
+/* same style as .entry-title */
+/* for use in view-documents page */
 .doc-name {
 	font-weight: bold;
+	font-size: 1.2em;
+	margin: .1em;
 }
 
-/*form button {*/
-	/*margin-top: 0.5em;*/
-/*}*/
+/* for use in new/edit page */
+.doc-title {
+	text-align: center;
+}
+
+/* same style as #num-entries */
+#num-docs, #loading-text {
+    font-size: 1.15em;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* same style as .entry-panel */
+.doc-panel {
+    margin-top: 0.4em;
+}
+
+.doc-panel .btn:not(:first-child) {
+	margin-left: .5em;
+}
+
+#doc-upload-form {
+	margin-top: 2em;
+	margin-left: auto;
+	margin-right: auto;
+	display: block;
+}
+
+/* copied from entries.css */
+#search-form {
+    /* top, right, bottom, left */
+    margin: 1em auto 0 auto;
+    max-width: 600px;
+}

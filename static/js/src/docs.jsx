@@ -108,13 +108,21 @@ class DocumentApp extends React.Component {
 
 class DocCount extends React.Component {
 	render() {
+		let doc = null;
+		if(this.props.docs) {
+			if(this.props.docs.length === 1) {
+				doc = "document";
+			} else {
+				doc = "documents";
+			}
+		}
 		return (
 			<div id="num-docs">
 				{ this.props.docsLoaded ?
 					null :
 					<span>Loading entries...</span> }
 				{ this.props.docsLoaded && this.props.docs.length > 0 ? 
-					<span>You have { this.props.docs.length } documents</span>	:
+					<span>You have { this.props.docs.length } { doc }</span> :
 					null }
 				{ this.props.docsLoaded && this.props.docs.length === 0 ?
 					<span>No documents yet!</span> :
@@ -160,7 +168,7 @@ class SearchResults extends React.Component {
 			/>;
 		}
 
-		return (<div className="doc-container">
+		return (<div id="doc-container">
 			{ docs }
 		</div>);
 	}
@@ -172,7 +180,7 @@ class Document extends React.Component {
 			<div className="doc-name">{ this.props.name }</div>
 			<div className="doc-panel">
 				<a href={ window.location.href + "/" + this.props.id }
-					className="btn btn-warning">Edit</a>
+					className="btn btn-info">View</a>
 				<button type="button" className="btn btn-danger">Delete</button>
 			</div>
 		</div>);
