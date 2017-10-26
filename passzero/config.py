@@ -1,4 +1,6 @@
-BUILD_ID = "territorial_elephant"
+BUILD_ID = "special_emu"
+# 100 MB for now
+MAX_STORAGE_PER_USER = 100 * (1024 * 1024)
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32

@@ -16,12 +16,14 @@ from passzero.models import db
 from . import api
 
 app = Flask(__name__)
-app.secret_key = 'foo'
+app.secret_key = "foo"
 app.register_blueprint(docs_api)
 app.register_blueprint(api_v1)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config['WTF_CSRF_ENABLED'] = False
+app.config["WTF_CSRF_ENABLED"] = False
+# lower this so that we don't need to send a lot of data for testing
+app.config["MAX_STORAGE_PER_USER"] = 1024
 
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"
@@ -30,6 +32,7 @@ DEFAULT_PASSWORD = "right_pass"
 class PassZeroDocTester(unittest.TestCase):
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
+        self._app = app
         self.app = app.test_client()
         db.app = app
         db.init_app(app)
@@ -180,3 +183,54 @@ class PassZeroDocTester(unittest.TestCase):
         assert isinstance(doc_id, int)
         r = api.delete_doc(self.app, doc_id + 1, check_status=False)
         assert r.status_code == 400
+
+    def test_docs_space_utilization_no_docs(self):
+        # first test with 0 documents
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        util = api.get_docs_space_utilization(self.app, check_status=True)
+        assert util["num_docs"] == 0
+        assert util["space_used"] == 0
+
+    def test_upload_large_file_and_fail(self):
+        b = BytesIO('w')
+        for i in range(self._app.config["MAX_STORAGE_PER_USER"] + 1):
+            b.write('\0')
+        doc_params = {
+            "name": "zero blob",
+            "document": (BytesIO(b.getvalue()), "zeros.bin")
+        }
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        r = api.post_doc(self.app, doc_params, check_status=False)
+        print(r.data)
+        assert r.status_code != 200
+        docs = api.get_docs(self.app, check_status=True)
+        # make sure the doc did not get uploaded
+        assert docs == []
+
+    def test_edit_large_file_and_fail(self):
+        # create a random 0.5KB file
+        old_doc_params = {
+            "name": "small document",
+            "document": (BytesIO("hello world"), "foo.txt")
+        }
+        self._create_active_account(DEFAULT_EMAIL, "pass")
+        api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
+        doc_id = api.post_doc(self.app, old_doc_params, check_status=True)["document_id"]
+        assert isinstance(doc_id, int)
+        b = BytesIO('w')
+        for i in range(self._app.config["MAX_STORAGE_PER_USER"] + 1):
+            b.write('\0')
+        new_doc_params = {
+            "name": "new name",
+            "document": (BytesIO(b.getvalue()), "large zero stream")
+        }
+        r = api.edit_doc(self.app, doc_id, new_doc_params, check_status=False)
+        # this should fail!
+        assert r.status_code != 200
+        # the document should still exist and hold all the old values
+        new_doc = api.get_doc(self.app, doc_id, check_status=True)
+        assert new_doc["name"] == old_doc_params["name"]
+        # you better hope this passes, otherwise have random binary crap all over the screen
+        assert binascii.a2b_base64(new_doc["contents"]) == "hello world"

@@ -24,6 +24,7 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["BUILD_ID"] = "test"
 app.config["WTF_CSRF_ENABLED"] = False
+app.config["MAX_STORAGE_PER_USER"] = 1024
 
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"

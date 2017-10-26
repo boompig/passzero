@@ -21,7 +21,8 @@ DB_FILENAME = "passzero.db"
 def create_app():
     from server import app
     from passzero.models import db
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % DB_FILENAME
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///%s" % DB_FILENAME
+    app.config["MAX_STORAGE_PER_USER"] = 1024
     db.init_app(app)
     with app.app_context():
         db.create_all()
@@ -29,10 +30,17 @@ def create_app():
 
 
 def create_sqlite_session():
-    engine = create_engine('sqlite:///%s' % DB_FILENAME)
+    engine = create_engine("sqlite:///%s" % DB_FILENAME)
     _, db = create_app()
     session = sessionmaker(bind=engine)()
     return session
+
+
+def create_app_and_sqlite_session():
+    engine = create_engine("sqlite:///%s" % DB_FILENAME)
+    app, db = create_app()
+    session = sessionmaker(bind=engine)()
+    return app, session
 
 
 def setup_module():
@@ -67,35 +75,36 @@ def test_create_inactive_user():
 
 
 def test_delete_account():
-    session = create_sqlite_session()
-    email = "fake@email.com"
-    user_key = "master"
-    user = create_inactive_user(session, email, user_key)
-    assert user.id is not None
-    # add an entry to that account
-    dec_entry_in = {
-        "account": "a",
-        "username": "u",
-        "password": "p",
-        "extra": "e",
-        "has_2fa": True
-    }
-    insert_entry_for_user(session, dec_entry_in, user.id, user_key)
-    # add a document to that account
-    dec_doc = DecryptedDocument(
-        name="test doc",
-        contents="hello",
-        content_type="text/plain"
-    )
-    insert_document_for_user(session, dec_doc, user.id, user_key)
-    delete_account(session, user)
-    try:
-        u2 = get_account_with_email(session, email)
-        # only printed on error
-        print(u2)
-        assert False
-    except NoResultFound:
-        assert True
+    app, session = create_app_and_sqlite_session()
+    with app.app_context():
+        email = "fake@email.com"
+        user_key = u"master"
+        user = create_inactive_user(session, email, user_key)
+        assert user.id is not None
+        # add an entry to that account
+        dec_entry_in = {
+            "account": "a",
+            "username": "u",
+            "password": "p",
+            "extra": "e",
+            "has_2fa": True
+        }
+        insert_entry_for_user(session, dec_entry_in, user.id, user_key)
+        # add a document to that account
+        dec_doc = DecryptedDocument(
+            name="test doc",
+            contents="hello",
+            content_type="text/plain"
+        )
+        insert_document_for_user(session, dec_doc, user.id, user_key)
+        delete_account(session, user)
+        try:
+            u2 = get_account_with_email(session, email)
+            # only printed on error
+            print(u2)
+            assert False
+        except NoResultFound:
+            assert True
 
 
 def test_insert_entry_for_user():

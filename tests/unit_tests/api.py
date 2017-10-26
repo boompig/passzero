@@ -350,6 +350,17 @@ def _delete_doc(app, doc_id, csrf_token, check_status=True):
         assert r.status_code == 200
     return r
 
+
+def get_docs_space_utilization(app, check_status=True):
+    r = json_get(app, "/api/v1/docs/space")
+    if check_status:
+        print(r.data)
+        assert r.status_code == 200
+        return json.loads(r.data)
+    else:
+        return r
+
+
 ### ----- end docs ---
 
 

@@ -379,6 +379,13 @@ class EncryptedDocument(db.Model):
             content_type=self.content_type
         )
 
+    def get_size(self):
+        """
+        A hacky method for estimating the size of user-supplied parameters in the file
+        """
+        return len(self.name) + len(self.document) + len(self.content_type)
+
+
 class DecryptedDocument:
     def __init__(self, name, contents, id=None, content_type=None):
         """
@@ -449,3 +456,9 @@ class DecryptedDocument:
             "contents": base64_encode(self.contents),
             "content_type": self.content_type
         }
+
+    def get_size(self):
+        """
+        A hacky method for estimating the size of user-supplied parameters in the file
+        """
+        return len(self.name) + len(self.contents) + len(self.content_type)

@@ -6,14 +6,13 @@ Supports basic CRUD over documents
 import logging
 
 from flask import Blueprint, escape, session
-
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend
 from .api_utils import (json_error, json_internal_error, json_success,
                         requires_csrf_check, requires_json_auth,
                         requires_json_form_validation, write_json)
-from .backend import ServerError
+from .backend import ServerError, FileTooBigException
 from .forms import NewDocumentForm
 from .models import EncryptedDocument, db
 
@@ -125,18 +124,24 @@ def create_doc_api(form_data):
 
     Status codes:
         - 200: success
-        - 400: various input validation errors
+        - 400: various input validation errors, also if file is too big
         - 401: not authenticated
         - 403: CSRF check failed
     """
-    encrypted_file = backend.encrypt_document(
-        db.session,
-        session["user_id"],
-        session["password"],
-        form_data["name"],
-        form_data["document"]
-    )
-    return write_json(200, {"document_id": encrypted_file.id})
+    try:
+        encrypted_file = backend.encrypt_document(
+            db.session,
+            session["user_id"],
+            session["password"],
+            form_data["name"],
+            form_data["document"]
+        )
+        code = 200
+        data = {"document_id": encrypted_file.id}
+    except FileTooBigException as e:
+        code, data = json_error(400, str(e))
+    return write_json(code, data)
+
 
 
 @docs_api.route("/api/v1/docs/<int:doc_id>", methods=["PATCH", "POST"])
@@ -154,6 +159,12 @@ def edit_doc_api(request_data, doc_id):
         ```
         { "status": ("success" | "error"), "msg": string }
         ```
+
+    Status codes:
+        - 200: success
+        - 400: various input validation errors, also if file is too big, or document does not belong to you
+        - 401: not authenticated
+        - 403: CSRF check failed
     """
     code = 200
     data = {}
@@ -173,6 +184,8 @@ def edit_doc_api(request_data, doc_id):
         code, data = json_error(400, "no such document")
     except AssertionError as e:
         code, data = json_error(400, "the given document does not belong to you")
+    except FileTooBigException as e:
+        code, data = json_error(400, str(e))
     except ServerError as e:
         logging.error(e)
         code, data = json_internal_error("there was an internal server error. admin has been notified.")
@@ -211,4 +224,33 @@ def delete_doc_api(doc_id):
     except AssertionError:
         code, data = json_error(400, "the given document does not belong to you")
     return write_json(code, data)
+
+
+@docs_api.route("/api/v1/docs/space", methods=["GET"])
+@requires_json_auth
+def get_docs_space_utilization():
+    """
+    Get the space utilization for the current logged-in user. This is just for documents.
+
+    Response:
+        on success:
+        ```
+        {
+            "num_docs": number,
+            "space_used": number,
+            "space_remaining": number
+        }
+        ```
+
+        on error:
+        ```
+        { "status": "error", "msg": string }
+        ```
+
+    Status codes:
+        - 200: success
+        - 401: not authenticated
+    """
+    data = backend.get_docs_space_utilization(db.session, session["user_id"])
+    return write_json(200, data)
 

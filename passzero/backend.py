@@ -1,17 +1,23 @@
 import logging
 
+from flask import current_app
+from sqlalchemy import func
+from sqlalchemy.sql.expression import asc
+
 from passzero import audit
 from passzero.config import SALT_SIZE
 from passzero.crypto_utils import get_hashed_password, get_salt
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
                              Entry, Service, User)
-from sqlalchemy import func
-from sqlalchemy.sql.expression import asc
 
 from .utils import base64_encode
 
 
 class ServerError(Exception):
+    pass
+
+
+class FileTooBigException(Exception):
     pass
 
 
@@ -242,6 +248,7 @@ def edit_document(session, user_id, master_key, document_id, document_name, docu
 
     :throws: NoResultFound -> when no such document
     :throws: AssertionError -> when the entry does not belong to the current user
+    :throws: FileTooBigException -> when the file is too big
     """
     assert isinstance(user_id, int)
     assert isinstance(master_key, unicode)
@@ -256,6 +263,15 @@ def edit_document(session, user_id, master_key, document_id, document_name, docu
         id=document_id,
         content_type=document.mimetype
     )
+    space_use = get_docs_space_utilization(session, user_id)
+    file_size = new_dec_doc.get_size()
+    # NOTE: content sizes are different encrypted and decrypted
+    # therefore this is not 100% correct comparison
+    # but it's close enough because I'm not dealing with any strict bounds as far as I can see
+    if file_size > space_use["space_remaining"]:
+        raise FileTooBigException(
+            "Tried to upload an object of size {} but only have {} bytes of space remaining".format(
+                file_size, space_use["space_remaining"]))
     extended_key, extension_params = DecryptedDocument.extend_key(master_key)
     # do NOT add new_enc_doc to session, it's just a placeholder 
     try:
@@ -280,7 +296,22 @@ def insert_document_for_user(session, decrypted_document, user_id, master_key):
     :param decrypted_document: DecryptedDocument
     :param master_key: unicode
     :param user_id: int
+
+    :throws: FileTooBigException -> if the file is too big
     """
+    assert isinstance(decrypted_document, DecryptedDocument)
+    assert isinstance(user_id, int)
+    assert isinstance(master_key, unicode)
+    # before inserting the document, make
+    space_use = get_docs_space_utilization(session, user_id)
+    file_size = decrypted_document.get_size()
+    # NOTE: content sizes are different encrypted and decrypted
+    # therefore this is not 100% correct comparison
+    # but it's close enough because I'm not dealing with any strict bounds as far as I can see
+    if file_size > space_use["space_remaining"]:
+        raise FileTooBigException(
+            "Tried to upload an object of size {} but only have {} bytes of space remaining".format(
+                file_size, space_use["space_remaining"]))
     extended_key, extension_params = DecryptedDocument.extend_key(master_key)
     enc_doc = decrypted_document.encrypt(extended_key)
     enc_doc.key_salt = base64_encode(extension_params["kdf_salt"])
@@ -288,3 +319,22 @@ def insert_document_for_user(session, decrypted_document, user_id, master_key):
     session.add(enc_doc)
     session.commit()
     return enc_doc
+
+
+def get_docs_space_utilization(session, user_id):
+    """
+    :param session: database session, NOT flask session
+    """
+    all_docs = session.query(EncryptedDocument).filter_by(user_id=user_id).all()
+    num_docs = 0
+    total_size = 0
+    for doc in all_docs:
+        num_docs += 1
+        # only count the user-supplied parameters for simplicity
+        total_size += doc.get_size()
+    return {
+        "num_docs": num_docs,
+        "space_used": total_size,
+        "space_remaining": max(current_app.config["MAX_STORAGE_PER_USER"] - total_size, 0)
+    }
+
