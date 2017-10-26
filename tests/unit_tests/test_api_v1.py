@@ -2,23 +2,28 @@ from __future__ import print_function
 
 import json
 import logging
+import os
 import unittest
+from io import BytesIO
 
 import mock
 from flask import Flask
 
 from passzero.api_v1 import api_v1
+from passzero.docs_api import docs_api
 from passzero.models import db
 
 from . import api
 
 app = Flask(__name__, template_folder="../../templates")
 app.secret_key = 'foo'
-app.register_blueprint(api_v1, prefix="")
+app.register_blueprint(docs_api)
+app.register_blueprint(api_v1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["BUILD_ID"] = "test"
+app.config["WTF_CSRF_ENABLED"] = False
 
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"
@@ -97,12 +102,11 @@ class PassZeroApiTester(unittest.TestCase):
         assert rv.status_code == 401
         assert json.loads(rv.data)["status"] == "error"
 
-    def test_delete_user_with_entries(self):
+    def test_delete_user_with_entries_and_docs(self):
         email = DEFAULT_EMAIL
         password = "right_pass"
         self._create_active_account(email, password)
         api.login(self.app, email, password)
-        token = api.get_csrf_token(self.app)
         entry = {
             "account": "foo",
             "username": "bar",
@@ -110,11 +114,18 @@ class PassZeroApiTester(unittest.TestCase):
             "extra": "foobar",
             "has_2fa": False
         }
-        api.create_entry(self.app, entry, token)
-        entries = api.get_entries(self.app)
+        api.create_entry_with_token(self.app, entry, check_status=True)
+        entries = api.get_entries(self.app, check_status=True)
         assert len(entries) == 1
-        token = api.get_csrf_token(self.app)
-        api.delete_user(self.app, password, token)
+        contents = os.urandom(512)
+        doc_params = {
+            "name": "random stream",
+            "document": (BytesIO(contents), "foo.bin")
+        }
+        api.post_doc(self.app, doc_params, check_status=True)
+        docs = api.get_docs(self.app, check_status=True)
+        assert len(docs) == 1
+        api.delete_user_with_token(self.app, password, check_status=True)
         r = api.get_entries(self.app, check_status=False)
         # this should fail
         assert r.status_code == 401
@@ -547,3 +558,24 @@ class PassZeroApiTester(unittest.TestCase):
         # just make sure this renders without errors
         r = self.app.get("/api/v1")
         assert r.status_code == 200
+
+    def test_delete_entry_not_yours(self):
+        entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+            "has_2fa": False
+        }
+        self._create_active_account("fake1@foo.com", "pass")
+        self._create_active_account("fake2@foo.com", "pass")
+        # first guy creates a document
+        api.login(self.app, "fake1@foo.com", "pass", check_status=True)
+        entry_id = api.create_entry_with_token(self.app, entry, check_status=True)
+        assert isinstance(entry_id, int)
+        api.logout(self.app)
+        # second guy tries to delete document of first guy
+        api.login(self.app, "fake2@foo.com", "pass", check_status=True)
+        r = api.delete_entry_with_token(self.app, entry_id, check_status=False)
+        assert r.status_code == 400
+

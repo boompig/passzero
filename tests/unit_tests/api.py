@@ -112,6 +112,15 @@ def create_entry(app, entry, csrf_token, check_status=True):
         return r
 
 
+def create_entry_with_token(app, entry, check_status=True):
+    """This interface adds the csrf token
+    :return entry_id"""
+    assert isinstance(entry, dict)
+    assert isinstance(check_status, bool)
+    csrf_token = get_csrf_token(app)
+    return create_entry(app, entry, csrf_token, check_status)
+
+
 def delete_entry(app, entry_id, csrf_token, check_status=True):
     assert isinstance(entry_id, int)
     assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
@@ -124,6 +133,13 @@ def delete_entry(app, entry_id, csrf_token, check_status=True):
     if check_status:
         assert r.status_code == 200
     return r
+
+
+def delete_entry_with_token(app, entry_id, check_status=True):
+    assert isinstance(entry_id, int)
+    assert isinstance(check_status, bool)
+    csrf_token = get_csrf_token(app)
+    return delete_entry(app, entry_id, csrf_token, check_status)
 
 
 def delete_all_entries(app, csrf_token, check_status=True):
@@ -153,6 +169,13 @@ def delete_user(app, password, csrf_token, check_status=True):
     if check_status:
         assert r.status_code == 200
     return r
+
+
+def delete_user_with_token(app, password, check_status=True):
+    assert isinstance(password, str) or isinstance(password, unicode)
+    assert isinstance(check_status, bool)
+    csrf_token = get_csrf_token(app)
+    return delete_user(app, password, csrf_token, check_status)
 
 
 def edit_entry(app, entry_id, entry, csrf_token, check_status=True):
@@ -243,6 +266,8 @@ def get_docs(app, check_status=True):
 
 
 def post_doc(app, doc_params, check_status=True):
+    assert isinstance(doc_params, dict)
+    assert isinstance(check_status, bool)
     csrf_token = get_csrf_token(app)
     return _post_doc(
         app,
@@ -253,6 +278,9 @@ def post_doc(app, doc_params, check_status=True):
 
 
 def _post_doc(app, doc_params, csrf_token, check_status=True):
+    assert isinstance(doc_params, dict)
+    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(check_status, bool)
     url = "/api/v1/docs"
     doc_params["csrf_token"] = csrf_token
     r = app.post(url,
