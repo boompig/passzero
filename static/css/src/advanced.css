@@ -52,10 +52,7 @@ form .form-error {
 
 #profile-tab-content .title {
     text-align: center;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 1em;
-    margin-bottom: 0;
+    margin: 1em auto 0 auto;
 }
 
 #profile-tab-content button {

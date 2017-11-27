@@ -40,7 +40,7 @@ head {
 #beta-sticker {
     display: inline;
     text-align: center;
-    margin: 0;
+    /*margin: 0;*/
     font-size: 1.1em;
 
     padding: 5px 10px;
@@ -54,7 +54,7 @@ head {
     font-size: 3.2em;
     font-weight: normal;
     display: inline;
-    margin: 0;
+    /*margin: 0;*/
     text-align: center;
     vertical-align: baseline;
 }

@@ -1,4 +1,4 @@
-BUILD_ID = "neat_ostrich"
+BUILD_ID = "unpleasant_rhino"
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32

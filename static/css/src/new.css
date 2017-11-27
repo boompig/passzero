@@ -36,7 +36,6 @@
     margin-top: 0.5em;
 }
 
->>>>>>> 445a6a3... new.ts is now in Angular (1)
 button[type="submit"] {
     margin-top: 0.5em;
 }
@@ -81,7 +80,6 @@ form {
     display: block;
 }
 
-<<<<<<< HEAD
 button#toggle-special-chars-btn {
     margin-top: 10px;
     margin-bottom: 10px;
@@ -115,13 +113,5 @@ button#toggle-special-chars-btn.active {
     margin-top: 0.5em;
     border: 1px solid #777;
     background-color: #ddd;
-=======
-.btn-settings {
-    border: 1px solid black;
-    background-color: #fff;
->>>>>>> 445a6a3... new.ts is now in Angular (1)
 }
 
-.btn-settings .glyphicon {
-    /*margin-right: 0.5em;*/
-}

@@ -1,0 +1,14 @@
+{
+    "ignore": [
+        "order-alphabetical",
+        "ids",
+        "overqualified-elements",
+        "adjoining-classes",
+        "important",
+        "unqualified-attributes",
+        "box-model",
+        "outline-none"
+    ],
+    "warnings": [
+    ]
+}
