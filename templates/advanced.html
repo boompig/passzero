@@ -27,13 +27,17 @@
     </ul>
     <div class="tab-content">
         <div id="password-strength" class="tab-pane" role="tabpanel">
-            <p><a href="/entries/strength">Click here</a> to see password strength for all your entries</p>
+            <div id="password-strength-container" class="tab-text-container">
+                <p><a href="/entries/strength">Click here</a> to see password strength for all your entries</p>
+            </div>
         </div>
         <div id="2fa-audit" class="tab-pane" role="tabpanel">
-            <p><a href="/entries/2fa">Click here</a> to see whether 2FA is enabled for all your entries</p>
+            <div id="2fa-audit-container" class="tab-text-container">
+                <p><a href="/entries/2fa">Click here</a> to see whether 2FA is enabled for all your entries</p>
+            </div>
         </div>
         <div id="export" class="tab-pane active" role="tabpanel">
-            <div id="export-container">
+            <div id="export-container" class="tab-text-container">
                 <p>Generate a CSV file of all your entries, still encrypted. Read about how your data is encrypted so you can decrypt it locally.</p>
 
                 <button type="submit" id="export-btn" class="btn btn-success"

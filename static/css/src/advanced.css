@@ -28,7 +28,7 @@ form .form-error {
     display: block;
 }
 
-#export-container {
+.tab-text-container {
     margin-left: 2em;
     margin-top: 2em;
 }
