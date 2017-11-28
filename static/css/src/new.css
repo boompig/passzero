@@ -1,7 +1,3 @@
-input[type="submit"] {
-    margin-top: 4px;
-}
-
 /* display input on own line */
 .form-control {
     display: block;
@@ -20,37 +16,28 @@ input[type="submit"] {
     }
 }
 
-#show-hide-btn, #gen-password-btn, #gen-passphrase-btn {
+.btn-container {
     margin-top: 0.5em;
-}
-
-@media(min-width: 700px) {
-    #gen-password-btn, #gen-passphrase-btn {
-        margin-left: 0.5em;
-    }
-}
-
-@media(max-width: 699px) {
-    #gen-password-btn, #gen-passphrase-btn {
-        margin-left: 0;
-    }
 }
 
 button[type="submit"] {
     margin-top: 0.5em;
 }
 
+.input-range {
+    max-width: 300px;
+    min-width: 250px;
+}
+
 form {
-    display: block;
-    max-width: 500px;
-    margin: 0 auto;
-
-    border: 1px solid #ccc;
     border-radius: 10px;
+    border: 1px solid #ccc;
+    display: block;
     margin-top: 30px;
-
-    padding-top: 1em;
+    margin: 0 auto;
+    max-width: 500px;
     padding-bottom: 1em;
+    padding-top: 1em;
 }
 
 @media(min-width: 700px) {
@@ -69,34 +56,6 @@ form {
     margin-top: 0.5em;
 }
 
-#len-container {
-    margin-top: 10px;
-
-    padding-right: 1em;
-    padding-top: 1em;
-    padding-bottom: 0.7em;
-    padding-left: 1em;
-    font-size: 0.9em;
-
-    /*display: table-cell;*/
-    display: block;
-    max-width: 300px;
-    vertical-align: center;
-
-    border-radius: 10px;
-    border: 1px solid #aaa;
-}
-
-#len-container button {
-    padding-top: .25em;
-    padding-bottom: .25em;
-    padding-left: .2em;
-}
-
-#len-container .text {
-    font-size: 1.1em;
-}
-
 #extra-container {
     margin-top: 0.4em;
 }
@@ -105,41 +64,11 @@ form {
     display: block;
 }
 
-button#toggle-special-chars-btn {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #999;
-    padding: 5px 15px;
-    font-size: 1.1em;
-    border-radius: 3px;
-    /*weight: bold;*/
-}
-
-#toggle-special-chars-btn:not(.active) .glyphicon {
-    display: none;
-}
-
-button#toggle-special-chars-btn:not(.active) {
-    background-color: #E8BB35;
-}
-
-button#toggle-special-chars-btn.active {
-    background-color: #5cb85c;
-    border-color: #4cae4c;
-    color: #fafafa;
-}
-
-#len-container #phraseLen, #len-container #passLen {
-    font-size: 1.3em;
-}
-
 .btn-settings {
-	display: inline-block;
-    margin-top: 0.5em;
-    border: 1px solid #777;
-    background-color: #ddd;
+    border: 1px solid black;
+    background-color: #fff;
 }
 
 .btn-settings .glyphicon {
-    /*margin-right: 0.5em;*/
+    margin-right: 0.5em;
 }
