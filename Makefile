@@ -54,7 +54,7 @@ test-cov: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html $(UNIT_TEST_SRC)
 
 live-test-local: $(SRC) $(E2E_TEST_SRC) lint
-	PYTHONPATH=$(CWD) pytest $(E2E_TEST_SRC)
+	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5050' pytest $(E2E_TEST_SRC)
 
 lint: $(SRC) $(js_src) $(css_src)
 	$(csslint) --quiet $(css_src)
