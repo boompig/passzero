@@ -75,8 +75,8 @@ var NewCtrl = function() {
      * Return the passphrase that has been generated from the given corpus of words
      */
     this.genPassphraseHelper = function(words: Array<string>, numWords: number): string {
-        let phrase = "", index, word, i;
-        for (i = 0; i < numWords; i++) {
+        let phrase = "", index, word;
+        for (let i = 0; i < numWords; i++) {
             let word = words[randInt(0, words.length)];
             word = word[0].toUpperCase() + word.substr(1);
             phrase += word;
@@ -107,18 +107,17 @@ var NewCtrl = function() {
      */
     this.genCharSet = function() {
         this.charSet = [];
-        let i;
-        for (i = "a".charCodeAt(0); i <= "z".charCodeAt(0); i++) {
+        for (let i = "a".charCodeAt(0); i <= "z".charCodeAt(0); i++) {
             this.charSet.push(String.fromCharCode(i));
         }
-        for (i = "A".charCodeAt(0); i <= "Z".charCodeAt(0); i++) {
+        for (let i = "A".charCodeAt(0); i <= "Z".charCodeAt(0); i++) {
             this.charSet.push(String.fromCharCode(i));
         }
-        for (i = "0".charCodeAt(0); i <= "9".charCodeAt(0); i++) {
+        for (let i = "0".charCodeAt(0); i <= "9".charCodeAt(0); i++) {
             this.charSet.push(String.fromCharCode(i));
         }
         if (this.useSpecialChars) {
-            for (i = "!".charCodeAt(0); i <= "/".charCodeAt(0); i++) {
+            for (let i = "!".charCodeAt(0); i <= "/".charCodeAt(0); i++) {
                 this.charSet.push(String.fromCharCode(i));
             }
         }

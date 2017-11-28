@@ -16,22 +16,6 @@
     }
 }
 
-#show-hide-btn, #gen-password-btn, #gen-passphrase-btn {
-    margin-top: 0.5em;
-}
-
-@media(min-width: 700px) {
-    #gen-password-btn, #gen-passphrase-btn {
-        margin-left: 0.5em;
-    }
-}
-
-@media(max-width: 699px) {
-    #gen-password-btn, #gen-passphrase-btn {
-        margin-left: 0;
-    }
-}
-
 .btn-container {
     margin-top: 0.5em;
 }
@@ -80,38 +64,11 @@ form {
     display: block;
 }
 
-button#toggle-special-chars-btn {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #999;
-    padding: 5px 15px;
-    font-size: 1.1em;
-    border-radius: 3px;
-    /*weight: bold;*/
-}
-
-#toggle-special-chars-btn:not(.active) .glyphicon {
-    display: none;
-}
-
-button#toggle-special-chars-btn:not(.active) {
-    background-color: #E8BB35;
-}
-
-button#toggle-special-chars-btn.active {
-    background-color: #5cb85c;
-    border-color: #4cae4c;
-    color: #fafafa;
-}
-
-#len-container #phraseLen, #len-container #passLen {
-    font-size: 1.3em;
-}
-
 .btn-settings {
-	display: inline-block;
-    margin-top: 0.5em;
-    border: 1px solid #777;
-    background-color: #ddd;
+    border: 1px solid black;
+    background-color: #fff;
 }
 
+.btn-settings .glyphicon {
+    margin-right: 0.5em;
+}
