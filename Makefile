@@ -1,4 +1,4 @@
-.PHONY: all install lint test live-test build clean minify-js minify-css minify copy-deps ts-compile
+.PHONY: all install lint test live-test-local build clean minify-js minify-css minify copy-deps ts-compile
 
 SRC=server.py passzero/*.py
 UNIT_TEST_SRC=tests/unit_tests/*.py
@@ -53,7 +53,7 @@ test: $(SRC) $(UNIT_TEST_SRC) lint
 test-cov: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html $(UNIT_TEST_SRC)
 
-live-test: $(SRC) $(E2E_TEST_SRC) lint
+live-test-local: $(SRC) $(E2E_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest $(E2E_TEST_SRC)
 
 lint: $(SRC) $(js_src) $(css_src)
