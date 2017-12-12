@@ -1,4 +1,4 @@
-BUILD_ID = "homely_manatee"
+BUILD_ID = "ethical_fox"
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32

@@ -8,7 +8,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "postinstall": "make minify && make copy-deps"
+    "postinstall": "make ts-compile && make minify && make copy-deps"
   },
   "dependencies": {
     "@types/clipboard": "^1.5.35",

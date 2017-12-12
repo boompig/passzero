@@ -1,4 +1,4 @@
-.PHONY: all install lint test live-test-local build clean minify-js minify-css minify copy-deps ts-compile
+.PHONY: all install lint test live-test-local build-name clean minify-js minify-css minify copy-deps ts-compile
 
 SRC=server.py passzero/*.py
 UNIT_TEST_SRC=tests/unit_tests/*.py
@@ -21,8 +21,8 @@ install: package.json
 	yarn
 	make copy-deps
 
-build: build/add_build_name.py passzero/config.py
-	python build/add_build_name.py passzero/config.py
+build-name: scripts/add_build_name.py passzero/config.py
+	python scripts/add_build_name.py passzero/config.py
 
 minify: minify-js minify-css
 
