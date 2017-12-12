@@ -51,3 +51,4 @@ static/js/src/passzero_api.js
 static/js/src/login.js
 static/js/src/index.js
 static/js/src/new.js
+static/js/src/register-sw.js
