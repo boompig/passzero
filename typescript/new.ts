@@ -6,6 +6,7 @@ declare let angular: any;
 declare let Utils: any;
 declare let pzAPI: any;
 declare let LogoutTimer: any;
+declare let Clipboard: any;
 
 /**
  * Get a random integer in interval [a, b)
@@ -234,6 +235,26 @@ var NewCtrl = function() {
         this.useSpecialChars = !this.useSpecialChars;
     };
 
+    this._onClip = function(e) {
+        e.clearSelection();
+        //console.log(e.trigger);
+        var elem = $(e.trigger);
+        // create the tooltip
+        elem.tooltip({
+            "container": "body",
+            "animation": true,
+            "placement": "bottom",
+            "title": "Copied to clipboard!",
+            "trigger": "manual"
+        });
+        // activate the tooltip
+        elem.tooltip("show");
+        window.setTimeout(function() {
+            // hide the tooltip after a delay
+            elem.tooltip("hide");
+        }, 3000);
+    };
+
     /**
      * Called by ng-init on the page
      */
@@ -242,6 +263,10 @@ var NewCtrl = function() {
             this.entry = entry;
         }
         console.log(entry);
+
+        // init clip button
+        var clipboard = new Clipboard(".copy-pwd-btn");
+        clipboard.on("success", this._onClip);
 
         // set up the logout timer
         this.timer = new LogoutTimer();

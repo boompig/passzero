@@ -11,6 +11,7 @@
     "postinstall": "make minify && make copy-deps"
   },
   "dependencies": {
+    "@types/clipboard": "^1.5.35",
     "@types/node": "^7.0.31",
     "angular": "1.6.4",
     "bootstrap": "3.3.7",

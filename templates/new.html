@@ -6,7 +6,15 @@
 
 {% block js %}
     <!-- angular from CDN -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.4/angular.min.js" integrity="sha256-jFCqhWdzGFjoG8/SAncY2afI/Xv1TPSWSZrb9dpXQbk=" crossorigin="anonymous"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.4/angular.min.js"
+        integrity="sha256-jFCqhWdzGFjoG8/SAncY2afI/Xv1TPSWSZrb9dpXQbk="
+        crossorigin="anonymous"></script>
+    <!-- clipboard.js from CDN -->
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.1/clipboard.min.js"
+        integrity="sha256-El0fEiD3YOM7uIVZztyQzmbbPlgEj0oJVxRWziUh4UE="
+        crossorigin="anonymous"></script>
 
     <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <script src="{{ url_for("static", filename="js/dist/new.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
@@ -27,21 +35,34 @@
             {%- if entry -%}
                 Edit PassZero entry for {{ entry["account"] }}
             {%- else -%}
-                Create new PassZero entry
+                Create New Entry
             {%- endif -%}
         </h3>
 
         <label for="account">Account</label>
-        <input type="text" name="account" required="true" class="form-control"
+        <input type="text"
+            name="account"
+            required="true"
+            class="form-control"
+            autocomplete="off"
             ng-model="ctrl.entry.account" />
 
         <label for="username">Username</label>
-        <input type="text" name="username" autocomplete="off" required="true" 
-            class="form-control" ng-model="ctrl.entry.username" />
+        <input type="text"
+            name="username"
+            autocomplete="email"
+            required="true" 
+            class="form-control"
+            ng-model="ctrl.entry.username" />
 
         <label for="password">Password</label>
-        <input type="password" name="password" id="password" autocomplete="off" 
-            required="true" class="form-control" ng-model="ctrl.entry.password" />
+        <input type="password"
+            name="password"
+            id="password"
+            autocomplete="off" 
+            required="true"
+            class="form-control"
+            ng-model="ctrl.entry.password" />
 
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
@@ -55,7 +76,14 @@
             </button>
             {% endraw %}
             <button type="button" class="btn btn-default btn-primary" id="gen-pass-btn"
-                data-ng-click="ctrl.genPassword()">Generate Password</button>
+                data-ng-click="ctrl.genPassword()">Random</button>
+            {% raw %}
+            <button type="button"
+                ng-if="!ctrl.entry.is_encrypted"
+                data-clipboard-text="{{ ctrl.entry.password }}"
+                class="btn btn-success copy-pwd-btn"
+                data-toggle="tooltip">Copy</button>
+            {% endraw %}
             <button type="button" class="btn btn-settings" data-ng-click="ctrl.showHideSettings($event)">
                 <span class="glyphicon glyphicon-cog"></span>Settings
             </button>

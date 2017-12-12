@@ -6,12 +6,23 @@ html, body {
 }
 
 .container {
-    margin-top: 50px;
     background-color: #fff;
     min-height: 100%;
 }
 
-h1.title, h2.title {
+@media(min-width: 700px) {
+    .container {
+        margin-top: 50px;
+    }
+}
+
+@media(max-width: 699px) {
+    .container {
+        margin-top: 2em;
+    }
+}
+
+h1.title, h2.title, h3.title {
     text-align: center;
 }
 

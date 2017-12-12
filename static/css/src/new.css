@@ -1,32 +1,8 @@
-/* display input on own line */
+
 .form-control {
+    /* display input on own line */
     display: block;
     width: 80%;
-}
-
-@media(min-width: 700px) {
-    .form-control {
-        width: 80%;
-    }
-}
-
-@media(max-width: 699px) {
-    .form-control {
-        width: 90%;
-    }
-}
-
-.btn-container {
-    margin-top: 0.5em;
-}
-
-button[type="submit"] {
-    margin-top: 0.5em;
-}
-
-.input-range {
-    max-width: 300px;
-    min-width: 250px;
 }
 
 form {
@@ -41,15 +17,38 @@ form {
 }
 
 @media(min-width: 700px) {
+    .form-control {
+        width: 80%;
+    }
+
     form {
         padding-left: 2em;
     }
 }
 
-@media (max-width: 699px) {
-    form {
-        padding-left: 0.8em;
+@media(max-width: 699px) {
+    .form-control {
+        /* on small devices form should take up more of screen */
+        width: 100%;
     }
+
+    form {
+        border: none;
+        padding-left: 0;
+    }
+}
+
+.btn-container {
+    margin-top: 0.5em;
+}
+
+button[type="submit"] {
+    margin-top: 0.5em;
+}
+
+.input-range {
+    max-width: 300px;
+    min-width: 250px;
 }
 
 #create-btn {
