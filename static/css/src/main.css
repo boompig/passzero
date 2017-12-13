@@ -8,22 +8,12 @@ html, body {
 .container {
     background-color: #fff;
     min-height: 100%;
-}
-
-@media(min-width: 700px) {
-    .container {
-        margin-top: 50px;
-    }
-}
-
-@media(max-width: 699px) {
-    .container {
-        margin-top: 2em;
-    }
+    margin-top: 45px;
 }
 
 h1.title, h2.title, h3.title {
     text-align: center;
+    font-weight: normal;
 }
 
 #logged-in-text {
@@ -31,7 +21,7 @@ h1.title, h2.title, h3.title {
 }
 
 .flashes {
-    margin-top: 20px;
+    margin-top: 1em;
 }
 
 /***** customize navbar ***/
