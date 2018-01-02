@@ -15,7 +15,7 @@ uglifyjs := node_modules/uglify-js/bin/uglifyjs
 cleancss := node_modules/clean-css-cli/bin/cleancss
 tsc		 := node_modules/typescript/bin/tsc
 
-all: lint test build
+all: lint test build-name
 
 install: package.json
 	yarn

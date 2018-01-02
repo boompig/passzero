@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import logging
 
+import six
 from sqlalchemy.orm.exc import NoResultFound
 
 from passzero.backend import encrypt_entry, insert_new_entry
@@ -60,8 +61,10 @@ def reencrypt_entries(session, user_id, old_password, new_password):
 
 
 def change_password_in_user_table(session, user_id, new_password):
+    assert isinstance(new_password, six.text_type)
     user = find_user(session, user_id)
-    user.password = get_hashed_password(new_password, user.salt)
+    # the user's salt is represented in the database as unicode but is worked on as bytestring
+    user.password = get_hashed_password(new_password, user.salt.encode('utf-8'))
 
 
 def change_password(session, user_id, old_password, new_password):
@@ -71,7 +74,7 @@ def change_password(session, user_id, old_password, new_password):
     """
     # do proper authentication
     user = find_user(session, user_id)
-    hashed_password = get_hashed_password(old_password, user.salt)
+    hashed_password = get_hashed_password(old_password, user.salt.encode('utf-8'))
     if hashed_password != user.password:
         logging.debug("[change_password] Hashed password is not the same as user password")
         session.rollback()

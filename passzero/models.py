@@ -2,6 +2,7 @@ import binascii
 import hmac
 from datetime import datetime
 
+import six
 from aead import AEAD
 from flask_sqlalchemy import SQLAlchemy
 
@@ -40,15 +41,23 @@ class User(db.Model):
         :type form_password:    unicode
         :return:                True on success, False on failure.
         :rtype:                 bool"""
-        hashed_password = get_hashed_password(form_password, self.salt)
+        assert isinstance(form_password, six.text_type)
+        # salt stored as unicode but should really be bytes
+        assert isinstance(self.salt, six.text_type)
+        hashed_password = get_hashed_password(form_password, self.salt.encode('utf-8'))
         # prevent timing attacks by using constant-time comparison
         # can't use compare_digest directly because args can't be unicode strings
-        d1 = hmac.new(self.password).digest()
+        assert isinstance(self.password, six.text_type)
+        assert isinstance(hashed_password, six.binary_type)
+        d1 = hmac.new(self.password.encode('utf-8')).digest()
         d2 = hmac.new(hashed_password).digest()
         return hmac.compare_digest(d1, d2)
 
     def change_password(self, new_password):
-        hashed_password = get_hashed_password(new_password, self.salt)
+        assert isinstance(new_password, six.text_type)
+        # salt stored as unicode but should really be bytes
+        assert isinstance(self.salt, six.text_type)
+        hashed_password = get_hashed_password(new_password, self.salt.encode('utf-8'))
         self.password = hashed_password
 
     def __repr__(self):

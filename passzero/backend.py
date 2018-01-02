@@ -1,3 +1,4 @@
+import six
 from sqlalchemy import func
 from sqlalchemy.sql.expression import asc
 
@@ -72,7 +73,8 @@ def get_entries(db_session, user_id):
 
 
 def get_account_with_email(db_session, email):
-     return db_session.query(User).filter_by(email=email).one()
+    assert isinstance(email, six.text_type)
+    return db_session.query(User).filter_by(email=email).one()
 
 
 def delete_all_entries(db_session, user):
@@ -117,12 +119,18 @@ def delete_account(db_session, user):
 def create_inactive_user(db_session, email, password):
     """Create an account which has not been activated.
     Return the user object (model)"""
+    assert isinstance(email, six.text_type)
+    assert isinstance(password, six.text_type)
     salt = get_salt(SALT_SIZE)
+    assert isinstance(salt, six.binary_type)
     password_hash = get_hashed_password(password, salt)
     user = User()
     user.email = email
-    user.password = password_hash
-    user.salt = salt
+    # the hashed password is a binary string, so have to convert to unicode
+    # will be unicode when it comes out of DB anyway
+    user.password = password_hash.decode("utf-8")
+    # even though it would make a lot of sense to store the salt as a binary string, in reality it is stored in unicode
+    user.salt = salt.decode("utf-8")
     user.active = False
     # necessary to get user ID
     db_session.add(user)

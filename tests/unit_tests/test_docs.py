@@ -2,13 +2,14 @@ from __future__ import print_function
 
 # import json
 import logging
+import os
 import unittest
-from six import BytesIO
 
 import mock
+import six
 from flask import Flask
+from six import BytesIO
 
-import os
 from passzero.api_v1 import api_v1
 from passzero.models import db
 
@@ -21,8 +22,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config['WTF_CSRF_ENABLED'] = False
 
-DEFAULT_EMAIL = "sample@fake.com"
-DEFAULT_PASSWORD = "right_pass"
+DEFAULT_EMAIL = u"sample@fake.com"
+DEFAULT_PASSWORD = u"right_pass"
 
 
 class PassZeroDocTester(unittest.TestCase):
@@ -35,6 +36,8 @@ class PassZeroDocTester(unittest.TestCase):
 
     @mock.patch("passzero.email.send_email")
     def _create_active_account(self, email, password, m1):
+        assert isinstance(email, six.text_type)
+        assert isinstance(password, six.text_type)
         # signup, etc etc
         #TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
@@ -62,14 +65,14 @@ class PassZeroDocTester(unittest.TestCase):
             fp.write("hello world\n")
 
     def test_no_docs(self):
-        self._create_active_account(DEFAULT_EMAIL, "pass")
-        api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
 
     def test_upload_and_get_doc_then_delete(self):
-        self._create_active_account(DEFAULT_EMAIL, "pass")
-        api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         upload_doc_token = api.get_csrf_token(self.app)
         doc_params = {
             "name": "test document",
@@ -91,8 +94,8 @@ class PassZeroDocTester(unittest.TestCase):
         assert docs_after_delete == []
 
     def test_no_such_doc(self):
-        self._create_active_account(DEFAULT_EMAIL, "pass")
-        api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
         r = api.get_document(self.app, 1, check_status=False)

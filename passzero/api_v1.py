@@ -18,6 +18,15 @@ from .models import AuthToken, Entry, User, db, EncryptedDocument
 
 api_v1 = Blueprint("api_v1", __name__)
 
+
+class UserNotActiveException(Exception):
+    pass
+
+
+class TokenExpiredException(Exception):
+    pass
+
+
 @api_v1.route("/api", methods=["GET"])
 @api_v1.route("/api/v1", methods=["GET"])
 def show_api():
@@ -97,7 +106,8 @@ def api_login(request_data):
     """
     try:
         user = backend.get_account_with_email(db.session, request_data["email"])
-        assert(user.active)
+        if not user.active:
+            raise UserNotActiveException
         if user.authenticate(request_data["password"]):
             session["email"] = user.email
             session["password"] = request_data["password"]
@@ -115,7 +125,7 @@ def api_login(request_data):
             code, data = json_error(401, "Either the email or password is incorrect")
     except NoResultFound:
         code, data = json_error(401, "There is no account with that email")
-    except AssertionError:
+    except UserNotActiveException:
         code, data = json_error(401,
             "The account has not been activated. Check your email!")
     return write_json(code, data)
@@ -551,7 +561,8 @@ def recover_password_confirm_api(request_data):
     """
     try:
         token = db.session.query(AuthToken).filter_by(token=request_data['token']).one()
-        assert not token.is_expired()
+        if token.is_expired():
+            raise TokenExpiredException
         user = db.session.query(User).filter_by(id=token.user_id).one()
         # 1) change the user's password
         user.change_password(request_data['password'])
@@ -567,7 +578,7 @@ def recover_password_confirm_api(request_data):
         code, data = json_success("successfully changed password")
     except NoResultFound:
         code, data = json_error(400, "token is invalid")
-    except AssertionError:
+    except TokenExpiredException:
         # delete old token
         db.session.delete(token)
         db.session.commit()

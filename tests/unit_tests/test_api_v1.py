@@ -5,6 +5,7 @@ import logging
 import unittest
 
 import mock
+import six
 from flask import Flask
 
 from passzero.api_v1 import api_v1
@@ -20,8 +21,8 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["BUILD_ID"] = "test"
 
-DEFAULT_EMAIL = "sample@fake.com"
-DEFAULT_PASSWORD = "right_pass"
+DEFAULT_EMAIL = u"sample@fake.com"
+DEFAULT_PASSWORD = u"right_pass"
 
 
 class PassZeroApiTester(unittest.TestCase):
@@ -40,8 +41,8 @@ class PassZeroApiTester(unittest.TestCase):
         db.create_all()
 
     def test_delete_all_entries(self):
-        self._create_active_account(DEFAULT_EMAIL, "pass")
-        api.login(self.app, DEFAULT_EMAIL, "pass", check_status=True)
+        self._create_active_account(DEFAULT_EMAIL, u"pass")
+        api.login(self.app, DEFAULT_EMAIL, u"pass", check_status=True)
         create_entry_token = api.get_csrf_token(self.app)
         entry = {
             "account": "foo",
@@ -73,8 +74,8 @@ class PassZeroApiTester(unittest.TestCase):
         assert json.loads(rv.data)["status"] == "error"
 
     def test_delete_invalid_entry(self):
-        self._create_active_account(DEFAULT_EMAIL, "pass")
-        api.login(self.app, DEFAULT_EMAIL, "pass")
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.get_csrf_token(self.app)
         rv = api.delete_entry(self.app, 2014, token, check_status=False)
         # only print on test failure
@@ -99,7 +100,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_delete_user_with_entries(self):
         email = DEFAULT_EMAIL
-        password = "right_pass"
+        password = DEFAULT_PASSWORD
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         token = api.get_csrf_token(self.app)
@@ -123,12 +124,10 @@ class PassZeroApiTester(unittest.TestCase):
         assert r.status_code == 401
 
     def test_delete_user_bad_password(self):
-        email = DEFAULT_EMAIL
-        password = "right_pass"
-        self._create_active_account(email, password)
-        api.login(self.app, email, password)
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.get_csrf_token(self.app)
-        r = api.delete_user(self.app, "bad password", token, check_status=False)
+        r = api.delete_user(self.app, u"bad password", token, check_status=False)
         assert r.status_code != 200
         # make sure that I can still get back profile information
         # which would be impossible if account was deleted
@@ -139,7 +138,7 @@ class PassZeroApiTester(unittest.TestCase):
     @mock.patch("passzero.email.send_email", return_value=True)
     def test_delete_user_with_recovery_token(self, m1):
         email = DEFAULT_EMAIL
-        password = "right_pass"
+        password = DEFAULT_PASSWORD
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         recover_csrf_token = api.get_csrf_token(self.app)
@@ -163,7 +162,7 @@ class PassZeroApiTester(unittest.TestCase):
     @mock.patch("passzero.email.send_email", return_value=True)
     def test_signup(self, m1):
         email = DEFAULT_EMAIL
-        password = "fake password"
+        password = u"fake password"
         r = api.signup(self.app, email, password)
         print(r.data)
         # only printed on error
@@ -184,14 +183,27 @@ class PassZeroApiTester(unittest.TestCase):
         token = api.get_csrf_token(self.app)
         assert isinstance(token, str) or isinstance(token, unicode)
 
+    def test_login(self):
+        """
+        Make sure the login works.
+        Most basic test and good way of discovering stupid mistakes
+        """
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        r = api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        # only printed on error
+        print(r.data)
+        assert r.status_code == 200
+
     def test_login_invalid_account(self):
-        r = api.login(self.app, DEFAULT_EMAIL, "world", check_status=False)
+        r = api.login(self.app, DEFAULT_EMAIL, u"world", check_status=False)
         # only printed on error
         print(r.data)
         assert r.status_code == 401
 
     @mock.patch("passzero.email.send_email")
     def _create_active_account(self, email, password, m1):
+        assert isinstance(email, six.text_type)
+        assert isinstance(password, six.text_type)
         # signup, etc etc
         #TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
@@ -201,6 +213,7 @@ class PassZeroApiTester(unittest.TestCase):
         assert r.status_code == 200
         # get the token from calls
         token = m1.call_args[0][2].split("?")[1].replace("token=", "")
+        assert isinstance(token, six.text_type)
         # link = m1.call_args[0][2][m1.call_args[0][2].index("http://"):]
         # activate
         r = api.activate_account(self.app, token)
@@ -212,7 +225,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_get_entries_empty(self):
         email = DEFAULT_EMAIL
-        password = "right_pass"
+        password = DEFAULT_PASSWORD
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         entries = api.get_entries(self.app)
@@ -220,7 +233,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_create_entry(self):
         email = DEFAULT_EMAIL
-        password = "right_pass"
+        password = DEFAULT_PASSWORD
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         token = api.get_csrf_token(self.app)
@@ -272,7 +285,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_create_and_delete_entry(self):
         email = DEFAULT_EMAIL
-        password = "right_pass"
+        password = DEFAULT_PASSWORD
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         token = api.get_csrf_token(self.app)
@@ -296,7 +309,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_edit_non_existant_entry(self):
         email = DEFAULT_EMAIL
-        password = "right_pass"
+        password = DEFAULT_PASSWORD
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         create_token = api.get_csrf_token(self.app)
@@ -321,7 +334,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_edit_existing_entry(self):
         email = DEFAULT_EMAIL
-        password = "right_pass"
+        password = DEFAULT_PASSWORD
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         create_token = api.get_csrf_token(self.app)
@@ -347,8 +360,8 @@ class PassZeroApiTester(unittest.TestCase):
         self._check_entries_equal(new_entry, entries[0])
 
     def test_edit_not_your_entry(self):
-        emails = ["email1@fake.com", "email2@fake.com"]
-        password = "right_pass"
+        emails = [u"email1@fake.com", u"email2@fake.com"]
+        password = DEFAULT_PASSWORD
         for email in emails:
             self._create_active_account(email, password)
         api.login(self.app, emails[0], password, check_status=True)
@@ -385,7 +398,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_change_master_password(self):
         email = DEFAULT_EMAIL
-        password = "old_password"
+        password = u"old_password"
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         create_token = api.get_csrf_token(self.app)
@@ -402,7 +415,7 @@ class PassZeroApiTester(unittest.TestCase):
             self.app,
             csrf_token=token,
             old_password=password,
-            new_password="a NEW very long and complicated password 7892384*$@*(!@"
+            new_password=u"a NEW very long and complicated password 7892384*$@*(!@"
         )
         print(r.data)
         entries = api.get_entries(self.app)
@@ -412,7 +425,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_put_user_prefs(self):
         """Check that you can update preferences"""
         email = DEFAULT_EMAIL
-        password = "old_password"
+        password = u"old_password"
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         create_token = api.get_csrf_token(self.app)
@@ -430,7 +443,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_put_user_prefs_single(self):
         """Check that you can update only a single preference"""
         email = DEFAULT_EMAIL
-        password = "old_password"
+        password = u"old_password"
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         old_prefs = api.get_user_preferences(self.app, check_status=True)
@@ -451,7 +464,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_change_master_password_bad_old_password(self):
         email = DEFAULT_EMAIL
-        old_password = "old_password"
+        old_password = u"old_password"
         self._create_active_account(email, old_password)
         api.login(self.app, email, old_password)
         create_token = api.get_csrf_token(self.app)
@@ -464,11 +477,11 @@ class PassZeroApiTester(unittest.TestCase):
         api.create_entry(self.app, entry, create_token)
         token = api.get_csrf_token(self.app)
         assert token != create_token
-        new_password = "a NEW very long and complicated password 7892384*$@*(!@"
+        new_password = u"a NEW very long and complicated password 7892384*$@*(!@"
         r = api.update_user_password(
             self.app,
             csrf_token=token,
-            old_password="this is not right",
+            old_password=u"this is not right",
             new_password=new_password,
             check_status=False
         )
@@ -486,7 +499,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_logout(self):
         email = DEFAULT_EMAIL
-        password = "old_password"
+        password = u"old_password"
         self._create_active_account(email, password)
         api.login(self.app, email, password)
         api.logout(self.app)
@@ -497,7 +510,7 @@ class PassZeroApiTester(unittest.TestCase):
     @mock.patch("passzero.email.send_email")
     def test_recover_account_valid_email(self, m1):
         email = DEFAULT_EMAIL
-        old_password = "a_password"
+        old_password = u"a_password"
         self._create_active_account(email, old_password)
         api.login(self.app, email, old_password)
         # create an entry
@@ -519,7 +532,7 @@ class PassZeroApiTester(unittest.TestCase):
         recovery_token = m1.call_args[0][2].split("?")[1].replace("token=", "")
         print("got recovery token from email: %s" % recovery_token)
         csrf_token = api.get_csrf_token(self.app)
-        new_password = "this is my new password"
+        new_password = u"this is my new password"
         r = api.recover_account_confirm(
             self.app,
             recovery_token=recovery_token,

@@ -6,6 +6,7 @@ import logging
 import unittest
 
 import mock
+import six
 from flask import Flask
 
 from passzero.api_v1 import api_v1
@@ -21,7 +22,8 @@ app.register_blueprint(api_v2, prefix="/api/v2")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-DEFAULT_EMAIL = "sample@fake.com"
+DEFAULT_EMAIL = u"sample@fake.com"
+DEFAULT_PASSWORD = u"a_password"
 
 
 class PassZeroApiTester(unittest.TestCase):
@@ -41,6 +43,8 @@ class PassZeroApiTester(unittest.TestCase):
 
     @mock.patch("passzero.email.send_email")
     def _create_active_account(self, email, password, m1):
+        assert isinstance(email, six.text_type)
+        assert isinstance(password, six.text_type)
         # signup, etc etc
         #TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
@@ -56,7 +60,6 @@ class PassZeroApiTester(unittest.TestCase):
         assert r.status_code == 200
 
     def test_get_entries(self):
-        password = "a_password"
         entry = {
             "account": "fake",
             "username": "entry_username",
@@ -64,8 +67,8 @@ class PassZeroApiTester(unittest.TestCase):
             "extra": "entry_extra",
         }
         self._create_active_account(DEFAULT_EMAIL,
-                password)
-        api.login(self.app, DEFAULT_EMAIL, password)
+                DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         csrf_token = api.get_csrf_token(self.app)
         entry_id = api.create_entry(self.app,
                 entry, csrf_token)
@@ -81,8 +84,8 @@ class PassZeroApiTester(unittest.TestCase):
         self.assertEntriesEqual(dec_entry_out, entry)
 
     def test_get_entries_not_your_entry(self):
-        emails = ["foo1@foo.com", "foo2@foo.com"]
-        password = "a_password"
+        emails = [u"foo1@foo.com", u"foo2@foo.com"]
+        password = u"a_password"
         entry = {
             "account": "fake",
             "username": "entry_username",
@@ -102,5 +105,4 @@ class PassZeroApiTester(unittest.TestCase):
         print(r.data)
         assert r.status_code != 200
         assert json.loads(r.data)["status"] == "error"
-
 

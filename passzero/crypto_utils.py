@@ -1,17 +1,26 @@
-from Crypto import Random
-from Crypto.Cipher import AES
-from Crypto.Protocol import KDF
 import hashlib
 import random
 
+import six
+from Crypto import Random
+from Crypto.Cipher import AES
+from Crypto.Protocol import KDF
+
 
 def byte_to_hex_legacy(s):
-    arr = [ord(c) for c in s]
-    return ''.join('{:02x}'.format(x) for x in arr)
+    """
+    :param s:       Byte-string
+    :return:        s converted into a hex (unicode) string
+    """
+    assert isinstance(s, bytes)
+    arr = bytearray(s)
+    assert all([isinstance(c, int) for c in arr])
+    return "".join('{:02x}'.format(x) for x in arr)
 
 
 def hex_to_byte_legacy(s):
-    return s.decode("hex")
+    arr = bytearray.fromhex(s)
+    return bytes(arr)
 
 
 def pad_to_length(key, length):
@@ -48,8 +57,14 @@ def encrypt_password_legacy(padded_key, password):
 def encrypt_field_v1(key, salt, field):
     """
     WARNING: do not use
-    Return encrypted hex string of field"""
-    actual_key = hashlib.sha256(key + salt).digest()
+    Return encrypted hex string of field
+    :param key:             byte-string
+    :param salt:            byte-string
+    """
+    assert isinstance(key, six.binary_type)
+    assert isinstance(salt, six.binary_type)
+    salted_key = (key + salt).encode('utf-8')
+    actual_key = hashlib.sha256(salted_key).digest()
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(actual_key, AES.MODE_CFB, iv)
     enc_field = cipher.encrypt(field) + iv
@@ -58,10 +73,18 @@ def encrypt_field_v1(key, salt, field):
 
 
 def encrypt_field_v2(extended_key, message, iv):
-    """Return encrypted hex string of extra field"""
+    """Return encrypted hex string of extra field
+    :param extended_key:        Bytes for the extended key
+    :param message:             The unicode message
+    :param iv:                  Bytes for initialization vector
+    :return The encrypted field as unicode"""
+    assert isinstance(extended_key, bytes)
+    assert isinstance(message, str)
+    assert isinstance(iv, bytes)
     cipher = AES.new(extended_key, AES.MODE_CFB, iv)
     enc_msg = cipher.encrypt(message)
     hex_ciphertext = byte_to_hex_legacy(enc_msg)
+    assert isinstance(hex_ciphertext, str)
     return hex_ciphertext
 
 
@@ -160,5 +183,13 @@ def random_hex(size):
 
 
 def get_hashed_password(password, salt):
-    password = password.encode("utf-8")
-    return hashlib.sha512(password + salt).hexdigest()
+    """
+    :param password:            Unicode string
+    :param salt:                byte-string
+    :return type:               byte-string
+    """
+    assert isinstance(password, six.text_type)
+    assert isinstance(salt, six.binary_type)
+    # this is stupid because a password should be able to contain unicode fields
+    b_password = (password).encode("utf-8")
+    return hashlib.sha512(b_password + salt).hexdigest()

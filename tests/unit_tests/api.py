@@ -1,6 +1,8 @@
 import copy
 import json
 
+import six
+
 json_header = { "Content-Type": "application/json" }
 file_upload_headers = { "Content-Type": "multipart/form-data" }
 
@@ -34,8 +36,8 @@ def json_delete(session, relative_url):
 ### v1 API starts here
 
 def login(app, email, password, check_status=True):
-    assert isinstance(email, str)
-    assert isinstance(password, str)
+    assert isinstance(email, six.text_type)
+    assert isinstance(password, six.text_type)
     data={
         "email": email,
         "password": password
@@ -82,7 +84,7 @@ def get_user_preferences(app, check_status=True):
 
 def put_user_preferences(app, prefs, csrf_token, check_status=True):
     assert isinstance(prefs, dict)
-    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/user/preferences"
     data = copy.copy(prefs)
@@ -114,7 +116,7 @@ def create_entry(app, entry, csrf_token, check_status=True):
 
 def delete_entry(app, entry_id, csrf_token, check_status=True):
     assert isinstance(entry_id, int)
-    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/entries/{}?csrf_token={}".format(
         entry_id, csrf_token)
@@ -127,7 +129,7 @@ def delete_entry(app, entry_id, csrf_token, check_status=True):
 
 
 def delete_all_entries(app, csrf_token, check_status=True):
-    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/entries/nuclear"
     data = { "csrf_token": csrf_token }
@@ -139,8 +141,8 @@ def delete_all_entries(app, csrf_token, check_status=True):
 
 
 def delete_user(app, password, csrf_token, check_status=True):
-    assert isinstance(password, str) or isinstance(password, unicode)
-    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(password, six.text_type)
+    assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/user".format(password, csrf_token)
     r = app.delete(url,
@@ -157,7 +159,7 @@ def delete_user(app, password, csrf_token, check_status=True):
 
 def edit_entry(app, entry_id, entry, csrf_token, check_status=True):
     assert isinstance(entry_id, int)
-    assert isinstance(csrf_token, str) or isinstance(csrf_token, unicode)
+    assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/entries/{}".format(entry_id)
     data = entry
@@ -169,6 +171,9 @@ def edit_entry(app, entry_id, entry, csrf_token, check_status=True):
 
 
 def signup(app, email, password, check_status=False):
+    assert isinstance(email, six.text_type)
+    assert isinstance(password, six.text_type)
+    assert isinstance(check_status, bool)
     url = "/api/v1/user/signup"
     data = {
         "email": email,
@@ -209,6 +214,7 @@ def recover_account_confirm(app, password, recovery_token, csrf_token, check_sta
 
 
 def activate_account(app, token):
+    assert isinstance(token, six.text_type)
     data = {"token": token}
     return json_post(app, "/api/v1/user/activate", data)
 

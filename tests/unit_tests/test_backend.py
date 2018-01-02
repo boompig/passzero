@@ -58,8 +58,8 @@ def teardown_function():
 
 def test_create_inactive_user():
     session = create_sqlite_session()
-    email = "fake@email.com"
-    password = "pwd"
+    email = u"fake@email.com"
+    password = u"pwd"
     u1 = create_inactive_user(session, email, password)
     assert u1.id is not None
     u2 = get_account_with_email(session, email)
@@ -68,8 +68,8 @@ def test_create_inactive_user():
 
 def test_delete_account():
     session = create_sqlite_session()
-    email = "fake@email.com"
-    user_key = "master"
+    email = u"fake@email.com"
+    user_key = u"master"
     user = create_inactive_user(session, email, user_key)
     assert user.id is not None
     # add an entry to that account
@@ -119,8 +119,8 @@ def test_insert_entry_for_user():
 
 def test_delete_all_entries():
     session = create_sqlite_session()
-    user_key = "master key"
-    user = create_inactive_user(session, "fake@em.com",
+    user_key = u"master key"
+    user = create_inactive_user(session, u"fake@em.com",
         user_key)
     for i in range(10):
         dec_entry_in = {
@@ -173,8 +173,8 @@ def test_encrypt_decrypt_entries():
 
 def test_get_account_with_email():
     session = MagicMock()
-    email = "fake_email"
-    password = "fake password"
+    email = u"fake_email"
+    password = u"fake password"
     created_user = create_inactive_user(session, email, password)
     assert isinstance(created_user, User)
     assert_equal(created_user.email, email)
@@ -196,9 +196,9 @@ def create_fake_entry(i):
 
 def test_change_password():
     session = create_sqlite_session()
-    old_pwd = "hello"
-    new_pwd = "world"
-    user = create_inactive_user(session, "fake@fake.com", old_pwd)
+    old_pwd = u"hello"
+    new_pwd = u"world"
+    user = create_inactive_user(session, u"fake@fake.com", old_pwd)
     logging.info("Creating fake users")
     for i in range(10):
         dec_entry_in = create_fake_entry(i)
