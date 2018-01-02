@@ -1,3 +1,4 @@
+import six
 import json
 import os
 
@@ -38,8 +39,8 @@ def json_delete(session, relative_url):
 ### v1 API starts here
 
 def login(session, email, password):
-    assert isinstance(email, str)
-    assert isinstance(password, str)
+    assert isinstance(email, six.text_type)
+    assert isinstance(password, six.text_type)
     data={
         "email": email,
         "password": password
@@ -61,7 +62,7 @@ def get_entries(session):
 
 def create_entry(session, entry, token):
     assert isinstance(entry, dict)
-    assert isinstance(token, unicode) or isinstance(token, str)
+    assert isinstance(token, six.text_type)
     data = entry
     data["csrf_token"] = token
     return json_post(session, "/api/v1/entries/new", data)
@@ -69,7 +70,7 @@ def create_entry(session, entry, token):
 
 def delete_entry(session, entry_id, token):
     assert isinstance(entry_id, int)
-    assert isinstance(token, unicode) or isinstance(token, str)
+    assert isinstance(token, six.text_type)
     url = "/api/v1/entries/{}?csrf_token={}".format(
         entry_id, token)
     return json_delete(session, url)
@@ -78,7 +79,7 @@ def delete_entry(session, entry_id, token):
 def edit_entry(session, entry_id, entry, token):
     assert isinstance(entry_id, int)
     assert isinstance(entry, dict)
-    assert isinstance(token, unicode)
+    assert isinstance(token, six.text_type)
     url = "/api/v1/entries/{}".format(entry_id)
     data = entry
     data["csrf_token"] = token
@@ -86,8 +87,8 @@ def edit_entry(session, entry_id, entry, token):
 
 
 def signup(session, email, password):
-    assert isinstance(email, str)
-    assert isinstance(password, str)
+    assert isinstance(email, six.text_type)
+    assert isinstance(password, six.text_type)
     data = {
         "email": email,
         "password": password,
@@ -97,8 +98,8 @@ def signup(session, email, password):
 
 
 def recover(session, email, token):
-    assert isinstance(email, str)
-    assert isinstance(token, unicode)
+    assert isinstance(email, six.text_type)
+    assert isinstance(token, six.text_type)
     data = {
         "email": email,
         "csrf_token": token
@@ -111,9 +112,9 @@ def get_documents(session):
 
 
 def post_document(session, name, doc_params, csrf_token):
-    assert isinstance(name, str)
+    assert isinstance(name, six.text_type)
     assert isinstance(doc_params, dict)
-    assert isinstance(csrf_token, unicode)
+    assert isinstance(csrf_token, six.text_type)
     url = base_url + "/api/v1/docs"
     r = session.post(url,
         data={"name": name, "csrf_token": csrf_token},
@@ -131,7 +132,7 @@ def get_document(session, doc_id):
 
 def delete_document(session, doc_id, csrf_token):
     assert isinstance(doc_id, int)
-    assert isinstance(csrf_token, unicode)
+    assert isinstance(csrf_token, six.text_type)
     url = "/api/v1/docs/{}?csrf_token={}".format(doc_id, csrf_token)
     return json_delete(session, url)
 
@@ -144,14 +145,14 @@ def get_entries_v2(session):
 
 def create_entry_v2(session, entry, token):
     assert isinstance(entry, dict)
-    assert isinstance(token, unicode)
+    assert isinstance(token, six.text_type)
     entry["csrf_token"] = token
     return json_post(session, "/api/v2/entries", entry)
 
 
 def delete_entry_v2(session, entry_id, token):
     assert isinstance(entry_id, int)
-    assert isinstance(token, unicode)
+    assert isinstance(token, six.text_type)
     url = "/api/v2/entries/{}?csrf_token={}".format(
         entry_id, token)
     return json_delete(session, url)

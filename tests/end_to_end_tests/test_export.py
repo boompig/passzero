@@ -10,8 +10,8 @@ from passzero import backend
 from passzero.datastore_postgres import db_export
 from passzero.my_env import DATABASE_URL
 
-DEFAULT_EMAIL = "sample@fake.com"
-DEFAULT_MASTER_KEY = "some long key 1&!@#$"
+DEFAULT_EMAIL = u"sample@fake.com"
+DEFAULT_MASTER_KEY = u"some long key 1&!@#$"
 
 logging.basicConfig(level=logging.DEBUG)
 

@@ -4,6 +4,7 @@ import os
 import unittest
 
 import requests
+import six
 from six import BytesIO
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -13,7 +14,8 @@ import api
 from passzero import backend as pz_backend
 from passzero.my_env import DATABASE_URL
 
-DEFAULT_EMAIL = "sample@fake.com"
+DEFAULT_EMAIL = u"sample@fake.com"
+DEFAULT_PASSWORD = u"right_pass"
 
 
 def get_db_session():
@@ -26,6 +28,8 @@ def create_active_account(email, password):
     """Create account and return the user object.
     Use this function instead of API because we do email verification in real API
     """
+    assert isinstance(email, six.text_type)
+    assert isinstance(password, six.text_type)
     db_session = get_db_session()
     try:
         pz_backend.get_account_with_email(db_session, email)
@@ -140,65 +144,57 @@ class PassZeroApiV1Tester(unittest.TestCase):
 
     def test_login_no_users(self):
         with requests.Session() as session:
-            result = api.login(session, "sample@fake.com", "right_pass")
+            result = api.login(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             assert result is not None
             self.assertEqual(result.status_code, 401)
 
     def test_no_email(self):
         with requests.Session() as session:
-            result = api.login(session, "", "right_pass")
+            result = api.login(session, u"", DEFAULT_PASSWORD)
             assert result is not None
             assert result.status_code == 400
 
     def test_no_password(self):
         with requests.Session() as session:
-            result = api.login(session, "sample@fake.com", "")
+            result = api.login(session, DEFAULT_EMAIL, u"")
             assert result is not None
             assert result.status_code == 400
 
     def test_login_inactive(self):
-        email = "sample@fake.com"
-        password = "right_pass"
         with requests.Session() as session:
             db_session = get_db_session()
-            pz_backend.create_inactive_user(db_session, email, password)
-            login_result = api.login(session, email, password)
+            pz_backend.create_inactive_user(db_session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            login_result = api.login(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             # only printed on error
             print(login_result.text)
             assert login_result.status_code == 401
 
     def test_correct_login(self):
-        email = DEFAULT_EMAIL
-        password = "right_pass"
         # create account
-        user, db_session = create_active_account(email, password)
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         db_session = get_db_session()
         # only if test fails
         print(db_session)
 
     def test_get_entries_empty(self):
-        email = DEFAULT_EMAIL
-        password = "right_pass"
-        user, db_session = create_active_account(email, password)
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             entries = self._get_entries(s)
             assert entries == []
 
     def test_create_no_csrf(self):
-        email = DEFAULT_EMAIL
-        password = "right_pass"
-        user, db_session = create_active_account(email, password)
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             entry = {
                 "account": "fake",
                 "username": "entry_username",
                 "password": "entry_pass",
             }
-            entry_create_response = api.create_entry(s, entry, "")
+            entry_create_response = api.create_entry(s, entry, u"")
             self.assertIsNotNone(entry_create_response)
             assert entry_create_response.status_code == 403
             entries = self._get_entries(s)
@@ -208,12 +204,11 @@ class PassZeroApiV1Tester(unittest.TestCase):
         print(db_session)
 
     def test_create_and_delete_entry(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user, db_session = create_active_account(email, password)
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             create_token = self._get_csrf_token(s)
+            assert isinstance(create_token, six.text_type)
             entry = {
                 "account": "fake",
                 "username": "entry_username",
@@ -236,11 +231,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
             self._get_csrf_token(s)
 
     def test_delete_entry(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user, db_session = create_active_account(email, password)
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             create_token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
@@ -255,12 +248,10 @@ class PassZeroApiV1Tester(unittest.TestCase):
             assert entries == []
 
     def test_delete_entry_no_token(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user, db_session = create_active_account(email, password)
-        assert user.email == email
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert user.email == DEFAULT_EMAIL
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
@@ -273,17 +264,15 @@ class PassZeroApiV1Tester(unittest.TestCase):
             print(entry_id)
             entries = self._get_entries(s)
             assert len(entries) == 1
-            entry_delete_response = api.delete_entry(s, entry_id, "")
+            entry_delete_response = api.delete_entry(s, entry_id, u"")
             assert entry_delete_response is not None
             assert entry_delete_response.status_code == 403
 
     def test_delete_nonexistant_entry(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user, db_session = create_active_account(email, password)
-        assert user.email == email
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert user.email == DEFAULT_EMAIL
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             create_token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
@@ -305,11 +294,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
             self.assertEqual(e1[field], e2[field])
 
     def test_edit_existing_entry(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user, db_session = create_active_account(email, password)
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             create_token = self._get_csrf_token(s)
             entry = {
                 "account": "fake",
@@ -329,11 +316,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
             self._check_entries_equal(entry, entries[0])
 
     def test_logout(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        user, db_session= create_active_account(email, password)
+        user, db_session= create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
-            self._login(s, email, password)
+            self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             token = self._get_csrf_token(s)
             # only if test fails
             print(token)
@@ -385,19 +370,19 @@ class PassZeroApiV1Tester(unittest.TestCase):
 
     def test_no_docs(self):
         with requests.Session() as s:
-            create_active_account(DEFAULT_EMAIL, "pass")
-            api.login(s, DEFAULT_EMAIL, "pass")
+            create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            api.login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             docs_before = api.get_documents(s).json()
             assert docs_before == []
 
     def test_upload_then_decrypt(self):
         with requests.Session() as s:
-            create_active_account(DEFAULT_EMAIL, "pass")
-            api.login(s, DEFAULT_EMAIL, "pass")
+            create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            api.login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             upload_doc_token = api.get_csrf_token(s).json()
             docs_before = api.get_documents(s).json()
             assert docs_before == []
-            r = api.post_document(s, "test document",
+            r = api.post_document(s, u"test document",
                     { "document": BytesIO(b"hello world\n") },
                 upload_doc_token)
             assert r.status_code == 200
@@ -409,12 +394,12 @@ class PassZeroApiV1Tester(unittest.TestCase):
 
     def test_upload_and_get_docs(self):
         with requests.Session() as s:
-            create_active_account(DEFAULT_EMAIL, "pass")
-            api.login(s, DEFAULT_EMAIL, "pass")
+            create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            api.login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             upload_doc_token = api.get_csrf_token(s).json()
             docs_before = api.get_documents(s).json()
             assert docs_before == []
-            r = api.post_document(s, "test document",
+            r = api.post_document(s, u"test document",
                     { "document": BytesIO(b"hello world\n") },
                 upload_doc_token)
             assert r.status_code == 200
@@ -424,12 +409,12 @@ class PassZeroApiV1Tester(unittest.TestCase):
 
     def test_upload_then_delete(self):
         with requests.Session() as s:
-            create_active_account(DEFAULT_EMAIL, "pass")
-            api.login(s, DEFAULT_EMAIL, "pass")
+            create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            api.login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             docs_before = api.get_documents(s).json()
             assert docs_before == []
             upload_doc_token = api.get_csrf_token(s).json()
-            r = api.post_document(s, "test document",
+            r = api.post_document(s, u"test document",
                     { "document": BytesIO(b"hello world\n") },
                 upload_doc_token)
             assert r.status_code == 200
@@ -442,8 +427,8 @@ class PassZeroApiV1Tester(unittest.TestCase):
 
     def test_no_such_doc(self):
         with requests.Session() as s:
-            create_active_account(DEFAULT_EMAIL, "pass")
-            api.login(s, DEFAULT_EMAIL, "pass")
+            create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            api.login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             docs_before = api.get_documents(s).json()
             assert docs_before == []
             r = api.get_document(s, 1)
