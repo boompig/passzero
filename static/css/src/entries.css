@@ -15,6 +15,10 @@
     max-width: 600px;
 }
 
+#search-form input[type="text"] {
+    font-size: 1em;
+}
+
 .entry-title {
     font-weight: bold;
     font-size: 1.2em;
@@ -48,6 +52,10 @@
 
 .entry-panel {
     margin-top: 0.4em;
+}
+
+.entry-panel button {
+    font-size: 1em;
 }
 
 .extra-container {
