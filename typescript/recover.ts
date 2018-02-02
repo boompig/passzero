@@ -1,33 +1,34 @@
 // provided externally via CDN
 declare let $: any;
-
-//const pzAPI = require("./passzero_api.js");
 declare let pzAPI: any;
 
+// for type-checking
+//import * as $ from "jquery";
+//import { pzAPI } from "passzero_api";
+
+
 function recoverPassword(e: Event) {
-    "use strict";
     e.preventDefault();
-    const email = $("input[type='email']").val();
-    pzAPI.recoverAccount(email)
-    .then(function(response, textStatus, obj) {
-        $("#success-msg").addClass("alert-success").text(response.msg).show();
-        console.log(response);
-    });
+    const email = $("input[type='email']").val() as string;
+	pzAPI.recoverAccount(email)
+	.then((response) => {
+		$("#success-msg").addClass("alert-success").text(response.msg).show();
+		console.log(response);
+	});
     return false;
 }
 
 function recoverPasswordConfirm(e: Event) {
-    "use strict";
     e.preventDefault();
-    const password = $("input[name='password']").val();
-    const confirmPassword = $("input[name='confirm_password']").val();
+    const password = $("input[name='password']").val() as string;
+    const confirmPassword = $("input[name='confirm_password']").val() as string;
     const token = window.location.search.replace("?token=", "");
     pzAPI.recoverAccountConfirm(token, password, confirmPassword)
-    .then(function(response, textStatus, obj) {
+    .done((response, textStatus, obj) => {
         console.log(response);
         window.location.href = "/logout";
     })
-    .catch(function(obj, b) {
+    .catch((obj, textStatus, err) => {
         $("#server-msg").text(obj.responseJSON.msg);
         console.log("error");
         console.log(obj.responseJSON);
@@ -36,9 +37,7 @@ function recoverPasswordConfirm(e: Event) {
 }
 
 $(function () {
-    "use strict";
-
-    $("#accept-risk").click(function() {
+    $("#accept-risk").click(() => {
         const c = $("#accept-risk").prop("checked");
         console.log("checked = %s", c);
         $("button[type='submit']").prop("disabled", !c);

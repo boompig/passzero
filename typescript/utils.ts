@@ -1,6 +1,9 @@
 // provided externally via CDN
 declare let $: any;
 
+// used during type checking
+//import * as $ from "jquery";
+
 interface NameValuePair {
     name: string;
     value: string;
@@ -30,3 +33,5 @@ const Utils = {
         return Utils.parseArray(dataArray);
     }
 };
+
+//export { Utils };
