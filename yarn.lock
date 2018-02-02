@@ -2,9 +2,17 @@
 # yarn lockfile v1
 
 
-"@types/clipboard@^1.5.35":
-  version "1.5.35"
-  resolved "https://registry.yarnpkg.com/@types/clipboard/-/clipboard-1.5.35.tgz#bceb67a7e0aad3070468929b95a2d626405db464"
+"@types/clipboard@^1.5.36":
+  version "1.5.36"
+  resolved "https://registry.yarnpkg.com/@types/clipboard/-/clipboard-1.5.36.tgz#e79fffc758e94e7ff9de9898ae7561db3c2bdd51"
+
+"@types/jquery@^3.3.0":
+  version "3.3.0"
+  resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.0.tgz#6316ac20a1a13c5d521a2dc661befc7184f73f5b"
+
+"@types/js-cookie@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/js-cookie/-/js-cookie-2.1.0.tgz#a8916246aa994db646c66d54c854916213300a51"
 
 "@types/node@^7.0.31":
   version "7.0.31"

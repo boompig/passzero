@@ -1,5 +1,6 @@
-// provided externally via CDN
-declare let $: any;
+// provided externally via script tags
+/// <reference types="jquery" />
+
 
 // used during type checking
 //import * as $ from "jquery";

@@ -1,11 +1,12 @@
-// from external CDN
-declare let $: any;
+/*
+ * These files are provided externally via script tags
+ */
+/// <reference types="jquery" />
+/// <reference path="./utils.ts" />
+/// <reference path="./passzero_api.ts" />
 
-// external
-declare let Utils: any;
-declare let pzAPI: any;
 
-// type-checking
+// module imports (tsc does not like these)
 //import * as $ from "jquery";
 //import { Utils } from "./utils";
 //import { pzAPI } from "passzero_api";

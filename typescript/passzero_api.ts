@@ -1,5 +1,5 @@
-// provided externally via CDN
-declare let $: any;
+/// <reference types="jquery" />
+
 
 // type-checking
 //import * as $ from "jquery";

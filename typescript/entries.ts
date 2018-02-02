@@ -1,13 +1,15 @@
-/* global $, Clipboard, angular, LogoutTimer */
-/* exported showHidePass, app */
-declare let $: any;
+/*
+ * These files are provided externally via script tags
+ */
+/// <reference types="jquery" />
+/// <reference types="clipboard" />
+/// <reference path="./passzero_api.ts" />
+/// <reference path="./logoutTimer.ts" />
+// TODO
 declare let angular: any;
-declare let Clipboard: any;
 
-// external script tags
-declare let LogoutTimer: any;
 
-// type-checking
+// module imports (tsc doesn't like these)
 //import * as $ from "jquery";
 //import "bootstrap"; // for jquery tooltip
 //import * as Clipboard from "clipboard";
@@ -19,9 +21,9 @@ declare let LogoutTimer: any;
  */
 function selectText(element) {
     "use strict";
-    var doc = document;
-    var text = element;
-    var range, selection;
+    let doc = document;
+    let text = element;
+    let range, selection;
     // typescript hack because createTextRange is IE-only
     if ((doc.body as any).createTextRange) {
         range = (document.body as any).createTextRange();
@@ -37,7 +39,7 @@ function selectText(element) {
 }
 
 function deselectText () {
-    var doc = document, range, selection;
+    let doc = document, range, selection;
     // typescript hack because createTextRange is IE-only
     if ((doc.body as any).createTextRange) {
         range = (document.body as any).createTextRange();
@@ -50,7 +52,7 @@ function deselectText () {
 
 function showHidePass(event) {
     "use strict";
-    var elem = $(event.target).parent().parent().parent().find(".hidden-toggle");
+    let elem = $(event.target).parent().parent().parent().find(".hidden-toggle");
     if (elem.hasClass("password-hidden")) {
         elem.removeClass("password-hidden");
         $(event.target).text("Hide");
@@ -94,12 +96,12 @@ var PassZeroCtrl = function ($scope, $location, $http, $window, $timeout) {
     };
 
     this.getEntries = function () {
-        var that = this;
-        $http.get("/api/v2/entries").then(function (response) {
-            var entries = response.data;
+        let that = this;
+        $http.get("/api/v2/entries").then((response) => {
+            let entries = response.data;
             console.log("Fetched entries:");
             console.log(entries);
-            for (var i = 0; i < entries.length; i++) {
+            for(let i = 0; i < entries.length; i++) {
                 if(!entries[i].hasOwnProperty("is_encrypted")) {
                     entries[i].is_encrypted = false;
                 }
@@ -122,7 +124,7 @@ var PassZeroCtrl = function ($scope, $location, $http, $window, $timeout) {
     this.deleteEntry = function (entry) {
         if (confirm("OK to delete entry for account " + entry.account + "?")) {
             console.log("Deleting entry with ID " + entry.id);
-            var data = { csrf_token: this.csrf_token };
+            const data = { csrf_token: this.csrf_token };
             $http.delete("/api/v1/entries/" + entry.id, { params: data })
                 .then(function () {
                     $window.location.href = "/entries/post_delete/" + entry.account;
@@ -135,18 +137,15 @@ var PassZeroCtrl = function ($scope, $location, $http, $window, $timeout) {
     };
 
     this.decryptEntry = function(event, entry, entryIndex) {
-        //var that = this;
-        //console.log(event);
-        //console.log(entry.id);
         $http.get("/api/v2/entries/" + entry.id)
             .then(function(result) {
-                var decEntry = result.data;
+                let decEntry = result.data;
                 // the result is the new entry
                 decEntry.is_encrypted = false;
                 //console.log(decEntry);
                 console.log(entryIndex);
                 // copy in the values from the decrypted entry into the current entry
-                for(var field in decEntry) {
+                for(let field in decEntry) {
                     if(decEntry.hasOwnProperty(field)) {
                         // alter the passed parameter
                         entry[field] = decEntry[field];
@@ -166,7 +165,7 @@ var PassZeroCtrl = function ($scope, $location, $http, $window, $timeout) {
      * If the password is not showing, show it (and select it)
      */
     this.toggleHidden = function (entry) {
-        var elem = $("#entry-" + entry.id).find(".inner-password")[0];
+        let elem = $("#entry-" + entry.id).find(".inner-password")[0];
         if (entry.show) {
             entry.show = false;
             deselectText();
@@ -179,7 +178,7 @@ var PassZeroCtrl = function ($scope, $location, $http, $window, $timeout) {
     this._onClip = function(e) {
         e.clearSelection();
 		// typescript is complaining about bootstrap
-        var elem = $(e.trigger) as any;
+        let elem = $(e.trigger) as any;
         // create the tooltip
         (elem as any).tooltip({
             "container": "body",
@@ -198,9 +197,9 @@ var PassZeroCtrl = function ($scope, $location, $http, $window, $timeout) {
 
     this.init = function () {
         // init clip button
-        var clipboard = new Clipboard(".copy-pwd-btn");
+        let clipboard = new Clipboard(".copy-pwd-btn");
         clipboard.on("success", this._onClip);
-        var timer = new LogoutTimer();
+        let timer = new LogoutTimer();
         timer.startLogoutTimer();
         $("#entry-container").click(function() {
             timer.resetLogoutTimer();

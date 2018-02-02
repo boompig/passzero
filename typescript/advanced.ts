@@ -1,11 +1,9 @@
-// provided externally via CDN
+/// <reference types="jquery" />
+/// <reference path="./passzero_api.ts" />
+/// <reference path="./utils.ts" />
 
-// use these imports because typescript modules are hard to reason about
-declare let $: any;
-declare let Utils: any;
-declare let pzAPI: any;
 
-// type-checking
+// module imports (tsc doesn't like these)
 //import * as $ from "jquery";
 //import { Utils } from "./utils";
 //import { pzAPI } from "./passzero_api";
@@ -24,7 +22,7 @@ function changePassword(e: Event) {
     const elem = $(e.target);
     const url = elem.attr("action");
     const dataArray = elem.serializeArray();
-    let data = Utils.parseArray(dataArray) as ChangeAccountPasswordData;
+    const data = Utils.parseArray(dataArray) as ChangeAccountPasswordData;
 
     $(".form-error").text("");
     $(".error-msg").text("");
@@ -39,10 +37,10 @@ function changePassword(e: Event) {
         });
     })
     .catch((obj, textStatus, textCode) => {
-        var response = obj.responseJSON;
+        let response = obj.responseJSON;
         $(".error-msg").text(response.msg);
 
-        for (var key in response) {
+        for(let key in response) {
             if (key !== "status" && key !== "msg") {
                 $("#form-error-" + key).text(response[key]);
             }
