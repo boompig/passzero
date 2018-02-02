@@ -1,12 +1,14 @@
-// provided externally via CDN
-declare let $: any;
-declare let Cookies: any;
+/*
+ * These files are provided externally via script tags
+ */
+/// <reference types="jquery" />
+/// <reference types="js-cookie" />
+/// <reference path="./passzero_api.ts" />
+/// <reference path="./logoutTimer.ts" />
+/// <reference path="./utils.ts" />
 
-// provided via script tags
-declare let pzAPI: any;
-declare let Utils: any;
 
-// type checking
+// module imports (tsc does not like these)
 //import * as $ from "jquery";
 //import { pzAPI } from "passzero_api";
 //import { Utils } from "utils";

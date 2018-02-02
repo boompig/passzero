@@ -1,8 +1,6 @@
-// provided via CDN
-declare let $: any;
+/// <reference types="jquery" />
+/// <reference path="./logoutTimer.ts" />
 
-// imported externally
-declare let LogoutTimer: any;
 
 // type-checking
 //import * as $ from "jquery";

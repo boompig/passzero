@@ -36,9 +36,7 @@ ts-compile: $(js_src_targets)
 
 static/js/src/%.js: typescript/%.ts
 	mkdir -p static/js/src
-	$(tsc) --outFile $@ $<
-	# use this only when doing real type-checking
-	#$(tsc) --outFile $@ $< --module System
+	$(tsc) $< --outDir static/js/src --module none
 
 minify-js: ts-compile $(js_dist_targets)
 

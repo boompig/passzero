@@ -1,12 +1,10 @@
-// provided externally via CDN
-declare let $: any;
-declare let angular: any;
-declare let Clipboard: any;
+/// <reference types="jquery" />
+/// <reference types="angular" />
+/// <reference types="clipboard" />
+/// <reference path="./logoutTimer.ts" />
+/// <reference path="./passzero_api.ts" />
+/// <reference path="./utils.ts" />
 
- //provided externally
-declare let Utils: any;
-declare let pzAPI: any;
-declare let LogoutTimer: any;
 
 // type-checking
 //import * as $ from "jquery";
@@ -92,7 +90,7 @@ var NewCtrl = function() {
      * Return the passphrase that has been generated from the given corpus of words
      */
     this.genPassphraseHelper = function(words: Array<string>, numWords: number): string {
-        let phrase = "", index, word;
+        let phrase = "";
         for (let i = 0; i < numWords; i++) {
             let word = words[randInt(0, words.length)];
             word = word[0].toUpperCase() + word.substr(1);
@@ -193,7 +191,6 @@ var NewCtrl = function() {
      */
     this.createNew = function(e: Event) {
         e.preventDefault();
-        const url = $(e.target).attr("action");
         const data = Utils.getFormData(e.target as HTMLElement) as ICreateEntryForm;
         pzAPI.createEntry(data)
         .done((response) => {
@@ -227,14 +224,14 @@ var NewCtrl = function() {
     };
 
     this.changeLen = function(diff) {
-        var elem = $("#passLen");
-        var len = Number(elem.text());
+        const elem = $("#passLen");
+        const len = Number(elem.text());
         elem.text(len + diff);
     };
 
     this.changePhraseLen = function(diff) {
-        var elem = $("#phraseLen");
-        var len = Number(elem.text());
+        const elem = $("#phraseLen");
+        const len = Number(elem.text());
         if (len + diff > 0 && len + diff <= this.maxNumWords) {
             elem.text(len + diff);
         }
@@ -284,7 +281,7 @@ var NewCtrl = function() {
         console.log(entry);
 
         // init clip button
-        var clipboard = new Clipboard(".copy-pwd-btn");
+        let clipboard = new Clipboard(".copy-pwd-btn");
         clipboard.on("success", this._onClip);
 
         // set up the logout timer
