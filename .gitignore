@@ -43,12 +43,4 @@ static/css/dist
 static/lib
 
 # typescript-compiled files
-static/js/src/utils.js
-static/js/src/recover.js
-static/js/src/logoutTimer.js
-static/js/src/advanced.js
-static/js/src/passzero_api.js
-static/js/src/login.js
-static/js/src/index.js
-static/js/src/new.js
-static/js/src/register-sw.js
+static/js/src/*.js

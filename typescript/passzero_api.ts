@@ -148,7 +148,10 @@ const pzAPI = {
             return pzAPI._recoverAccount(email, response);
         });
     },
-    _recoverAccountConfirm: function(csrfToken, token, password, confirmPassword) {
+    _recoverAccountConfirm: function(csrfToken: string,
+        token: string,
+        password: string,
+        confirmPassword: string) {
         const url = "/api/v1/user/recover/confirm";
         const data = {
             "token": token,
@@ -157,13 +160,16 @@ const pzAPI = {
         };
         return $.postJSON(url, data);
     },
-    recoverAccountConfirm: function(token, password, confirmPassword) {
+    recoverAccountConfirm: function(token: string, password: string, confirmPassword: string) {
         return pzAPI.getCSRFToken()
         .then(function(response) {
             return pzAPI._recoverAccountConfirm(response, token, password, confirmPassword);
         });
     },
-    _changeAccountPassword: function(csrfToken, oldPassword, newPassword, confirmNewPassword) {
+    _changeAccountPassword: function(csrfToken: string,
+        oldPassword: string,
+        newPassword: string,
+        confirmNewPassword: string) {
         const url = "/api/v1/user/password";
         const data = {
             "csrf_token": csrfToken,
@@ -173,10 +179,22 @@ const pzAPI = {
         };
         return $.putJSON(url, data);
     },
-    changeAccountPassword: function(oldPassword, newPassword, confirmNewPassword) {
+    changeAccountPassword: function(oldPassword: string, newPassword: string, confirmNewPassword: string) {
         return pzAPI.getCSRFToken()
         .then(function(response) {
             return pzAPI._changeAccountPassword(response, oldPassword, newPassword, confirmNewPassword);
+        });
+    },
+    _updateUserPreferences: function(csrfToken: string, prefs: any) {
+        const url = "/api/v1/user/preferences";
+        const data = pzAPI._copyObject(prefs);
+        data.csrf_token = csrfToken;
+        return $.putJSON(url, data);
+    },
+    updateUserPreferences: function(prefs: any): Promise<any> {
+        return pzAPI.getCSRFToken()
+        .then(function(response) {
+            return pzAPI._updateUserPreferences(response, prefs);
         });
     },
     _nukeEntries: function(csrf_token: string): Promise<any> {

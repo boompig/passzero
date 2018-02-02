@@ -15,12 +15,14 @@ module.exports = function(config) {
 
     // list of files / patterns to load in the browser
     files: [
-      'node_modules/angular/angular.js',
-      'node_modules/angular-mocks/angular-mocks.js',
-      'node_modules/clipboard/dist/clipboard.js',
-      'node_modules/jquery/dist/jquery.js',
-      'static/js/src/*.js',
-      'tests/angular/*.js'
+		'node_modules/angular/angular.js',
+		'node_modules/angular-mocks/angular-mocks.js',
+		'node_modules/clipboard/dist/clipboard.js',
+		'node_modules/jquery/dist/jquery.js',
+		// don't do wildcard imports because I named the files like an idiot
+		'static/js/src/entries.js',
+		'static/js/src/logoutTimer.js',
+		'tests/angular/entries.js'
     ],
 
 
@@ -65,7 +67,7 @@ module.exports = function(config) {
 
     // Continuous Integration mode
     // if true, Karma captures browsers, runs the tests and exits
-    singleRun: false,
+    singleRun: true,
 
     // Concurrency level
     // how many browser should be started simultaneous

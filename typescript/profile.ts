@@ -1,17 +1,30 @@
-//import Utils from "./utils"
-//import pzAPI from "./passzero_api"
-//export default class Profile {
-var Profile = (function () {
-    function Profile() {
-    }
-    Profile.renderState = function () {
-        var key;
+declare let $: any;
+declare let Utils: any;
+declare let pzAPI: any;
+
+class Profile {
+	static state = {
+		// these are global
+		successMsg: null,
+		errorMsg: null,
+		updatePassword: {
+			formErrors: {},
+			formErrorSet: false,
+			inProgress: false
+		},
+		updatePrefs: {
+			formErrors: {},
+			formErrorSet: false
+		}
+	};
+
+    static renderState() {
         console.log(Profile.state);
         // updatePassword state
         if (Profile.state.updatePassword.formErrorSet) {
             $("#change-password").find(".form-error").text("");
             console.log("Setting updatePassword error messages...");
-            for (key in Profile.state.updatePassword.formErrors) {
+            for (let key in Profile.state.updatePassword.formErrors) {
                 $("#form-error-" + key).text(Profile.state.updatePassword.formErrors[key]);
             }
         }
@@ -34,7 +47,7 @@ var Profile = (function () {
         if (Profile.state.updatePrefs.formErrorSet) {
             $("#user-prefs").find(".form-error").text("");
             console.log("Setting updatePrefs error messages...");
-            for (key in Profile.state.updatePrefs.formErrors) {
+            for (let key in Profile.state.updatePrefs.formErrors) {
                 $("#form-error-" + key).text(Profile.state.updatePrefs.formErrors[key]);
             }
         }
@@ -55,27 +68,29 @@ var Profile = (function () {
         else {
             $(".alert-success").hide();
         }
-    };
-    Profile.deleteUser = function (e) {
+    }
+
+    static deleteUser(e) {
         "use strict";
         e.preventDefault();
-        var password = Utils.getFormData(e.target).password;
+        let password = Utils.getFormData(e.target).password;
         // set state on submit and re-render
         Profile.state.successMsg = null;
         Profile.state.errorMsg = null;
         // and render state
         Profile.renderState();
         pzAPI.deleteUser(password)
-            .then(function (response) {
+            .then((response) => {
             window.location.href = "/post_account_delete";
-        })["catch"](function (obj, textStatus, textCode) {
+        })
+		.catch((obj, textStatus, textCode) => {
             Profile.state.successMsg = null;
             if (obj.responseJSON) {
                 if (obj.status === 400 && textCode === "BAD REQUEST") {
                     Profile.state.errorMsg = "Incorrect password";
                 }
                 else {
-                    var response = obj.responseJSON;
+                    let response = obj.responseJSON;
                     // set the state
                     Profile.state.errorMsg = response.msg;
                 }
@@ -90,14 +105,15 @@ var Profile = (function () {
             console.log(textCode);
         });
         return false;
-    };
-    Profile.updatePrefs = function (e) {
+    }
+
+    static updatePrefs(e) {
         "use strict";
         if (!e) {
             throw "Event cannot be falsy";
         }
         e.preventDefault();
-        var prefs = Utils.getFormData(e.target);
+        let prefs = Utils.getFormData(e.target);
         if (Object.keys(prefs).length === 0) {
             throw "Form data cannot be empty";
         }
@@ -109,7 +125,7 @@ var Profile = (function () {
         // and render state
         Profile.renderState();
         pzAPI.updateUserPreferences(prefs)
-            .then(function (response) {
+            .then((response) => {
             // set the state
             Profile.state.successMsg = response.msg;
             Profile.state.errorMsg = null;
@@ -117,15 +133,16 @@ var Profile = (function () {
             Profile.state.updatePrefs.formErrors = {};
             // render state
             Profile.renderState();
-        })["catch"](function (obj, textStatus, textCode) {
+        })
+		.catch((obj, textStatus, textCode) => {
             Profile.state.successMsg = null;
             if (obj.responseJSON) {
-                var response = obj.responseJSON;
+                let response = obj.responseJSON;
                 // set the state
                 Profile.state.errorMsg = response.msg;
                 Profile.state.updatePrefs.formErrorSet = true;
                 Profile.state.updatePrefs.formErrors = {};
-                for (var key in response) {
+                for (let key in response) {
                     if (key !== "status" && key !== "msg") {
                         Profile.state.updatePrefs.formErrors[key] = response[key];
                     }
@@ -141,11 +158,12 @@ var Profile = (function () {
             console.log(textCode);
         });
         return false;
-    };
-    Profile.updatePassword = function (e) {
+    }
+
+    static updatePassword(e) {
         "use strict";
         e.preventDefault();
-        var data = Utils.getFormData(e.target);
+        let data = Utils.getFormData(e.target);
         if (Profile.state.updatePassword.inProgress) {
             console.log("Already in progress!");
             return;
@@ -159,11 +177,11 @@ var Profile = (function () {
         // and render state
         Profile.renderState();
         pzAPI.updateUserPassword(data.old_password, data.new_password, data.confirm_new_password)
-            .then(function (response) {
-            var $elem = $(e.target);
+            .then((response) => {
+            let $elem = $(e.target);
             // reset form fields
             // TODO move this into state
-            $elem.find("input[type='password']").each(function () {
+            $elem.find("input[type='password']").each(() => {
                 $(this).val("");
             });
             // set the state
@@ -174,15 +192,16 @@ var Profile = (function () {
             Profile.state.updatePassword.formErrors = {};
             // render state
             Profile.renderState();
-        })["catch"](function (obj, textStatus, textCode) {
-            var response = obj.responseJSON;
+        })
+		.catch((obj, textStatus, textCode) => {
+            let response = obj.responseJSON;
             // set the state
             Profile.state.updatePassword.inProgress = false;
             Profile.state.successMsg = null;
             Profile.state.errorMsg = response.msg;
             Profile.state.updatePassword.formErrorSet = true;
             Profile.state.updatePassword.formErrors = {};
-            for (var key in response) {
+            for (let key in response) {
                 if (key !== "status" && key !== "msg") {
                     Profile.state.updatePassword.formErrors[key] = response[key];
                 }
@@ -194,20 +213,5 @@ var Profile = (function () {
             console.log(textCode);
         });
         return false;
-    };
-    return Profile;
-}());
-Profile.state = {
-    // these are global
-    successMsg: null,
-    errorMsg: null,
-    updatePassword: {
-        formErrors: {},
-        formErrorSet: false,
-        inProgress: false
-    },
-    updatePrefs: {
-        formErrors: {},
-        formErrorSet: false
     }
-};
+}
