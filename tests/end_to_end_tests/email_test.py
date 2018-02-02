@@ -7,11 +7,17 @@ import os
 
 from passzero import email as pz_email
 from passzero.my_env import SENDGRID_API_KEY, REAL_EMAIL
+from passzero.config import BUILD_ID
 
 
 def test_send_email():
     os.environ["SENDGRID_API_KEY"] = SENDGRID_API_KEY
-    success = pz_email.send_email(REAL_EMAIL, "hello world subject",
-            "hello world body")
+    # adding a bit more information to this email
+    # in case I kick off the build by accident
+    success = pz_email.send_email(
+        REAL_EMAIL,
+        "Live Test Local with build ID %s" % BUILD_ID,
+        "Running local live test for build with ID %s" % BUILD_ID
+    )
     assert success == True
 
