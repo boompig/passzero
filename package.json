@@ -26,6 +26,10 @@
   },
   "devDependencies": {
     "@types/node": "^7.0.31",
+    "angular-mocks": "^1.6.8",
+    "jasmine-core": "^2.9.1",
+    "karma-chrome-launcher": "^2.2.0",
+    "karma-jasmine": "^1.1.1",
     "typescript": "^2.3.4"
   }
 }
