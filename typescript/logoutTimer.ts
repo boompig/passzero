@@ -53,3 +53,5 @@ class LogoutTimer {
         window.location.href = "/logout";
     };
 }
+
+//export { LogoutTimer };

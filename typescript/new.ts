@@ -1,12 +1,19 @@
 // provided externally via CDN
 declare let $: any;
 declare let angular: any;
+declare let Clipboard: any;
 
-// provided externally
+ //provided externally
 declare let Utils: any;
 declare let pzAPI: any;
 declare let LogoutTimer: any;
-declare let Clipboard: any;
+
+// type-checking
+//import * as $ from "jquery";
+//import { Utils } from "./utils";
+//import { pzAPI } from "./passzero_api";
+//import { LogoutTimer } from "./LogoutTimer";
+
 
 /**
  * Get a random integer in interval [a, b)
@@ -30,6 +37,15 @@ interface IEntry {
     extra: string;
     id: number;
     version: number;
+}
+
+// right now same as the creation form
+interface IEditEntryForm {
+    account: string;
+    username: string;
+    password: string;
+    extra: string;
+    csrf_token: string;
 }
 
 var NewCtrl = function() {
@@ -178,9 +194,9 @@ var NewCtrl = function() {
     this.createNew = function(e: Event) {
         e.preventDefault();
         const url = $(e.target).attr("action");
-        const data: ICreateEntryForm = Utils.getFormData(e.target);
-        pzAPI.createEntry(data, data.csrf_token)
-        .then(function(response) {
+        const data = Utils.getFormData(e.target as HTMLElement) as ICreateEntryForm;
+        pzAPI.createEntry(data)
+        .done((response) => {
             window.location.href = "/entries/done_new/" + data.account;
         }).catch((obj, textStatus, textCode) => {
             console.log(obj);
@@ -196,13 +212,16 @@ var NewCtrl = function() {
     };
 
     this.makeEdit = function(e) {
-        "use strict";
         e.preventDefault();
-        var data = Utils.getFormData(e.target);
-        var entry_id = this.getEntryID();
-        pzAPI.editEntry(entry_id, data, data.csrf_token)
-        .then(function(response) {
+        const data = Utils.getFormData(e.target as HTMLElement) as IEditEntryForm;
+        let entry_id = this.getEntryID();
+        pzAPI.editEntry(entry_id, data)
+        .done(function(response) {
             window.location.href = "/entries/done_edit/" + data.account;
+        }).catch((obj, textStatus, textCode) => {
+            console.log(obj);
+            console.log(textStatus);
+            console.log(textCode);
         });
         return false;
     };
@@ -237,8 +256,8 @@ var NewCtrl = function() {
 
     this._onClip = function(e) {
         e.clearSelection();
-        //console.log(e.trigger);
-        var elem = $(e.trigger);
+		// typescript complaining about jquery tooltip
+        let elem = $(e.trigger) as any;
         // create the tooltip
         elem.tooltip({
             "container": "body",

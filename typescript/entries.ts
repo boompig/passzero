@@ -1,9 +1,17 @@
 /* global $, Clipboard, angular, LogoutTimer */
 /* exported showHidePass, app */
-
 declare let $: any;
 declare let angular: any;
+declare let Clipboard: any;
+
+// external script tags
 declare let LogoutTimer: any;
+
+// type-checking
+//import * as $ from "jquery";
+//import "bootstrap"; // for jquery tooltip
+//import * as Clipboard from "clipboard";
+
 
 /**
  * From this SOF thread:
@@ -170,10 +178,10 @@ var PassZeroCtrl = function ($scope, $location, $http, $window, $timeout) {
 
     this._onClip = function(e) {
         e.clearSelection();
-        //console.log(e.trigger);
-        var elem = $(e.trigger);
+		// typescript is complaining about bootstrap
+        var elem = $(e.trigger) as any;
         // create the tooltip
-        elem.tooltip({
+        (elem as any).tooltip({
             "container": "body",
             "animation": true,
             "placement": "bottom",

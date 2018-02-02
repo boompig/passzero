@@ -1,10 +1,15 @@
 // provided externally via CDN
-declare let $: any;
 
-//const Utils = require("./utils.js");
-//const pzAPI = require("./passzero_api.js");
+// use these imports because typescript modules are hard to reason about
+declare let $: any;
 declare let Utils: any;
 declare let pzAPI: any;
+
+// type-checking
+//import * as $ from "jquery";
+//import { Utils } from "./utils";
+//import { pzAPI } from "./passzero_api";
+
 
 interface ChangeAccountPasswordData {
     old_password: string;
@@ -19,21 +24,21 @@ function changePassword(e: Event) {
     const elem = $(e.target);
     const url = elem.attr("action");
     const dataArray = elem.serializeArray();
-    let data : ChangeAccountPasswordData = Utils.parseArray(dataArray);
+    let data = Utils.parseArray(dataArray) as ChangeAccountPasswordData;
 
     $(".form-error").text("");
     $(".error-msg").text("");
     $(".alert-success").hide();
 
     pzAPI.changeAccountPassword(data.old_password, data.new_password, data.confirm_new_password)
-    .then(function (response) {
+    .done((response) => {
         $(".alert-success").text("Successfully changed password").show();
         // reset form fields
         elem.find("input[type='password']").each(function (idx) {
             $(this).val("");
         });
     })
-    .catch(function (obj, textStatus, textCode) {
+    .catch((obj, textStatus, textCode) => {
         var response = obj.responseJSON;
         $(".error-msg").text(response.msg);
 
@@ -58,7 +63,7 @@ function nukeEntries(e: Event) {
         const url = $elem.attr("action");
         const csrf_token = $elem.find("[name='csrf_token']").val();
         const data = { "csrf_token": csrf_token };
-        pzAPI.nukeEntries
+        pzAPI.nukeEntries()
         .then((response) => {
             $("#nuke-success-msg").text(response.msg).show();
         });

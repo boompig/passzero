@@ -1,6 +1,31 @@
+// from external CDN
 declare let $: any;
+
+// external
 declare let Utils: any;
 declare let pzAPI: any;
+
+// type-checking
+//import * as $ from "jquery";
+//import { Utils } from "./utils";
+//import { pzAPI } from "passzero_api";
+
+interface IPrefsForm {
+	default_random_passphrase_length: number;
+	default_random_password_length: number;
+}
+
+interface IDeleteUserForm {
+	password: string;
+	csrf_token: string;
+}
+
+interface IChangePasswordForm {
+	old_password: string;
+	new_password: string;
+	confirm_new_password: string;
+	csrf_token: string;
+}
 
 class Profile {
     static state = {
@@ -70,17 +95,17 @@ class Profile {
         }
     }
 
-    static deleteUser(e) {
-        "use strict";
+    static deleteUser(e: Event) {
         e.preventDefault();
-        let password = Utils.getFormData(e.target).password;
+        let password = (Utils.getFormData(e.target as HTMLElement) as IDeleteUserForm)
+						.password;
         // set state on submit and re-render
         Profile.state.successMsg = null;
         Profile.state.errorMsg = null;
         // and render state
         Profile.renderState();
         pzAPI.deleteUser(password)
-            .then((response) => {
+		.done((response, textStatus, obj) => {
             window.location.href = "/post_account_delete";
         })
         .catch((obj, textStatus, textCode) => {
@@ -125,7 +150,7 @@ class Profile {
         // and render state
         Profile.renderState();
         pzAPI.updateUserPreferences(prefs)
-            .then((response) => {
+		.done((response, textStatus, obj) => {
             // set the state
             Profile.state.successMsg = response.msg;
             Profile.state.errorMsg = null;
@@ -163,7 +188,7 @@ class Profile {
     static updatePassword(e) {
         "use strict";
         e.preventDefault();
-        let data = Utils.getFormData(e.target);
+        let data = Utils.getFormData(e.target as HTMLElement) as IChangePasswordForm;
         if (Profile.state.updatePassword.inProgress) {
             console.log("Already in progress!");
             return;
@@ -176,8 +201,8 @@ class Profile {
         Profile.state.updatePassword.formErrors = {};
         // and render state
         Profile.renderState();
-        pzAPI.updateUserPassword(data.old_password, data.new_password, data.confirm_new_password)
-            .then((response) => {
+        pzAPI.changeAccountPassword(data.old_password, data.new_password, data.confirm_new_password)
+		.done((response, textStatus, obj) => {
             let $elem = $(e.target);
             // reset form fields
             // TODO move this into state
