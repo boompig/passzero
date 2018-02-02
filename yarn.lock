@@ -2,6 +2,10 @@
 # yarn lockfile v1
 
 
+"@types/angular@^1.6.42":
+  version "1.6.42"
+  resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.42.tgz#8d587afeccff635900ffb04a10a0cae894704ef2"
+
 "@types/clipboard@^1.5.36":
   version "1.5.36"
   resolved "https://registry.yarnpkg.com/@types/clipboard/-/clipboard-1.5.36.tgz#e79fffc758e94e7ff9de9898ae7561db3c2bdd51"

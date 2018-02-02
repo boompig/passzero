@@ -20,7 +20,6 @@ function changePassword(e: Event) {
     e.preventDefault();
 
     const elem = $(e.target);
-    const url = elem.attr("action");
     const dataArray = elem.serializeArray();
     const data = Utils.parseArray(dataArray) as ChangeAccountPasswordData;
 
@@ -57,10 +56,6 @@ function nukeEntries(e: Event) {
     "use strict";
     e.preventDefault();
     if (confirm("Are you sure you want to delete all your entries?")) {
-        const $elem = $(e.target);
-        const url = $elem.attr("action");
-        const csrf_token = $elem.find("[name='csrf_token']").val();
-        const data = { "csrf_token": csrf_token };
         pzAPI.nukeEntries()
         .then((response) => {
             $("#nuke-success-msg").text(response.msg).show();

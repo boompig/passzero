@@ -1,12 +1,8 @@
-/*
- * These files are provided externally via script tags
- */
 /// <reference types="jquery" />
+/// <reference types="angular" />
 /// <reference types="clipboard" />
 /// <reference path="./passzero_api.ts" />
 /// <reference path="./logoutTimer.ts" />
-// TODO
-declare let angular: any;
 
 
 // module imports (tsc doesn't like these)

@@ -1,6 +1,13 @@
 {
     "compilerOptions": {
-        "noUnusedLocals": true
+        "noUnusedLocals": true,
+		"outDir": "static/js/src",
+		"module": "none"
     },
-    "target": "es6"
+    "target": "es6",
+	"exclude": [
+		"node_modules",
+		"static/lib",
+		"static/js"
+	]
 }

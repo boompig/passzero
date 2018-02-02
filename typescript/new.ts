@@ -1,10 +1,9 @@
-/// <reference path="../node_modules/@types/jquery/index.d.ts" />
-/// <reference path="../node_modules/@types/clipboard/index.d.ts" />
+/// <reference types="jquery" />
+/// <reference types="angular" />
+/// <reference types="clipboard" />
 /// <reference path="./logoutTimer.ts" />
 /// <reference path="./passzero_api.ts" />
 /// <reference path="./utils.ts" />
-// TODO import types for angular as well
-declare let angular: any;
 
 
 // type-checking
@@ -91,7 +90,7 @@ var NewCtrl = function() {
      * Return the passphrase that has been generated from the given corpus of words
      */
     this.genPassphraseHelper = function(words: Array<string>, numWords: number): string {
-        let phrase = "", index, word;
+        let phrase = "";
         for (let i = 0; i < numWords; i++) {
             let word = words[randInt(0, words.length)];
             word = word[0].toUpperCase() + word.substr(1);
@@ -192,7 +191,6 @@ var NewCtrl = function() {
      */
     this.createNew = function(e: Event) {
         e.preventDefault();
-        const url = $(e.target).attr("action");
         const data = Utils.getFormData(e.target as HTMLElement) as ICreateEntryForm;
         pzAPI.createEntry(data)
         .done((response) => {
