@@ -3,20 +3,20 @@ declare let Utils: any;
 declare let pzAPI: any;
 
 class Profile {
-	static state = {
-		// these are global
-		successMsg: null,
-		errorMsg: null,
-		updatePassword: {
-			formErrors: {},
-			formErrorSet: false,
-			inProgress: false
-		},
-		updatePrefs: {
-			formErrors: {},
-			formErrorSet: false
-		}
-	};
+    static state = {
+        // these are global
+        successMsg: null,
+        errorMsg: null,
+        updatePassword: {
+            formErrors: {},
+            formErrorSet: false,
+            inProgress: false
+        },
+        updatePrefs: {
+            formErrors: {},
+            formErrorSet: false
+        }
+    };
 
     static renderState() {
         console.log(Profile.state);
@@ -83,7 +83,7 @@ class Profile {
             .then((response) => {
             window.location.href = "/post_account_delete";
         })
-		.catch((obj, textStatus, textCode) => {
+        .catch((obj, textStatus, textCode) => {
             Profile.state.successMsg = null;
             if (obj.responseJSON) {
                 if (obj.status === 400 && textCode === "BAD REQUEST") {
@@ -134,7 +134,7 @@ class Profile {
             // render state
             Profile.renderState();
         })
-		.catch((obj, textStatus, textCode) => {
+        .catch((obj, textStatus, textCode) => {
             Profile.state.successMsg = null;
             if (obj.responseJSON) {
                 let response = obj.responseJSON;
@@ -193,7 +193,7 @@ class Profile {
             // render state
             Profile.renderState();
         })
-		.catch((obj, textStatus, textCode) => {
+        .catch((obj, textStatus, textCode) => {
             let response = obj.responseJSON;
             // set the state
             Profile.state.updatePassword.inProgress = false;

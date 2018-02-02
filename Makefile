@@ -15,7 +15,7 @@ csslint  := node_modules/csslint/dist/cli.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
 cleancss := node_modules/clean-css-cli/bin/cleancss
 tsc		 := node_modules/typescript/bin/tsc
-karma    := node_modules/karma/
+karma	:= node_modules/karma/
 
 all: lint test build-name
 
