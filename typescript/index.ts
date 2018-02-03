@@ -7,7 +7,7 @@
 //import { LogoutTimer } from "./logoutTimer";
 
 
-$(function() {
-    let timer = new LogoutTimer();
-    timer.startLogoutTimer();
+$(() => {
+	const timer = new LogoutTimer();
+	timer.startLogoutTimer();
 });

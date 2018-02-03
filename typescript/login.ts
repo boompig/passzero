@@ -4,32 +4,31 @@
 /// <reference types="jquery" />
 /// <reference types="js-cookie" />
 /// <reference path="./passzero_api.ts" />
-/// <reference path="./logoutTimer.ts" />
 /// <reference path="./utils.ts" />
 
 
 // module imports (tsc does not like these)
 //import * as $ from "jquery";
-//import { pzAPI } from "passzero_api";
-//import { Utils } from "utils";
+//import { pzAPI } from "./passzero_api";
+//import { Utils } from "./utils";
 
 
 interface IRegisterFormData {
-    email: string;
-    password: string;
-    confirm_password: string;
+	email: string;
+	password: string;
+	confirm_password: string;
 }
 
 interface ILoginFormData {
-    email: string;
-    password: string;
-    remember: boolean;
+	email: string;
+	password: string;
+	remember: boolean;
 }
 
 
 const Login = {
 
-	createAccount: function(e: Event) {
+	createAccount: (e: Event) => {
 		e.preventDefault();
 		console.log(e.target);
 		const data = Utils.getFormData(e.target as HTMLElement) as IRegisterFormData;
@@ -71,7 +70,7 @@ const Login = {
 		return false;
 	},
 
-	login: function(e: Event) {
+	login: (e: Event) => {
 		"use strict";
 		e.preventDefault();
 		console.log(e.target);
@@ -107,14 +106,14 @@ const Login = {
 		return false;
 	},
 
-	onLoad: function() {
+	onLoad: () => {
 		const email: string = Cookies.get("email");
 		if (email) {
 			$("[name='remember']").prop("checked", true);
 			$("[name='email']").val(email);
 		}
 	}
-}
+};
 
 $(() => {
 	Login.onLoad();

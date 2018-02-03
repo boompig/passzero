@@ -139,6 +139,12 @@
             {% endraw %}
         </div>
 
+        <input
+            type="checkbox"
+            name="has_2fa"
+            ng-model="ctrl.entry.has_2fa" />
+        <label for="has_2fa">2FA enabled</label>
+
         <button type="submit" class="btn btn-success form-control" 
             id="create-btn">{{ ("Save" if entry else "Create" ) }}</button>
     </form>
