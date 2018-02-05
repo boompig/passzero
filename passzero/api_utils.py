@@ -56,7 +56,11 @@ def requires_json_form_validation(form_class):
         @wraps(function)
         def inner(*args, **kwargs):
             request_data = get_request_data()
-            form = form_class(data=request_data)
+            if request.files:
+                # shouldn't pass in data directly here
+                form = form_class()
+            else:
+                form = form_class(data=request_data)
             if form.validate():
                 return function(form.data, *args, **kwargs)
             else:

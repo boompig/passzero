@@ -83,7 +83,7 @@ def test_delete_account():
     insert_entry_for_user(session, dec_entry_in, user.id, user_key)
     # add a document to that account
     dec_doc = DecryptedDocument(
-        name="test doc",
+        name=u"test doc",
         contents="hello"
     )
     insert_document_for_user(session, dec_doc, user.id, user_key)
@@ -106,7 +106,7 @@ def test_insert_entry_for_user():
         "extra": "e",
         "has_2fa": True
     }
-    user_key = "master key"
+    user_key = u"master key"
     insert_entry_for_user(session, dec_entry_in, 1, user_key)
     # make sure the entry is inserted
     enc_entries = get_entries(session, 1)

@@ -16,11 +16,14 @@ def find_entries(session, user_id):
 
 
 def find_pinned_entry(session, user_id):
+    assert isinstance(user_id, int)
     return session.query(Entry).filter_by(
         user_id=user_id, pinned=True).one()
 
 
 def create_pinned_entry(session, user_id, master_password):
+    assert isinstance(user_id, int)
+    assert isinstance(master_password, six.text_type)
     dec_entry = {
         "account": "sanity",
         "username": "sanity",
@@ -38,6 +41,8 @@ def find_user(session, user_id):
 
 
 def verify_pinned_entry(session, pinned_entry, old_password):
+    assert isinstance(pinned_entry, Entry)
+    assert isinstance(old_password, six.text_type)
     dec_entry = pinned_entry.decrypt(old_password)
     assert dec_entry["account"] == "sanity"
     assert dec_entry["username"] == "sanity"
@@ -64,7 +69,9 @@ def change_password_in_user_table(session, user_id, new_password):
     assert isinstance(new_password, six.text_type)
     user = find_user(session, user_id)
     # the user's salt is represented in the database as unicode but is worked on as bytestring
-    user.password = get_hashed_password(new_password, user.salt.encode('utf-8'))
+    user.password = (get_hashed_password(new_password, user.salt.encode('utf-8'))
+                    .decode("utf-8"))
+    assert isinstance(user.password, six.text_type)
 
 
 def change_password(session, user_id, old_password, new_password):
@@ -72,9 +79,15 @@ def change_password(session, user_id, old_password, new_password):
     0. Verify using the good old-fashioned way
     1. Verify using pinned entry (auth)
     """
+    assert isinstance(user_id, int)
+    assert isinstance(old_password, six.text_type)
+    assert isinstance(new_password, six.text_type)
     # do proper authentication
     user = find_user(session, user_id)
-    hashed_password = get_hashed_password(old_password, user.salt.encode('utf-8'))
+    assert isinstance(user, User)
+    hashed_password = get_hashed_password(old_password, user.salt.encode('utf-8')).decode('utf-8')
+    # should be unicode
+    assert isinstance(hashed_password, six.text_type)
     if hashed_password != user.password:
         logging.debug("[change_password] Hashed password is not the same as user password")
         session.rollback()

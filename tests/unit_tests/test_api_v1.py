@@ -7,6 +7,7 @@ import unittest
 import mock
 import six
 from flask import Flask
+from six import BytesIO
 
 from passzero.api_v1 import api_v1
 from passzero.models import db
@@ -20,6 +21,7 @@ app.register_blueprint(api_v1, prefix="")
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["BUILD_ID"] = "test"
+app.config['WTF_CSRF_ENABLED'] = False
 
 DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"
@@ -122,6 +124,29 @@ class PassZeroApiTester(unittest.TestCase):
         # now try to login
         r = api.login(self.app, email, password, check_status=False)
         assert r.status_code == 401
+
+    def test_delete_user_with_docs(self):
+        email = DEFAULT_EMAIL
+        password = DEFAULT_PASSWORD
+        self._create_active_account(email, password)
+        api.login(self.app, email, password)
+        token = api.get_csrf_token(self.app)
+        doc_params = {
+            "name": "test document",
+            "document": (BytesIO(b"hello world\n"), "hello_world.txt")
+        }
+        api.post_document(self.app, doc_params, token, check_status=True)
+        docs = api.get_documents(self.app, check_status=True)
+        assert len(docs) == 1
+        token = api.get_csrf_token(self.app)
+        api.delete_user(self.app, password, token, check_status=True)
+        # this should fail
+        r = api.get_documents(self.app, check_status=False)
+        assert r.status_code == 401
+        # now try to login
+        r = api.login(self.app, email, password, check_status=False)
+        assert r.status_code == 401
+
 
     def test_delete_user_bad_password(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
