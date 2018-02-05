@@ -220,3 +220,7 @@ class PassZeroTemplateTester(unittest.TestCase):
         print(response.data)
         assert response.status_code == 200
 
+    def test_api_v2_docs(self):
+        response = self.test_client.get("/api/v2", follow_redirects=True)
+        print(response.data)
+        assert response.status_code == 200

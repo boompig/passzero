@@ -2,8 +2,8 @@ from passzero.crypto_utils import (decrypt_field_v2, encrypt_field_v2, extend_ke
                           get_iv, get_kdf_salt)
 
 def test_encrypt_decrypt_v2():
-    user_key = "hello"
-    username = "my username"
+    user_key = u"hello"
+    username = u"my username"
     kdf_salt = get_kdf_salt()
     extended_key = extend_key(user_key, kdf_salt)
     iv = get_iv()

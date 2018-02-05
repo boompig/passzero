@@ -119,16 +119,18 @@ def delete_account(db_session, user):
 def create_inactive_user(db_session, email, password):
     """Create an account which has not been activated.
     Return the user object (model)"""
-    assert isinstance(email, six.text_type)
-    assert isinstance(password, six.text_type)
+    assert isinstance(email, six.text_type), "Type of email is %s" % type(email)
+    assert isinstance(password, six.text_type), "Type of password is %s" % type(password)
     salt = get_salt(SALT_SIZE)
-    assert isinstance(salt, six.binary_type)
+    assert isinstance(salt, bytes), "Type of salt is %s" % type(salt)
     password_hash = get_hashed_password(password, salt)
+    assert isinstance(password_hash, bytes)
     user = User()
     user.email = email
     # the hashed password is a binary string, so have to convert to unicode
     # will be unicode when it comes out of DB anyway
     user.password = password_hash.decode("utf-8")
+    assert isinstance(user.password, six.text_type)
     # even though it would make a lot of sense to store the salt as a binary string, in reality it is stored in unicode
     user.salt = salt.decode("utf-8")
     user.active = False
@@ -159,6 +161,9 @@ def encrypt_entry(user_key, dec_entry, version=4):
     :param user_key:    A string representing the user's key
     :return:            Entry object
     """
+    assert isinstance(user_key, six.text_type)
+    assert isinstance(dec_entry, dict)
+    assert isinstance(version, int)
     entry = Entry()
     if version == 4:
         entry.encrypt_v4(user_key, dec_entry)
@@ -221,6 +226,9 @@ def encrypt_document(session, user_id, master_key, document_name, document):
     :param session: database session, NOT flask session
     :param document: contents of the document
     """
+    assert isinstance(user_id, int)
+    assert isinstance(master_key, six.text_type)
+    assert isinstance(document_name, six.text_type)
     doc = DecryptedDocument(document_name, document)
     return insert_document_for_user(session, doc, user_id, master_key)
 
@@ -232,7 +240,11 @@ def insert_document_for_user(session, decrypted_document, user_id, master_key):
     :param master_key: unicode
     :param user_id: int
     """
+    assert isinstance(decrypted_document, DecryptedDocument)
+    assert isinstance(user_id, int)
+    assert isinstance(master_key, six.text_type)
     extended_key, extension_params = DecryptedDocument.extend_key(master_key)
+    assert isinstance(extended_key, bytes)
     enc_doc = decrypted_document.encrypt(extended_key)
     enc_doc.key_salt = base64_encode(extension_params["kdf_salt"])
     enc_doc.user_id = user_id
