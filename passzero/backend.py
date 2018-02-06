@@ -246,8 +246,10 @@ def insert_document_for_user(session, decrypted_document, user_id, master_key):
     extended_key, extension_params = DecryptedDocument.extend_key(master_key)
     assert isinstance(extended_key, bytes)
     enc_doc = decrypted_document.encrypt(extended_key)
-    enc_doc.key_salt = base64_encode(extension_params["kdf_salt"])
+    enc_doc.key_salt = base64_encode(extension_params["kdf_salt"]).decode("utf-8")
+    assert isinstance(enc_doc.key_salt, six.text_type)
     enc_doc.user_id = user_id
+    assert isinstance(enc_doc.user_id, int)
     session.add(enc_doc)
     session.commit()
     return enc_doc

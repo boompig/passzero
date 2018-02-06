@@ -95,7 +95,7 @@ def write_json(code, data):
 
 def json_form_validation_error(errors):
     code, data = json_error(400, "Failed to validate form")
-    for k, v in dict(errors).iteritems():
+    for k, v in dict(errors).items():
         data[k] = v[0]
     return (code, data)
 

@@ -1,14 +1,20 @@
 from __future__ import print_function
-from flask import request
+
 import logging
 import os
 import sys
-from sendgrid.helpers.mail import Email, Content, Mail
+
 import sendgrid
+import six
+from flask import request
+from sendgrid.helpers.mail import Content, Email, Mail
 
 
 def send_email_sendgrid(to_email, subject, msg):
     """Directly taken from sendgrid site code sample"""
+    assert isinstance(to_email, six.text_type)
+    assert isinstance(subject, six.text_type)
+    assert isinstance(msg, six.text_type)
     try:
         assert os.environ.get("SENDGRID_API_KEY", None)
     except AssertionError:
@@ -33,8 +39,10 @@ def send_email_sendgrid(to_email, subject, msg):
         logging.error("response headers = %s", str(response.headers))
         return False
 
+
 def send_email(email, subject, msg):
     return send_email_sendgrid(email, subject, msg)
+
 
 def send_recovery_email(email, token):
     link =  request.url_root + "recover/confirm?token=%s" % token
@@ -43,6 +51,7 @@ def send_recovery_email(email, token):
         "Recover your PassZero account",
         "To complete your PassZero account recovery, follow this link: %s" % link
     )
+
 
 def send_confirmation_email(email, token):
     link =  request.url_root + "signup/confirm?token=%s" % token

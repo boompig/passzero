@@ -1,4 +1,4 @@
-BUILD_ID = "unable_rhino"
+BUILD_ID = "negative_emu"
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32

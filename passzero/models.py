@@ -46,7 +46,7 @@ class User(db.Model):
         assert isinstance(self.salt, six.text_type)
         hashed_password = get_hashed_password(form_password, self.salt.encode('utf-8'))
         assert isinstance(self.password, six.text_type)
-        assert isinstance(hashed_password, six.binary_type)
+        assert isinstance(hashed_password, bytes)
         # prevent timing attacks by using constant-time comparison
         # can't use compare_digest directly because args can't be unicode strings
         d1 = hmac.new(self.password.encode('utf-8')).digest()
@@ -157,11 +157,11 @@ class Entry(db.Model):
         """
         assert isinstance(key, six.text_type)
         kdf_salt = binascii.a2b_base64(self.key_salt)
-        assert isinstance(kdf_salt, six.binary_type)
+        assert isinstance(kdf_salt, bytes)
         extended_key = extend_key(key, kdf_salt)
-        assert isinstance(extended_key, six.binary_type)
+        assert isinstance(extended_key, bytes)
         iv = binascii.a2b_base64(self.iv)
-        assert isinstance(iv, six.binary_type)
+        assert isinstance(iv, bytes)
         messages = [
             binascii.a2b_base64(self.username),
             binascii.a2b_base64(self.password),
@@ -264,11 +264,11 @@ class Entry(db.Model):
         assert "has_2fa" in dec_entry, "Entry %s must have field 'has_2fa'" % str(dec_entry)
         # generate random new IV
         iv = get_iv()
-        assert isinstance(iv, six.binary_type)
+        assert isinstance(iv, bytes)
         kdf_salt = get_kdf_salt()
-        assert isinstance(kdf_salt, six.binary_type)
+        assert isinstance(kdf_salt, bytes)
         extended_key = extend_key(master_key, kdf_salt)
-        assert isinstance(extended_key, six.binary_type)
+        assert isinstance(extended_key, bytes)
         fields = ["username", "password", "extra"]
         messages = [dec_entry[field] for field in fields]
         enc_messages = encrypt_messages(extended_key, iv, messages)
@@ -286,8 +286,10 @@ class Entry(db.Model):
         # encryption metadata - which encryption scheme to use to decrypt
         self.version = 4
         self.pinned = False
-        self.key_salt = base64_encode(kdf_salt)
-        self.iv = base64_encode(iv)
+        self.key_salt = base64_encode(kdf_salt).decode("utf-8")
+        assert isinstance(self.key_salt, six.text_type)
+        self.iv = base64_encode(iv).decode("utf-8")
+        assert isinstance(self.iv, six.text_type)
         # old information
         self.padding = None
 
@@ -392,7 +394,10 @@ class EncryptedDocument(db.Model):
         """Helper method.
         Call extend_key with the right parameters"""
         assert isinstance(master_key, six.text_type)
-        return extend_key(master_key, binascii.a2b_base64(self.key_salt),
+        # sadly, base64-encoded
+        assert isinstance(self.key_salt, six.text_type)
+        return extend_key(master_key,
+            binascii.a2b_base64(self.key_salt),
             EncryptedDocument.KEY_LENGTH)
 
     def to_json(self):
@@ -400,7 +405,7 @@ class EncryptedDocument(db.Model):
         NOTE: this is a really bad idea.
         Since the contents are bytes and will not make any sense on the client side
         """
-        assert isinstance(self.document, six.binary_type)
+        assert isinstance(self.document, bytes)
         return {
             "id": self.id,
             "name": self.name,
@@ -412,7 +417,7 @@ class EncryptedDocument(db.Model):
         extended_key = self.extend_key(master_key)
         cryptor = AEAD(base64_encode(extended_key))
         assert isinstance(self.name, six.text_type)
-        assert isinstance(self.document, six.binary_type)
+        assert isinstance(self.document, bytes)
         pt = cryptor.decrypt(self.document, self.name.encode('utf-8'))
         return DecryptedDocument(
             name=self.name,
@@ -427,7 +432,7 @@ class DecryptedDocument:
         """
         assert isinstance(name, six.text_type)
         self.name = name
-        if isinstance(contents, six.binary_type):
+        if isinstance(contents, bytes):
             # data is already binary data
             self.contents = contents
         elif isinstance(contents, six.text_type):
@@ -452,9 +457,12 @@ class DecryptedDocument:
         params:
             kdf_salt -> bytes
         """
+        assert isinstance(master_key, six.text_type)
         key_salt = get_kdf_salt()
+        assert isinstance(key_salt, bytes)
         # need a 32-byte key (256 bits)
         extended_key = extend_key(master_key, key_salt, 32)
+        assert isinstance(extended_key, bytes)
         return (extended_key, { "kdf_salt": key_salt } )
 
     def encrypt(self, key):
@@ -462,17 +470,17 @@ class DecryptedDocument:
         :param key:         bytes
         :return:            encrypted document with the content fields set
         """
-        assert isinstance(key, six.binary_type)
+        assert isinstance(key, bytes)
         #AES_128_CBC_HMAC_SHA_256
         assert len(key) == 32, \
                "key must be 32 bytes long, actually %d bytes" % len(key)
         assert isinstance(self.name, six.text_type), \
                "Name must be a unicode string"
-        assert isinstance(self.contents, six.binary_type), \
+        assert isinstance(self.contents, bytes), \
                "Contents must be bytes"
         cryptor = AEAD(base64_encode(key))
         ct = cryptor.encrypt(self.contents, self.name.encode("utf-8"))
-        assert isinstance(ct, six.binary_type), \
+        assert isinstance(ct, bytes), \
                "ciphertext is binary"
         return EncryptedDocument(
             # contents
@@ -485,7 +493,7 @@ class DecryptedDocument:
         For now decode the doc into UTF-8
         """
         assert isinstance(self.name, six.text_type)
-        assert isinstance(self.contents, six.binary_type)
+        assert isinstance(self.contents, bytes)
         return {
             "name": self.name,
             "contents": self.contents.decode("utf-8")

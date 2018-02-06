@@ -15,7 +15,8 @@ def byte_to_hex_legacy(s):
     assert isinstance(s, bytes)
     arr = bytearray(s)
     assert all([isinstance(c, int) for c in arr])
-    return "".join('{:02x}'.format(x) for x in arr).decode("utf-8")
+    # when it's python 3 we don't have to decode
+    return "".join('{:02x}'.format(x) for x in arr)
 
 
 def hex_to_byte_legacy(s):
@@ -34,7 +35,8 @@ def pad_to_length(key, length):
     padding = []
     while len(key) + len(padding) < length:
         padding.append(random.choice(alphabet))
-    return "".join(padding).decode("utf-8")
+    # when it's python 3 we don't have to decode
+    return "".join(padding)
 
 
 def pad_key_legacy(key):
@@ -146,10 +148,13 @@ def get_kdf_salt(num_bytes=32):
 
 def extend_key(key, salt, key_length=16):
     """Extend the given key into a key of length suitable for AES.
-    :type key:          bytes
+    :type key:          unicode
     :type salt:         bytes
     :rtype:             bytes
     """
+    assert isinstance(key, six.text_type)
+    assert isinstance(salt, bytes)
+    assert isinstance(key_length, int)
     return KDF.PBKDF2(key, salt, count=1000, dkLen=key_length)
 
 

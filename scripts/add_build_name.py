@@ -1,7 +1,6 @@
 from argparse import ArgumentParser
 import os
 import random
-import sys
 
 
 DIRNAME = os.path.dirname(os.path.realpath(__file__))
@@ -43,4 +42,4 @@ if __name__ == "__main__":
     assert os.path.exists(args.fname), "%s does not exist" % args.fname
     line = "BUILD_ID = \"%s\"" % build_name
     replace_first_line(args.fname, line)
-    print "set build ID to %s" % build_name
+    print("set build ID to %s" % build_name)
