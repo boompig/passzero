@@ -24,7 +24,7 @@ def get_db_session():
     return Session()
 
 
-def create_active_account(email, password):
+def create_active_account(email: str, password: str):
     """Create account and return the user object.
     Use this function instead of API because we do email verification in real API
     """

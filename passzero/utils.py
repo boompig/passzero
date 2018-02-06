@@ -1,7 +1,7 @@
 import binascii
 
 
-def base64_encode(bin_data):
+def base64_encode(bin_data: bytes):
     """
     :type bin_data:     bytes
     :rtype:             bytes

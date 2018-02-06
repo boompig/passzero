@@ -5,6 +5,7 @@ from datetime import datetime
 import six
 from aead import AEAD
 from flask_sqlalchemy import SQLAlchemy
+from typing import Tuple
 
 from passzero.config import TOKEN_SIZE
 from passzero.crypto_utils import (byte_to_hex_legacy, decrypt_field_v1,
@@ -35,7 +36,7 @@ class User(db.Model):
     # number of words in passphrase
     default_random_passphrase_length = db.Column(db.Integer, nullable=False, default=4)
 
-    def authenticate(self, form_password):
+    def authenticate(self, form_password: str) -> bool:
         """
         :param form_password:   user-submitted password
         :type form_password:    unicode
@@ -53,7 +54,7 @@ class User(db.Model):
         d2 = hmac.new(hashed_password).digest()
         return hmac.compare_digest(d1, d2)
 
-    def change_password(self, new_password):
+    def change_password(self, new_password: str) -> None:
         assert isinstance(new_password, six.text_type)
         # salt stored as unicode but should really be bytes
         assert isinstance(self.salt, six.text_type)
@@ -62,7 +63,7 @@ class User(db.Model):
         self.password = hashed_password
         assert isinstance(self.password, six.text_type)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<User(email=%s, password=%s, salt=%s, active=%s)>" % (self.email, self.password, self.salt, str(self.active))
 
 
@@ -76,10 +77,10 @@ class AuthToken(db.Model):
     # in seconds
     MAX_AGE = 15 * 60
 
-    def random_token(self):
+    def random_token(self) -> None:
         self.token = random_hex(TOKEN_SIZE)
 
-    def is_expired(self):
+    def is_expired(self) -> bool:
         """
         :return:                True iff expired
         :rtype:                 bool
@@ -111,10 +112,10 @@ class Entry(db.Model):
     version = db.Column(db.Integer, nullable=False)
     pinned = db.Column(db.Boolean, default=False, nullable=False)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
 
-    def to_json(self):
+    def to_json(self) -> dict:
         """
         :return:            All fields of the entry, some possibly still encrypted
         :rtype:             dict
@@ -131,7 +132,7 @@ class Entry(db.Model):
             "is_encrypted": True
         }
 
-    def decrypt(self, key):
+    def decrypt(self, key) -> dict:
         """
         :return:            a dictionary mapping fields to their decrypted values.
         :rtype:             dict"""
@@ -147,7 +148,7 @@ class Entry(db.Model):
         else:
             raise AssertionError("Unsupported version: {}".format(self.version))
 
-    def _decrypt_version_4(self, key):
+    def _decrypt_version_4(self, key: str) -> dict:
         """
         Version 4 encrypts, sequentially, the following data:
         - username
@@ -178,7 +179,8 @@ class Entry(db.Model):
             "version": self.version
         }
 
-    def _decrypt_version_3(self, key):
+    def _decrypt_version_3(self, key: str) -> dict:
+        assert isinstance(key, six.text_type)
         kdf_salt = binascii.a2b_base64(self.key_salt)
         extended_key = extend_key(key, kdf_salt)
         iv = binascii.a2b_base64(self.iv)
@@ -197,10 +199,12 @@ class Entry(db.Model):
             "version": self.version
         }
 
-    def _decrypt_version_1(self, key):
+    def _decrypt_version_1(self, key: str) -> dict:
+        assert isinstance(key, six.text_type)
         return self._decrypt_with_padding(key)
 
-    def _decrypt_version_2(self, key):
+    def _decrypt_version_2(self, key: str) -> dict:
+        assert isinstance(key, six.text_type)
         key_salt = hex_to_byte_legacy(self.key_salt)
         iv = hex_to_byte_legacy(self.iv)
         extended_key = extend_key(key, key_salt)
@@ -223,7 +227,7 @@ class Entry(db.Model):
             "extra": dec_extra
         }
 
-    def _decrypt_with_padding(self, key):
+    def _decrypt_with_padding(self, key: str) -> dict:
         """
         :type key:              unicode string
         """
@@ -294,11 +298,13 @@ class Entry(db.Model):
         self.padding = None
 
 
-    def encrypt_v3(self, master_key, dec_entry):
+    def encrypt_v3(self, master_key: str, dec_entry: dict):
         """
         :param master_key:  The user's key, used to derive entry-specific enc key
         :param dec_entry:   Entry to encrypt (dictionary of fields)
         """
+        assert isinstance(master_key, six.text_type)
+        assert isinstance(dec_entry, dict)
         # generate random new IV
         iv = get_iv()
         kdf_salt = get_kdf_salt()
@@ -322,7 +328,7 @@ class Entry(db.Model):
         # old information
         self.padding = None
 
-    def encrypt_v2(self, master_key, dec_entry):
+    def encrypt_v2(self, master_key: str, dec_entry: dict):
         """
         WARNING: This is not secure! Do not use this!
         This is only here to satisfy the unit test for decryption of these old entries
@@ -348,13 +354,14 @@ class Entry(db.Model):
         self.iv = byte_to_hex_legacy(iv)
         self.version = 2
 
-    def encrypt_v1(self, master_key, dec_entry):
+    def encrypt_v1(self, master_key: str, dec_entry: dict):
         """
         WARNING: This is not secure! Do not use this!
         This is only here to satisfy the unit test for decryption of these old entries
         If they are still alive in the database
         """
         assert isinstance(master_key, six.text_type)
+        assert isinstance(dec_entry, dict)
         self.padding = pad_key_legacy(master_key)
         assert isinstance(self.padding, six.text_type)
         self.account = dec_entry[u"account"]
@@ -390,7 +397,7 @@ class EncryptedDocument(db.Model):
 
     KEY_LENGTH = 32
 
-    def extend_key(self, master_key):
+    def extend_key(self, master_key: str) -> bytes:
         """Helper method.
         Call extend_key with the right parameters"""
         assert isinstance(master_key, six.text_type)
@@ -400,7 +407,7 @@ class EncryptedDocument(db.Model):
             binascii.a2b_base64(self.key_salt),
             EncryptedDocument.KEY_LENGTH)
 
-    def to_json(self):
+    def to_json(self) -> dict:
         """
         NOTE: this is a really bad idea.
         Since the contents are bytes and will not make any sense on the client side
@@ -412,7 +419,7 @@ class EncryptedDocument(db.Model):
             "contents": self.document.decode("utf-8")
         }
 
-    def decrypt(self, master_key):
+    def decrypt(self, master_key: str) -> 'DecryptedDocument':
         assert isinstance(master_key, six.text_type)
         extended_key = self.extend_key(master_key)
         cryptor = AEAD(base64_encode(extended_key))
@@ -425,7 +432,8 @@ class EncryptedDocument(db.Model):
         )
 
 class DecryptedDocument:
-    def __init__(self, name, contents):
+
+    def __init__(self, name: str, contents) -> None:
         """
         :param name: String, the user's name for the file. Not a filename.
         :param document: object for the file
@@ -448,7 +456,7 @@ class DecryptedDocument:
                 self.contents = contents.stream.read()
 
     @staticmethod
-    def extend_key(master_key):
+    def extend_key(master_key: str) -> Tuple[bytes, dict]:
         """
         Helper method.
 
@@ -465,7 +473,7 @@ class DecryptedDocument:
         assert isinstance(extended_key, bytes)
         return (extended_key, { "kdf_salt": key_salt } )
 
-    def encrypt(self, key):
+    def encrypt(self, key: bytes) -> 'EncryptedDocument':
         """
         :param key:         bytes
         :return:            encrypted document with the content fields set
@@ -488,7 +496,7 @@ class DecryptedDocument:
             document=ct
         )
 
-    def to_json(self):
+    def to_json(self) -> dict:
         """This is a really bad idea, to return a document this way.
         For now decode the doc into UTF-8
         """

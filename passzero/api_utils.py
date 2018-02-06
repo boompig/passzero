@@ -84,7 +84,7 @@ def generate_csrf_token():
     return session["csrf_token"]
 
 
-def write_json(code, data):
+def write_json(code: int, data: dict) -> Response:
     """Write JSON response. Code is status code."""
     return Response(
         json.dumps(data, separators=(",", ":")),
@@ -100,14 +100,14 @@ def json_form_validation_error(errors):
     return (code, data)
 
 
-def json_error(code, msg):
+def json_error(code: int, msg: str) -> dict:
     return (code, {
         "status": "error",
         "msg": msg
     })
 
 
-def json_success(msg):
+def json_success(msg: str) -> dict:
     """Return tuple of (code, JSON data)"""
     return (200, {
         "status": "success",
@@ -143,7 +143,7 @@ def json_csrf_validation_error():
     return (code, data)
 
 
-def json_internal_error(msg):
+def json_internal_error(msg: str):
     """Return tuple of (code, JSON data)"""
     return json_error(500, msg)
 

@@ -1,6 +1,7 @@
 import six
 from sqlalchemy import func
 from sqlalchemy.sql.expression import asc
+from typing import Any, Dict, List, Tuple
 
 from passzero import audit
 from passzero.config import SALT_SIZE
@@ -11,14 +12,14 @@ from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
 from .utils import base64_encode
 
 
-def activate_account(db_session, user):
+def activate_account(db_session, user: User):
     """Set the user to active and commit changes"""
     user.active = True
     db_session.add(user)
     db_session.commit()
 
 
-def password_strength_scores(email, dec_entries):
+def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, Any]]:
     l = []
     for entry in dec_entries:
         d = {}
@@ -34,19 +35,19 @@ def password_strength_scores(email, dec_entries):
     return l
 
 
-def _decrypt_row(row, key):
+def _decrypt_row(row, key: str):
     obj = row.decrypt(key)
     obj["id"] = row.id
     return obj
 
 
-def decrypt_entries_pool(entry_key_pair):
+def decrypt_entries_pool(entry_key_pair: Tuple[dict, str]) -> List[dict]:
     row, key = entry_key_pair
     result = _decrypt_row(row, key)
     return result
 
 
-def _decrypt_entries_multiprocess(entries, key):
+def _decrypt_entries_multiprocess(entries, key: str) -> List[dict]:
     from multiprocessing import Pool
     pool = Pool(5)
     entry_key_pairs = [(entry, key) for entry in entries]
@@ -56,49 +57,49 @@ def _decrypt_entries_multiprocess(entries, key):
     return results
 
 
-def _decrypt_entries_single_thread(entries, key):
+def _decrypt_entries_single_thread(entries, key: str) -> List[dict]:
     return [_decrypt_row(row, key) for row in entries]
 
 
-def decrypt_entries(entries, key):
+def decrypt_entries(entries, key: str) -> List[dict]:
     """Return a list of objects representing the decrypted entries"""
     return _decrypt_entries_multiprocess(entries, key)
 
 
-def get_entries(db_session, user_id):
+def get_entries(db_session, user_id: int):
     return db_session.query(Entry)\
         .filter_by(user_id=user_id, pinned=False)\
         .order_by(asc(func.lower(Entry.account)))\
         .all()
 
 
-def get_account_with_email(db_session, email):
+def get_account_with_email(db_session, email: str) -> User:
     assert isinstance(email, six.text_type)
     return db_session.query(User).filter_by(email=email).one()
 
 
-def delete_all_entries(db_session, user):
+def delete_all_entries(db_session, user: User) -> None:
     entries = db_session.query(Entry).filter_by(user_id=user.id).all()
     for entry in entries:
         db_session.delete(entry)
     db_session.commit()
 
 
-def delete_all_documents(db_session, user):
+def delete_all_documents(db_session, user: User) -> None:
     docs = db_session.query(EncryptedDocument).filter_by(user_id=user.id).all()
     for doc in docs:
         db_session.delete(doc)
     db_session.commit()
 
 
-def delete_all_auth_tokens(db_session, user):
+def delete_all_auth_tokens(db_session, user: User) -> None:
     auth_tokens = db_session.query(AuthToken).filter_by(user_id=user.id).all()
     for token in auth_tokens:
         db_session.delete(token)
     db_session.commit()
 
 
-def delete_account(db_session, user):
+def delete_account(db_session, user: User) -> None:
     """Delete the given user from the database.
     Also delete all entries associated with that user
     Also delete all documents associated with that user
@@ -116,7 +117,7 @@ def delete_account(db_session, user):
     db_session.commit()
 
 
-def create_inactive_user(db_session, email, password):
+def create_inactive_user(db_session, email: str, password: str) -> User:
     """Create an account which has not been activated.
     Return the user object (model)"""
     assert isinstance(email, six.text_type), "Type of email is %s" % type(email)
@@ -140,19 +141,20 @@ def create_inactive_user(db_session, email, password):
     return user
 
 
-def insert_entry_for_user(db_session, dec_entry, user_id, user_key, version=4):
+def insert_entry_for_user(db_session, dec_entry: dict,
+        user_id: int, user_key: str, version: int = 4) -> Entry:
     entry = encrypt_entry(user_key, dec_entry, version=version)
     insert_new_entry(db_session, entry, user_id)
     db_session.commit()
     return entry
 
 
-def insert_new_entry(session, entry, user_id):
+def insert_new_entry(session, entry: Entry, user_id: int) -> None:
     entry.user_id = user_id
     session.add(entry)
 
 
-def encrypt_entry(user_key, dec_entry, version=4):
+def encrypt_entry(user_key: str, dec_entry: dict, version: int = 4) -> Entry:
     """
     A different KDF key is used for each entry.
     This is equivalent to salting the entry.
@@ -172,7 +174,7 @@ def encrypt_entry(user_key, dec_entry, version=4):
     return entry
 
 
-def edit_entry(session, entry_id, user_key, edited_entry, user_id):
+def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_id: int) -> Entry:
     """
     Try to edit the entry with ID <entry_id>. Commit changes to DB.
     Check first if the entry belongs to the current user
@@ -183,6 +185,7 @@ def edit_entry(session, entry_id, user_key, edited_entry, user_id):
     :param edited_entry:    Dictionary of changes to the entry
     :param user_id:         ID of the user
     :return:                Newly edited entry
+    :rtype:                 Entry
     """
     entry = session.query(Entry).filter_by(id=entry_id).one()
     assert entry.user_id == user_id
@@ -209,7 +212,7 @@ def edit_entry(session, entry_id, user_key, edited_entry, user_id):
     return entry
 
 
-def get_services_map(session):
+def get_services_map(session) -> Dict[str, Any]:
     services = session.query(Service).all()
     d = {}
     for service in services:
@@ -220,11 +223,12 @@ def get_services_map(session):
     return d
 
 
-def encrypt_document(session, user_id, master_key, document_name, document):
+def encrypt_document(session, user_id: int, master_key: str, document_name: str, document) -> EncryptedDocument:
     """
     Create an encrypted document, fill in the fields, and save in the database
     :param session: database session, NOT flask session
     :param document: contents of the document
+    :rtype:             EncryptedDocument
     """
     assert isinstance(user_id, int)
     assert isinstance(master_key, six.text_type)
@@ -233,12 +237,13 @@ def encrypt_document(session, user_id, master_key, document_name, document):
     return insert_document_for_user(session, doc, user_id, master_key)
 
 
-def insert_document_for_user(session, decrypted_document, user_id, master_key):
+def insert_document_for_user(session, decrypted_document, user_id, master_key) -> EncryptedDocument:
     """
     :param session: database session, NOT flask session
     :param decrypted_document: DecryptedDocument
     :param master_key: unicode
     :param user_id: int
+    :rtype:                         EncryptedDocument
     """
     assert isinstance(decrypted_document, DecryptedDocument)
     assert isinstance(user_id, int)

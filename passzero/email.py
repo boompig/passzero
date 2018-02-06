@@ -10,7 +10,7 @@ from flask import request
 from sendgrid.helpers.mail import Content, Email, Mail
 
 
-def send_email_sendgrid(to_email, subject, msg):
+def send_email_sendgrid(to_email: str, subject: str, msg: str) -> bool:
     """Directly taken from sendgrid site code sample"""
     assert isinstance(to_email, six.text_type)
     assert isinstance(subject, six.text_type)
@@ -28,7 +28,7 @@ def send_email_sendgrid(to_email, subject, msg):
         response = sg.client.mail.send.post(request_body=mail.get())
     except Exception as e:
         logging.error("Failed to send email:")
-        logging.error(e)
+        logging.error(str(e))
         return False
     if response.status_code in [200, 202]:
         return True
@@ -40,11 +40,11 @@ def send_email_sendgrid(to_email, subject, msg):
         return False
 
 
-def send_email(email, subject, msg):
+def send_email(email: str, subject: str, msg: str) -> bool:
     return send_email_sendgrid(email, subject, msg)
 
 
-def send_recovery_email(email, token):
+def send_recovery_email(email: str, token: str):
     link =  request.url_root + "recover/confirm?token=%s" % token
     return send_email(
         email,
@@ -53,7 +53,7 @@ def send_recovery_email(email, token):
     )
 
 
-def send_confirmation_email(email, token):
+def send_confirmation_email(email: str, token: str):
     link =  request.url_root + "signup/confirm?token=%s" % token
     return send_email(
         email,

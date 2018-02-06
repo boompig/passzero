@@ -4,24 +4,25 @@ import logging
 
 import six
 from sqlalchemy.orm.exc import NoResultFound
+from typing import Sequence
 
 from passzero.backend import encrypt_entry, insert_new_entry
 from passzero.crypto_utils import get_hashed_password
 from passzero.models import Entry, User
 
 
-def find_entries(session, user_id):
+def find_entries(session, user_id: int) -> Sequence[Entry]:
     return session.query(Entry).filter_by(
         user_id=user_id, pinned=False)
 
 
-def find_pinned_entry(session, user_id):
+def find_pinned_entry(session, user_id: int) -> Entry:
     assert isinstance(user_id, int)
     return session.query(Entry).filter_by(
         user_id=user_id, pinned=True).one()
 
 
-def create_pinned_entry(session, user_id, master_password):
+def create_pinned_entry(session, user_id: int, master_password: str) -> None:
     assert isinstance(user_id, int)
     assert isinstance(master_password, six.text_type)
     dec_entry = {
@@ -36,11 +37,11 @@ def create_pinned_entry(session, user_id, master_password):
     insert_new_entry(session, new_entry, user_id)
 
 
-def find_user(session, user_id):
+def find_user(session, user_id: int) -> User:
     return session.query(User).filter_by(id=user_id).one()
 
 
-def verify_pinned_entry(session, pinned_entry, old_password):
+def verify_pinned_entry(session, pinned_entry: Entry, old_password: str) -> None:
     assert isinstance(pinned_entry, Entry)
     assert isinstance(old_password, six.text_type)
     dec_entry = pinned_entry.decrypt(old_password)
@@ -50,14 +51,14 @@ def verify_pinned_entry(session, pinned_entry, old_password):
     assert dec_entry["extra"] == "sanity"
 
 
-def reencrypt_entry(session, old_entry, user_id, old_password, new_password):
+def reencrypt_entry(session, old_entry: Entry, user_id: int, old_password: str, new_password: str) -> None:
     dec_entry = old_entry.decrypt(old_password)
     new_entry = encrypt_entry(new_password, dec_entry)
     insert_new_entry(session, new_entry, user_id)
     session.delete(old_entry)
 
 
-def reencrypt_entries(session, user_id, old_password, new_password):
+def reencrypt_entries(session, user_id: int, old_password: str, new_password: str) -> int:
     n = 0
     for old_entry in find_entries(session, user_id):
         reencrypt_entry(session, old_entry, user_id, old_password, new_password)
@@ -65,7 +66,7 @@ def reencrypt_entries(session, user_id, old_password, new_password):
     return n
 
 
-def change_password_in_user_table(session, user_id, new_password):
+def change_password_in_user_table(session, user_id: int, new_password: str) -> None:
     assert isinstance(new_password, six.text_type)
     user = find_user(session, user_id)
     # the user's salt is represented in the database as unicode but is worked on as bytestring
@@ -74,7 +75,7 @@ def change_password_in_user_table(session, user_id, new_password):
     assert isinstance(user.password, six.text_type)
 
 
-def change_password(session, user_id, old_password, new_password):
+def change_password(session, user_id: int, old_password: str, new_password: str) -> bool:
     """Perform the following steps:
     0. Verify using the good old-fashioned way
     1. Verify using pinned entry (auth)

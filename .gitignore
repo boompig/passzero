@@ -44,3 +44,5 @@ static/lib
 
 # typescript-compiled files
 static/js/src/*.js
+
+.mypy_cache

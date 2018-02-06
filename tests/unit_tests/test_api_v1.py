@@ -28,7 +28,7 @@ DEFAULT_PASSWORD = u"right_pass"
 
 
 class PassZeroApiTester(unittest.TestCase):
-    def _check_entries_equal(self, e1, e2):
+    def _check_entries_equal(self, e1: dict, e2: dict) -> bool:
         entry_fields = ["account", "username", "password", "extra"]
         for field in entry_fields:
             assert field in e1
@@ -206,7 +206,7 @@ class PassZeroApiTester(unittest.TestCase):
 
     def test_get_csrf_token(self):
         token = api.get_csrf_token(self.app)
-        assert isinstance(token, str) or isinstance(token, unicode)
+        assert isinstance(token, six.binary_type) or isinstance(token, six.text_type)
 
     def test_login(self):
         """
