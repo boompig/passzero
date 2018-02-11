@@ -21,7 +21,7 @@ function randInt(a: number, b: number) {
 	return Math.floor(Math.random() * (b - a) + a);
 }
 
-const NewCtrl = () => {
+const NewCtrl = function() {
 	/**
 	 * form data
 	 */

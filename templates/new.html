@@ -26,7 +26,7 @@
             data-ng-submit="ctrl.makeEdit($event)"
             data-ng-init='ctrl.init({{ entry|tojson }})'>
     {% else %}
-        <form method="POST" action="api/v1/entries/new" role="form"
+        <form method="POST" action="/api/v1/entries/new" role="form"
             data-ng-submit="ctrl.createNew($event)"
             data-ng-init='ctrl.init(null)'>
     {% endif %}
