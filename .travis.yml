@@ -1,12 +1,12 @@
 language: python
 python:
-    - "2.7.11"
+    - "3.6.4"
 install:
     - "pip install -r requirements.txt"
     - "pip install -r requirements-dev.txt"
     - "pip install coveralls"
 env:
     - DATABASE_URL="sqlite:///passzero.db" MAILGUN_API_KEY="xxxxxxxxxxxxxxxxxxxxxxxx"
-script: "PYTHONPATH=. py.test tests/unit_tests --cov=passzero"
+script: "PYTHONPATH=. pytest tests/unit_tests --cov=passzero"
 after_success:
     - coveralls
