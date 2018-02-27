@@ -13,19 +13,19 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
                               get_services_map, insert_document_for_user,
                               insert_entry_for_user, password_strength_scores)
 from passzero.change_password import change_password
+from passzero.models import db as _db
 from passzero.models import DecryptedDocument, Entry, Service, User
+from server import app as _app
 
 DB_FILENAME = "passzero.db"
 
 
 def create_app():
-    from server import app
-    from passzero.models import db
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % DB_FILENAME
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
-    return app, db
+    _app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % DB_FILENAME
+    _db.init_app(_app)
+    with _app.app_context():
+        _db.create_all()
+    return _app, _db
 
 
 def create_sqlite_session():
