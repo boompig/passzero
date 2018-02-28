@@ -1,8 +1,8 @@
 import logging
 import os
 
+import pytest
 from mock import MagicMock
-from nose.tools import assert_equal
 from sqlalchemy import create_engine
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import sessionmaker
@@ -28,10 +28,19 @@ def create_app():
     return _app, _db
 
 
-def create_sqlite_session():
+@pytest.fixture(scope="function")
+def session(request):
     engine = create_engine('sqlite:///%s' % DB_FILENAME)
     _, db = create_app()
     session = sessionmaker(bind=engine)()
+
+    def teardown():
+        session.query(User).delete()
+        session.query(Entry).delete()
+        session.commit()
+
+
+    request.addfinalizer(teardown)
     return session
 
 
@@ -48,16 +57,7 @@ def setup_function():
     pass
 
 
-def teardown_function():
-    session = create_sqlite_session()
-    # clear database
-    session.query(User).delete()
-    session.query(Entry).delete()
-    session.commit()
-
-
-def test_create_inactive_user():
-    session = create_sqlite_session()
+def test_create_inactive_user(session):
     email = u"fake@email.com"
     password = u"pwd"
     u1 = create_inactive_user(session, email, password)
@@ -66,8 +66,7 @@ def test_create_inactive_user():
     assert u1.id == u2.id
 
 
-def test_delete_account():
-    session = create_sqlite_session()
+def test_delete_account(session):
     email = u"fake@email.com"
     user_key = u"master"
     user = create_inactive_user(session, email, user_key)
@@ -97,8 +96,7 @@ def test_delete_account():
         assert True
 
 
-def test_insert_entry_for_user():
-    session = create_sqlite_session()
+def test_insert_entry_for_user(session):
     dec_entry_in = {
         "account": "a",
         "username": "u",
@@ -117,8 +115,7 @@ def test_insert_entry_for_user():
         assert dec_entry_in[field] == dec_entries[0][field]
 
 
-def test_delete_all_entries():
-    session = create_sqlite_session()
+def test_delete_all_entries(session):
     user_key = u"master key"
     user = create_inactive_user(session, u"fake@em.com",
         user_key)
@@ -177,7 +174,7 @@ def test_get_account_with_email():
     password = u"fake password"
     created_user = create_inactive_user(session, email, password)
     assert isinstance(created_user, User)
-    assert_equal(created_user.email, email)
+    assert created_user.email == email
     # TODO this is not a test, just makes sure that nothing crashes
     user = get_account_with_email(session, email)
     # print this out on error
@@ -194,8 +191,7 @@ def create_fake_entry(i):
         "has_2fa": False
     }
 
-def test_change_password():
-    session = create_sqlite_session()
+def test_change_password(session):
     old_pwd = u"hello"
     new_pwd = u"world"
     user = create_inactive_user(session, u"fake@fake.com", old_pwd)
@@ -235,11 +231,10 @@ def test_password_strength_scores():
         assert entry["account"] == score["account"]
 
 
-def test_get_services_map():
+def test_get_services_map(session):
     # insert a thingy
-    db_session = create_sqlite_session()
-    db_session.add(Service(name="MyService"))
-    db_session.commit()
-    service_map = get_services_map(db_session)
+    session.add(Service(name="MyService"))
+    session.commit()
+    service_map = get_services_map(session)
     assert len(service_map) == 1
     service_map.get("MyService", None) is not None
