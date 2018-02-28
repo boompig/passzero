@@ -136,9 +136,6 @@ def api_login(request_data):
     except UserNotActiveException:
         code, data = json_error(401,
             "The account has not been activated. Check your email!")
-    except Exception as e:
-        logging.error(e)
-        code, data = json_error(500, "Some kind of internal error happened")
     return write_json(code, data)
 
 #---------------- DOCUMENTS BEGIN
