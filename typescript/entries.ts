@@ -140,7 +140,7 @@ const PassZeroCtrl = function($scope, $location, $http, $window, $timeout) {
 				//console.log(decEntry);
 				console.log(entryIndex);
 				// copy in the values from the decrypted entry into the current entry
-				for (let field in decEntry) {
+				for (const field in decEntry) {
 					if (decEntry.hasOwnProperty(field)) {
 						// alter the passed parameter
 						(entry as any)[field] = decEntry[field];
@@ -213,7 +213,7 @@ const PassZeroCtrl = function($scope, $location, $http, $window, $timeout) {
 	this.init();
 };
 
-var app = angular.module("PassZero", [])
+const app = angular.module("PassZero", [])
 	.controller("PassZeroCtrl", PassZeroCtrl);
 
 //export { app, PassZeroCtrl, showHidePass };
