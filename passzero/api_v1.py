@@ -39,14 +39,17 @@ def show_api():
 def api_get_csrf_token():
     """Get CSRF token for current user's session.
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        CSRF token as string
+    Response
+    --------
+    CSRF token as string
 
-    Status codes:
-        - 200: success
+    Status codes
+    ------------
+    - 200: success
     """
     # make sure there is a CSRF token
     token = generate_csrf_token()
@@ -67,16 +70,19 @@ def __logout():
 def api_logout():
     """Logout. Destroy current session.
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
+    Status codes
+    ------------
+    - 200: success
     """
     __logout()
     code, data = json_success("Successfully logged out")
@@ -89,20 +95,23 @@ def api_logout():
 def api_login(request_data):
     """Login. On success, update session cookie.
 
-    Arguments:
-        - email: string (required)
-        - password: string (required)
+    Arguments
+    ---------
+    - email: string (required)
+    - password: string (required)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: failed to validate arguments
-        - 401: bad username-password combo or account doesn't exist or account isn't activated
-        - 403: CSRF check failed
+    Status codes
+    ------------
+    - 200: success
+    - 400: failed to validate arguments
+    - 401: bad username-password combo or account doesn't exist or account isn't activated
+    - 403: CSRF check failed
     """
     try:
         user = backend.get_account_with_email(db.session, request_data["email"])
@@ -138,34 +147,34 @@ def get_docs_api():
     """Retrieve all saved documents for the logged-in user
     The document contents will be encrypted.
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        on success:
-            ```
-            [doc-1, doc-2, ... doc-n]
-            ```
-            
-            a document's object looks like this:
-            ```
-            {
-                "id": number,
-                "name": string,
-                "contents": binary
-            }
-            ```
+    Response
+    --------
+    on success::
 
-            The contents will be encrypted
+        [doc-1, doc-2, ... doc-n]
+        
+    a document's object looks like this::
 
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
+        {
+            "id": number,
+            "name": string,
+            "contents": binary
+        }
 
-    Status codes:
-        - 200: success
-        - 401: user is not logged in
+    The contents will be encrypted
+
+    on error::
+
+        { "status": "error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 401: user is not logged in
     """
     docs = db.session.query(EncryptedDocument).filter_by(user_id=session["user_id"]).all()
     rval = [doc.to_json() for doc in docs]
@@ -178,28 +187,28 @@ def decrypt_doc_api(doc_id):
     """
     Decrypt the specified document
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        on success:
+    Response
+    --------
+    on success::
         
-        ```
         {
             "name": string,
             "contents": binary
         }
 
-        ```
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
+    on error::
 
-    Status codes:
-        - 200: success
-        - 400: document does not exist or does not belong to logged-in user
-        - 401: user is not logged in
+        { "status": "error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 400: document does not exist or does not belong to logged-in user
+    - 401: user is not logged in
     """
     try:
         enc_doc = db.session.query(EncryptedDocument).\
@@ -221,24 +230,27 @@ def decrypt_doc_api(doc_id):
 def create_doc_api(form_data: NewDocumentForm):
     """Upload a new document for the logged-in user
 
-    Arguments:
-        - TODO
+    Arguments
+    ---------
+    - name: string (required)
+    - document: File (required)
 
-    Response:
-        on success:
-            ```
-            { "document_id": number }
-            ```
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
+    Response
+    --------
+    on success::
 
-    Status codes:
-        - 200: success
-        - 400: various input validation errors
-        - 401: not authenticated
-        - 403: CSRF check failed
+        { "document_id": number }
+
+    on error::
+
+        { "status": "error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 400: various input validation errors
+    - 401: not authenticated
+    - 403: CSRF check failed
     """
     encrypted_file = backend.encrypt_document(
         db.session,
@@ -256,19 +268,22 @@ def create_doc_api(form_data: NewDocumentForm):
 def api_v1_delete_doc(doc_id: int):
     """Delete the document with the given ID.
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: document does not exist or does not belong to logged-in user
-        - 401: not authenticated
-        - 403: CSRF check failed
+    Status codes
+    ------------
+    - 200: success
+    - 400: document does not exist or does not belong to logged-in user
+    - 401: not authenticated
+    - 403: CSRF check failed
     """
     try:
         enc_doc = db.session.query(EncryptedDocument).filter_by(id=doc_id).one()
@@ -291,24 +306,27 @@ def api_v1_delete_doc(doc_id: int):
 def get_entries_api():
     """Retrieve all decrypted entries for the logged-in user
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        on success:
-            ```
-            [entry-1, entry-2, ... entry-n]
-            ```
-            The entry details depend on which version entries the user has.
-            For details see passzero/models.py.
-        On error:
-            ```
-            { "status": "error", "msg": string }
-            ```
+    Response
+    --------
+    on success::
 
-    Status codes:
-        - 200: success
-        - 401: user is not logged in
+        [entry-1, entry-2, ... entry-n]
+
+    The entry details depend on which version entries the user has.
+    For details see passzero/models.py.
+
+    on error::
+
+        { "status": "error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 401: user is not logged in
     """
     code = 200
     entries = backend.get_entries(db.session, session["user_id"])
@@ -324,19 +342,22 @@ def get_entries_api():
 def api_v1_delete_entry(entry_id: int):
     """Delete the entry with the given ID.
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: entry does not exist or does not belong to logged-in user
-        - 401: not authenticated
-        - 403: CSRF check failed
+    Status codes
+    ------------
+    - 200: success
+    - 400: entry does not exist or does not belong to logged-in user
+    - 401: not authenticated
+    - 403: CSRF check failed
     """
     try:
         entry = db.session.query(Entry).filter_by(id=entry_id).one()
@@ -351,36 +372,37 @@ def api_v1_delete_entry(entry_id: int):
     return write_json(code, data)
 
 
-@api_v1.route("/api/entries/new", methods=["POST"])
-@api_v1.route("/api/v1/entries/new", methods=["POST"])
+@api_v1.route("/api/v1/entries", methods=["POST"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
 def api_v1_new_entry(request_data: NewEntryForm):
     """Create a new entry for the logged-in user.
 
-    Arguments:
-        - account: string (required)
-        - username: string (required)
-        - password: string(required)
-        - extra: string (optional)
-        - has_2fa: boolean (required)
+    Arguments
+    ---------
+    - account: string (required)
+    - username: string (required)
+    - password: string(required)
+    - extra: string (optional)
+    - has_2fa: boolean (required)
 
-    Response:
-        on success:
-            ```
-            { "entry_id": number }
-            ```
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
+    Response
+    --------
+    on success::
 
-    Status codes:
-        - 200: success
-        - 400: various input validation errors
-        - 401: not authenticated
-        - 403: CSRF check failed
+        { "entry_id": number }
+
+    on error::
+
+        { "status": "error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 400: various input validation errors
+    - 401: not authenticated
+    - 403: CSRF check failed
     """
     # token has been spent here
     dec_entry = {
@@ -408,21 +430,24 @@ def signup_api(request_data: SignupForm):
     Create an inactive user and send an email to the specified email address.
     The account cannot be logged-into until it has been activated via the activation link in the email.
 
-    Arguments:
-        - email: string (required)
-        - password: string (required)
-        - confirm_password: string (required)
+    Arguments
+    ---------
+    - email: string (required)
+    - password: string (required)
+    - confirm_password: string (required)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: account already exists
-        - 403: CSRF token validation failed
-        - 500: failed to send email
+    Status codes
+    ------------
+    - 200: success
+    - 400: account already exists
+    - 403: CSRF token validation failed
+    - 500: failed to send email
     """
     try:
         user = backend.get_account_with_email(db.session, request_data["email"])
@@ -462,19 +487,22 @@ def confirm_signup_api(request_data: ActivateAccountForm):
     Activate the previously created inactive account.
     This API is meant to be hit when a user clicks a link in their email.
 
-    Arguments:
-        - token: string (required)
+    Arguments
+    ---------
+    - token: string (required)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: account already activated
-        - 401: token is invalid
-        - 403: CSRF token validation failed
+    Status codes
+    ------------
+    - 200: success
+    - 400: account already activated
+    - 401: token is invalid
+    - 403: CSRF token validation failed
     """
     try:
         token = request_data['token']
@@ -505,19 +533,22 @@ def api_v1_user_recover(request_data: RecoverPasswordForm):
     """First step of account recovery for the specified user.
     Send an account recovery token to the user's email address.
 
-    Arguments:
-        - email: string (required)
+    Arguments
+    ---------
+    - email: string (required)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: failed to validated parameters
-        - 401: no account for this email
-        - 500: internal server error, or email failed to send
+    Status codes
+    ------------
+    - 200: success
+    - 400: failed to validated parameters
+    - 401: no account for this email
+    - 500: internal server error, or email failed to send
     """
     try:
         user = db.session.query(User).filter_by(email=request_data['email']).one()
@@ -545,19 +576,22 @@ def recover_password_confirm_api(request_data: ConfirmRecoverPasswordForm):
     This API is meant to be hit when the user clicks the link in a recovery email.
     Check the token is valid, then nuke all the entries and reset the password.
 
-    Arguments:
-        - token: string (required)
-        - password: string (required)
-        - confirm_password: string (required)
+    Arguments
+    ---------
+    - token: string (required)
+    - password: string (required)
+    - confirm_password: string (required)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: token is invalid
+    Status codes
+    ------------
+    - 200: success
+    - 400: token is invalid
     """
     try:
         token = db.session.query(AuthToken).filter_by(token=request_data['token']).one()
@@ -588,23 +622,27 @@ def recover_password_confirm_api(request_data: ConfirmRecoverPasswordForm):
 
 
 @api_v1.route("/api/v1/entries/nuclear", methods=["POST"])
+@api_v1.route("/api/v1/entries", methods=["DELETE"])
 @requires_json_auth
 @requires_csrf_check
 def nuke_entries_api():
     """Delete <b>all</b> entries for the logged-in user.
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 401: not authenticated
-        - 403: CSRF token validation failed
+    Status codes
+    ------------
+    - 200: success
+    - 401: not authenticated
+    - 403: CSRF token validation failed
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     backend.delete_all_entries(db.session, user)
@@ -619,19 +657,22 @@ def nuke_entries_api():
 def delete_user_api(request_data: DeleteUserForm):
     """Delete all information about the currently logged-in user.
 
-    Arguments:
-        - password: string (required)
+    Arguments
+    ---------
+    - password: string (required)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: parameter validation error
-        - 401: not authenticated, or password incorrect
-        - 403: CSRF token validation failed
+    Status codes
+    ------------
+    - 200: success
+    - 400: parameter validation error
+    - 401: not authenticated, or password incorrect
+    - 403: CSRF token validation failed
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     if user.authenticate(request_data["password"]):
@@ -659,32 +700,33 @@ def delete_user_api(request_data: DeleteUserForm):
     return write_json(code, data)
 
 
-# NOTE: POST is legacy
-@api_v1.route("/api/entries/<int:entry_id>", methods=["PATCH", "POST"])
-@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["PATCH", "PUT", "POST"])
+@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["PATCH", "PUT"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
 def api_v1_update_entry(request_data: NewEntryForm, entry_id: int):
     """Update the specified entry.
 
-    Arguments:
-        - account: string (required)
-        - username: string (required)
-        - password: string (required)
-        - extra: string (optional)
-        - has_2fa: boolean (required)
+    Arguments
+    ---------
+    - account: string (required)
+    - username: string (required)
+    - password: string (required)
+    - extra: string (optional)
+    - has_2fa: boolean (required)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: various input validation errors
-        - 401: not authenticated
-        - 403: CSRF check failed
+    Status codes
+    ------------
+    - 200: success
+    - 400: various input validation errors
+    - 401: not authenticated
+    - 403: CSRF check failed
     """
     code = 200
     data = {} # type: dict
@@ -713,22 +755,25 @@ def api_v1_update_entry(request_data: NewEntryForm, entry_id: int):
 def api_v1_update_user_password(request_data: UpdatePasswordForm):
     """Change the master password for the logged-in user.
 
-    Arguments:
-        - old_password: string (required)
-        - new_password: string (required)
-        - confirm_new_password: string (required)
+    Arguments
+    ---------
+    - old_password: string (required)
+    - new_password: string (required)
+    - confirm_new_password: string (required)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: failed to validate parameters
-        - 401: user is not authenticated, or old password is incorrect
-        - 403: CSRF check failed
-        - 500: server error, or old password is incorrect
+    Status codes
+    ------------
+    - 200: success
+    - 400: failed to validate parameters
+    - 401: user is not authenticated, or old password is incorrect
+    - 403: CSRF check failed
+    - 500: server error, or old password is incorrect
     """
     entries = backend.get_entries(db.session, session["user_id"])
     try:
@@ -756,18 +801,22 @@ def api_v1_update_user_password(request_data: UpdatePasswordForm):
 def api_v1_get_user_preferences():
     """Get various account preferences for the logged-in user.
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { pref-1-key: pref-1-value, ... }
-        ```
-        For specific preference values look in models.py
 
-    Status codes:
-        - 200: success
-        - 401: user is not authenticated
+    For specific preference values look in models.py
+
+    Status codes
+    ------------
+    - 200: success
+    - 401: user is not authenticated
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     data = {
@@ -786,21 +835,24 @@ def api_v1_update_user_preferences(request_data: UpdatePreferencesForm):
     Only have to specify those preferences that you want to change.
     Preferences which are not specified will not change.
 
-    Arguments:
-        - default_random_password_length: string (optional)
-        - default_random_passphrase_length: string (optional)
+    Arguments
+    ---------
+    - default_random_password_length: string (optional)
+    - default_random_passphrase_length: string (optional)
 
-    Response:
-        ```
+    Response
+    --------
+    Success or error message::
+
         { "status": "success"|"error", "msg": string }
-        ```
 
-    Status codes:
-        - 200: success
-        - 400: failed to validate parameters
-        - 401: user is not authenticated
-        - 403: CSRF check failed
-        - 500: internal server error
+    Status codes
+    ------------
+    - 200: success
+    - 400: failed to validate parameters
+    - 401: user is not authenticated
+    - 403: CSRF check failed
+    - 500: internal server error
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     if request_data.get("default_random_password_length", None):

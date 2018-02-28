@@ -29,6 +29,14 @@ def json_post(session, relative_url: str, data: dict = {}) -> Response:
         verify=False
     )
 
+def json_put(session, relative_url: str, data: dict = {}) -> Response:
+    return session.put(
+        base_url + relative_url,
+        data=json.dumps(data),
+        headers=json_header,
+        verify=False
+    )
+
 def json_delete(session, relative_url: str) -> Response:
     # expect the data to be formatted into the URL for now
     return session.delete(
@@ -67,7 +75,7 @@ def create_entry(session, entry: dict, token: str) -> Response:
     assert isinstance(token, six.text_type)
     data = entry
     data["csrf_token"] = token
-    return json_post(session, "/api/v1/entries/new", data)
+    return json_post(session, "/api/v1/entries", data)
 
 
 def delete_entry(session, entry_id: int, token: str) -> Response:
@@ -85,7 +93,7 @@ def edit_entry(session, entry_id: int, entry: dict, token: str) -> Response:
     url = "/api/v1/entries/{}".format(entry_id)
     data = entry
     data["csrf_token"] = token
-    return json_post(session, url, data)
+    return json_put(session, url, data)
 
 
 def signup(session, email: str, password: str) -> Response:
