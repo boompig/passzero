@@ -1,8 +1,8 @@
 from multiprocessing import Pool
 
-from flask import Blueprint, session, render_template
-
+from flask import Blueprint, render_template, session
 from sqlalchemy.orm.exc import NoResultFound
+from typing import List
 
 from . import backend
 from .api_utils import json_error, requires_json_auth, write_json
@@ -11,7 +11,7 @@ from .models import Entry, db
 api_v2 = Blueprint("api_v2", __name__)
 
 
-def jsonify_entries_pool(entry):
+def jsonify_entries_pool(entry: Entry) -> dict:
     assert entry.version >= 4
     out = entry.to_json()
     # remove the encrypted elements in order to conserve bandwidth
@@ -21,7 +21,7 @@ def jsonify_entries_pool(entry):
     return out
 
 
-def __jsonify_entries_multiprocess(enc_entries):
+def __jsonify_entries_multiprocess(enc_entries: List[Entry]):
     pool = Pool(5)
     results = pool.map(jsonify_entries_pool, enc_entries)
     pool.close()
@@ -68,7 +68,7 @@ def api_get_entries():
 
 @api_v2.route("/api/v2/entries/<int:entry_id>", methods=["GET"])
 @requires_json_auth
-def api_get_entry(entry_id):
+def api_get_entry(entry_id: int):
     """Decrypt the given entry and return the contents
 
     Arguments:

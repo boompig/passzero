@@ -1,11 +1,11 @@
 import logging
 import os
 
+import pytest
 from mock import MagicMock
-from nose.tools import assert_equal
-from sqlalchemy import create_engine
+# from sqlalchemy import create_engine
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm.session import sessionmaker
+# from sqlalchemy.orm.session import sessionmaker
 
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries,
@@ -13,51 +13,82 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
                               get_services_map, insert_document_for_user,
                               insert_entry_for_user, password_strength_scores)
 from passzero.change_password import change_password
+from passzero.models import db as _db
 from passzero.models import DecryptedDocument, Entry, Service, User
+from server import app as _app
 
 DB_FILENAME = "passzero.db"
 
 
-def create_app():
-    from server import app
-    from passzero.models import db
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % DB_FILENAME
-    db.init_app(app)
-    with app.app_context():
-        db.create_all()
-    return app, db
+def create_app(settings_override):
+    for k, v in settings_override.items():
+        _app.config[k] = v
+    _db.init_app(_app)
+    _db.create_all()
+    return _app
 
 
-def create_sqlite_session():
-    engine = create_engine('sqlite:///%s' % DB_FILENAME)
-    _, db = create_app()
-    session = sessionmaker(bind=engine)()
+@pytest.fixture(scope="session")
+def app(request):
+    settings_override = {
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///%s" % DB_FILENAME
+    }
+    app = create_app(settings_override)
+
+    ctx = app.app_context()
+    ctx.push()
+
+    def teardown():
+        ctx.pop()
+
+    request.addfinalizer(teardown)
+    return app
+
+
+@pytest.fixture(scope="session")
+def db(app, request):
+    if os.path.exists(DB_FILENAME):
+        os.remove(DB_FILENAME)
+
+    def teardown():
+        _db.drop_all()
+        if os.path.exists(DB_FILENAME):
+            os.remove(DB_FILENAME)
+
+    _db.app = app
+    _db.create_all()
+
+    request.addfinalizer(teardown)
+    return _db
+
+
+
+@pytest.fixture(scope="function")
+def session(db, request):
+    # engine = create_engine('sqlite:///%s' % DB_FILENAME)
+    # session = sessionmaker(bind=engine)()
+    connection = db.engine.connect()
+    transaction = connection.begin()
+    options = dict(bind=connection)
+    session = db.create_scoped_session(options=options)
+
+    db.session = session
+
+    def teardown():
+        transaction.rollback()
+        # manual cleanup
+        session.query(User).delete()
+        session.query(Entry).delete()
+        session.commit()
+
+        connection.close()
+        session.remove()
+
+    request.addfinalizer(teardown)
     return session
 
 
-def setup_module():
-    # creates tables
-    create_app()
-
-
-def teardown_module():
-    os.remove(DB_FILENAME)
-
-
-def setup_function():
-    pass
-
-
-def teardown_function():
-    session = create_sqlite_session()
-    # clear database
-    session.query(User).delete()
-    session.query(Entry).delete()
-    session.commit()
-
-
-def test_create_inactive_user():
-    session = create_sqlite_session()
+def test_create_inactive_user(session):
     email = u"fake@email.com"
     password = u"pwd"
     u1 = create_inactive_user(session, email, password)
@@ -66,8 +97,7 @@ def test_create_inactive_user():
     assert u1.id == u2.id
 
 
-def test_delete_account():
-    session = create_sqlite_session()
+def test_delete_account(session):
     email = u"fake@email.com"
     user_key = u"master"
     user = create_inactive_user(session, email, user_key)
@@ -97,8 +127,7 @@ def test_delete_account():
         assert True
 
 
-def test_insert_entry_for_user():
-    session = create_sqlite_session()
+def test_insert_entry_for_user(session):
     dec_entry_in = {
         "account": "a",
         "username": "u",
@@ -117,8 +146,7 @@ def test_insert_entry_for_user():
         assert dec_entry_in[field] == dec_entries[0][field]
 
 
-def test_delete_all_entries():
-    session = create_sqlite_session()
+def test_delete_all_entries(session):
     user_key = u"master key"
     user = create_inactive_user(session, u"fake@em.com",
         user_key)
@@ -177,7 +205,7 @@ def test_get_account_with_email():
     password = u"fake password"
     created_user = create_inactive_user(session, email, password)
     assert isinstance(created_user, User)
-    assert_equal(created_user.email, email)
+    assert created_user.email == email
     # TODO this is not a test, just makes sure that nothing crashes
     user = get_account_with_email(session, email)
     # print this out on error
@@ -194,8 +222,7 @@ def create_fake_entry(i):
         "has_2fa": False
     }
 
-def test_change_password():
-    session = create_sqlite_session()
+def test_change_password(session):
     old_pwd = u"hello"
     new_pwd = u"world"
     user = create_inactive_user(session, u"fake@fake.com", old_pwd)
@@ -235,11 +262,10 @@ def test_password_strength_scores():
         assert entry["account"] == score["account"]
 
 
-def test_get_services_map():
+def test_get_services_map(session):
     # insert a thingy
-    db_session = create_sqlite_session()
-    db_session.add(Service(name="MyService"))
-    db_session.commit()
-    service_map = get_services_map(db_session)
+    session.add(Service(name="MyService"))
+    session.commit()
+    service_map = get_services_map(session)
     assert len(service_map) == 1
     service_map.get("MyService", None) is not None

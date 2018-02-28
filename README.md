@@ -20,6 +20,7 @@ PassZero is implemented as a simple web app with results held in a database, the
     - libssl-dev
     - postgresql-server-dev
 * create virtualenv from requirements.txt
+* if running on Mac, install certificates using [this procedure](https://stackoverflow.com/a/42334357/755934)
 * create self-signed certificate for SSL, place it at root of PassZero
     - instructions [here](https://stackoverflow.com/questions/10175812/how-to-create-a-self-signed-certificate-with-openssl)
 * set environment variables

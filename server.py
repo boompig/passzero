@@ -85,7 +85,7 @@ def index():
 
 @app.route("/entries/post_delete/<account_name>", methods=["GET"])
 @auth_or_abort
-def post_delete(account_name):
+def post_delete(account_name: str):
     flash("Successfully deleted account %s" % escape(account_name))
     return redirect(url_for("view_entries"))
 
@@ -132,7 +132,7 @@ def new_entry_view():
 
 
 @app.route("/done_signup/<email>", methods=["GET"])
-def post_signup(email):
+def post_signup(email: str):
     flash("Successfully created account with email %s. A confirmation email was sent to this address." % escape(email))
     return redirect(url_for("login"))
 

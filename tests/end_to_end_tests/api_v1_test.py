@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
-import api
+from . import api
 from passzero import backend as pz_backend
 from passzero.my_env import DATABASE_URL
 
@@ -24,7 +24,7 @@ def get_db_session():
     return Session()
 
 
-def create_active_account(email, password):
+def create_active_account(email: str, password: str):
     """Create account and return the user object.
     Use this function instead of API because we do email verification in real API
     """
@@ -82,7 +82,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
     def _logout(self, session):
         auth_response = api.logout(session)
         self.assertIsNotNone(auth_response)
-        self.assertEqual(auth_response.status_code, 200)
+        auth_response.status_code == 200
 
 
     def _signup(self, session, email, password):
@@ -102,26 +102,27 @@ class PassZeroApiV1Tester(unittest.TestCase):
         self.assertIsNotNone(csrf_response)
         self.assertEqual(csrf_response.status_code, 200)
         token = csrf_response.json()
-        assert type(token) == unicode
+        assert isinstance(token, six.text_type)
         assert len(token) != 0
         return token
 
     def _create_entry(self, session, entry, token):
         """Return entry ID"""
         entry_create_response = api.create_entry(session, entry, token)
-        self.assertIsNotNone(entry_create_response)
-        self.assertEqual(entry_create_response.status_code, 200)
+        print(entry_create_response.text)
+        assert entry_create_response is not None
+        entry_create_response.status_code == 200
         entry_id = entry_create_response.json()["entry_id"]
-        assert type(entry_id) == int
+        assert isinstance(entry_id, int)
         return entry_id
 
     def _edit_entry(self, session, entry_id, entry, token):
         """Returns nothing"""
         entry_edit_response = api.edit_entry(session, entry_id, entry, token)
-        self.assertIsNotNone(entry_edit_response)
+        assert entry_edit_response is not None
         response_json = entry_edit_response.json()
         try:
-            self.assertEqual(entry_edit_response.status_code, 200)
+            assert  entry_edit_response.status_code == 200
         except AssertionError as e:
             print(response_json)
             raise e
@@ -129,11 +130,11 @@ class PassZeroApiV1Tester(unittest.TestCase):
     def _get_entries(self, session):
         """Return list of entries"""
         entry_response = api.get_entries(session)
-        self.assertIsNotNone(entry_response)
-        self.assertEqual(entry_response.status_code, 200)
+        assert entry_response is not None
+        assert entry_response.status_code == 200
         entries = entry_response.json()
         self.assertIsNotNone(entries)
-        assert type(entries) == list
+        assert isinstance(entries, list)
         return entries
 
     def _delete_entry(self, session, entry_id, token):
@@ -145,18 +146,21 @@ class PassZeroApiV1Tester(unittest.TestCase):
     def test_login_no_users(self):
         with requests.Session() as session:
             result = api.login(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            print(result)
             assert result is not None
             self.assertEqual(result.status_code, 401)
 
     def test_no_email(self):
         with requests.Session() as session:
             result = api.login(session, u"", DEFAULT_PASSWORD)
+            print(result)
             assert result is not None
             assert result.status_code == 400
 
     def test_no_password(self):
         with requests.Session() as session:
             result = api.login(session, DEFAULT_EMAIL, u"")
+            print(result.text)
             assert result is not None
             assert result.status_code == 400
 
@@ -283,6 +287,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             entry_id = self._create_entry(s, entry, create_token)
             delete_token = self._get_csrf_token(s)
             entry_delete_response = api.delete_entry(s, entry_id + 100, delete_token)
+            print(entry_delete_response.text)
             assert entry_delete_response is not None
             assert entry_delete_response.status_code == 400
 
@@ -326,7 +331,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             assert len(entries) == 0
             self._logout(s)
             response = api.get_entries(s)
-            self.assertEqual(response.status_code, 401)
+            assert response.status_code == 401
 
     """
     These tests require sending emails
@@ -385,10 +390,19 @@ class PassZeroApiV1Tester(unittest.TestCase):
             r = api.post_document(s, u"test document",
                     { "document": BytesIO(b"hello world\n") },
                 upload_doc_token)
+            print(r.status_code)
+            print(r.text)
             assert r.status_code == 200
             doc_id = r.json()["document_id"]
             assert isinstance(doc_id, int)
-            doc = api.get_document(s, doc_id).json()
+            r = api.get_document(s, doc_id)
+            # for debugging
+            print(r)
+            print(r.text)
+            print(r.status_code)
+            # doc = api.get_document(s, doc_id).json()
+            doc = r.json()
+            print(doc)
             assert doc["contents"] == "hello world\n"
             assert doc["name"] == "test document"
 

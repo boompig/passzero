@@ -5,9 +5,10 @@ import six
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Protocol import KDF
+# from typing import List
 
 
-def byte_to_hex_legacy(s):
+def byte_to_hex_legacy(s: bytes) -> str:
     """
     :param s:       Byte-string
     :return:        s converted into a hex (unicode) string
@@ -15,15 +16,16 @@ def byte_to_hex_legacy(s):
     assert isinstance(s, bytes)
     arr = bytearray(s)
     assert all([isinstance(c, int) for c in arr])
-    return "".join('{:02x}'.format(x) for x in arr).decode("utf-8")
+    # when it's python 3 we don't have to decode
+    return "".join('{:02x}'.format(x) for x in arr)
 
 
-def hex_to_byte_legacy(s):
+def hex_to_byte_legacy(s: str) -> bytes:
     arr = bytearray.fromhex(s)
     return bytes(arr)
 
 
-def pad_to_length(key, length):
+def pad_to_length(key: str, length: int) -> str:
     """Return the padding
     :type key:          unicode string
     :type length:       int
@@ -31,13 +33,14 @@ def pad_to_length(key, length):
     """
     assert isinstance(key, six.text_type)
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    padding = []
+    padding = [] # type: List[str]
     while len(key) + len(padding) < length:
         padding.append(random.choice(alphabet))
-    return "".join(padding).decode("utf-8")
+    # when it's python 3 we don't have to decode
+    return "".join(padding)
 
 
-def pad_key_legacy(key):
+def pad_key_legacy(key: str) -> str:
     """Return the padding
     :type key:      unicode string
     :rtype:         unicode string
@@ -53,16 +56,15 @@ def pad_key_legacy(key):
         raise Exception("Key too long (%d chars)" % len(key))
 
 
-def encrypt_password_legacy(padded_key, password):
+def encrypt_password_legacy(padded_key: str, password: str):
     """Return encrypted password where encrypted password is a hex string"""
-
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(padded_key, AES.MODE_CFB, iv)
     enc_password = iv + cipher.encrypt(password)
     return byte_to_hex_legacy(enc_password)
 
 
-def encrypt_field_v1(key, salt, field):
+def encrypt_field_v1(key: str, salt: str, field: str):
     """
     WARNING: do not use
     Return encrypted hex string of field
@@ -144,21 +146,24 @@ def get_kdf_salt(num_bytes=32):
     return random_bytes(num_bytes)
 
 
-def extend_key(key, salt, key_length=16):
+def extend_key(key: str, salt: bytes, key_length: int = 16) -> bytes:
     """Extend the given key into a key of length suitable for AES.
-    :type key:          bytes
+    :type key:          unicode
     :type salt:         bytes
     :rtype:             bytes
     """
+    assert isinstance(key, six.text_type)
+    assert isinstance(salt, bytes)
+    assert isinstance(key_length, int)
     return KDF.PBKDF2(key, salt, count=1000, dkLen=key_length)
 
 
-def get_iv():
-    """:rtype       8-bit string"""
+def get_iv() -> bytes:
+    """:rtype       bytes"""
     return Random.new().read(AES.block_size)
 
 
-def decrypt_field_v2(extended_key, hex_ciphertext, iv):
+def decrypt_field_v2(extended_key: bytes, hex_ciphertext: str, iv: bytes) -> str:
     """Return decrypted string of field
     :param extended_key:        Binary decryption key
     :type extended_key:         bytes
@@ -178,7 +183,7 @@ def decrypt_field_v2(extended_key, hex_ciphertext, iv):
     return msg
 
 
-def decrypt_field_v1(key, salt, hex_ciphertext):
+def decrypt_field_v1(key: str, salt: str, hex_ciphertext: str) -> str:
     """Return decrypted string of extra field
     :type key:              unicode string
     :type salt:             unicode string
@@ -200,7 +205,7 @@ def decrypt_field_v1(key, salt, hex_ciphertext):
     return dec_extra
 
 
-def decrypt_password_legacy(padded_key, hex_ciphertext):
+def decrypt_password_legacy(padded_key: str, hex_ciphertext: str) -> str:
     """Return the decrypted password
     :type padded_key:           unicode string
     :type hex_ciphertext:       unicode string
@@ -217,9 +222,9 @@ def decrypt_password_legacy(padded_key, hex_ciphertext):
     return dec_password
 
 
-def get_salt(size):
+def get_salt(size: int) -> six.binary_type:
     """Create and return random salt of given size
-    :rtype:                 byte-string of size `size`
+    :rtype:                 8-bit string of size `size`
     """
     assert isinstance(size, int)
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -229,17 +234,17 @@ def get_salt(size):
     return b"".join(chars)
 
 
-def random_hex(size):
+def random_hex(size: int) -> str:
     alphabet = "abcdef1234567890"
     chars = [random.choice(alphabet) for i in range(size)]
     return "".join(chars)
 
 
-def get_hashed_password(password, salt):
+def get_hashed_password(password: str, salt: bytes) -> bytes:
     """
     :type password:            Unicode string
-    :type salt:                byte-string
-    :rtype:                    byte-string
+    :type salt:                bytes
+    :rtype:                    bytes
     """
     assert isinstance(password, six.text_type)
     assert isinstance(salt, bytes)

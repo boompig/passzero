@@ -1,11 +1,15 @@
 # ignore sqlite3 database
 *.db
+
 # Python binaries are boring
 *.pyc
+
 # ignore the dump file for database
 dump.sql
+
 # virtualenv
 venv*
+
 # code coverage
 .coverage*
 cover
@@ -19,6 +23,7 @@ server.key*
 
 # environment setup
 my_env.py
+
 # ctags
 tags
 
@@ -44,3 +49,7 @@ static/lib
 
 # typescript-compiled files
 static/js/src/*.js
+
+# python3
+.mypy_cache
+.pytest_cache

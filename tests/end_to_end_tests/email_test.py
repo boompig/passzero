@@ -6,11 +6,11 @@ It *really* sends the email, so the test is live
 import os
 
 from passzero import email as pz_email
-from passzero.my_env import SENDGRID_API_KEY, REAL_EMAIL
 from passzero.config import BUILD_ID
+from passzero.my_env import REAL_EMAIL, SENDGRID_API_KEY
 
 
-def test_send_email():
+def test_send_email() -> None:
     os.environ["SENDGRID_API_KEY"] = SENDGRID_API_KEY
     # adding a bit more information to this email
     # in case I kick off the build by accident

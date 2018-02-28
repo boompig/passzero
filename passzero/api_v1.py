@@ -218,7 +218,7 @@ def decrypt_doc_api(doc_id):
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewDocumentForm)
-def create_doc_api(form_data):
+def create_doc_api(form_data: NewDocumentForm):
     """Upload a new document for the logged-in user
 
     Arguments:
@@ -253,7 +253,7 @@ def create_doc_api(form_data):
 @api_v1.route("/api/v1/docs/<int:doc_id>", methods=["DELETE"])
 @requires_json_auth
 @requires_csrf_check
-def api_v1_delete_doc(doc_id):
+def api_v1_delete_doc(doc_id: int):
     """Delete the document with the given ID.
 
     Arguments:
@@ -321,7 +321,7 @@ def get_entries_api():
 @api_v1.route("/api/v1/entries/<int:entry_id>", methods=["DELETE"])
 @requires_json_auth
 @requires_csrf_check
-def api_v1_delete_entry(entry_id):
+def api_v1_delete_entry(entry_id: int):
     """Delete the entry with the given ID.
 
     Arguments:
@@ -356,7 +356,7 @@ def api_v1_delete_entry(entry_id):
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
-def api_v1_new_entry(request_data):
+def api_v1_new_entry(request_data: NewEntryForm):
     """Create a new entry for the logged-in user.
 
     Arguments:
@@ -403,7 +403,7 @@ def api_v1_new_entry(request_data):
 
 @api_v1.route("/api/v1/user/signup", methods=["POST"])
 @requires_json_form_validation(SignupForm)
-def signup_api(request_data):
+def signup_api(request_data: SignupForm):
     """First step of user registration.
     Create an inactive user and send an email to the specified email address.
     The account cannot be logged-into until it has been activated via the activation link in the email.
@@ -457,7 +457,7 @@ def signup_api(request_data):
 
 @api_v1.route("/api/v1/user/activate", methods=["POST"])
 @requires_json_form_validation(ActivateAccountForm)
-def confirm_signup_api(request_data):
+def confirm_signup_api(request_data: ActivateAccountForm):
     """Second and final step of user registration.
     Activate the previously created inactive account.
     This API is meant to be hit when a user clicks a link in their email.
@@ -501,7 +501,7 @@ def confirm_signup_api(request_data):
 @api_v1.route("/api/v1/user/recover", methods=["POST"])
 @requires_csrf_check
 @requires_json_form_validation(RecoverPasswordForm)
-def api_v1_user_recover(request_data):
+def api_v1_user_recover(request_data: RecoverPasswordForm):
     """First step of account recovery for the specified user.
     Send an account recovery token to the user's email address.
 
@@ -539,7 +539,7 @@ def api_v1_user_recover(request_data):
 
 @api_v1.route("/api/v1/user/recover/confirm", methods=["POST"])
 @requires_json_form_validation(ConfirmRecoverPasswordForm)
-def recover_password_confirm_api(request_data):
+def recover_password_confirm_api(request_data: ConfirmRecoverPasswordForm):
     """
     Second and final step of account recovery for the specified user.
     This API is meant to be hit when the user clicks the link in a recovery email.
@@ -616,7 +616,7 @@ def nuke_entries_api():
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(DeleteUserForm)
-def delete_user_api(request_data):
+def delete_user_api(request_data: DeleteUserForm):
     """Delete all information about the currently logged-in user.
 
     Arguments:
@@ -665,7 +665,7 @@ def delete_user_api(request_data):
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewEntryForm)
-def api_v1_update_entry(request_data, entry_id):
+def api_v1_update_entry(request_data: NewEntryForm, entry_id: int):
     """Update the specified entry.
 
     Arguments:
@@ -687,7 +687,7 @@ def api_v1_update_entry(request_data, entry_id):
         - 403: CSRF check failed
     """
     code = 200
-    data = {}
+    data = {} # type: dict
     try:
         backend.edit_entry(
             db.session,
@@ -710,7 +710,7 @@ def api_v1_update_entry(request_data, entry_id):
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(UpdatePasswordForm)
-def api_v1_update_user_password(request_data):
+def api_v1_update_user_password(request_data: UpdatePasswordForm):
     """Change the master password for the logged-in user.
 
     Arguments:
@@ -781,7 +781,7 @@ def api_v1_get_user_preferences():
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(UpdatePreferencesForm)
-def api_v1_update_user_preferences(request_data):
+def api_v1_update_user_preferences(request_data: UpdatePreferencesForm):
     """Update various account preferences for the logged-in user.
     Only have to specify those preferences that you want to change.
     Preferences which are not specified will not change.
