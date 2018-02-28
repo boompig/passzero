@@ -3,10 +3,9 @@ import os
 
 import pytest
 from mock import MagicMock
-# from sqlalchemy import create_engine
 from sqlalchemy.orm.exc import NoResultFound
-# from sqlalchemy.orm.session import sessionmaker
 
+from passzero.app_factory import create_app
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries,
                               get_account_with_email, get_entries,
@@ -15,26 +14,22 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
 from passzero.change_password import change_password
 from passzero.models import db as _db
 from passzero.models import DecryptedDocument, Entry, Service, User
-from server import app as _app
 
 DB_FILENAME = "passzero.db"
 
 
-def create_app(settings_override):
-    for k, v in settings_override.items():
-        _app.config[k] = v
-    _db.init_app(_app)
-    _db.create_all()
-    return _app
-
-
 @pytest.fixture(scope="session")
 def app(request):
+    """Provide the fixture for the duration of the test, then tear it down"""
+    # remove previous database if present
+    if os.path.exists(DB_FILENAME):
+        os.remove(DB_FILENAME)
+
     settings_override = {
         "SQLALCHEMY_DATABASE_URI": "sqlite:///%s" % DB_FILENAME
     }
-    app = create_app(settings_override)
 
+    app = create_app(__name__, settings_override)
     ctx = app.app_context()
     ctx.push()
 
@@ -57,28 +52,29 @@ def db(app, request):
 
     _db.app = app
     _db.create_all()
-
+    
     request.addfinalizer(teardown)
     return _db
 
 
-
 @pytest.fixture(scope="function")
 def session(db, request):
-    # engine = create_engine('sqlite:///%s' % DB_FILENAME)
-    # session = sessionmaker(bind=engine)()
     connection = db.engine.connect()
     transaction = connection.begin()
+
     options = dict(bind=connection)
     session = db.create_scoped_session(options=options)
 
     db.session = session
 
     def teardown():
+        # I don't think this works completely
         transaction.rollback()
-        # manual cleanup
+
+        # so have to manually clear users table
         session.query(User).delete()
         session.query(Entry).delete()
+        session.query(Service).delete()
         session.commit()
 
         connection.close()

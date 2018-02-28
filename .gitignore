@@ -53,3 +53,6 @@ static/js/src/*.js
 # python3
 .mypy_cache
 .pytest_cache
+
+# editor
+.vimrc

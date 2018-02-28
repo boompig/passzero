@@ -43,14 +43,16 @@ def json_delete(session, relative_url):
 
 ### v1 API starts here
 
-def login(app, email, password, check_status=True):
+def login(app, email: str, password: str, check_status: bool = True):
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
+    assert isinstance(check_status, bool)
     data={
         "email": email,
         "password": password
     }
     r = json_post(app, "/api/v1/login", data)
+    print(r.data)
     if check_status:
         assert r.status_code == 200, "Failed to login with email '%s' and password '%s' (code %d)" % (email, password, r.status_code)
     return r
@@ -107,7 +109,7 @@ def put_user_preferences(app, prefs, csrf_token, check_status=True):
     return r
 
 
-def create_entry(app, entry, csrf_token, check_status=True):
+def create_entry(app, entry: dict, csrf_token: str, check_status: bool = True) -> int:
     """
     :return entry_id:       The entry ID of the newly created entry
     """
@@ -178,7 +180,7 @@ def edit_entry(app, entry_id, entry, csrf_token, check_status=True):
     return r
 
 
-def signup(app, email, password, check_status=False):
+def signup(app, email: str, password: str, check_status: bool = False):
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
     assert isinstance(check_status, bool)
@@ -189,12 +191,13 @@ def signup(app, email, password, check_status=False):
         "confirm_password": password
     }
     r = json_post(app, url, data)
+    print(r.data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-def recover_account(app, email, csrf_token):
+def recover_account(app, email: str, csrf_token: str):
     url = "/api/v1/user/recover"
     data = {
         "email": email,
@@ -221,10 +224,15 @@ def recover_account_confirm(app, password, recovery_token, csrf_token, check_sta
     return r
 
 
-def activate_account(app, token):
+def activate_account(app, token: six.text_type, check_status: bool = True):
     assert isinstance(token, six.text_type)
-    data = {"token": token}
-    return json_post(app, "/api/v1/user/activate", data)
+    assert isinstance(check_status, bool)
+    data = { "token": token }
+    r = json_post(app, "/api/v1/user/activate", data)
+    print(r.data)
+    if check_status:
+        assert r.status_code == 200
+    return r
 
 
 def update_user_password(app, old_password, new_password, csrf_token, check_status=True):
