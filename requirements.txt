@@ -32,7 +32,6 @@ mock==2.0.0
 msgpack-python==0.4.8
 mypy==0.560
 neovim==0.2.0
-newrelic==2.42.0.35
 nose==1.3.7
 parsimonious==0.7.0
 parso==0.1.1
