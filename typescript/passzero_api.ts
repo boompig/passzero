@@ -63,7 +63,7 @@ const pzAPI = {
 
 	_copyObject: (o: any): any => {
 		const newObj: any = {};
-		for (let k in o) {
+		for (const k in o) {
 			newObj[k] = o[k];
 		}
 		return newObj;

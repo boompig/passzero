@@ -39,7 +39,7 @@ function changePassword(e: Event) {
 		const response = obj.responseJSON;
 		$(".error-msg").text(response.msg);
 
-		for (let key in response) {
+		for (const key in response) {
 			if (key !== "status" && key !== "msg") {
 				$("#form-error-" + key).text(response[key]);
 			}

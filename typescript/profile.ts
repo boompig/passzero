@@ -64,7 +64,7 @@ class Profile {
 		if (Profile.state.updatePassword.formErrorSet) {
 			$("#change-password").find(".form-error").text("");
 			console.log("Setting updatePassword error messages...");
-			for (let key in Profile.state.updatePassword.formErrors) {
+			for (const key in Profile.state.updatePassword.formErrors) {
 				$("#form-error-" + key).text(Profile.state.updatePassword.formErrors[key]);
 			}
 		} else {
@@ -85,7 +85,7 @@ class Profile {
 		if (Profile.state.updatePrefs.formErrorSet) {
 			$("#user-prefs").find(".form-error").text("");
 			console.log("Setting updatePrefs error messages...");
-			for (let key in Profile.state.updatePrefs.formErrors) {
+			for (const key in Profile.state.updatePrefs.formErrors) {
 				$("#form-error-" + key).text(Profile.state.updatePrefs.formErrors[key]);
 			}
 		} else {
@@ -174,7 +174,7 @@ class Profile {
 				Profile.state.errorMsg = response.msg;
 				Profile.state.updatePrefs.formErrorSet = true;
 				Profile.state.updatePrefs.formErrors = {};
-				for (let key in response) {
+				for (const key in response) {
 					if (key !== "status" && key !== "msg") {
 						Profile.state.updatePrefs.formErrors[key] = response[key];
 					}
@@ -232,7 +232,7 @@ class Profile {
 			Profile.state.errorMsg = response.msg;
 			Profile.state.updatePassword.formErrorSet = true;
 			Profile.state.updatePassword.formErrors = {};
-			for (let key in response) {
+			for (const key in response) {
 				if (key !== "status" && key !== "msg") {
 					Profile.state.updatePassword.formErrors[key] = response[key];
 				}

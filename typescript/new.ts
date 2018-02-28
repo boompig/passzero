@@ -275,7 +275,7 @@ const NewCtrl = function() {
 	};
 };
 
-var app = angular.module("PassZero", [])
+const app = angular.module("PassZero", [])
 	.controller("PassZeroCtrl", NewCtrl);
 
 //export { NewCtrl, app };
