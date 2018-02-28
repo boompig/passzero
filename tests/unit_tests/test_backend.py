@@ -3,9 +3,9 @@ import os
 
 import pytest
 from mock import MagicMock
-from sqlalchemy import create_engine
+# from sqlalchemy import create_engine
 from sqlalchemy.orm.exc import NoResultFound
-from sqlalchemy.orm.session import sessionmaker
+# from sqlalchemy.orm.session import sessionmaker
 
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries,
@@ -20,41 +20,72 @@ from server import app as _app
 DB_FILENAME = "passzero.db"
 
 
-def create_app():
-    _app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///%s' % DB_FILENAME
+def create_app(settings_override):
+    for k, v in settings_override.items():
+        _app.config[k] = v
     _db.init_app(_app)
-    with _app.app_context():
-        _db.create_all()
-    return _app, _db
+    _db.create_all()
+    return _app
+
+
+@pytest.fixture(scope="session")
+def app(request):
+    settings_override = {
+        "SQLALCHEMY_DATABASE_URI": "sqlite:///%s" % DB_FILENAME
+    }
+    app = create_app(settings_override)
+
+    ctx = app.app_context()
+    ctx.push()
+
+    def teardown():
+        ctx.pop()
+
+    request.addfinalizer(teardown)
+    return app
+
+
+@pytest.fixture(scope="session")
+def db(app, request):
+    if os.path.exists(DB_FILENAME):
+        os.remove(DB_FILENAME)
+
+    def teardown():
+        _db.drop_all()
+        if os.path.exists(DB_FILENAME):
+            os.remove(DB_FILENAME)
+
+    _db.app = app
+    _db.create_all()
+
+    request.addfinalizer(teardown)
+    return _db
+
 
 
 @pytest.fixture(scope="function")
-def session(request):
-    engine = create_engine('sqlite:///%s' % DB_FILENAME)
-    _, db = create_app()
-    session = sessionmaker(bind=engine)()
+def session(db, request):
+    # engine = create_engine('sqlite:///%s' % DB_FILENAME)
+    # session = sessionmaker(bind=engine)()
+    connection = db.engine.connect()
+    transaction = connection.begin()
+    options = dict(bind=connection)
+    session = db.create_scoped_session(options=options)
+
+    db.session = session
 
     def teardown():
+        transaction.rollback()
+        # manual cleanup
         session.query(User).delete()
         session.query(Entry).delete()
         session.commit()
 
+        connection.close()
+        session.remove()
 
     request.addfinalizer(teardown)
     return session
-
-
-def setup_module():
-    # creates tables
-    create_app()
-
-
-def teardown_module():
-    os.remove(DB_FILENAME)
-
-
-def setup_function():
-    pass
 
 
 def test_create_inactive_user(session):
