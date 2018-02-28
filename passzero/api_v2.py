@@ -40,23 +40,26 @@ def show_api():
 def api_get_entries():
     """Return a list of encrypted entries.
 
-    Arguments:
-        none
+    Arguments
+    ---------
+    none
 
-    Response:
-        on success:
-            ```
-            [ entry-1, entry-2, ..., entry-n ]
-            ```
-            exactly what information is returned depends on the entry version
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
+    Response
+    --------
+    on success::
 
-    Status codes:
-        - 200: success
-        - 500: there are some old entries (version < 4) so this method cannot work
+        [ entry-1, entry-2, ..., entry-n ]
+
+    exactly what information is returned depends on the entry version
+
+    on error::
+
+    { "status": "error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 500: there are some old entries (version < 4) so this method cannot work
     """
     enc_entries = backend.get_entries(db.session, session["user_id"])
     if any([entry.version < 4 for entry in enc_entries]):
@@ -71,23 +74,25 @@ def api_get_entries():
 def api_get_entry(entry_id: int):
     """Decrypt the given entry and return the contents
 
-    Arguments:
-        none
+    Arguments
+    ---------
 
-    Response:
-        on success:
-            ```
-            entry
-            ```
-            exactly what information is returned depends on the entry version
-        on error:
-            ```
-            { "status": "error", "msg": string }
-            ```
+    Response
+    --------
+    on success::
 
-    Status codes:
-        - 200: success
-        - 500: there are some old entries (version < 4) so this method cannot work
+        entry
+
+    Exactly what information is returned depends on the entry version
+
+    on error::
+
+        { "status": "error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 500: there are some old entries (version < 4) so this method cannot work
     """
     code = 200
     try:
