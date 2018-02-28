@@ -92,15 +92,20 @@ const Login = {
 			}
 			window.location.href = "/done_login";
 		}).catch((obj, textStatus, textCode) => {
+			let errorMsg;
 			console.log(obj);
 			if (textCode === "UNAUTHORIZED" || textCode === "BAD REQUEST") {
 				const response = JSON.parse(obj.responseText);
-				$("#error-msg").text(response.msg);
+				errorMsg = response.msg;
+			} else if (textCode === "INTERNAL SERVER ERROR") {
+				errorMsg = "There was a server-side error processing your request. The site maintainer has been notified";
 			} else {
 				console.log(obj);
 				console.log(textStatus);
 				console.log(textCode);
+				errorMsg = textCode;
 			}
+			$("#error-msg").text(errorMsg);
 			$("#error-msg-container").show();
 		});
 		return false;
