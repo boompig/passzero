@@ -56,7 +56,7 @@ function nukeEntries(e: Event) {
 	"use strict";
 	e.preventDefault();
 	if (confirm("Are you sure you want to delete all your entries?")) {
-		pzAPI.nukeEntries()
+		pzAPI.deleteAllEntries()
 		.then((response) => {
 			$("#nuke-success-msg").text(response.msg).show();
 		});

@@ -24,6 +24,14 @@ def json_post(session, relative_url, data={}):
         follow_redirects=True
     )
 
+def json_put(session, relative_url, data={}):
+    return session.put(
+        relative_url,
+        data=json.dumps(data),
+        headers=json_header,
+        follow_redirects=True
+    )
+
 def json_delete(session, relative_url):
     # expect the data to be formatted into the URL for now
     return session.delete(
@@ -105,7 +113,7 @@ def create_entry(app, entry, csrf_token, check_status=True):
     """
     data = entry
     data["csrf_token"] = csrf_token
-    r = json_post(app, "/api/v1/entries/new", data)
+    r = json_post(app, "/api/v1/entries", data)
     if check_status:
         print(r.data)
         assert r.status_code == 200
@@ -164,7 +172,7 @@ def edit_entry(app, entry_id, entry, csrf_token, check_status=True):
     url = "/api/v1/entries/{}".format(entry_id)
     data = entry
     data["csrf_token"] = csrf_token
-    r = json_post(app, url, data)
+    r = json_put(app, url, data)
     if check_status:
         assert r.status_code == 200
     return r

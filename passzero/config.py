@@ -1,4 +1,4 @@
-BUILD_ID = "negative_emu"
+BUILD_ID = "absent_fox"
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32
