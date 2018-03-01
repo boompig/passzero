@@ -1,16 +1,23 @@
 import os
+from datetime import timedelta
 
 from flask import Flask
 from flask_compress import Compress
+from flask_jwt_extended import JWTManager
+from flask_restful import Api
 from flask_sslify import SSLify
 from werkzeug.contrib.fixers import ProxyFix
 
 import passzero.config as pz_config
+from passzero.api.api_token import ApiTokenResource
+from passzero.api.entry_list import ApiEntryList
+from passzero.api.entry import ApiEntry
 from passzero.api_utils import generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
 from passzero.main_routes import main_routes
-from passzero.models import db
+from passzero.models import db, ApiToken
+from sqlalchemy.orm.exc import NoResultFound
 
 
 def create_app(name: str, settings_override: dict = {}):
@@ -31,17 +38,37 @@ def create_app(name: str, settings_override: dict = {}):
 
     # app config
     app.config.from_object(pz_config)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL']
-    app.config['DUMP_FILE'] = "passzero_dump.csv"
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['WTF_CSRF_ENABLED'] = False
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+    app.config["DUMP_FILE"] = "passzero_dump.csv"
+    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    app.config["WTF_CSRF_ENABLED"] = False
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=5)
+    app.config["JWT_BLACKLIST_ENABLED"] = True
+    app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access"]
 
     app.config.update(settings_override)
+
+    jwt = JWTManager(app)
+
+    @jwt.token_in_blacklist_loader
+    def check_token_in_blacklist(token_dict: dict) -> bool:
+        user_id = token_dict["identity"]["user_id"]
+        try:
+            api_token = db.session.query(ApiToken).filter_by(user_id=user_id).one()
+            return api_token.token_identity != token_dict["jti"]
+        except NoResultFound:
+            # no token registered - may mean the token is revoked
+            return True
 
     # register blueprints
     app.register_blueprint(api_v1)
     app.register_blueprint(api_v2, prefix="/api/v2")
     app.register_blueprint(main_routes)
+
+    api = Api(app)
+    api.add_resource(ApiTokenResource, "/api/v3/token")
+    api.add_resource(ApiEntryList, "/api/v3/entries")
+    api.add_resource(ApiEntry, "/api/v3/entries/<int:entry_id>")
 
     # register CSRF generation function
     app.jinja_env.globals["csrf_token"] = generate_csrf_token

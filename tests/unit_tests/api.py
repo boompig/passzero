@@ -2,6 +2,7 @@ import copy
 import json
 
 import six
+from typing import Dict
 
 json_header = { "Content-Type": "application/json" }
 file_upload_headers = { "Content-Type": "multipart/form-data" }
@@ -9,34 +10,56 @@ file_upload_headers = { "Content-Type": "multipart/form-data" }
 
 ### utils
 
-def json_get(app, relative_url):
+def json_header_with_token(token: str) -> Dict[str, str]:
+    assert token is not None
+    h = copy.copy(json_header)
+    h["Authorization"] = "Bearer %s" % token
+    return h
+
+def json_get(app, relative_url: str, token: str = None):
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
     return app.get(
         relative_url,
-        headers=json_header,
+        headers=headers,
         follow_redirects=True
     )
 
-def json_post(session, relative_url, data={}):
+def json_post(session, relative_url: str, data: dict = {}, token: str = None):
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
     return session.post(
         relative_url,
         data=json.dumps(data),
-        headers=json_header,
+        headers=headers,
         follow_redirects=True
     )
 
-def json_put(session, relative_url, data={}):
+def json_put(session, relative_url: str, data: dict = {}, token: str = None):
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
     return session.put(
         relative_url,
         data=json.dumps(data),
-        headers=json_header,
+        headers=headers,
         follow_redirects=True
     )
 
-def json_delete(session, relative_url):
+def json_delete(session, relative_url: str, token: str = None):
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
     # expect the data to be formatted into the URL for now
     return session.delete(
         relative_url,
-        headers=json_header,
+        headers=headers,
         follow_redirects=True
     )
 
@@ -113,7 +136,7 @@ def create_entry(app, entry: dict, csrf_token: str, check_status: bool = True) -
     """
     :return entry_id:       The entry ID of the newly created entry
     """
-    data = entry
+    data = copy.copy(entry)
     data["csrf_token"] = csrf_token
     r = json_post(app, "/api/v1/entries", data)
     if check_status:
@@ -316,3 +339,115 @@ def get_entry_v2(app, entry_id, check_status=True):
         return json.loads(r.data)
     else:
         return r
+
+#### v3 (tokens)
+
+def get_api_token_with_login(app, check_status: bool = True):
+    r = json_get(app, "/api/v3/token")
+    print(r.data)
+    if check_status:
+        assert r.status_code == 200
+        return json.loads(r.data)["token"]
+    else:
+        return r
+
+def login_with_token(app, email: str, password: str, check_status: bool = True):
+    r = json_post(app, "/api/v3/token", data={
+        "email": email,
+        "password": password
+    })
+    if check_status:
+        assert r.status_code == 200
+        print(json.loads(r.data))
+        return json.loads(r.data)["token"]
+    else:
+        return r
+
+
+def destroy_token(app, token: str, check_status: bool = True):
+    r = json_delete(app, "/api/v3/token", token=token)
+    print(r.data)
+    if check_status:
+        assert r.status_code == 200
+    return r
+
+
+def create_entry_with_token(app, entry: dict, password: str, token: str, check_status: bool = True):
+    data = {
+        "entry": entry,
+        "password": password
+    }
+    r = json_post(app, "/api/v3/entries", data=data, token=token)
+    if check_status:
+        print(r.data)
+        assert r.status_code == 200
+        return json.loads(r.data)["entry_id"]
+    else:
+        return r
+
+
+def delete_all_entries_with_token(app, token: str, check_status: bool = True):
+    r = json_delete(app, "/api/v3/entries", token=token)
+    print(r.data)
+    if check_status:
+        assert r.status_code == 200
+    return r
+
+
+def get_encrypted_entries_with_token(app, token: str, check_status: bool = True):
+    r = json_get(app, "/api/v3/entries", token=token)
+    print(r.data)
+    if check_status:
+        assert r.status_code == 200
+        return json.loads(r.data)
+    else:
+        return r
+
+
+def delete_entry_with_token(app, entry_id: int, token: str, check_status: bool = True):
+    r = json_delete(app, "/api/v3/entries/%d" % entry_id, token=token)
+    print(r.data)
+    if check_status:
+        assert r.status_code == 200
+    return r
+
+
+def decrypt_entry_with_token(app,
+        entry_id: int,
+        password: str,
+        token: str,
+        check_status: bool = True):
+    r = json_post(
+        app,
+        "/api/v3/entries/{}".format(entry_id),
+        { "password": password },
+        token=token
+    )
+    if check_status:
+        assert r.status_code == 200
+        print(r.data)
+        return json.loads(r.data)
+    else:
+        return r
+
+
+def edit_entry_with_token(app,
+        entry_id: int,
+        new_entry: dict,
+        password: str,
+        token: str,
+        check_status: bool = True):
+    r = json_put(
+        app,
+        "/api/v3/entries/{}".format(entry_id),
+        { "entry": new_entry, "password": password },
+        token=token
+    )
+    if check_status:
+        assert r.status_code == 200
+        print(r.data)
+        return json.loads(r.data)
+    else:
+        return r
+
+

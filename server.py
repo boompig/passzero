@@ -3,8 +3,9 @@ import os
 from passzero.app_factory import create_app
 from passzero.models import db
 
+app = create_app(__name__)
+
 if __name__ == "__main__":
-    app = create_app(__name__)
     db.create_all()
     if app.config['DEBUG']:
         app.debug = True
