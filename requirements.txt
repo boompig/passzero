@@ -7,12 +7,15 @@ beautifulsoup4==4.6.0
 bs4==0.0.1
 certifi==2018.1.18
 cffi==1.11.5
+click==6.7
 coverage==4.5.1
 cryptography==2.1.4
 decorator==4.2.1
 docutils==0.14
+first==2.0.1
 Flask==0.10.1
 Flask-Compress==1.0.2
+Flask-Cors==3.0.3
 Flask-JWT-Extended==3.7.0
 Flask-Login==0.2.11
 Flask-RESTful==0.3.6
@@ -38,6 +41,7 @@ parso==0.1.1
 pbr==3.1.1
 pexpect==4.4.0
 pickleshare==0.7.4
+pip-tools==1.11.0
 pluggy==0.6.0
 prompt-toolkit==1.0.15
 psutil==5.4.3
@@ -49,7 +53,7 @@ pycparser==2.18
 pycrypto==2.6.1
 pyflakes==1.6.0
 Pygments==2.2.0
-PyJWT==1.5.3
+PyJWT==1.4.2
 pyOpenSSL==0.14
 pytest==3.4.1
 pytest-cov==2.5.1
