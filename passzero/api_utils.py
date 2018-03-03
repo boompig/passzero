@@ -3,6 +3,7 @@ import logging
 from functools import wraps
 
 from flask import Response, abort, request, session
+from typing import Tuple, Dict
 
 from .config import CSRF_TOKEN_LENGTH
 from .crypto_utils import random_hex
@@ -70,14 +71,14 @@ def requires_json_form_validation(form_class):
     return real_function
 
 
-def spend_csrf_token():
+def spend_csrf_token() -> None:
     """Invalidate previous CSRF token and set a new one"""
     prev_token = session.pop("csrf_token")
     logging.debug("[spend_csrf_token] Previous csrf_token was %s" % prev_token)
     session["csrf_token"] = generate_csrf_token()
 
 
-def generate_csrf_token():
+def generate_csrf_token() -> str:
     """Generate a CSRF token for the session, if not currently set"""
     if "csrf_token" not in session:
         session["csrf_token"] = random_hex(CSRF_TOKEN_LENGTH)
@@ -93,21 +94,28 @@ def write_json(code: int, data: dict) -> Response:
     )
 
 
-def json_form_validation_error(errors):
+def json_form_validation_error(errors) -> Tuple[int, dict]:
     code, data = json_error(400, "Failed to validate form")
     for k, v in dict(errors).items():
         data[k] = v[0]
     return (code, data)
 
 
-def json_error(code: int, msg: str) -> dict:
+def json_error(code: int, msg: str) -> Tuple[int, dict]:
     return (code, {
         "status": "error",
         "msg": msg
     })
 
 
-def json_success(msg: str) -> dict:
+def json_error_v2(msg: str, code: int) -> Tuple[Dict[str, str], int]:
+    return ({
+        "status": "error",
+        "msg": msg
+    }, code)
+
+
+def json_success(msg: str) -> Tuple[int, dict]:
     """Return tuple of (code, JSON data)"""
     return (200, {
         "status": "success",
@@ -115,35 +123,43 @@ def json_success(msg: str) -> dict:
     })
 
 
-def check_auth():
+def json_success_v2(msg: str) -> Tuple[dict, int]:
+    """Return tuple of (code, JSON data)"""
+    return ({
+        "status": "success",
+        "msg": msg
+    }, 200)
+
+
+def check_auth() -> bool:
     """Return True iff user_id and password are in session."""
     return 'user_id' in session and 'password' in session
 
 
-def json_noauth():
+def json_noauth() -> Tuple[int, dict]:
     """Return tuple of (code, json object)"""
     return json_error(401, "must be logged in to perform this action")
 
 
-def check_all_csrf():
+def check_all_csrf() -> bool:
     """Check CSRF token differently depending on the request method"""
     data = get_request_data()
     return check_csrf(data)
 
 
-def check_csrf(form):
+def check_csrf(form) -> bool:
     """
     :return:     True iff csrf_token is set in the form and matches the CSRF token in session
     """
     return "csrf_token" in form and form["csrf_token"] == session["csrf_token"]
 
 
-def json_csrf_validation_error():
+def json_csrf_validation_error() -> Tuple[int, dict]:
     code, data = json_error(403, "Failed to validate CSRF token")
     return (code, data)
 
 
-def json_internal_error(msg: str):
+def json_internal_error(msg: str) -> Tuple[int, dict]:
     """Return tuple of (code, JSON data)"""
     return json_error(500, msg)
 

@@ -110,7 +110,6 @@ def api_login(request_data):
     - 200: success
     - 400: failed to validate arguments
     - 401: bad username-password combo or account doesn't exist or account isn't activated
-    - 403: CSRF check failed
     """
     try:
         user = backend.get_account_with_email(db.session, request_data["email"])
