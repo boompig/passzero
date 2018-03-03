@@ -8,7 +8,7 @@ def base64_encode(bin_data: bytes):
     """
     assert isinstance(bin_data, bytes)
     s = binascii.b2a_base64(bin_data)
-    if s[-1] == "\n":
+    if s[-1] == ord("\n"):
         # this is maddening (python2)
         return s[:-1]
     else:
