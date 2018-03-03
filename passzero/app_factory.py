@@ -7,6 +7,7 @@ from flask_jwt_extended import JWTManager
 from flask_restful import Api
 from flask_sslify import SSLify
 from werkzeug.contrib.fixers import ProxyFix
+from flask_cors import CORS
 
 import passzero.config as pz_config
 from passzero.api.api_token import ApiTokenResource
@@ -24,6 +25,8 @@ def create_app(name: str, settings_override: dict = {}):
     compress = Compress()
 
     app = Flask(name, static_url_path="")
+    # allow CORS on /api/v3 (everything with an API key)
+    CORS(app, resources={r"/api/v3/*": { "origins": "*" } })
 
     # add compress middleware
     compress.init_app(app)

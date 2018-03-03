@@ -1,12 +1,12 @@
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask import escape
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restful import Resource, reqparse
 from sqlalchemy.orm.exc import NoResultFound
-from flask import escape
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
-from ..models import Entry, db, User
-# from ..forms import NewEntryForm
+from ..models import Entry, User, db
+
 
 class ApiEntry(Resource):
     method_decorators = {
