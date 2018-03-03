@@ -63,7 +63,8 @@ def _decrypt_entries_single_thread(entries, key: str) -> List[dict]:
 
 def decrypt_entries(entries, key: str) -> List[dict]:
     """Return a list of objects representing the decrypted entries"""
-    return _decrypt_entries_multiprocess(entries, key)
+    # return _decrypt_entries_multiprocess(entries, key)
+    return _decrypt_entries_single_thread(entries, key)
 
 
 def get_entries(db_session, user_id: int):

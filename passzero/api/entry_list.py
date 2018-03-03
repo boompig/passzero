@@ -26,13 +26,18 @@ def _jsonify_entries_multiprocess(enc_entries: List[Entry]):
     pool.join()
     return results
 
-class ApiEntryList(Resource):
-    method_decorators = {
-        "get": [jwt_required],
-        "post": [jwt_required],
-        "delete": [jwt_required]
-    }
 
+def _jsonify_entries_single_thread(enc_entries: List[Entry]):
+    return [jsonify_entries_pool(entry) for entry in enc_entries]
+
+
+def jsonify_entries(enc_entries: List[Entry]):
+    return _jsonify_entries_single_thread(enc_entries)
+
+
+class ApiEntryList(Resource):
+
+    @jwt_required
     def post(self):
         """Create a new entry for the logged-in user.
 
@@ -74,7 +79,6 @@ class ApiEntryList(Resource):
         entry_parser.add_argument("extra", required=False, type=str, default="", location=("entry", ))
         entry_parser.add_argument("has_2fa", required=False, type=bool, default=False, location=("entry", ))
         entry_parser.parse_args(req=args)
-
         user_id = get_jwt_identity()["user_id"]
         user = db.session.query(User).filter_by(id=user_id).one()
         if user.authenticate(args.password):
@@ -88,6 +92,7 @@ class ApiEntryList(Resource):
         else:
             return json_error_v2("Password is not correct", 401)
 
+    @jwt_required
     def delete(self):
         """Delete *all* entries for the logged-in user.
 
@@ -111,6 +116,7 @@ class ApiEntryList(Resource):
         backend.delete_all_entries(db.session, user)
         return json_success_v2("Deleted all entries")
 
+    @jwt_required
     def get(self):
         """Return a list of encrypted entries.
 
@@ -139,6 +145,5 @@ class ApiEntryList(Resource):
         enc_entries = backend.get_entries(db.session, user_id)
         if any([entry.version < 4 for entry in enc_entries]):
             return json_error_v2("This method does not work if there are entries below version 4", 500)
-        jsonified_entries = _jsonify_entries_multiprocess(enc_entries)
-        return jsonified_entries
+        return jsonify_entries(enc_entries)
 
