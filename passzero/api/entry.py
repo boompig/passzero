@@ -1,13 +1,16 @@
 from flask import escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask_restplus import Resource, reqparse
+from flask_restplus import Resource, reqparse, Namespace
 from sqlalchemy.orm.exc import NoResultFound
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
 from ..models import Entry, User, db
 
+ns = Namespace("Entry")
 
+
+@ns.route("/")
 class ApiEntry(Resource):
 
     @jwt_required

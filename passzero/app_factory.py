@@ -10,9 +10,9 @@ from werkzeug.contrib.fixers import ProxyFix
 from flask_cors import CORS
 
 import passzero.config as pz_config
-from passzero.api.api_token import ApiTokenResource
-from passzero.api.entry_list import ApiEntryList
-from passzero.api.entry import ApiEntry
+from passzero.api.api_token import ns as ApiTokenNamespace
+from passzero.api.entry_list import ns as ApiEntryListNamespace
+from passzero.api.entry import ns as ApiEntryNamespace
 from passzero.api_utils import generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
@@ -48,6 +48,7 @@ def create_app(name: str, settings_override: dict = {}):
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=5)
     app.config["JWT_BLACKLIST_ENABLED"] = True
     app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access"]
+    app.config["SWAGGER_UI_DOC_EXPANSION"] = "list"
 
     app.config.update(settings_override)
 
@@ -73,9 +74,9 @@ def create_app(name: str, settings_override: dict = {}):
     api = Api(app, doc="/doc/")
     app.register_blueprint(blueprint)
 
-    api.add_resource(ApiTokenResource, "/api/v3/token")
-    api.add_resource(ApiEntryList, "/api/v3/entries")
-    api.add_resource(ApiEntry, "/api/v3/entries/<int:entry_id>")
+    api.add_namespace(ApiTokenNamespace, path="/api/v3/token")
+    api.add_namespace(ApiEntryListNamespace, path="/api/v3/entries")
+    api.add_namespace(ApiEntryNamespace, path="/api/v3/entries/<int:entry_id>")
 
     # register CSRF generation function
     app.jinja_env.globals["csrf_token"] = generate_csrf_token

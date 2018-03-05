@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask_restplus import Resource, reqparse
+from flask_restplus import Resource, reqparse, Namespace
 from typing import List
 
 from .. import backend
@@ -35,6 +35,10 @@ def jsonify_entries(enc_entries: List[Entry]):
     return _jsonify_entries_single_thread(enc_entries)
 
 
+ns = Namespace("EntryList")
+
+
+@ns.route("/")
 class ApiEntryList(Resource):
 
     @jwt_required
