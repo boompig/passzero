@@ -8,6 +8,7 @@ bs4==0.0.1
 certifi==2018.1.18
 cffi==1.11.5
 click==6.7
+coloredlogs==9.0
 coverage==4.5.1
 cryptography==2.1.4
 decorator==4.2.1
@@ -19,6 +20,7 @@ Flask-Cors==3.0.3
 Flask-JWT-Extended==3.7.0
 Flask-Login==0.2.11
 Flask-RESTful==0.3.6
+flask-restplus==0.10.1
 Flask-SQLAlchemy==2.0
 Flask-SSLify==0.1.4
 Flask-WTF==0.14.2
@@ -30,6 +32,7 @@ ipython-genutils==0.2.0
 itsdangerous==0.24
 jedi==0.11.1
 Jinja2==2.7.3
+jsonschema==2.6.0
 MarkupSafe==0.23
 mock==2.0.0
 msgpack-python==0.4.8

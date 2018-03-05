@@ -1,6 +1,6 @@
 from flask import escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask_restful import Resource, reqparse
+from flask_restplus import Resource, reqparse
 from sqlalchemy.orm.exc import NoResultFound
 
 from .. import backend
@@ -9,15 +9,8 @@ from ..models import Entry, User, db
 
 
 class ApiEntry(Resource):
-    method_decorators = {
-        "get": [jwt_required],
-        "put": [jwt_required],
-        "patch": [jwt_required],
-        # using POST to hide password argument
-        "post": [jwt_required],
-        "delete": [jwt_required]
-    }
 
+    @jwt_required
     def delete(self, entry_id: int):
         """Delete the entry with the given ID.
 
@@ -35,8 +28,6 @@ class ApiEntry(Resource):
         ------------
         - 200: success
         - 400: entry does not exist or does not belong to logged-in user
-        - 401: not authenticated
-        - 403: CSRF check failed
         """
         user_id = get_jwt_identity()["user_id"]
         try:
@@ -50,13 +41,8 @@ class ApiEntry(Resource):
         except AssertionError:
             return json_error_v2("the given entry does not belong to you", 400)
 
-    def put(self, entry_id: int):
-        return self.edit_entry(entry_id)
-
+    @jwt_required
     def patch(self, entry_id: int):
-        return self.edit_entry(entry_id)
-
-    def edit_entry(self, entry_id: int):
         """Update the specified entry.
 
         Arguments
@@ -82,7 +68,6 @@ class ApiEntry(Resource):
         - 200: success
         - 400: various input validation errors
         - 401: not authenticated
-        - 403: CSRF check failed
         """
         parser = reqparse.RequestParser()
         parser.add_argument("password", type=str, required=True)
@@ -114,6 +99,7 @@ class ApiEntry(Resource):
         except AssertionError:
             return json_error_v2("the given entry does not belong to you", 400)
 
+    @jwt_required
     def post(self, entry_id: int):
         """Decrypt the given entry and return the contents
 

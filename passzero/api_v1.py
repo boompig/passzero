@@ -381,7 +381,7 @@ def api_v1_new_entry(request_data: NewEntryForm):
     ---------
     - account: string (required)
     - username: string (required)
-    - password: string(required)
+    - password: string (required)
     - extra: string (optional)
     - has_2fa: boolean (required)
 

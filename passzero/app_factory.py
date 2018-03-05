@@ -1,10 +1,10 @@
 import os
 from datetime import timedelta
 
-from flask import Flask
+from flask import Flask, Blueprint
 from flask_compress import Compress
 from flask_jwt_extended import JWTManager
-from flask_restful import Api
+from flask_restplus import Api
 from flask_sslify import SSLify
 from werkzeug.contrib.fixers import ProxyFix
 from flask_cors import CORS
@@ -68,7 +68,11 @@ def create_app(name: str, settings_override: dict = {}):
     app.register_blueprint(api_v2, prefix="/api/v2")
     app.register_blueprint(main_routes)
 
-    api = Api(app)
+    # create swagger docs automatically and show them at /doc
+    blueprint = Blueprint("api", __name__, url_prefix="/api")
+    api = Api(app, doc="/doc/")
+    app.register_blueprint(blueprint)
+
     api.add_resource(ApiTokenResource, "/api/v3/token")
     api.add_resource(ApiEntryList, "/api/v3/entries")
     api.add_resource(ApiEntry, "/api/v3/entries/<int:entry_id>")

@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from flask import session
 from flask_jwt_extended import (create_access_token, decode_token,
                                 get_jwt_identity, jwt_required)
-from flask_restful import Resource, reqparse
+from flask_restplus import Resource, reqparse
 from sqlalchemy.orm.exc import NoResultFound
 
 from .. import backend

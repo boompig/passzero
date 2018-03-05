@@ -1,7 +1,7 @@
 from multiprocessing import Pool
 
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask_restful import Resource, reqparse
+from flask_restplus import Resource, reqparse
 from typing import List
 
 from .. import backend
