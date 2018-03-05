@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from flask import Blueprint, escape, render_template, session
+from flask import Blueprint, escape, session
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend, change_password
@@ -25,12 +25,6 @@ class UserNotActiveException(Exception):
 
 class TokenExpiredException(Exception):
     pass
-
-
-@api_v1.route("/api/v1", methods=["GET"])
-def show_api():
-    """Display all available APIs"""
-    return render_template("api_v1.html", title="PassZero &middot; API v1")
 
 
 @api_v1.route("/api/csrf_token", methods=["GET"])
