@@ -1,6 +1,6 @@
 from multiprocessing import Pool
 
-from flask import Blueprint, render_template, session
+from flask import Blueprint, session
 from sqlalchemy.orm.exc import NoResultFound
 from typing import List
 
@@ -27,12 +27,6 @@ def __jsonify_entries_multiprocess(enc_entries: List[Entry]):
     pool.close()
     pool.join()
     return results
-
-
-@api_v2.route("/api/v2", methods=["GET"])
-def show_api():
-    """Display all available APIs"""
-    return render_template("api_v2.html", title="PassZero &middot; API v2")
 
 
 @api_v2.route("/api/v2/entries", methods=["GET"])

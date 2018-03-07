@@ -56,3 +56,6 @@ static/js/src/*.js
 
 # editor
 .vimrc
+
+# private future work document
+TODO.md

@@ -580,8 +580,3 @@ class PassZeroApiTester(unittest.TestCase):
         # make sure all old entries deleted
         entries = api.get_entries(self.app)
         assert len(entries) == 0
-
-    def test_get_api_docs_template(self):
-        # just make sure this renders without errors
-        r = self.app.get("/api/v1")
-        assert r.status_code == 200

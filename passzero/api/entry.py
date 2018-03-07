@@ -1,25 +1,28 @@
 from flask import escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask_restful import Resource, reqparse
 from sqlalchemy.orm.exc import NoResultFound
+
+from flask_restplus import Namespace, Resource, reqparse
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
 from ..models import Entry, User, db
+from .jwt_auth import authorizations
+
+ns = Namespace("Entry", authorizations=authorizations)
 
 
+@ns.route("")
 class ApiEntry(Resource):
-    method_decorators = {
-        "get": [jwt_required],
-        "put": [jwt_required],
-        "patch": [jwt_required],
-        # using POST to hide password argument
-        "post": [jwt_required],
-        "delete": [jwt_required]
-    }
 
+    @ns.doc(security="apikey")
+    @jwt_required
     def delete(self, entry_id: int):
         """Delete the entry with the given ID.
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
@@ -35,8 +38,6 @@ class ApiEntry(Resource):
         ------------
         - 200: success
         - 400: entry does not exist or does not belong to logged-in user
-        - 401: not authenticated
-        - 403: CSRF check failed
         """
         user_id = get_jwt_identity()["user_id"]
         try:
@@ -50,14 +51,14 @@ class ApiEntry(Resource):
         except AssertionError:
             return json_error_v2("the given entry does not belong to you", 400)
 
-    def put(self, entry_id: int):
-        return self.edit_entry(entry_id)
-
+    @ns.doc(security="apikey")
+    @jwt_required
     def patch(self, entry_id: int):
-        return self.edit_entry(entry_id)
-
-    def edit_entry(self, entry_id: int):
         """Update the specified entry.
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
@@ -81,8 +82,7 @@ class ApiEntry(Resource):
         ------------
         - 200: success
         - 400: various input validation errors
-        - 401: not authenticated
-        - 403: CSRF check failed
+        - 401: password is not correct
         """
         parser = reqparse.RequestParser()
         parser.add_argument("password", type=str, required=True)
@@ -94,28 +94,38 @@ class ApiEntry(Resource):
         entry_parser.add_argument("username", type=str, required=True, location=("entry", ))
         entry_parser.add_argument("password", type=str, required=True, location=("entry", ))
         entry_parser.add_argument("extra", required=False, type=str, default="", location=("entry", ))
-        entry_parser.add_argument("has_2fa", required=False, type=bool, default=False, location=("entry", ))
+        entry_parser.add_argument("has_2fa", required=True, type=bool, location=("entry", ))
         entry_parser.parse_args(req=args)
 
         user_id = get_jwt_identity()["user_id"]
-        try:
-            backend.edit_entry(
-                session=db.session,
-                entry_id=entry_id,
-                user_key=args.password,
-                edited_entry=args.entry,
-                user_id=user_id
-            )
-            return json_success_v2(
-                "successfully edited account %s" % escape(args.entry["account"])
-            )
-        except NoResultFound:
-            return json_error_v2("no such entry", 400)
-        except AssertionError:
-            return json_error_v2("the given entry does not belong to you", 400)
+        user = db.session.query(User).filter_by(id=user_id).one()
+        if user.authenticate(args.password):
+            try:
+                backend.edit_entry(
+                    session=db.session,
+                    entry_id=entry_id,
+                    user_key=args.password,
+                    edited_entry=args.entry,
+                    user_id=user_id
+                )
+                return json_success_v2(
+                    "successfully edited account %s" % escape(args.entry["account"])
+                )
+            except NoResultFound:
+                return json_error_v2("no such entry", 400)
+            except AssertionError:
+                return json_error_v2("the given entry does not belong to you", 400)
+        else:
+            return json_error_v2("Password is not correct", 401)
 
+    @ns.doc(security="apikey")
+    @jwt_required
     def post(self, entry_id: int):
         """Decrypt the given entry and return the contents
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
@@ -136,6 +146,8 @@ class ApiEntry(Resource):
         Status codes
         ------------
         - 200: success
+        - 400: various input validation errors
+        - 401: password is not correct
         - 500: there are some old entries (version < 4) so this method cannot work
         """
         parser = reqparse.RequestParser()

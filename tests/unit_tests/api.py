@@ -51,6 +51,20 @@ def json_put(session, relative_url: str, data: dict = {}, token: str = None):
         follow_redirects=True
     )
 
+
+def json_patch(session, relative_url: str, data: dict = {}, token: str = None):
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
+    return session.patch(
+        relative_url,
+        data=json.dumps(data),
+        headers=headers,
+        follow_redirects=True
+    )
+
+
 def json_delete(session, relative_url: str, token: str = None):
     if token:
         headers = json_header_with_token(token)
@@ -356,15 +370,15 @@ def login_with_token(app, email: str, password: str, check_status: bool = True):
         "email": email,
         "password": password
     })
+    print(r.data)
     if check_status:
         assert r.status_code == 200
-        print(json.loads(r.data))
         return json.loads(r.data)["token"]
     else:
         return r
 
 
-def destroy_token(app, token: str, check_status: bool = True):
+def delete_token(app, token: str, check_status: bool = True):
     r = json_delete(app, "/api/v3/token", token=token)
     print(r.data)
     if check_status:
@@ -378,8 +392,8 @@ def create_entry_with_token(app, entry: dict, password: str, token: str, check_s
         "password": password
     }
     r = json_post(app, "/api/v3/entries", data=data, token=token)
+    print(r.data)
     if check_status:
-        print(r.data)
         assert r.status_code == 200
         return json.loads(r.data)["entry_id"]
     else:
@@ -423,9 +437,9 @@ def decrypt_entry_with_token(app,
         { "password": password },
         token=token
     )
+    print(r.data)
     if check_status:
         assert r.status_code == 200
-        print(r.data)
         return json.loads(r.data)
     else:
         return r
@@ -437,15 +451,15 @@ def edit_entry_with_token(app,
         password: str,
         token: str,
         check_status: bool = True):
-    r = json_put(
+    r = json_patch(
         app,
         "/api/v3/entries/{}".format(entry_id),
         { "entry": new_entry, "password": password },
         token=token
     )
+    print(r.data)
     if check_status:
         assert r.status_code == 200
-        print(r.data)
         return json.loads(r.data)
     else:
         return r
