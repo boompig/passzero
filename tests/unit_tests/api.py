@@ -51,6 +51,20 @@ def json_put(session, relative_url: str, data: dict = {}, token: str = None):
         follow_redirects=True
     )
 
+
+def json_patch(session, relative_url: str, data: dict = {}, token: str = None):
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
+    return session.patch(
+        relative_url,
+        data=json.dumps(data),
+        headers=headers,
+        follow_redirects=True
+    )
+
+
 def json_delete(session, relative_url: str, token: str = None):
     if token:
         headers = json_header_with_token(token)
@@ -357,6 +371,8 @@ def login_with_token(app, email: str, password: str, check_status: bool = True):
         "password": password
     })
     if check_status:
+        print(r)
+        print(r.status_code)
         assert r.status_code == 200
         print(json.loads(r.data))
         return json.loads(r.data)["token"]
@@ -437,7 +453,7 @@ def edit_entry_with_token(app,
         password: str,
         token: str,
         check_status: bool = True):
-    r = json_put(
+    r = json_patch(
         app,
         "/api/v3/entries/{}".format(entry_id),
         { "entry": new_entry, "password": password },

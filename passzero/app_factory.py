@@ -1,24 +1,22 @@
 import os
 from datetime import timedelta
 
-from flask import Flask, Blueprint
+from flask import Blueprint, Flask
 from flask_compress import Compress
-from flask_jwt_extended import JWTManager
-from flask_restplus import Api
-from flask_sslify import SSLify
-from werkzeug.contrib.fixers import ProxyFix
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from flask_sslify import SSLify
+from jwt.exceptions import DecodeError
+from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.contrib.fixers import ProxyFix
 
 import passzero.config as pz_config
-from passzero.api.api_token import ns as ApiTokenNamespace
-from passzero.api.entry_list import ns as ApiEntryListNamespace
-from passzero.api.entry import ns as ApiEntryNamespace
+from passzero.api import api
 from passzero.api_utils import generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
 from passzero.main_routes import main_routes
-from passzero.models import db, ApiToken
-from sqlalchemy.orm.exc import NoResultFound
+from passzero.models import ApiToken, db
 
 
 def create_app(name: str, settings_override: dict = {}):
@@ -64,6 +62,15 @@ def create_app(name: str, settings_override: dict = {}):
             # no token registered - may mean the token is revoked
             return True
 
+    @api.errorhandler(DecodeError)
+    @app.errorhandler(DecodeError)
+    def error_handler(e):
+        """Use this for when the JWT token is not valid"""
+        return {
+            "message": "Invalid token",
+            "success": False
+        }, 403
+
     # register blueprints
     app.register_blueprint(api_v1)
     app.register_blueprint(api_v2, prefix="/api/v2")
@@ -71,12 +78,8 @@ def create_app(name: str, settings_override: dict = {}):
 
     # create swagger docs automatically and show them at /doc
     blueprint = Blueprint("api", __name__, url_prefix="/api")
-    api = Api(app, doc="/doc/")
+    api.init_app(app)
     app.register_blueprint(blueprint)
-
-    api.add_namespace(ApiTokenNamespace, path="/api/v3/token")
-    api.add_namespace(ApiEntryListNamespace, path="/api/v3/entries")
-    api.add_namespace(ApiEntryNamespace, path="/api/v3/entries/<int:entry_id>")
 
     # register CSRF generation function
     app.jinja_env.globals["csrf_token"] = generate_csrf_token

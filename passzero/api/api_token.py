@@ -7,8 +7,9 @@ from datetime import datetime, timezone
 from flask import session
 from flask_jwt_extended import (create_access_token, decode_token,
                                 get_jwt_identity, jwt_required)
-from flask_restplus import Resource, reqparse, Namespace
 from sqlalchemy.orm.exc import NoResultFound
+
+from flask_restplus import Namespace, Resource, reqparse
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2, requires_json_auth
@@ -21,12 +22,8 @@ class UserNotActiveException(Exception):
 ns = Namespace("ApiToken")
 
 
-@ns.route("/")
+@ns.route("")
 class ApiTokenResource(Resource):
-    method_decorators = {
-        "get": [requires_json_auth],
-        "delete": [jwt_required]
-    }
 
     def create_token_and_add_to_database(self, user_id: int) -> str:
         """Create a new JTI token and add it to the database.
@@ -49,6 +46,7 @@ class ApiTokenResource(Resource):
         db.session.commit()
         return token
     
+    @requires_json_auth
     def get(self):
         """Return the current token for the logged-in user
 
@@ -140,6 +138,7 @@ class ApiTokenResource(Resource):
         except UserNotActiveException:
             return json_error_v2("The account has not been activated. Check your email!", 401)
 
+    @jwt_required
     def delete(self):
         """Logout. Destroy current token.
 

@@ -1,21 +1,34 @@
 from flask import escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask_restplus import Resource, reqparse, Namespace
 from sqlalchemy.orm.exc import NoResultFound
+
+from flask_restplus import Namespace, Resource, reqparse
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
 from ..models import Entry, User, db
 
-ns = Namespace("Entry")
+authorizations = {
+    "apikey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization"
+    }
+}
+ns = Namespace("Entry", authorizations=authorizations)
 
 
-@ns.route("/")
+@ns.route("")
 class ApiEntry(Resource):
 
+    @ns.doc(security="apikey")
     @jwt_required
     def delete(self, entry_id: int):
         """Delete the entry with the given ID.
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
@@ -44,9 +57,14 @@ class ApiEntry(Resource):
         except AssertionError:
             return json_error_v2("the given entry does not belong to you", 400)
 
+    @ns.doc(security="apikey")
     @jwt_required
     def patch(self, entry_id: int):
         """Update the specified entry.
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
@@ -70,7 +88,6 @@ class ApiEntry(Resource):
         ------------
         - 200: success
         - 400: various input validation errors
-        - 401: not authenticated
         """
         parser = reqparse.RequestParser()
         parser.add_argument("password", type=str, required=True)
@@ -82,7 +99,7 @@ class ApiEntry(Resource):
         entry_parser.add_argument("username", type=str, required=True, location=("entry", ))
         entry_parser.add_argument("password", type=str, required=True, location=("entry", ))
         entry_parser.add_argument("extra", required=False, type=str, default="", location=("entry", ))
-        entry_parser.add_argument("has_2fa", required=False, type=bool, default=False, location=("entry", ))
+        entry_parser.add_argument("has_2fa", required=True, type=bool, location=("entry", ))
         entry_parser.parse_args(req=args)
 
         user_id = get_jwt_identity()["user_id"]
@@ -102,9 +119,14 @@ class ApiEntry(Resource):
         except AssertionError:
             return json_error_v2("the given entry does not belong to you", 400)
 
+    @ns.doc(security="apikey")
     @jwt_required
     def post(self, entry_id: int):
         """Decrypt the given entry and return the contents
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
@@ -125,6 +147,7 @@ class ApiEntry(Resource):
         Status codes
         ------------
         - 200: success
+        - 400: various input validation errors
         - 500: there are some old entries (version < 4) so this method cannot work
         """
         parser = reqparse.RequestParser()

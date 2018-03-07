@@ -1,8 +1,9 @@
 from multiprocessing import Pool
 
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from flask_restplus import Resource, reqparse, Namespace
 from typing import List
+
+from flask_restplus import Namespace, Resource, reqparse
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
@@ -35,15 +36,27 @@ def jsonify_entries(enc_entries: List[Entry]):
     return _jsonify_entries_single_thread(enc_entries)
 
 
+authorizations = {
+    "apikey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "Authorization"
+    }
+}
 ns = Namespace("EntryList")
 
 
-@ns.route("/")
+@ns.route("")
 class ApiEntryList(Resource):
 
+    @ns.doc(security="apikey")
     @jwt_required
     def post(self):
         """Create a new entry for the logged-in user.
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
@@ -81,7 +94,7 @@ class ApiEntryList(Resource):
         entry_parser.add_argument("username", type=str, required=True, location=("entry", ))
         entry_parser.add_argument("password", type=str, required=True, location=("entry", ))
         entry_parser.add_argument("extra", required=False, type=str, default="", location=("entry", ))
-        entry_parser.add_argument("has_2fa", required=False, type=bool, default=False, location=("entry", ))
+        entry_parser.add_argument("has_2fa", required=True, type=bool, location=("entry", ))
         entry_parser.parse_args(req=args)
         user_id = get_jwt_identity()["user_id"]
         user = db.session.query(User).filter_by(id=user_id).one()
@@ -96,9 +109,14 @@ class ApiEntryList(Resource):
         else:
             return json_error_v2("Password is not correct", 401)
 
+    @ns.doc(security="apikey")
     @jwt_required
     def delete(self):
         """Delete *all* entries for the logged-in user.
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
@@ -120,9 +138,14 @@ class ApiEntryList(Resource):
         backend.delete_all_entries(db.session, user)
         return json_success_v2("Deleted all entries")
 
+    @ns.doc(security="apikey")
     @jwt_required
     def get(self):
         """Return a list of encrypted entries.
+
+        Authentication
+        --------------
+        JWT
 
         Arguments
         ---------
