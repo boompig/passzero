@@ -1,5 +1,3 @@
-from multiprocessing import Pool
-
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from typing import List
 
@@ -8,6 +6,7 @@ from flask_restplus import Namespace, Resource, reqparse
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
 from ..models import Entry, User, db
+from .jwt_auth import authorizations
 
 
 def jsonify_entries_pool(entry: Entry) -> dict:
@@ -20,30 +19,11 @@ def jsonify_entries_pool(entry: Entry) -> dict:
     return out
 
 
-def _jsonify_entries_multiprocess(enc_entries: List[Entry]):
-    pool = Pool(5)
-    results = pool.map(jsonify_entries_pool, enc_entries)
-    pool.close()
-    pool.join()
-    return results
-
-
-def _jsonify_entries_single_thread(enc_entries: List[Entry]):
+def jsonify_entries(enc_entries: List[Entry]):
     return [jsonify_entries_pool(entry) for entry in enc_entries]
 
 
-def jsonify_entries(enc_entries: List[Entry]):
-    return _jsonify_entries_single_thread(enc_entries)
-
-
-authorizations = {
-    "apikey": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "Authorization"
-    }
-}
-ns = Namespace("EntryList")
+ns = Namespace("EntryList", authorizations=authorizations)
 
 
 @ns.route("")

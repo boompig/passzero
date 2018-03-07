@@ -7,14 +7,8 @@ from flask_restplus import Namespace, Resource, reqparse
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
 from ..models import Entry, User, db
+from .jwt_auth import authorizations
 
-authorizations = {
-    "apikey": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "Authorization"
-    }
-}
 ns = Namespace("Entry", authorizations=authorizations)
 
 
@@ -88,6 +82,7 @@ class ApiEntry(Resource):
         ------------
         - 200: success
         - 400: various input validation errors
+        - 401: password is not correct
         """
         parser = reqparse.RequestParser()
         parser.add_argument("password", type=str, required=True)
@@ -103,21 +98,25 @@ class ApiEntry(Resource):
         entry_parser.parse_args(req=args)
 
         user_id = get_jwt_identity()["user_id"]
-        try:
-            backend.edit_entry(
-                session=db.session,
-                entry_id=entry_id,
-                user_key=args.password,
-                edited_entry=args.entry,
-                user_id=user_id
-            )
-            return json_success_v2(
-                "successfully edited account %s" % escape(args.entry["account"])
-            )
-        except NoResultFound:
-            return json_error_v2("no such entry", 400)
-        except AssertionError:
-            return json_error_v2("the given entry does not belong to you", 400)
+        user = db.session.query(User).filter_by(id=user_id).one()
+        if user.authenticate(args.password):
+            try:
+                backend.edit_entry(
+                    session=db.session,
+                    entry_id=entry_id,
+                    user_key=args.password,
+                    edited_entry=args.entry,
+                    user_id=user_id
+                )
+                return json_success_v2(
+                    "successfully edited account %s" % escape(args.entry["account"])
+                )
+            except NoResultFound:
+                return json_error_v2("no such entry", 400)
+            except AssertionError:
+                return json_error_v2("the given entry does not belong to you", 400)
+        else:
+            return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
     @jwt_required
@@ -148,6 +147,7 @@ class ApiEntry(Resource):
         ------------
         - 200: success
         - 400: various input validation errors
+        - 401: password is not correct
         - 500: there are some old entries (version < 4) so this method cannot work
         """
         parser = reqparse.RequestParser()

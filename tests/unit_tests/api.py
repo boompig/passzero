@@ -370,17 +370,15 @@ def login_with_token(app, email: str, password: str, check_status: bool = True):
         "email": email,
         "password": password
     })
+    print(r.data)
     if check_status:
-        print(r)
-        print(r.status_code)
         assert r.status_code == 200
-        print(json.loads(r.data))
         return json.loads(r.data)["token"]
     else:
         return r
 
 
-def destroy_token(app, token: str, check_status: bool = True):
+def delete_token(app, token: str, check_status: bool = True):
     r = json_delete(app, "/api/v3/token", token=token)
     print(r.data)
     if check_status:
@@ -394,8 +392,8 @@ def create_entry_with_token(app, entry: dict, password: str, token: str, check_s
         "password": password
     }
     r = json_post(app, "/api/v3/entries", data=data, token=token)
+    print(r.data)
     if check_status:
-        print(r.data)
         assert r.status_code == 200
         return json.loads(r.data)["entry_id"]
     else:
@@ -439,9 +437,9 @@ def decrypt_entry_with_token(app,
         { "password": password },
         token=token
     )
+    print(r.data)
     if check_status:
         assert r.status_code == 200
-        print(r.data)
         return json.loads(r.data)
     else:
         return r
@@ -459,9 +457,9 @@ def edit_entry_with_token(app,
         { "entry": new_entry, "password": password },
         token=token
     )
+    print(r.data)
     if check_status:
         assert r.status_code == 200
-        print(r.data)
         return json.loads(r.data)
     else:
         return r

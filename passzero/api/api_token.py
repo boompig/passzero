@@ -14,12 +14,13 @@ from flask_restplus import Namespace, Resource, reqparse
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2, requires_json_auth
 from ..models import ApiToken, db
+from .jwt_auth import authorizations
 
 
 class UserNotActiveException(Exception):
     pass
 
-ns = Namespace("ApiToken")
+ns = Namespace("ApiToken", authorizations=authorizations)
 
 
 @ns.route("")
@@ -46,6 +47,7 @@ class ApiTokenResource(Resource):
         db.session.commit()
         return token
     
+    @ns.doc(security="session-cookie")
     @requires_json_auth
     def get(self):
         """Return the current token for the logged-in user
@@ -138,6 +140,7 @@ class ApiTokenResource(Resource):
         except UserNotActiveException:
             return json_error_v2("The account has not been activated. Check your email!", 401)
 
+    @ns.doc(security="apikey")
     @jwt_required
     def delete(self):
         """Logout. Destroy current token.
