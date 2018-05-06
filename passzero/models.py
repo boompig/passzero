@@ -510,7 +510,8 @@ class DecryptedDocument:
 class ApiToken(db.Model):
     __tablename__ = "api_tokens"
     id = db.Column(db.Integer, db.Sequence("api_token_id_seq"), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    # for now there can be at most one API token per user
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
 
     # the actual token substance
     token = db.Column(db.String, nullable=False)
