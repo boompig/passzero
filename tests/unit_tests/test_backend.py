@@ -12,8 +12,9 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
                               get_services_map, insert_document_for_user,
                               insert_entry_for_user, password_strength_scores)
 from passzero.change_password import change_password
-from passzero.models import db as _db
+from passzero.crypto_utils import PasswordHashAlgo
 from passzero.models import DecryptedDocument, Entry, Service, User
+from passzero.models import db as _db
 
 DB_FILENAME = "passzero.db"
 
@@ -84,10 +85,19 @@ def session(db, request):
     return session
 
 
-def test_create_inactive_user(session):
+def test_create_inactive_user_sha512(session):
     email = u"fake@email.com"
     password = u"pwd"
-    u1 = create_inactive_user(session, email, password)
+    u1 = create_inactive_user(session, email, password, password_hash_algo=PasswordHashAlgo.SHA512)
+    assert u1.id is not None
+    u2 = get_account_with_email(session, email)
+    assert u1.id == u2.id
+
+
+def test_create_inactive_user_argon2(session):
+    email = u"fake@email.com"
+    password = u"pwd"
+    u1 = create_inactive_user(session, email, password, password_hash_algo=PasswordHashAlgo.Argon2)
     assert u1.id is not None
     u2 = get_account_with_email(session, email)
     assert u1.id == u2.id

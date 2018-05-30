@@ -1,11 +1,22 @@
+import enum
 import hashlib
+import hmac
 import random
+from typing import List
 
+import nacl.pwhash
 import six
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Protocol import KDF
-# from typing import List
+
+
+@enum.unique
+class PasswordHashAlgo(enum.Enum):
+    """Algorithms used for hashing the user's password
+    Use explicit values to match up with the values in the database"""
+    SHA512 = 1
+    Argon2 = 2
 
 
 def byte_to_hex_legacy(s: bytes) -> str:
@@ -119,11 +130,20 @@ def encrypt_messages(extended_key, iv, messages):
     return enc_messages
 
 
-def decrypt_messages(extended_key, iv, messages):
+def decrypt_messages(extended_key: bytes, iv: bytes, messages: List[bytes]):
     assert isinstance(extended_key, bytes)
-    assert isinstance(extended_key, bytes)
+    assert isinstance(iv, bytes)
+    assert all([isinstance(msg, bytes) for msg in messages])
     cipher = AES.new(extended_key, AES.MODE_CFB, iv)
-    dec_messages = [cipher.decrypt(message).decode("utf-8") for message in messages]
+    # dec_messages = [cipher.decrypt(message).decode("utf-8") for message in messages]
+    dec_messages_bytes = [cipher.decrypt(message) for message in messages]
+    dec_messages = []
+    for msg in dec_messages_bytes:
+        try:
+            dec_messages.append(msg.decode("utf-8"))
+        except Exception as e:
+            print(msg)
+            raise e
     return dec_messages
 
 
@@ -240,8 +260,43 @@ def random_hex(size: int) -> str:
     return "".join(chars)
 
 
-def get_hashed_password(password: str, salt: bytes) -> bytes:
+def get_hashed_password(password: str, salt: bytes, hash_algo: PasswordHashAlgo) -> bytes:
     """
+    :type password:            Unicode string
+    :type salt:                bytes
+    :type hash_algo:           PasswordHashAlgo (enum)
+    :rtype:                    bytes
+    """
+    assert isinstance(password, six.text_type)
+    assert isinstance(salt, bytes)
+    assert isinstance(hash_algo, PasswordHashAlgo)
+    if hash_algo == PasswordHashAlgo.SHA512:
+        return __get_hashed_password_sha512(password, salt)
+    elif hash_algo == PasswordHashAlgo.Argon2:
+        return __get_hashed_password_argon2(password, salt)
+    else:
+        raise Exception("Unknown hash algorithm: {}".format(hash_algo))
+
+
+def __get_hashed_password_argon2(password: str, salt: bytes) -> bytes:
+    """
+    Use the Argon2 algorithm to hash the user's password with the given salt
+    NOTE: salt is not used in this method. The underlying library generates its own salt
+    :type password:            Unicode string
+    :type salt:                bytes
+    :rtype:                    bytes
+    """
+    assert isinstance(password, six.text_type)
+    assert isinstance(salt, bytes)
+    b_password = (password).encode("utf-8")
+    out_password = nacl.pwhash.argon2id.str(b_password)
+    assert isinstance(out_password, bytes)
+    return out_password
+
+
+def __get_hashed_password_sha512(password: str, salt: bytes) -> bytes:
+    """
+    Use the SHA512 algorithm to hash the user's password with the given salt
     :type password:            Unicode string
     :type salt:                bytes
     :rtype:                    bytes
@@ -251,3 +306,30 @@ def get_hashed_password(password: str, salt: bytes) -> bytes:
     # this is stupid because a password should be able to contain unicode fields
     b_password = (password).encode("utf-8")
     return six.b(hashlib.sha512(b_password + salt).hexdigest())
+
+
+def constant_time_compare_passwords(password_hash: str, password: str, salt: bytes, hash_algo: PasswordHashAlgo) -> bool:
+    """
+    Compare the user's password to the given password and return whether they are equal in constant time
+    :param password_hash:               The hash of the password stored in the database
+    """
+    assert isinstance(password_hash, six.text_type)
+    assert isinstance(password, six.text_type)
+    assert isinstance(salt, bytes)
+    assert isinstance(hash_algo, PasswordHashAlgo)
+    if hash_algo == PasswordHashAlgo.Argon2:
+        # nacl.pwhash.verify expects (bytestring, bytestring which is an argon thingy)
+        try:
+            # API: (password_hash, password)
+            nacl.pwhash.verify(password_hash.encode("utf-8"), password.encode("utf-8"))
+            return True
+        except nacl.exceptions.InvalidkeyError:
+            return False
+    elif hash_algo == PasswordHashAlgo.SHA512:
+        hashed_password = __get_hashed_password_sha512(password, salt)
+        d1 = hmac.new(hashed_password).digest()
+        d2 = hmac.new(password_hash.encode("utf-8")).digest()
+        return hmac.compare_digest(d1, d2)
+    else:
+        raise Exception("Unknown hash algorithm: {}".format(hash_algo))
+

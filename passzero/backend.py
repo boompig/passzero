@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple
 
 from passzero import audit
 from passzero.config import SALT_SIZE
-from passzero.crypto_utils import get_hashed_password, get_salt
+from passzero.crypto_utils import get_hashed_password, get_salt, PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
                              Entry, Service, User)
 
@@ -61,13 +61,18 @@ def _decrypt_entries_single_thread(entries, key: str) -> List[dict]:
     return [_decrypt_row(row, key) for row in entries]
 
 
-def decrypt_entries(entries, key: str) -> List[dict]:
-    """Return a list of objects representing the decrypted entries"""
+def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:
+    """Return a list of objects representing the decrypted entries
+    :param entries:         List[Entry]
+    :param key:             Unicode string
+    :rtype:                 List[dict]"""
+    assert isinstance(key, six.text_type)
     # return _decrypt_entries_multiprocess(entries, key)
     return _decrypt_entries_single_thread(entries, key)
 
 
-def get_entries(db_session, user_id: int):
+def get_entries(db_session, user_id: int) -> List[Entry]:
+    assert isinstance(user_id, int)
     return db_session.query(Entry)\
         .filter_by(user_id=user_id, pinned=False)\
         .order_by(asc(func.lower(Entry.account)))\
@@ -118,20 +123,25 @@ def delete_account(db_session, user: User) -> None:
     db_session.commit()
 
 
-def create_inactive_user(db_session, email: str, password: str) -> User:
+def create_inactive_user(db_session, email: str, password: str, 
+        password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
     """Create an account which has not been activated.
-    Return the user object (model)"""
+    Return the user object (model)
+    :param password_hash_algo:  This parameter exists for testing
+        In all cases outside of testing, this should be set to User.DEFAULT_PASSWORD_HASH_ALGO
+    """
     assert isinstance(email, six.text_type), "Type of email is %s" % type(email)
     assert isinstance(password, six.text_type), "Type of password is %s" % type(password)
     salt = get_salt(SALT_SIZE)
     assert isinstance(salt, bytes), "Type of salt is %s" % type(salt)
-    password_hash = get_hashed_password(password, salt)
+    password_hash = get_hashed_password(password, salt, password_hash_algo)
     assert isinstance(password_hash, bytes)
     user = User()
     user.email = email
     # the hashed password is a binary string, so have to convert to unicode
     # will be unicode when it comes out of DB anyway
     user.password = password_hash.decode("utf-8")
+    user.password_hash_algo = password_hash_algo
     assert isinstance(user.password, six.text_type)
     # even though it would make a lot of sense to store the salt as a binary string, in reality it is stored in unicode
     user.salt = salt.decode("utf-8")
@@ -144,6 +154,9 @@ def create_inactive_user(db_session, email: str, password: str) -> User:
 
 def insert_entry_for_user(db_session, dec_entry: dict,
         user_id: int, user_key: str, version: int = 4) -> Entry:
+    assert isinstance(user_id, int)
+    assert isinstance(user_key, six.text_type)
+    assert isinstance(version, int)
     entry = encrypt_entry(user_key, dec_entry, version=version)
     insert_new_entry(db_session, entry, user_id)
     db_session.commit()

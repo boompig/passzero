@@ -1,13 +1,14 @@
 from __future__ import print_function
 
 import logging
+from typing import Sequence
 
 import six
 from sqlalchemy.orm.exc import NoResultFound
-from typing import Sequence
 
 from passzero.backend import encrypt_entry, insert_new_entry
-from passzero.crypto_utils import get_hashed_password
+from passzero.crypto_utils import (constant_time_compare_passwords,
+                                   get_hashed_password)
 from passzero.models import Entry, User
 
 
@@ -70,8 +71,13 @@ def change_password_in_user_table(session, user_id: int, new_password: str) -> N
     assert isinstance(new_password, six.text_type)
     user = find_user(session, user_id)
     # the user's salt is represented in the database as unicode but is worked on as bytestring
-    user.password = (get_hashed_password(new_password, user.salt.encode('utf-8'))
-                    .decode("utf-8"))
+    # also update the password hashing algo
+    user.password = (get_hashed_password(
+        password=new_password,
+        salt=user.salt.encode('utf-8'),
+        hash_algo=User.DEFAULT_PASSWORD_HASH_ALGO
+    ).decode("utf-8"))
+    user.hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
     assert isinstance(user.password, six.text_type)
 
 
@@ -79,6 +85,9 @@ def change_password(session, user_id: int, old_password: str, new_password: str)
     """Perform the following steps:
     0. Verify using the good old-fashioned way
     1. Verify using pinned entry (auth)
+    :param old_password:        User's input of what they *believe* the old password to be (pt)
+    :param new_password:        What the user wants to change the password to
+    :rtype:                     True iff old_password is correct
     """
     assert isinstance(user_id, int)
     assert isinstance(old_password, six.text_type)
@@ -86,10 +95,11 @@ def change_password(session, user_id: int, old_password: str, new_password: str)
     # do proper authentication
     user = find_user(session, user_id)
     assert isinstance(user, User)
-    hashed_password = get_hashed_password(old_password, user.salt.encode('utf-8')).decode('utf-8')
-    # should be unicode
-    assert isinstance(hashed_password, six.text_type)
-    if hashed_password != user.password:
+    if not constant_time_compare_passwords(
+            password_hash=user.password,
+            password=old_password,
+            salt=user.salt.encode("utf-8"),
+            hash_algo=user.password_hash_algo):
         logging.debug("[change_password] Hashed password is not the same as user password")
         session.rollback()
         return False
