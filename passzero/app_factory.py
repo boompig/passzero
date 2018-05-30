@@ -85,15 +85,15 @@ def create_app(name: str, settings_override: dict = {}):
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
 
     # create SSL secret keys
-    if 'FLASK_SECRET_KEY' in os.environ:
+    if "FLASK_SECRET_KEY" in os.environ:
         app.secret_key = str(os.environ["FLASK_SECRET_KEY"])
         SSLify(app, permanent=True)
-        app.config['DEBUG'] = False
+        app.config["DEBUG"] = False
     else:
-        if 'NO_SSL' not in os.environ:
+        if "NO_SSL" not in os.environ:
             SSLify(app, permanent=True)
-        app.secret_key = '64f5abcf8369e362c36a6220128de068'
-        app.config['DEBUG'] = True
+        app.secret_key = "64f5abcf8369e362c36a6220128de068"
+        app.config["DEBUG"] = True
 
     # add the database
     db.app = app
