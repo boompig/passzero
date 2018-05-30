@@ -33,7 +33,7 @@ class User(db.Model):
     active = db.Column(db.Boolean, nullable=False, default=False)
     last_login = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
-    DEFAULT_PASSWORD_HASH_ALGO = PasswordHashAlgo.SHA512
+    DEFAULT_PASSWORD_HASH_ALGO = PasswordHashAlgo.Argon2
 
 
     # password generation preferences
