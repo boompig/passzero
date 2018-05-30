@@ -5,7 +5,16 @@ import six
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Protocol import KDF
+import enum
 # from typing import List
+
+
+@enum.unique
+class PasswordHashAlgo(enum.Enum):
+    """Algorithms used for hashing the user's password
+    Use explicit values to match up with the values in the database"""
+    SHA512 = 1
+    Argon2 = 2
 
 
 def byte_to_hex_legacy(s: bytes) -> str:
@@ -240,8 +249,38 @@ def random_hex(size: int) -> str:
     return "".join(chars)
 
 
-def get_hashed_password(password: str, salt: bytes) -> bytes:
+def get_hashed_password(password: str, salt: bytes, hash_algo: PasswordHashAlgo) -> bytes:
     """
+    :type password:            Unicode string
+    :type salt:                bytes
+    :type hash_algo:           PasswordHashAlgo (enum)
+    :rtype:                    bytes
+    """
+    assert isinstance(password, six.text_type)
+    assert isinstance(salt, bytes)
+    assert isinstance(hash_algo, PasswordHashAlgo)
+    assert hash_algo == PasswordHashAlgo.SHA512
+    if hash_algo == PasswordHashAlgo.SHA512:
+        return __get_hashed_password_sha512(password, salt)
+    elif hash_algo == PasswordHashAlgo.Argon2:
+        return __get_hashed_password_argon2(password, salt)
+    else:
+        raise Exception("Unknown hash algorithm: {}".format(hash_algo))
+
+
+def __get_hashed_password_argon2(password: str, salt: bytes) -> bytes:
+    """
+    Use the Argon2 algorithm to hash the user's password with the given salt
+    :type password:            Unicode string
+    :type salt:                bytes
+    :rtype:                    bytes
+    """
+    raise NotImplementedError()
+
+
+def __get_hashed_password_sha512(password: str, salt: bytes) -> bytes:
+    """
+    Use the SHA512 algorithm to hash the user's password with the given salt
     :type password:            Unicode string
     :type salt:                bytes
     :rtype:                    bytes

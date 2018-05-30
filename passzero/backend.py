@@ -125,13 +125,14 @@ def create_inactive_user(db_session, email: str, password: str) -> User:
     assert isinstance(password, six.text_type), "Type of password is %s" % type(password)
     salt = get_salt(SALT_SIZE)
     assert isinstance(salt, bytes), "Type of salt is %s" % type(salt)
-    password_hash = get_hashed_password(password, salt)
+    password_hash = get_hashed_password(password, salt, User.DEFAULT_PASSWORD_HASH_ALGO)
     assert isinstance(password_hash, bytes)
     user = User()
     user.email = email
     # the hashed password is a binary string, so have to convert to unicode
     # will be unicode when it comes out of DB anyway
     user.password = password_hash.decode("utf-8")
+    user.password_hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
     assert isinstance(user.password, six.text_type)
     # even though it would make a lot of sense to store the salt as a binary string, in reality it is stored in unicode
     user.salt = salt.decode("utf-8")

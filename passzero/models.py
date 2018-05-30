@@ -15,20 +15,25 @@ from passzero.crypto_utils import (byte_to_hex_legacy, decrypt_field_v1,
                                    encrypt_password_legacy, extend_key,
                                    get_hashed_password, get_iv, get_kdf_salt,
                                    hex_to_byte_legacy, pad_key_legacy,
-                                   random_hex)
-
+                                   random_hex, PasswordHashAlgo)
 from .utils import base64_encode
 
 db = SQLAlchemy()
+
+
 
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, db.Sequence("users_id_seq"), primary_key=True)
     email = db.Column(db.String, unique=True)
     password = db.Column(db.String, nullable=False)
+    password_hash_algo = db.Column(db.Enum(PasswordHashAlgo), nullable=False)
     salt = db.Column(db.String(32), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=False)
     last_login = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    DEFAULT_PASSWORD_HASH_ALGO = PasswordHashAlgo.SHA512
+
 
     # password generation preferences
     # number of characters in password
@@ -45,12 +50,12 @@ class User(db.Model):
         assert isinstance(form_password, six.text_type)
         # salt stored as unicode but should really be bytes
         assert isinstance(self.salt, six.text_type)
-        hashed_password = get_hashed_password(form_password, self.salt.encode('utf-8'))
+        hashed_password = get_hashed_password(form_password, self.salt.encode("utf-8"), self.password_hash_algo)
         assert isinstance(self.password, six.text_type)
         assert isinstance(hashed_password, bytes)
         # prevent timing attacks by using constant-time comparison
         # can't use compare_digest directly because args can't be unicode strings
-        d1 = hmac.new(self.password.encode('utf-8')).digest()
+        d1 = hmac.new(self.password.encode("utf-8")).digest()
         d2 = hmac.new(hashed_password).digest()
         return hmac.compare_digest(d1, d2)
 
@@ -58,9 +63,14 @@ class User(db.Model):
         assert isinstance(new_password, six.text_type)
         # salt stored as unicode but should really be bytes
         assert isinstance(self.salt, six.text_type)
-        hashed_password = (get_hashed_password(new_password, self.salt.encode('utf-8'))
-                           .decode("utf-8"))
+        # also update the password hashing algo
+        hashed_password = (get_hashed_password(
+            password=new_password,
+            salt=self.salt.encode("utf-8"),
+            hash_algo=User.DEFAULT_PASSWORD_HASH_ALGO
+        ).decode("utf-8"))
         self.password = hashed_password
+        self.password_hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
         assert isinstance(self.password, six.text_type)
 
     def __repr__(self) -> str:
@@ -419,13 +429,13 @@ class EncryptedDocument(db.Model):
             "contents": self.document.decode("utf-8")
         }
 
-    def decrypt(self, master_key: str) -> 'DecryptedDocument':
+    def decrypt(self, master_key: str) -> "DecryptedDocument":
         assert isinstance(master_key, six.text_type)
         extended_key = self.extend_key(master_key)
         cryptor = AEAD(base64_encode(extended_key))
         assert isinstance(self.name, six.text_type)
         assert isinstance(self.document, bytes)
-        pt = cryptor.decrypt(self.document, self.name.encode('utf-8'))
+        pt = cryptor.decrypt(self.document, self.name.encode("utf-8"))
         return DecryptedDocument(
             name=self.name,
             contents=pt
@@ -473,7 +483,7 @@ class DecryptedDocument:
         assert isinstance(extended_key, bytes)
         return (extended_key, { "kdf_salt": key_salt } )
 
-    def encrypt(self, key: bytes) -> 'EncryptedDocument':
+    def encrypt(self, key: bytes) -> "EncryptedDocument":
         """
         :param key:         bytes
         :return:            encrypted document with the content fields set
