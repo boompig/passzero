@@ -53,13 +53,15 @@ class User(db.Model):
         assert isinstance(self.salt, six.text_type)
         assert isinstance(self.password, six.text_type)
         return constant_time_compare_passwords(
-            expected_password=self.password,
+            password_hash=self.password,
             password=form_password,
             salt=self.salt.encode("utf-8"),
             hash_algo=self.password_hash_algo
         )
 
     def change_password(self, new_password: str) -> None:
+        """Note: this method ONLY changes the password, and does not decrypt/encrypt the entries
+        This method should *only* be used when recovering a password"""
         assert isinstance(new_password, six.text_type)
         # salt stored as unicode but should really be bytes
         assert isinstance(self.salt, six.text_type)
@@ -75,7 +77,8 @@ class User(db.Model):
         assert isinstance(self.password, six.text_type)
 
     def __repr__(self) -> str:
-        return "<User(email=%s, password=%s, salt=%s, active=%s)>" % (self.email, self.password, self.salt, str(self.active))
+        return "<User(email={}, password={}, salt={}, active={}, password_hash_algo={})>".format(
+            self.email, self.password, self.salt, str(self.active), str(self.password_hash_algo))
 
 
 class AuthToken(db.Model):

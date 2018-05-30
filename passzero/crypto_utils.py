@@ -281,6 +281,7 @@ def get_hashed_password(password: str, salt: bytes, hash_algo: PasswordHashAlgo)
 def __get_hashed_password_argon2(password: str, salt: bytes) -> bytes:
     """
     Use the Argon2 algorithm to hash the user's password with the given salt
+    NOTE: salt is not used in this method. The underlying library generates its own salt
     :type password:            Unicode string
     :type salt:                bytes
     :rtype:                    bytes
@@ -307,20 +308,27 @@ def __get_hashed_password_sha512(password: str, salt: bytes) -> bytes:
     return six.b(hashlib.sha512(b_password + salt).hexdigest())
 
 
-def constant_time_compare_passwords(expected_password: str, password: str, salt: bytes, hash_algo: PasswordHashAlgo) -> bool:
+def constant_time_compare_passwords(password_hash: str, password: str, salt: bytes, hash_algo: PasswordHashAlgo) -> bool:
     """
     Compare the user's password to the given password and return whether they are equal in constant time
+    :param password_hash:               The hash of the password stored in the database
     """
-    assert isinstance(expected_password, six.text_type)
+    assert isinstance(password_hash, six.text_type)
     assert isinstance(password, six.text_type)
     assert isinstance(salt, bytes)
     assert isinstance(hash_algo, PasswordHashAlgo)
     if hash_algo == PasswordHashAlgo.Argon2:
-        return nacl.pwhash.verify(password, expected_password)
+        # nacl.pwhash.verify expects (bytestring, bytestring which is an argon thingy)
+        try:
+            # API: (password_hash, password)
+            nacl.pwhash.verify(password_hash.encode("utf-8"), password.encode("utf-8"))
+            return True
+        except nacl.exceptions.InvalidkeyError:
+            return False
     elif hash_algo == PasswordHashAlgo.SHA512:
         hashed_password = __get_hashed_password_sha512(password, salt)
         d1 = hmac.new(hashed_password).digest()
-        d2 = hmac.new(expected_password.encode("utf-8")).digest()
+        d2 = hmac.new(password_hash.encode("utf-8")).digest()
         return hmac.compare_digest(d1, d2)
     else:
         raise Exception("Unknown hash algorithm: {}".format(hash_algo))

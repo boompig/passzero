@@ -1,13 +1,14 @@
 from __future__ import print_function
 
 import logging
+from typing import Sequence
 
 import six
 from sqlalchemy.orm.exc import NoResultFound
-from typing import Sequence
 
 from passzero.backend import encrypt_entry, insert_new_entry
-from passzero.crypto_utils import get_hashed_password, constant_time_compare_passwords
+from passzero.crypto_utils import (constant_time_compare_passwords,
+                                   get_hashed_password)
 from passzero.models import Entry, User
 
 
@@ -95,7 +96,7 @@ def change_password(session, user_id: int, old_password: str, new_password: str)
     user = find_user(session, user_id)
     assert isinstance(user, User)
     if not constant_time_compare_passwords(
-            expected_password=user.password,
+            password_hash=user.password,
             password=old_password,
             salt=user.salt.encode("utf-8"),
             hash_algo=user.password_hash_algo):
