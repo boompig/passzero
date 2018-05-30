@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Tuple
 
 from passzero import audit
 from passzero.config import SALT_SIZE
-from passzero.crypto_utils import get_hashed_password, get_salt
+from passzero.crypto_utils import get_hashed_password, get_salt, PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
                              Entry, Service, User)
 
@@ -123,14 +123,18 @@ def delete_account(db_session, user: User) -> None:
     db_session.commit()
 
 
-def create_inactive_user(db_session, email: str, password: str) -> User:
+def create_inactive_user(db_session, email: str, password: str, 
+        password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
     """Create an account which has not been activated.
-    Return the user object (model)"""
+    Return the user object (model)
+    :param password_hash_algo:  This parameter exists for testing
+        In all cases outside of testing, this should be set to User.DEFAULT_PASSWORD_HASH_ALGO
+    """
     assert isinstance(email, six.text_type), "Type of email is %s" % type(email)
     assert isinstance(password, six.text_type), "Type of password is %s" % type(password)
     salt = get_salt(SALT_SIZE)
     assert isinstance(salt, bytes), "Type of salt is %s" % type(salt)
-    password_hash = get_hashed_password(password, salt, User.DEFAULT_PASSWORD_HASH_ALGO)
+    password_hash = get_hashed_password(password, salt, password_hash_algo)
     assert isinstance(password_hash, bytes)
     user = User()
     user.email = email

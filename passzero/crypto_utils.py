@@ -1,13 +1,14 @@
+import enum
 import hashlib
+import hmac
 import random
+from typing import List
 
+import nacl.pwhash
 import six
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Protocol import KDF
-import enum
-import nacl.pwhash
-from typing import List
 
 
 @enum.unique
@@ -304,3 +305,23 @@ def __get_hashed_password_sha512(password: str, salt: bytes) -> bytes:
     # this is stupid because a password should be able to contain unicode fields
     b_password = (password).encode("utf-8")
     return six.b(hashlib.sha512(b_password + salt).hexdigest())
+
+
+def constant_time_compare_passwords(expected_password: str, password: str, salt: bytes, hash_algo: PasswordHashAlgo) -> bool:
+    """
+    Compare the user's password to the given password and return whether they are equal in constant time
+    """
+    assert isinstance(expected_password, six.text_type)
+    assert isinstance(password, six.text_type)
+    assert isinstance(salt, bytes)
+    assert isinstance(hash_algo, PasswordHashAlgo)
+    if hash_algo == PasswordHashAlgo.Argon2:
+        return nacl.pwhash.verify(password, expected_password)
+    elif hash_algo == PasswordHashAlgo.SHA512:
+        hashed_password = __get_hashed_password_sha512(password, salt)
+        d1 = hmac.new(hashed_password).digest()
+        d2 = hmac.new(expected_password.encode("utf-8")).digest()
+        return hmac.compare_digest(d1, d2)
+    else:
+        raise Exception("Unknown hash algorithm: {}".format(hash_algo))
+

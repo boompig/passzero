@@ -7,9 +7,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from typing import Sequence
 
 from passzero.backend import encrypt_entry, insert_new_entry
-from passzero.crypto_utils import get_hashed_password
+from passzero.crypto_utils import get_hashed_password, constant_time_compare_passwords
 from passzero.models import Entry, User
-import hmac
 
 
 def find_entries(session, user_id: int) -> Sequence[Entry]:
@@ -95,19 +94,11 @@ def change_password(session, user_id: int, old_password: str, new_password: str)
     # do proper authentication
     user = find_user(session, user_id)
     assert isinstance(user, User)
-    hashed_password = get_hashed_password(
-        password=old_password,
-        salt=user.salt.encode('utf-8'),
-        hash_algo=user.password_hash_algo
-    ).decode('utf-8')
-    # should be unicode
-    assert isinstance(hashed_password, six.text_type)
-    # compare the hashed passwords using constant-time comparison
-    # hashed_password = user's guess
-    d1 = hmac.new(hashed_password.encode("utf-8")).digest()
-    # user.password = actual old password
-    d2 = hmac.new(user.password.encode("utf-8")).digest()
-    if not hmac.compare_digest(d1, d2):
+    if not constant_time_compare_passwords(
+            expected_password=user.password,
+            password=old_password,
+            salt=user.salt.encode("utf-8"),
+            hash_algo=user.password_hash_algo):
         logging.debug("[change_password] Hashed password is not the same as user password")
         session.rollback()
         return False

@@ -1,21 +1,22 @@
 import binascii
-import hmac
 from datetime import datetime
+from typing import Tuple
 
 import six
 from aead import AEAD
 from flask_sqlalchemy import SQLAlchemy
-from typing import Tuple
 
 from passzero.config import TOKEN_SIZE
-from passzero.crypto_utils import (byte_to_hex_legacy, decrypt_field_v1,
-                                   decrypt_field_v2, decrypt_messages,
-                                   decrypt_password_legacy, encrypt_field_v1,
-                                   encrypt_field_v2, encrypt_messages,
-                                   encrypt_password_legacy, extend_key,
-                                   get_hashed_password, get_iv, get_kdf_salt,
-                                   hex_to_byte_legacy, pad_key_legacy,
-                                   random_hex, PasswordHashAlgo)
+from passzero.crypto_utils import (PasswordHashAlgo, byte_to_hex_legacy,
+                                   constant_time_compare_passwords,
+                                   decrypt_field_v1, decrypt_field_v2,
+                                   decrypt_messages, decrypt_password_legacy,
+                                   encrypt_field_v1, encrypt_field_v2,
+                                   encrypt_messages, encrypt_password_legacy,
+                                   extend_key, get_hashed_password, get_iv,
+                                   get_kdf_salt, hex_to_byte_legacy,
+                                   pad_key_legacy, random_hex)
+
 from .utils import base64_encode
 
 db = SQLAlchemy()
@@ -50,14 +51,13 @@ class User(db.Model):
         assert isinstance(form_password, six.text_type)
         # salt stored as unicode but should really be bytes
         assert isinstance(self.salt, six.text_type)
-        hashed_password = get_hashed_password(form_password, self.salt.encode("utf-8"), self.password_hash_algo)
         assert isinstance(self.password, six.text_type)
-        assert isinstance(hashed_password, bytes)
-        # prevent timing attacks by using constant-time comparison
-        # can't use compare_digest directly because args can't be unicode strings
-        d1 = hmac.new(self.password.encode("utf-8")).digest()
-        d2 = hmac.new(hashed_password).digest()
-        return hmac.compare_digest(d1, d2)
+        return constant_time_compare_passwords(
+            expected_password=self.password,
+            password=form_password,
+            salt=self.salt.encode("utf-8"),
+            hash_algo=self.password_hash_algo
+        )
 
     def change_password(self, new_password: str) -> None:
         assert isinstance(new_password, six.text_type)
