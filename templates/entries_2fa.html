@@ -2,18 +2,25 @@
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") }}" />
-    <link rel="stylesheet" href="{{ url_for("static", filename="lib/tablesort/tablesort.css") }}" />
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.30.5/css/theme.bootstrap_3.min.css"
+		integrity="sha256-dXZ9g5NdsPlD0182JqLz9UFael+Ug5AYo63RfujWPu8="
+		crossorigin="anonymous" />
 {% endblock %}
 
 {% block js %}
     <!-- make the table sortable -->
-    <!--<script src="{{ url_for("static", filename="lib/tablesort/dist/tablesort.min.js") }}"></script>-->
-    <script src="{{ url_for("static", filename="lib/tablesort/src/tablesort.js") }}"></script>
-    <script>
-        $(function() {
-            new Tablesort(document.getElementById("2fa-audit-table"));
-        });
-    </script>
+	<script
+		src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.30.5/js/jquery.tablesorter.min.js"
+		integrity="sha256-hwBdweUyYRh66ChQYK+o9bSD1fyYShd6oQVwZ6iq7Ww="
+		crossorigin="anonymous"></script>
+	<script>
+		$(function() {
+			$("#2fa-audit-table").tablesorter({
+				theme: "bootstrap",
+			});
+		});
+	</script>
 {% endblock %}
 
 {% block body %}
@@ -22,7 +29,7 @@
     <table id="2fa-audit-table" class="table table-striped table-bordered">
         <thead>
             <tr>
-                <th data-sort-method="none">Account</th>
+                <th>Account</th>
                 <th>Possible to enable 2FA on this service</th>
                 <th>Has 2FA enabled</th>
             </tr>
