@@ -64,12 +64,13 @@ class User(db.Model):
         # salt stored as unicode but should really be bytes
         assert isinstance(self.salt, six.text_type)
         # also update the password hashing algo
-        hashed_password = (get_hashed_password(
+        hashed_password = get_hashed_password(
             password=new_password,
             salt=self.salt.encode("utf-8"),
             hash_algo=User.DEFAULT_PASSWORD_HASH_ALGO
-        ).decode("utf-8"))
-        self.password = hashed_password
+        )
+        # this field is unicode
+        self.password = hashed_password.decode("utf-8")
         self.password_hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
         assert isinstance(self.password, six.text_type)
 
@@ -262,7 +263,7 @@ class Entry(db.Model):
             "extra": dec_extra
         }
 
-    def encrypt_v4(self, master_key, dec_entry):
+    def encrypt_v4(self, master_key: str, dec_entry: dict):
         """
         :param master_key:  The user's key, used to derive entry-specific enc key
         :param dec_entry:   Entry to encrypt (dictionary of fields)

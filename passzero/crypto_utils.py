@@ -6,7 +6,8 @@ from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Protocol import KDF
 import enum
-# from typing import List
+import nacl.pwhash
+from typing import List
 
 
 @enum.unique
@@ -128,11 +129,20 @@ def encrypt_messages(extended_key, iv, messages):
     return enc_messages
 
 
-def decrypt_messages(extended_key, iv, messages):
+def decrypt_messages(extended_key: bytes, iv: bytes, messages: List[bytes]):
     assert isinstance(extended_key, bytes)
-    assert isinstance(extended_key, bytes)
+    assert isinstance(iv, bytes)
+    assert all([isinstance(msg, bytes) for msg in messages])
     cipher = AES.new(extended_key, AES.MODE_CFB, iv)
-    dec_messages = [cipher.decrypt(message).decode("utf-8") for message in messages]
+    # dec_messages = [cipher.decrypt(message).decode("utf-8") for message in messages]
+    dec_messages_bytes = [cipher.decrypt(message) for message in messages]
+    dec_messages = []
+    for msg in dec_messages_bytes:
+        try:
+            dec_messages.append(msg.decode("utf-8"))
+        except Exception as e:
+            print(msg)
+            raise e
     return dec_messages
 
 
@@ -259,7 +269,6 @@ def get_hashed_password(password: str, salt: bytes, hash_algo: PasswordHashAlgo)
     assert isinstance(password, six.text_type)
     assert isinstance(salt, bytes)
     assert isinstance(hash_algo, PasswordHashAlgo)
-    assert hash_algo == PasswordHashAlgo.SHA512
     if hash_algo == PasswordHashAlgo.SHA512:
         return __get_hashed_password_sha512(password, salt)
     elif hash_algo == PasswordHashAlgo.Argon2:
@@ -275,7 +284,12 @@ def __get_hashed_password_argon2(password: str, salt: bytes) -> bytes:
     :type salt:                bytes
     :rtype:                    bytes
     """
-    raise NotImplementedError()
+    assert isinstance(password, six.text_type)
+    assert isinstance(salt, bytes)
+    b_password = (password).encode("utf-8")
+    out_password = nacl.pwhash.argon2id.str(b_password)
+    assert isinstance(out_password, bytes)
+    return out_password
 
 
 def __get_hashed_password_sha512(password: str, salt: bytes) -> bytes:

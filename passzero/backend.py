@@ -61,13 +61,18 @@ def _decrypt_entries_single_thread(entries, key: str) -> List[dict]:
     return [_decrypt_row(row, key) for row in entries]
 
 
-def decrypt_entries(entries, key: str) -> List[dict]:
-    """Return a list of objects representing the decrypted entries"""
+def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:
+    """Return a list of objects representing the decrypted entries
+    :param entries:         List[Entry]
+    :param key:             Unicode string
+    :rtype:                 List[dict]"""
+    assert isinstance(key, six.text_type)
     # return _decrypt_entries_multiprocess(entries, key)
     return _decrypt_entries_single_thread(entries, key)
 
 
-def get_entries(db_session, user_id: int):
+def get_entries(db_session, user_id: int) -> List[Entry]:
+    assert isinstance(user_id, int)
     return db_session.query(Entry)\
         .filter_by(user_id=user_id, pinned=False)\
         .order_by(asc(func.lower(Entry.account)))\
@@ -145,6 +150,9 @@ def create_inactive_user(db_session, email: str, password: str) -> User:
 
 def insert_entry_for_user(db_session, dec_entry: dict,
         user_id: int, user_key: str, version: int = 4) -> Entry:
+    assert isinstance(user_id, int)
+    assert isinstance(user_key, six.text_type)
+    assert isinstance(version, int)
     entry = encrypt_entry(user_key, dec_entry, version=version)
     insert_new_entry(db_session, entry, user_id)
     db_session.commit()
