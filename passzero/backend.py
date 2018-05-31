@@ -72,6 +72,7 @@ def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:
 
 
 def get_entries(db_session, user_id: int) -> List[Entry]:
+    """Return a list of entries without decrypting them"""
     assert isinstance(user_id, int)
     return db_session.query(Entry)\
         .filter_by(user_id=user_id, pinned=False)\

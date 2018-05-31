@@ -5,6 +5,10 @@ from typing import Tuple
 import six
 from aead import AEAD
 from flask_sqlalchemy import SQLAlchemy
+import msgpack
+import nacl.pwhash
+import nacl.secret
+import nacl.utils
 
 from passzero.config import TOKEN_SIZE
 from passzero.crypto_utils import (PasswordHashAlgo, byte_to_hex_legacy,
@@ -114,12 +118,13 @@ class Entry(db.Model):
     # these fields are *always* encrypted
     username = db.Column(db.String, nullable=False)
     password = db.Column(db.String, nullable=False)
-    padding = db.Column(db.String)
     extra = db.Column(db.String)
 
     # this field is *never* encrypted
     has_2fa = db.Column(db.Boolean, default=False, nullable=False)
 
+    # this field is used in Entry v1 encryption/decryption
+    padding = db.Column(db.String)
     key_salt = db.Column(db.String)
     iv = db.Column(db.String)
     version = db.Column(db.Integer, nullable=False)
@@ -131,7 +136,8 @@ class Entry(db.Model):
     }
 
     def __repr__(self) -> str:
-        return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
+        return "<Entry(account={}, username={}, password={}, padding={}, user_id={})>".format(
+            self.account, self.username, self.password, self.padding, self.user_id)
 
     def to_json(self) -> dict:
         """
@@ -187,13 +193,13 @@ class Entry(db.Model):
         self.account = dec_entry[u"account"]
         assert isinstance(self.account, six.text_type)
         self.username = encrypt_field_v1(master_key, self.padding,
-                dec_entry[u"username"])
+                                         dec_entry[u"username"])
         assert isinstance(self.username, six.text_type)
         self.password = encrypt_password_legacy(master_key + self.padding,
-                dec_entry[u"password"])
+                                                dec_entry[u"password"])
         assert isinstance(self.password, six.text_type)
         self.extra = encrypt_field_v1(master_key, self.padding,
-                dec_entry[u"extra"])
+                                      dec_entry[u"extra"])
         assert isinstance(self.extra, six.text_type)
         self.version = 1
 
@@ -313,7 +319,27 @@ class Entry_v3(Entry):
 
 
 class Entry_v4(Entry):
-    """Use single-table inheritence"""
+    """This entry type encrypts the following fields:
+    - username
+    - password
+    - extra
+
+    And leaves the following fields unencrypted:
+    - account
+    - has_2fa
+
+    This design choice is driven by the need to search and audit entries
+    without decrypting everything
+
+    The fields are encrypted using the `encrypt_messages` method in crypto_utils
+    It is roughly equivalent to applying AES - MODE CFB.
+    The issue with this approach is that there is no authentication associated with the message contents:
+    i.e. there is no guarantee that the data has not been tampered with while in storage
+
+    When using this version, you have to be careful with the `iv`: do not reuse this
+
+    Entry-specific keys are generated using PBKDF2. Be careful with `kdf_salt`: do not reuse this
+    """
 
     __mapper_args__ = {
         "polymorphic_identity": 4
@@ -396,6 +422,88 @@ class Entry_v4(Entry):
         self.padding = None
 
 
+class Entry_v5(Entry):
+    """This entry type encrypts the following fields:
+    - username
+    - password
+    - extra
+
+    And leaves the following fields unencrypted:
+    - account
+    - has_2fa
+
+    For the same reason as in v4.
+
+    HOWEVER: the encrypted fields are stored in one monolithic binary blob in the `contents` field
+    The fields relevant fields are left as empty strings
+
+    The fields are encrypted using the `encrypt_messages` method in crypto_utils
+    It is roughly equivalent to applying AES - MODE CFB.
+    The issue with this approach is that there is no authentication associated with the message contents:
+    i.e. there is no guarantee that the data has not been tampered with while in storage
+
+    When using this version, you have to be careful with the (iv, nonce, salt): do not reuse these
+
+    Entry-specific keys are generated using PBKDF2.
+    """
+
+    __mapper_args__ = {
+        "polymorphic_identity": 5
+    }
+
+    # a new contents object
+    contents = db.Column(db.LargeBinary)
+
+    def __get_entry_key(self, master_key: str, kdf_salt: bytes) -> bytes:
+        return nacl.pwhash.argon2id.kdf(
+            size=nacl.secret.SecretBox.KEY_SIZE,
+            # TODO: this may not always be possible if a unicode password is used
+            password=master_key.encode("utf-8"),
+            salt=kdf_salt,
+        )
+
+    def decrypt(self, key: str) -> dict:
+        assert isinstance(key, six.text_type)
+        kdf_salt = binascii.a2b_base64(self.key_salt)
+        entry_key = self.__get_entry_key(key, kdf_salt)
+        box = nacl.secret.SecretBox(entry_key)
+        dec_contents = box.decrypt(self.contents)
+        dec_contents_d = msgpack.unpackb(dec_contents, raw=False)
+        # fill in the unencrypted data
+        dec_contents_d["account"] = self.account
+        dec_contents_d["has_2fa"] = self.has_2fa
+        dec_contents_d["version"] = self.version
+        return dec_contents_d
+
+    def encrypt(self, master_key: str, dec_entry: dict) -> None:
+        assert isinstance(master_key, six.text_type)
+        assert isinstance(dec_entry, dict)
+        dec_contents_d = {
+            "username": dec_entry["username"],
+            "password": dec_entry["password"],
+            "extra": dec_entry["extra"]
+        }
+        dec_contents = msgpack.packb(dec_contents_d, use_bin_type=True)
+        kdf_salt = nacl.utils.random(nacl.pwhash.argon2id.SALTBYTES)
+        entry_key = self.__get_entry_key(master_key, kdf_salt)
+        # what's nice is that pynacl generates a random nonce
+        box = nacl.secret.SecretBox(entry_key)
+        self.contents = box.encrypt(dec_contents)
+        # metadata
+        self.version = 5
+        self.pinned = False
+        self.key_salt = base64_encode(kdf_salt)
+        # unencrypted data
+        self.account = dec_entry["account"]
+        self.has_2fa = dec_entry["has_2fa"]
+        # old information (other entry versions)
+        self.padding = None
+        self.username = b""
+        self.password = b""
+        self.extra = b""
+        self.iv = None
+
+
 class Service(db.Model):
     __tablename__ = "services"
     name = db.Column(db.String, primary_key=True, nullable=False)
@@ -421,9 +529,11 @@ class EncryptedDocument(db.Model):
         assert isinstance(master_key, six.text_type)
         # sadly, base64-encoded
         assert isinstance(self.key_salt, six.text_type)
-        return extend_key(master_key,
+        return extend_key(
+            master_key,
             binascii.a2b_base64(self.key_salt),
-            EncryptedDocument.KEY_LENGTH)
+            EncryptedDocument.KEY_LENGTH
+        )
 
     def to_json(self) -> dict:
         """
@@ -448,6 +558,7 @@ class EncryptedDocument(db.Model):
             name=self.name,
             contents=pt
         )
+
 
 class DecryptedDocument:
 
@@ -489,7 +600,7 @@ class DecryptedDocument:
         # need a 32-byte key (256 bits)
         extended_key = extend_key(master_key, key_salt, 32)
         assert isinstance(extended_key, bytes)
-        return (extended_key, { "kdf_salt": key_salt } )
+        return (extended_key, {"kdf_salt": key_salt})
 
     def encrypt(self, key: bytes) -> "EncryptedDocument":
         """
@@ -497,7 +608,7 @@ class DecryptedDocument:
         :return:            encrypted document with the content fields set
         """
         assert isinstance(key, bytes)
-        #AES_128_CBC_HMAC_SHA_256
+        # AES_128_CBC_HMAC_SHA_256
         assert len(key) == 32, \
                "key must be 32 bytes long, actually %d bytes" % len(key)
         assert isinstance(self.name, six.text_type), \
@@ -524,6 +635,7 @@ class DecryptedDocument:
             "name": self.name,
             "contents": self.contents.decode("utf-8")
         }
+
 
 class ApiToken(db.Model):
     __tablename__ = "api_tokens"
