@@ -162,4 +162,3 @@ def json_csrf_validation_error() -> Tuple[int, dict]:
 def json_internal_error(msg: str) -> Tuple[int, dict]:
     """Return tuple of (code, JSON data)"""
     return json_error(500, msg)
-

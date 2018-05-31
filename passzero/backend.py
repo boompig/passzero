@@ -20,7 +20,7 @@ def activate_account(db_session, user: User):
 
 
 def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, Any]]:
-    l = []
+    dec_entries_json = []
     for entry in dec_entries:
         d = {}
         d["account"] = entry["account"]
@@ -31,8 +31,8 @@ def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, An
         d["feedback"] = " ".join(results["feedback"]["suggestions"])
         if entry["password"] == "" or entry["password"] == "-":
             continue
-        l.append(d)
-    return l
+        dec_entries_json.append(d)
+    return dec_entries_json
 
 
 def _decrypt_row(row, key: str):
@@ -123,8 +123,8 @@ def delete_account(db_session, user: User) -> None:
     db_session.commit()
 
 
-def create_inactive_user(db_session, email: str, password: str, 
-        password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
+def create_inactive_user(db_session, email: str, password: str,
+                         password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
     """Create an account which has not been activated.
     Return the user object (model)
     :param password_hash_algo:  This parameter exists for testing
@@ -153,7 +153,7 @@ def create_inactive_user(db_session, email: str, password: str,
 
 
 def insert_entry_for_user(db_session, dec_entry: dict,
-        user_id: int, user_key: str, version: int = 4) -> Entry:
+                          user_id: int, user_key: str, version: int = 4) -> Entry:
     assert isinstance(user_id, int)
     assert isinstance(user_key, six.text_type)
     assert isinstance(version, int)
@@ -216,7 +216,7 @@ def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_i
     }
     # do not add e2 to session, it's just a placeholder
     e2 = encrypt_entry(user_key, dec_entry,
-            version=entry.version)
+                       version=entry.version)
     # update those fields that the user might have changed
     entry.account = e2.account
     entry.username = e2.username

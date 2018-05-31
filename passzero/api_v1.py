@@ -131,7 +131,8 @@ def api_login(request_data):
             "The account has not been activated. Check your email!")
     return write_json(code, data)
 
-#---------------- DOCUMENTS BEGIN
+
+#  -------------- DOCUMENTS BEGIN
 
 @api_v1.route("/api/v1/docs", methods=["GET"])
 @requires_json_auth
@@ -148,7 +149,7 @@ def get_docs_api():
     on success::
 
         [doc-1, doc-2, ... doc-n]
-        
+
     a document's object looks like this::
 
         {
@@ -186,7 +187,7 @@ def decrypt_doc_api(doc_id):
     Response
     --------
     on success::
-        
+
         {
             "name": string,
             "contents": binary
@@ -290,7 +291,8 @@ def api_v1_delete_doc(doc_id: int):
         code, data = json_error(400, "the given document does not belong to you")
     return write_json(code, data)
 
-#---------------- DOCUMENTS END
+
+#  -------------- DOCUMENTS END
 
 @api_v1.route("/api/entries", methods=["GET"])
 @api_v1.route("/api/v1/entries", methods=["GET"])
@@ -452,7 +454,7 @@ def signup_api(request_data: SignupForm):
                 request_data["email"],
                 request_data["password"]
             )
-            token.user_id = user.id;
+            token.user_id = user.id
             # now add token
             db.session.add(token)
             change_password.create_pinned_entry(db.session, user.id, request_data["password"])
@@ -855,4 +857,3 @@ def api_v1_update_user_preferences(request_data: UpdatePreferencesForm):
     db.session.commit()
     code, data = json_success("Preferences have been updated")
     return write_json(code, data)
-
