@@ -22,7 +22,6 @@ from .utils import base64_encode
 db = SQLAlchemy()
 
 
-
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, db.Sequence("users_id_seq"), primary_key=True)
@@ -34,7 +33,6 @@ class User(db.Model):
     last_login = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     DEFAULT_PASSWORD_HASH_ALGO = PasswordHashAlgo.Argon2
-
 
     # password generation preferences
     # number of characters in password

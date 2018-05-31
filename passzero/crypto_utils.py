@@ -44,7 +44,7 @@ def pad_to_length(key: str, length: int) -> str:
     """
     assert isinstance(key, six.text_type)
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    padding = [] # type: List[str]
+    padding = []  # type: List[str]
     while len(key) + len(padding) < length:
         padding.append(random.choice(alphabet))
     # when it's python 3 we don't have to decode
@@ -308,7 +308,8 @@ def __get_hashed_password_sha512(password: str, salt: bytes) -> bytes:
     return six.b(hashlib.sha512(b_password + salt).hexdigest())
 
 
-def constant_time_compare_passwords(password_hash: str, password: str, salt: bytes, hash_algo: PasswordHashAlgo) -> bool:
+def constant_time_compare_passwords(password_hash: str, password: str, salt: bytes,
+                                    hash_algo: PasswordHashAlgo) -> bool:
     """
     Compare the user's password to the given password and return whether they are equal in constant time
     :param password_hash:               The hash of the password stored in the database
@@ -332,4 +333,3 @@ def constant_time_compare_passwords(password_hash: str, password: str, salt: byt
         return hmac.compare_digest(d1, d2)
     else:
         raise Exception("Unknown hash algorithm: {}".format(hash_algo))
-

@@ -97,4 +97,3 @@ class NewDocumentForm(FlaskForm):
     document = FileField("document", [
         FileRequired()
     ])
-

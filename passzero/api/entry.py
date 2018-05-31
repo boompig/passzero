@@ -167,4 +167,3 @@ class ApiEntry(Resource):
                 return json_error_v2("no such entry or the entry does not belong to you", 400)
         else:
             return json_error_v2("Password is not correct", 401)
-
