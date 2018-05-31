@@ -462,6 +462,8 @@ class Entry_v5(Entry):
             # TODO: this may not always be possible if a unicode password is used
             password=master_key.encode("utf-8"),
             salt=kdf_salt,
+            opslimit=nacl.pwhash.OPSLIMIT_INTERACTIVE,
+            memlimit=nacl.pwhash.MEMLIMIT_INTERACTIVE,
         )
 
     def decrypt(self, key: str) -> dict:
