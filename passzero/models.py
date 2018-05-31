@@ -447,6 +447,8 @@ class Entry_v5(Entry):
     Entry-specific keys are generated using PBKDF2.
     """
 
+    # self.key_salt should be of type unicode
+
     __mapper_args__ = {
         "polymorphic_identity": 5
     }
@@ -463,10 +465,15 @@ class Entry_v5(Entry):
         )
 
     def decrypt(self, key: str) -> dict:
+        """
+        Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
+        """
         assert isinstance(key, six.text_type)
-        kdf_salt = binascii.a2b_base64(self.key_salt)
+        assert isinstance(self.key_salt, six.text_type)
+        kdf_salt = binascii.a2b_base64(self.key_salt.encode("utf-8"))
         entry_key = self.__get_entry_key(key, kdf_salt)
         box = nacl.secret.SecretBox(entry_key)
+        assert isinstance(self.contents, bytes)
         dec_contents = box.decrypt(self.contents)
         dec_contents_d = msgpack.unpackb(dec_contents, raw=False)
         # fill in the unencrypted data
@@ -485,6 +492,7 @@ class Entry_v5(Entry):
         }
         dec_contents = msgpack.packb(dec_contents_d, use_bin_type=True)
         kdf_salt = nacl.utils.random(nacl.pwhash.argon2id.SALTBYTES)
+        # generate a new entry key
         entry_key = self.__get_entry_key(master_key, kdf_salt)
         # what's nice is that pynacl generates a random nonce
         box = nacl.secret.SecretBox(entry_key)
@@ -492,7 +500,8 @@ class Entry_v5(Entry):
         # metadata
         self.version = 5
         self.pinned = False
-        self.key_salt = base64_encode(kdf_salt)
+        self.key_salt = base64_encode(kdf_salt).decode("utf-8")
+        assert isinstance(self.key_salt, six.text_type)
         # unencrypted data
         self.account = dec_entry["account"]
         self.has_2fa = dec_entry["has_2fa"]

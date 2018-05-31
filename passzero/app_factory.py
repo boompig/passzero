@@ -24,7 +24,9 @@ def create_app(name: str, settings_override: dict = {}):
 
     app = Flask(name, static_url_path="")
     # allow CORS on /api/v3 (everything with an API key)
-    CORS(app, resources={r"/api/v3/*": { "origins": "*" } })
+    CORS(app, resources={
+        r"/api/v3/*": {"origins": "*"}
+    })
 
     # add compress middleware
     compress.init_app(app)
@@ -47,6 +49,11 @@ def create_app(name: str, settings_override: dict = {}):
     app.config["JWT_BLACKLIST_ENABLED"] = True
     app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access"]
     app.config["SWAGGER_UI_DOC_EXPANSION"] = "list"
+    # remove whitespace from json responses through the API
+    app.config["RESTPLUS_JSON"] = {
+        "indent": None,
+        "separators": (",",":")
+    }
 
     app.config.update(settings_override)
 
