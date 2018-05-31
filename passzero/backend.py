@@ -7,7 +7,7 @@ from passzero import audit
 from passzero.config import SALT_SIZE
 from passzero.crypto_utils import get_hashed_password, get_salt, PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
-                             Entry, Service, User)
+                             Entry, Service, User, Entry_v4, Entry_v3)
 
 from .utils import base64_encode
 
@@ -180,11 +180,15 @@ def encrypt_entry(user_key: str, dec_entry: dict, version: int = 4) -> Entry:
     assert isinstance(user_key, six.text_type)
     assert isinstance(dec_entry, dict)
     assert isinstance(version, int)
-    entry = Entry()
+    entry = None
     if version == 4:
-        entry.encrypt_v4(user_key, dec_entry)
+        entry = Entry_v4()
+        entry.encrypt(user_key, dec_entry)
+    elif version == 3:
+        entry = Entry_v3()
+        entry.encrypt(user_key, dec_entry)
     else:
-        entry.encrypt_v3(user_key, dec_entry)
+        raise Exception("We do not support encrypting very old entries (version specified = {})".format(version))
     return entry
 
 

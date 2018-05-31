@@ -27,6 +27,7 @@ gunicorn==19.1.1
 humanfriendly==4.8
 idna==2.6
 ipython-genutils==0.2.0
+isort==4.3.4
 itsdangerous==0.24
 jedi==0.11.1
 Jinja2==2.7.3
