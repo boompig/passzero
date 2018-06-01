@@ -11,6 +11,7 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
                               get_account_with_email, get_entries,
                               get_services_map, insert_document_for_user,
                               insert_entry_for_user, password_strength_scores)
+from passzero import backend
 from passzero.change_password import change_password
 from passzero.crypto_utils import PasswordHashAlgo
 from passzero.models import DecryptedDocument, Entry, Service, User
@@ -53,7 +54,7 @@ def db(app, request):
 
     _db.app = app
     _db.create_all()
-    
+
     request.addfinalizer(teardown)
     return _db
 
@@ -173,36 +174,55 @@ def test_delete_all_entries(session):
     assert len(enc_entries) == 0
 
 
+def __encrypt_decrypt_entry(version: int):
+    """
+    Encrypt and decrypt an entry at specified version. Make sure the output matches the input"""
+    # create multiple entries for this user
+    dec_entry = {
+        "account": u"test account",
+        "username": u"test username",
+        "password": u"test password",
+        "extra": u"test extra",
+        "has_2fa": True,
+    }
+    user_key = u"test master key"
+    entry = backend.encrypt_entry(user_key, dec_entry, version=version)
+    assert isinstance(entry, Entry)
+    dec_entry_again = entry.decrypt(user_key)
+    fields = ["account", "username", "password", "extra", "has_2fa"]
+    for field in fields:
+        assert dec_entry_again[field] == dec_entry[field]
 
-def test_encrypt_decrypt_entries():
-    pass
-    # # create multiple entries for this user
-    # dec_entry = {
-        # "account": "test account",
-        # "username": "test username",
-        # "password": "test password",
-        # "extra": "test extra"
-    # }
-    # user_key = "test master key"
-    # entry = encrypt_entry(user_key, dec_entry)
-    # assert isinstance(entry, Entry)
-    # dec_entry_again = entry.decrypt(user_key)
-    # fields = ["account", "username", "password", "extra"]
-    # for field in fields:
-        # assert_equal(dec_entry_again[field], dec_entry[field])
-    # dec_entry = {
-        # "account": "test account",
-        # "username": "test username",
-        # "password": "test password",
-        # "extra": "test extra"
-    # }
-    # user_key = "test master key"
-    # entry = encrypt_entry(user_key, dec_entry)
-    # assert isinstance(entry, Entry)
-    # dec_entry_again = entry.decrypt(user_key)
-    # fields = ["account", "username", "password", "extra"]
-    # for field in fields:
-        # assert_equal(dec_entry_again[field], dec_entry[field])
+
+def test_encrypt_decrypt_entry_v5():
+    __encrypt_decrypt_entry(5)
+
+
+def test_encrypt_decrypt_entry_v4():
+   __encrypt_decrypt_entry(4)
+
+
+def test_encrypt_decrypt_entry_v3():
+   __encrypt_decrypt_entry(3)
+
+
+def test_fail_encrypt_entry_v2():
+    """Should fail to encrypt entry v2 because it's too old"""
+   # create multiple entries for this user
+    dec_entry = {
+        "account": u"test account",
+        "username": u"test username",
+        "password": u"test password",
+        "extra": u"test extra",
+        "has_2fa": True,
+    }
+    user_key = u"test master key"
+    try:
+        backend.encrypt_entry(user_key, dec_entry, version=2)
+    except Exception as e:
+        pass
+    else:
+        assert False, "Should throw exception"
 
 
 def test_get_account_with_email():

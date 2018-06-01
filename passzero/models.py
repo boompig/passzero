@@ -262,6 +262,18 @@ class Entry_v2(Entry):
 
 
 class Entry_v3(Entry):
+    """This is an old version of the entry
+    DO NOT USE THIS VERSION. It exists for backwards compatibility only.
+
+    The following fields are encrypted:
+    - account
+    - username
+    - password
+    - extra
+
+    The following fields are *not* encrypted:
+    - has_2fa
+    """
 
     __mapper_args__ = {
         "polymorphic_identity": 3
@@ -289,6 +301,8 @@ class Entry_v3(Entry):
         self.username = enc_entry["username"]
         self.password = enc_entry["password"]
         self.extra = enc_entry["extra"]
+        # unencrypted contents (forward compatibility)
+        self.has_2fa = dec_entry.get("has_2fa", False)
         # metadata - which encryption scheme to use to decrypt
         self.version = 3
         self.pinned = False
@@ -314,7 +328,8 @@ class Entry_v3(Entry):
             "username": dec_messages[1],
             "password": dec_messages[2],
             "extra": dec_messages[3],
-            "version": self.version
+            "version": self.version,
+            "has_2fa": self.has_2fa,
         }
 
 
