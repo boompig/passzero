@@ -3,45 +3,71 @@ import os
 
 import six
 from requests import Response
+from typing import Optional, Dict, List
+import copy
+import requests
 
 json_header = { "Content-Type": "application/json" }
 file_upload_headers = { "Content-Type": "multipart/form-data" }
 
 assert 'LIVE_TEST_HOST' in os.environ, \
     "Did not find 'LIVE_TEST_HOST' among environment variables"
-base_url = os.environ['LIVE_TEST_HOST']
+BASE_URL = os.environ['LIVE_TEST_HOST']
 
 
 ### utils
-def json_get(session, relative_url, data={}) -> Response:
+def json_header_with_token(token: str) -> Dict[str, str]:
+    assert token is not None
+    h = copy.copy(json_header)
+    h["Authorization"] = "Bearer %s" % token
+    return h
+
+
+def json_get(session, relative_url: str, data: dict = {}, token: Optional[str] = None) -> Response:
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
     return session.get(
-        base_url + relative_url,
+        BASE_URL + relative_url,
         data=json.dumps(data),
-        headers=json_header,
+        headers=headers,
         verify=False
     )
 
-def json_post(session, relative_url: str, data: dict = {}) -> Response:
+def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] = None) -> Response:
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
     return session.post(
-        base_url + relative_url,
+        BASE_URL + relative_url,
         data=json.dumps(data),
-        headers=json_header,
+        headers=headers,
         verify=False
     )
 
-def json_put(session, relative_url: str, data: dict = {}) -> Response:
+def json_put(session, relative_url: str, data: dict = {}, token: Optional[str] = None) -> Response:
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
     return session.put(
-        base_url + relative_url,
+        BASE_URL + relative_url,
         data=json.dumps(data),
-        headers=json_header,
+        headers=headers,
         verify=False
     )
 
-def json_delete(session, relative_url: str) -> Response:
+def json_delete(session, relative_url: str, token: Optional[str] = None) -> Response:
+    if token:
+        headers = json_header_with_token(token)
+    else:
+        headers = json_header
     # expect the data to be formatted into the URL for now
     return session.delete(
-        base_url + relative_url,
-        headers=json_header,
+        BASE_URL + relative_url,
+        headers=headers,
         verify=False
     )
 
@@ -125,7 +151,7 @@ def post_document(session, name: str, doc_params, csrf_token: str) -> Response:
     assert isinstance(name, six.text_type)
     assert isinstance(doc_params, dict)
     assert isinstance(csrf_token, six.text_type)
-    url = base_url + "/api/v1/docs"
+    url = BASE_URL + "/api/v1/docs"
     r = session.post(url,
         data={"name": name, "csrf_token": csrf_token},
         files=doc_params,
@@ -167,3 +193,92 @@ def delete_entry_v2(session, entry_id: int, token: str) -> Response:
         entry_id, token)
     return json_delete(session, url)
 
+
+def get_entry_v2(session, entry_id: int) -> Response:
+    return json_get(session, "/api/v2/entries/{}".format(entry_id))
+
+
+#### v3 API starts here
+def login_with_token(session, email: str, password: str) -> Response:
+    return json_post(session, "/api/v3/token", data={
+        "email": email,
+        "password": password
+    })
+
+def get_encrypted_entries_with_token(session, token: str) -> Response:
+    """
+    Return entry metadata without decrypting the entries
+    """
+    return json_get(session, "/api/v3/entries", token=token)
+
+
+def decrypt_entry_with_token(session,
+                             entry_id: int,
+                             password: str,
+                             token: str) -> Response:
+    return json_post(
+        session,
+        "/api/v3/entries/{}".format(entry_id),
+        data={ "password": password },
+        token=token
+    )
+
+
+def create_entry_with_token(session,
+                            entry: dict,
+                            password: str,
+                            token: str) -> Response:
+    data = {
+        "entry": entry,
+        "password": password
+    }
+    return json_post(session, "/api/v3/entries", data=data, token=token)
+
+
+def delete_entry_with_token(session,
+                            entry_id: int,
+                            token: str) -> Response:
+    return json_delete(session, "/api/v3/entries/%d" % entry_id, token=token)
+
+
+class ApiClient:
+    def __init__(self, base_url: str) -> None:
+        global BASE_URL
+        BASE_URL = base_url
+        self.session = requests.Session()
+        self.api_token = None
+
+    def __assert_status_code_200(self, response: Response) -> None:
+        try:
+            assert response.status_code == 200
+        except AssertionError as e:
+            print("Expected status code 200. Got code {}".format(response.status_code))
+            print(response.text)
+            raise e
+
+    def login(self, email: str, password: str) -> str:
+        r = login_with_token(self.session, email, password)
+        self.__assert_status_code_200(r)
+        # save the token
+        self.api_token = r.json()["token"]
+        return self.api_token
+
+    def get_encrypted_entries(self) -> List[dict]:
+        r = get_encrypted_entries_with_token(self.session, self.api_token)
+        self.__assert_status_code_200(r)
+        return r.json()
+
+    def decrypt_entry(self, entry_id: int, password: str) -> dict:
+        r = decrypt_entry_with_token(self.session, entry_id, password, self.api_token)
+        self.__assert_status_code_200(r)
+        return r.json()
+
+    def create_entry(self, new_entry: dict, password: str) -> int:
+        r = create_entry_with_token(self.session, new_entry, password, self.api_token)
+        self.__assert_status_code_200(r)
+        return r.json()["entry_id"]
+
+    def delete_entry(self, entry_id) -> dict:
+        r = delete_entry_with_token(self.session, entry_id, self.api_token)
+        self.__assert_status_code_200(r)
+        return r.json()

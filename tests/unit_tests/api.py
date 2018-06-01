@@ -409,7 +409,11 @@ def delete_all_entries_with_token(app, token: str, check_status: bool = True):
 
 
 def get_encrypted_entries_with_token(app, token: str, check_status: bool = True):
+    """
+    Return entry metadata without decrypting the entries
+    """
     r = json_get(app, "/api/v3/entries", token=token)
+    # will not be printed unless there is an error
     print(r.data)
     if check_status:
         assert r.status_code == 200
@@ -437,6 +441,7 @@ def decrypt_entry_with_token(app,
         { "password": password },
         token=token
     )
+    # will not be printed unless there is an error
     print(r.data)
     if check_status:
         assert r.status_code == 200

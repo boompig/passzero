@@ -4,10 +4,10 @@ from sqlalchemy.sql.expression import asc
 from typing import Any, Dict, List, Tuple
 
 from passzero import audit
-from passzero.config import SALT_SIZE
+from passzero.config import SALT_SIZE, DEFAULT_ENTRY_VERSION
 from passzero.crypto_utils import get_hashed_password, get_salt, PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
-                             Entry, Service, User)
+                             Entry, Service, User, Entry_v4, Entry_v3, Entry_v5)
 
 from .utils import base64_encode
 
@@ -20,7 +20,7 @@ def activate_account(db_session, user: User):
 
 
 def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, Any]]:
-    l = []
+    dec_entries_json = []
     for entry in dec_entries:
         d = {}
         d["account"] = entry["account"]
@@ -31,11 +31,12 @@ def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, An
         d["feedback"] = " ".join(results["feedback"]["suggestions"])
         if entry["password"] == "" or entry["password"] == "-":
             continue
-        l.append(d)
-    return l
+        dec_entries_json.append(d)
+    return dec_entries_json
 
 
 def _decrypt_row(row, key: str):
+    """Used in `decrypt_entries_pool`"""
     obj = row.decrypt(key)
     obj["id"] = row.id
     return obj
@@ -72,6 +73,7 @@ def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:
 
 
 def get_entries(db_session, user_id: int) -> List[Entry]:
+    """Return a list of entries without decrypting them"""
     assert isinstance(user_id, int)
     return db_session.query(Entry)\
         .filter_by(user_id=user_id, pinned=False)\
@@ -123,8 +125,8 @@ def delete_account(db_session, user: User) -> None:
     db_session.commit()
 
 
-def create_inactive_user(db_session, email: str, password: str, 
-        password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
+def create_inactive_user(db_session, email: str, password: str,
+                         password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
     """Create an account which has not been activated.
     Return the user object (model)
     :param password_hash_algo:  This parameter exists for testing
@@ -153,7 +155,8 @@ def create_inactive_user(db_session, email: str, password: str,
 
 
 def insert_entry_for_user(db_session, dec_entry: dict,
-        user_id: int, user_key: str, version: int = 4) -> Entry:
+                          user_id: int, user_key: str,
+                          version: int = DEFAULT_ENTRY_VERSION) -> Entry:
     assert isinstance(user_id, int)
     assert isinstance(user_key, six.text_type)
     assert isinstance(version, int)
@@ -168,7 +171,8 @@ def insert_new_entry(session, entry: Entry, user_id: int) -> None:
     session.add(entry)
 
 
-def encrypt_entry(user_key: str, dec_entry: dict, version: int = 4) -> Entry:
+def encrypt_entry(user_key: str, dec_entry: dict,
+                  version: int = DEFAULT_ENTRY_VERSION) -> Entry:
     """
     A different KDF key is used for each entry.
     This is equivalent to salting the entry.
@@ -180,11 +184,16 @@ def encrypt_entry(user_key: str, dec_entry: dict, version: int = 4) -> Entry:
     assert isinstance(user_key, six.text_type)
     assert isinstance(dec_entry, dict)
     assert isinstance(version, int)
-    entry = Entry()
-    if version == 4:
-        entry.encrypt_v4(user_key, dec_entry)
+    entry = None
+    if version == 5:
+        entry = Entry_v5()
+    elif version == 4:
+        entry = Entry_v4()
+    elif version == 3:
+        entry = Entry_v3()
     else:
-        entry.encrypt_v3(user_key, dec_entry)
+        raise Exception("We do not support encrypting very old entries (version specified = {})".format(version))
+    entry.encrypt(user_key, dec_entry)
     return entry
 
 
@@ -212,13 +221,14 @@ def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_i
     }
     # do not add e2 to session, it's just a placeholder
     e2 = encrypt_entry(user_key, dec_entry,
-            version=entry.version)
+                       version=entry.version)
     # update those fields that the user might have changed
     entry.account = e2.account
     entry.username = e2.username
     entry.password = e2.password
     entry.extra = e2.extra
     entry.has_2fa = e2.has_2fa
+    entry.contents = e2.contents
     # update those parameters which might have changed on encryption
     entry.iv = e2.iv
     entry.key_salt = e2.key_salt

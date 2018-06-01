@@ -5,6 +5,10 @@ from typing import Tuple
 import six
 from aead import AEAD
 from flask_sqlalchemy import SQLAlchemy
+import msgpack
+import nacl.pwhash
+import nacl.secret
+import nacl.utils
 
 from passzero.config import TOKEN_SIZE
 from passzero.crypto_utils import (PasswordHashAlgo, byte_to_hex_legacy,
@@ -22,7 +26,6 @@ from .utils import base64_encode
 db = SQLAlchemy()
 
 
-
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer, db.Sequence("users_id_seq"), primary_key=True)
@@ -34,7 +37,6 @@ class User(db.Model):
     last_login = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     DEFAULT_PASSWORD_HASH_ALGO = PasswordHashAlgo.Argon2
-
 
     # password generation preferences
     # number of characters in password
@@ -107,6 +109,7 @@ class AuthToken(db.Model):
 
 
 class Entry(db.Model):
+    """This entry serves as both the v1 entry and the base class to other entries"""
     __tablename__ = "entries"
     id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
@@ -115,19 +118,26 @@ class Entry(db.Model):
     # these fields are *always* encrypted
     username = db.Column(db.String, nullable=False)
     password = db.Column(db.String, nullable=False)
-    padding = db.Column(db.String)
     extra = db.Column(db.String)
-    
+
     # this field is *never* encrypted
     has_2fa = db.Column(db.Boolean, default=False, nullable=False)
 
+    # this field is used in Entry v1 encryption/decryption
+    padding = db.Column(db.String)
     key_salt = db.Column(db.String)
     iv = db.Column(db.String)
     version = db.Column(db.Integer, nullable=False)
     pinned = db.Column(db.Boolean, default=False, nullable=False)
 
+    __mapper_args__ = {
+        "polymorphic_identity": 1,
+        "polymorphic_on": version
+    }
+
     def __repr__(self) -> str:
-        return "<Entry(account=%s, username=%s, password=%s, padding=%s, user_id=%d)>" % (self.account, self.username, self.password, self.padding, self.user_id)
+        return "<Entry(account={}, username={}, password={}, padding={}, user_id={})>".format(
+            self.account, self.username, self.password, self.padding, self.user_id)
 
     def to_json(self) -> dict:
         """
@@ -146,23 +156,196 @@ class Entry(db.Model):
             "is_encrypted": True
         }
 
-    def decrypt(self, key) -> dict:
+    def decrypt(self, key: str) -> dict:
+        """Decrypt with padding
+        :type key:              unicode string
         """
-        :return:            a dictionary mapping fields to their decrypted values.
-        :rtype:             dict"""
-        assert key is not None
-        if self.version == 1:
-            return self._decrypt_version_1(key)
-        elif self.version == 2:
-            return self._decrypt_version_2(key)
-        elif self.version == 3:
-            return self._decrypt_version_3(key)
-        elif self.version == 4:
-            return self._decrypt_version_4(key)
+        assert isinstance(key, six.text_type)
+        assert isinstance(self.username, six.text_type)
+        dec_password = decrypt_password_legacy(key + self.padding, self.password)
+        if self.extra:
+            try:
+                dec_extra = decrypt_field_v1(key, self.padding, self.extra)
+            except TypeError:
+                dec_extra = self.extra
         else:
-            raise AssertionError("Unsupported version: {}".format(self.version))
+            dec_extra = ""
+        try:
+            dec_username = decrypt_field_v1(key, self.padding, self.username)
+        except TypeError:
+            dec_username = self.username
+        return {
+            "account": self.account,
+            "username": dec_username,
+            "password": dec_password,
+            "extra": dec_extra
+        }
 
-    def _decrypt_version_4(self, key: str) -> dict:
+    def encrypt(self, master_key: str, dec_entry: dict):
+        """
+        WARNING: This is not secure! Do not use this!
+        This is only here to satisfy the unit test for decryption of these old entries
+        """
+        assert isinstance(master_key, six.text_type)
+        assert isinstance(dec_entry, dict)
+        self.padding = pad_key_legacy(master_key)
+        assert isinstance(self.padding, six.text_type)
+        self.account = dec_entry[u"account"]
+        assert isinstance(self.account, six.text_type)
+        self.username = encrypt_field_v1(master_key, self.padding,
+                                         dec_entry[u"username"])
+        assert isinstance(self.username, six.text_type)
+        self.password = encrypt_password_legacy(master_key + self.padding,
+                                                dec_entry[u"password"])
+        assert isinstance(self.password, six.text_type)
+        self.extra = encrypt_field_v1(master_key, self.padding,
+                                      dec_entry[u"extra"])
+        assert isinstance(self.extra, six.text_type)
+        self.version = 1
+
+
+class Entry_v2(Entry):
+
+    __mapper_args__ = {
+        "polymorphic_identity": 2
+    }
+
+    def decrypt(self, key: str) -> dict:
+        assert isinstance(key, six.text_type)
+        key_salt = hex_to_byte_legacy(self.key_salt)
+        iv = hex_to_byte_legacy(self.iv)
+        extended_key = extend_key(key, key_salt)
+        dec_password = decrypt_field_v2(extended_key, self.password, iv)
+        if self.extra:
+            try:
+                dec_extra = decrypt_field_v2(extended_key, self.extra, iv)
+            except TypeError:
+                dec_extra = self.extra
+        else:
+            dec_extra = ""
+        try:
+            dec_username = decrypt_field_v2(extended_key, self.username, iv)
+        except TypeError:
+            dec_username = self.username
+        return {
+            "account": self.account,
+            "username": dec_username,
+            "password": dec_password,
+            "extra": dec_extra
+        }
+
+    def encrypt(self, master_key: str, dec_entry: dict):
+        """
+        WARNING: This is not secure! Do not use this!
+        This is only here to satisfy the unit test for decryption of these old entries
+        If they are still alive in the database
+        """
+        assert isinstance(master_key, six.text_type)
+        assert isinstance(dec_entry, dict)
+        if "extra" not in dec_entry:
+            dec_entry["extra"] = u""
+        key_salt = get_kdf_salt()
+        iv = get_iv()
+        extended_key = extend_key(master_key, key_salt)
+        self.account = dec_entry["account"]
+        # these should all be unicode
+        self.username = encrypt_field_v2(extended_key, dec_entry["username"], iv)
+        self.password = encrypt_field_v2(extended_key, dec_entry["password"], iv)
+        self.extra = encrypt_field_v2(extended_key, dec_entry["extra"], iv)
+        assert isinstance(self.account, six.text_type)
+        assert isinstance(self.username, six.text_type)
+        assert isinstance(self.password, six.text_type)
+        assert isinstance(self.extra, six.text_type)
+        self.key_salt = byte_to_hex_legacy(key_salt)
+        self.iv = byte_to_hex_legacy(iv)
+        self.version = 2
+
+
+class Entry_v3(Entry):
+
+    __mapper_args__ = {
+        "polymorphic_identity": 3
+    }
+
+    def encrypt(self, master_key: str, dec_entry: dict):
+        """
+        :param master_key:  The user's key, used to derive entry-specific enc key
+        :param dec_entry:   Entry to encrypt (dictionary of fields)
+        """
+        assert isinstance(master_key, six.text_type)
+        assert isinstance(dec_entry, dict)
+        # generate random new IV
+        iv = get_iv()
+        kdf_salt = get_kdf_salt()
+        extended_key = extend_key(master_key, kdf_salt)
+        fields = ["account", "username", "password", "extra"]
+        messages = [dec_entry[field] for field in fields]
+        enc_messages = encrypt_messages(extended_key, iv, messages)
+        enc_entry = {}
+        for field, enc_message in zip(fields, enc_messages):
+            enc_entry[field] = base64_encode(enc_message)
+        # entry contents
+        self.account = enc_entry["account"]
+        self.username = enc_entry["username"]
+        self.password = enc_entry["password"]
+        self.extra = enc_entry["extra"]
+        # metadata - which encryption scheme to use to decrypt
+        self.version = 3
+        self.pinned = False
+        self.iv = base64_encode(iv)
+        self.key_salt = base64_encode(kdf_salt)
+        # old information
+        self.padding = None
+
+    def decrypt(self, key: str) -> dict:
+        assert isinstance(key, six.text_type)
+        kdf_salt = binascii.a2b_base64(self.key_salt)
+        extended_key = extend_key(key, kdf_salt)
+        iv = binascii.a2b_base64(self.iv)
+        messages = [
+            binascii.a2b_base64(self.account),
+            binascii.a2b_base64(self.username),
+            binascii.a2b_base64(self.password),
+            binascii.a2b_base64(self.extra)
+        ]
+        dec_messages = decrypt_messages(extended_key, iv, messages)
+        return {
+            "account": dec_messages[0],
+            "username": dec_messages[1],
+            "password": dec_messages[2],
+            "extra": dec_messages[3],
+            "version": self.version
+        }
+
+
+class Entry_v4(Entry):
+    """This entry type encrypts the following fields:
+    - username
+    - password
+    - extra
+
+    And leaves the following fields unencrypted:
+    - account
+    - has_2fa
+
+    This design choice is driven by the need to search and audit entries
+    without decrypting everything
+
+    The fields are encrypted using the `encrypt_messages` method in crypto_utils
+    It is roughly equivalent to applying AES - MODE CFB.
+    The issue with this approach is that there is no authentication associated with the message contents:
+    i.e. there is no guarantee that the data has not been tampered with while in storage
+
+    When using this version, you have to be careful with the `iv`: do not reuse this
+
+    Entry-specific keys are generated using PBKDF2. Be careful with `kdf_salt`: do not reuse this
+    """
+
+    __mapper_args__ = {
+        "polymorphic_identity": 4
+    }
+
+    def decrypt(self, key: str) -> dict:
         """
         Version 4 encrypts, sequentially, the following data:
         - username
@@ -193,80 +376,7 @@ class Entry(db.Model):
             "version": self.version
         }
 
-    def _decrypt_version_3(self, key: str) -> dict:
-        assert isinstance(key, six.text_type)
-        kdf_salt = binascii.a2b_base64(self.key_salt)
-        extended_key = extend_key(key, kdf_salt)
-        iv = binascii.a2b_base64(self.iv)
-        messages = [
-            binascii.a2b_base64(self.account),
-            binascii.a2b_base64(self.username),
-            binascii.a2b_base64(self.password),
-            binascii.a2b_base64(self.extra)
-        ]
-        dec_messages = decrypt_messages(extended_key, iv, messages)
-        return {
-            "account": dec_messages[0],
-            "username": dec_messages[1],
-            "password": dec_messages[2],
-            "extra": dec_messages[3],
-            "version": self.version
-        }
-
-    def _decrypt_version_1(self, key: str) -> dict:
-        assert isinstance(key, six.text_type)
-        return self._decrypt_with_padding(key)
-
-    def _decrypt_version_2(self, key: str) -> dict:
-        assert isinstance(key, six.text_type)
-        key_salt = hex_to_byte_legacy(self.key_salt)
-        iv = hex_to_byte_legacy(self.iv)
-        extended_key = extend_key(key, key_salt)
-        dec_password = decrypt_field_v2(extended_key, self.password, iv)
-        if self.extra:
-            try:
-                dec_extra = decrypt_field_v2(extended_key, self.extra, iv)
-            except TypeError:
-                dec_extra = self.extra
-        else:
-            dec_extra = ""
-        try:
-            dec_username = decrypt_field_v2(extended_key, self.username, iv)
-        except TypeError:
-            dec_username = self.username
-        return {
-            "account": self.account,
-            "username": dec_username,
-            "password": dec_password,
-            "extra": dec_extra
-        }
-
-    def _decrypt_with_padding(self, key: str) -> dict:
-        """
-        :type key:              unicode string
-        """
-        assert isinstance(key, six.text_type)
-        assert isinstance(self.username, six.text_type)
-        dec_password = decrypt_password_legacy(key + self.padding, self.password)
-        if self.extra:
-            try:
-                dec_extra = decrypt_field_v1(key, self.padding, self.extra)
-            except TypeError:
-                dec_extra = self.extra
-        else:
-            dec_extra = ""
-        try:
-            dec_username = decrypt_field_v1(key, self.padding, self.username)
-        except TypeError:
-            dec_username = self.username
-        return {
-            "account": self.account,
-            "username": dec_username,
-            "password": dec_password,
-            "extra": dec_extra
-        }
-
-    def encrypt_v4(self, master_key: str, dec_entry: dict):
+    def encrypt(self, master_key: str, dec_entry: dict):
         """
         :param master_key:  The user's key, used to derive entry-specific enc key
         :param dec_entry:   Entry to encrypt (dictionary of fields)
@@ -312,84 +422,97 @@ class Entry(db.Model):
         self.padding = None
 
 
-    def encrypt_v3(self, master_key: str, dec_entry: dict):
+class Entry_v5(Entry):
+    """This entry type encrypts the following fields:
+    - username
+    - password
+    - extra
+
+    And leaves the following fields unencrypted:
+    - account
+    - has_2fa
+
+    For the same reason as in v4.
+
+    HOWEVER: the encrypted fields are stored in one monolithic binary blob in the `contents` field
+    The fields relevant fields are left as empty strings
+
+    The fields are encrypted using the `encrypt_messages` method in crypto_utils
+    It is roughly equivalent to applying AES - MODE CFB.
+    The issue with this approach is that there is no authentication associated with the message contents:
+    i.e. there is no guarantee that the data has not been tampered with while in storage
+
+    When using this version, you have to be careful with the (iv, nonce, salt): do not reuse these
+
+    Entry-specific keys are generated using PBKDF2.
+    """
+
+    # self.key_salt should be of type unicode
+
+    __mapper_args__ = {
+        "polymorphic_identity": 5
+    }
+
+    # a new contents object
+    contents = db.Column(db.LargeBinary)
+
+    def __get_entry_key(self, master_key: str, kdf_salt: bytes) -> bytes:
+        return nacl.pwhash.argon2id.kdf(
+            size=nacl.secret.SecretBox.KEY_SIZE,
+            # TODO: this may not always be possible if a unicode password is used
+            password=master_key.encode("utf-8"),
+            salt=kdf_salt,
+            opslimit=nacl.pwhash.OPSLIMIT_INTERACTIVE,
+            memlimit=nacl.pwhash.MEMLIMIT_INTERACTIVE,
+        )
+
+    def decrypt(self, key: str) -> dict:
         """
-        :param master_key:  The user's key, used to derive entry-specific enc key
-        :param dec_entry:   Entry to encrypt (dictionary of fields)
+        Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
         """
+        assert isinstance(key, six.text_type)
+        assert isinstance(self.key_salt, six.text_type)
+        kdf_salt = binascii.a2b_base64(self.key_salt.encode("utf-8"))
+        entry_key = self.__get_entry_key(key, kdf_salt)
+        box = nacl.secret.SecretBox(entry_key)
+        assert isinstance(self.contents, bytes)
+        dec_contents = box.decrypt(self.contents)
+        dec_contents_d = msgpack.unpackb(dec_contents, raw=False)
+        # fill in the unencrypted data
+        dec_contents_d["account"] = self.account
+        dec_contents_d["has_2fa"] = self.has_2fa
+        dec_contents_d["version"] = self.version
+        return dec_contents_d
+
+    def encrypt(self, master_key: str, dec_entry: dict) -> None:
         assert isinstance(master_key, six.text_type)
         assert isinstance(dec_entry, dict)
-        # generate random new IV
-        iv = get_iv()
-        kdf_salt = get_kdf_salt()
-        extended_key = extend_key(master_key, kdf_salt)
-        fields = ["account", "username", "password", "extra"]
-        messages = [dec_entry[field] for field in fields]
-        enc_messages = encrypt_messages(extended_key, iv, messages)
-        enc_entry = {}
-        for field, enc_message in zip(fields, enc_messages):
-            enc_entry[field] = base64_encode(enc_message)
-        # entry contents
-        self.account = enc_entry["account"]
-        self.username = enc_entry["username"]
-        self.password = enc_entry["password"]
-        self.extra = enc_entry["extra"]
-        # metadata - which encryption scheme to use to decrypt
-        self.version = 3
+        dec_contents_d = {
+            "username": dec_entry["username"],
+            "password": dec_entry["password"],
+            "extra": dec_entry["extra"]
+        }
+        dec_contents = msgpack.packb(dec_contents_d, use_bin_type=True)
+        kdf_salt = nacl.utils.random(nacl.pwhash.argon2id.SALTBYTES)
+        # generate a new entry key
+        entry_key = self.__get_entry_key(master_key, kdf_salt)
+        # what's nice is that pynacl generates a random nonce
+        box = nacl.secret.SecretBox(entry_key)
+        self.contents = box.encrypt(dec_contents)
+        # metadata
+        self.version = 5
         self.pinned = False
-        self.iv = base64_encode(iv)
-        self.key_salt = base64_encode(kdf_salt)
-        # old information
-        self.padding = None
-
-    def encrypt_v2(self, master_key: str, dec_entry: dict):
-        """
-        WARNING: This is not secure! Do not use this!
-        This is only here to satisfy the unit test for decryption of these old entries
-        If they are still alive in the database
-        """
-        assert isinstance(master_key, six.text_type)
-        assert isinstance(dec_entry, dict)
-        if "extra" not in dec_entry:
-            dec_entry["extra"] = u""
-        key_salt = get_kdf_salt()
-        iv = get_iv()
-        extended_key = extend_key(master_key, key_salt)
+        self.key_salt = base64_encode(kdf_salt).decode("utf-8")
+        assert isinstance(self.key_salt, six.text_type)
+        # unencrypted data
         self.account = dec_entry["account"]
-        # these should all be unicode
-        self.username = encrypt_field_v2(extended_key, dec_entry["username"], iv)
-        self.password = encrypt_field_v2(extended_key, dec_entry["password"], iv)
-        self.extra = encrypt_field_v2(extended_key, dec_entry["extra"], iv)
-        assert isinstance(self.account, six.text_type)
-        assert isinstance(self.username, six.text_type)
-        assert isinstance(self.password, six.text_type)
-        assert isinstance(self.extra, six.text_type)
-        self.key_salt = byte_to_hex_legacy(key_salt)
-        self.iv = byte_to_hex_legacy(iv)
-        self.version = 2
-
-    def encrypt_v1(self, master_key: str, dec_entry: dict):
-        """
-        WARNING: This is not secure! Do not use this!
-        This is only here to satisfy the unit test for decryption of these old entries
-        If they are still alive in the database
-        """
-        assert isinstance(master_key, six.text_type)
-        assert isinstance(dec_entry, dict)
-        self.padding = pad_key_legacy(master_key)
-        assert isinstance(self.padding, six.text_type)
-        self.account = dec_entry[u"account"]
-        assert isinstance(self.account, six.text_type)
-        self.username = encrypt_field_v1(master_key, self.padding,
-                dec_entry[u"username"])
-        assert isinstance(self.username, six.text_type)
-        self.password = encrypt_password_legacy(master_key + self.padding,
-                dec_entry[u"password"])
-        assert isinstance(self.password, six.text_type)
-        self.extra = encrypt_field_v1(master_key, self.padding,
-                dec_entry[u"extra"])
-        assert isinstance(self.extra, six.text_type)
-        self.version = 1
+        self.has_2fa = dec_entry["has_2fa"]
+        # old information (other entry versions)
+        self.padding = None
+        self.username = b""
+        self.password = b""
+        self.extra = b""
+        self.iv = None
 
 
 class Service(db.Model):
@@ -417,9 +540,11 @@ class EncryptedDocument(db.Model):
         assert isinstance(master_key, six.text_type)
         # sadly, base64-encoded
         assert isinstance(self.key_salt, six.text_type)
-        return extend_key(master_key,
+        return extend_key(
+            master_key,
             binascii.a2b_base64(self.key_salt),
-            EncryptedDocument.KEY_LENGTH)
+            EncryptedDocument.KEY_LENGTH
+        )
 
     def to_json(self) -> dict:
         """
@@ -444,6 +569,7 @@ class EncryptedDocument(db.Model):
             name=self.name,
             contents=pt
         )
+
 
 class DecryptedDocument:
 
@@ -485,7 +611,7 @@ class DecryptedDocument:
         # need a 32-byte key (256 bits)
         extended_key = extend_key(master_key, key_salt, 32)
         assert isinstance(extended_key, bytes)
-        return (extended_key, { "kdf_salt": key_salt } )
+        return (extended_key, {"kdf_salt": key_salt})
 
     def encrypt(self, key: bytes) -> "EncryptedDocument":
         """
@@ -493,7 +619,7 @@ class DecryptedDocument:
         :return:            encrypted document with the content fields set
         """
         assert isinstance(key, bytes)
-        #AES_128_CBC_HMAC_SHA_256
+        # AES_128_CBC_HMAC_SHA_256
         assert len(key) == 32, \
                "key must be 32 bytes long, actually %d bytes" % len(key)
         assert isinstance(self.name, six.text_type), \
@@ -520,6 +646,7 @@ class DecryptedDocument:
             "name": self.name,
             "contents": self.contents.decode("utf-8")
         }
+
 
 class ApiToken(db.Model):
     __tablename__ = "api_tokens"

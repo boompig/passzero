@@ -118,4 +118,3 @@ def change_password(session, user_id: int, old_password: str, new_password: str)
     create_pinned_entry(session, user_id, new_password)
     session.commit()
     return True
-

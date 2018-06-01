@@ -13,4 +13,3 @@ def base64_encode(bin_data: bytes):
         return s[:-1]
     else:
         return s
-

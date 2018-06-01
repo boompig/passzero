@@ -18,6 +18,7 @@ class SignupForm(Form):
         validators.DataRequired()
     ])
 
+
 class LoginForm(Form):
     email = TextField("email", [
         validators.DataRequired(),
@@ -25,8 +26,10 @@ class LoginForm(Form):
     ])
     password = PasswordField("password", [validators.DataRequired()])
 
+
 class DeleteUserForm(Form):
     password = PasswordField("password", [validators.DataRequired()])
+
 
 class NewEntryForm(Form):
     account = TextField("account", [
@@ -44,6 +47,7 @@ class NewEntryForm(Form):
         validators.AnyOf([True, False])
     ])
 
+
 class UpdatePasswordForm(Form):
     old_password = PasswordField("old password", [validators.DataRequired()])
     new_password = PasswordField("new password", [
@@ -52,11 +56,13 @@ class UpdatePasswordForm(Form):
     ])
     confirm_new_password = PasswordField("confirm new password", [validators.DataRequired()])
 
+
 class RecoverPasswordForm(Form):
     email = TextField("email", [
         validators.DataRequired(),
         validators.Email()
     ])
+
 
 class UpdatePreferencesForm(Form):
     default_random_password_length = IntegerField("default_random_password_length", [
@@ -68,8 +74,10 @@ class UpdatePreferencesForm(Form):
         validators.NumberRange(1, MAX_GEN_PASSPHRASE_WORDS),
     ])
 
+
 class ActivateAccountForm(Form):
     token = TextField("token", [validators.DataRequired()])
+
 
 class ConfirmRecoverPasswordForm(Form):
     token = TextField("token", [validators.DataRequired()])
@@ -89,4 +97,3 @@ class NewDocumentForm(FlaskForm):
     document = FileField("document", [
         FileRequired()
     ])
-
