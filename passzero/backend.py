@@ -228,7 +228,11 @@ def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_i
     entry.password = e2.password
     entry.extra = e2.extra
     entry.has_2fa = e2.has_2fa
-    entry.contents = e2.contents
+    try:
+        entry.contents = e2.contents
+    except AttributeError:
+        # this is fine, just means we're editing an old entry
+        pass
     # update those parameters which might have changed on encryption
     entry.iv = e2.iv
     entry.key_salt = e2.key_salt

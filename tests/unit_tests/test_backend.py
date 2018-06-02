@@ -225,6 +225,64 @@ def test_fail_encrypt_entry_v2():
         assert False, "Should throw exception"
 
 
+def __edit_entry(session, version):
+    """
+    Try to edit an existing v4 entry"""
+    user_key = u"test master key"
+    user = create_inactive_user(session, u"fake@fake.com", user_key)
+    dec_entry = {
+        "account": u"test account",
+        "username": u"test username",
+        "password": u"test password",
+        "extra": u"test extra",
+        "has_2fa": True,
+    }
+    entry = backend.insert_entry_for_user(
+        session,
+        dec_entry,
+        user.id,
+        user_key,
+        version=version
+    )
+    # save this in case it changes
+    entry_id = entry.id
+    # edit the entry
+    dec_entry["password"] = u"a new password"
+    dec_entry["has_2fa"] = False
+    dec_entry["username"] = u"a new username"
+    # edit the entry
+    edited_entry = backend.edit_entry(
+        session,
+        entry_id,
+        user_key,
+        dec_entry,
+        entry.user_id
+    )
+    # make sure the metadata remains the same
+    assert edited_entry.version == version
+    assert edited_entry.id == entry_id
+    assert edited_entry.user_id == user.id
+    # make sure entry is actually edited
+    dec_entry_out = edited_entry.decrypt(user_key)
+    entry_fields = ["account", "username", "password", "extra", "has_2fa"]
+    for field in entry_fields:
+        assert dec_entry[field] == dec_entry_out[field]
+
+
+# NOTE: v2 and v1 not tested for now
+
+def test_edit_entry_v3(session):
+    __edit_entry(session, version=3)
+
+
+def test_edit_entry_v4(session):
+    __edit_entry(session, version=4)
+
+
+def test_edit_entry_v5(session):
+    __edit_entry(session, version=5)
+
+
 def test_get_account_with_email():
     session = MagicMock()
     email = u"fake_email"
