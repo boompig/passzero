@@ -12,7 +12,7 @@ cffi==1.11.5
 click==6.7
 coloredlogs==10.0
 coverage==4.5.1
-cryptography==2.1.4
+cryptography==2.3
 decorator==4.2.1
 docutils==0.14
 execnet==1.5.0
@@ -50,6 +50,7 @@ pbr==3.1.1
 pexpect==4.4.0
 pickleshare==0.7.4
 pip-tools==1.11.0
+pipdeptree==0.13.0
 pluggy==0.6.0
 prompt-toolkit==1.0.15
 psutil==5.4.3
