@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import base64
 import os
 import unittest
 
@@ -10,9 +11,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import api
 from passzero import backend as pz_backend
 from passzero.my_env import DATABASE_URL
+
+from . import api
 
 DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"
@@ -54,7 +56,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
 
     @property
     def json_header(self):
-        return { "Content-Type": "application/json" }
+        return {"Content-Type": "application/json"}
 
     def setUp(self):
         # disable certificate warnings for testing
@@ -84,7 +86,6 @@ class PassZeroApiV1Tester(unittest.TestCase):
         self.assertIsNotNone(auth_response)
         auth_response.status_code == 200
 
-
     def _signup(self, session, email, password):
         auth_response = api.signup(session, email, password)
         assert auth_response is not None
@@ -94,7 +95,6 @@ class PassZeroApiV1Tester(unittest.TestCase):
         except AssertionError as e:
             print(response_json)
             raise e
-
 
     def _get_csrf_token(self, session):
         """Return CSRF token"""
@@ -122,7 +122,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
         assert entry_edit_response is not None
         response_json = entry_edit_response.json()
         try:
-            assert  entry_edit_response.status_code == 200
+            assert entry_edit_response.status_code == 200
         except AssertionError as e:
             print(response_json)
             raise e
@@ -227,7 +227,6 @@ class PassZeroApiV1Tester(unittest.TestCase):
             self._delete_entry(s, entry_id, delete_token)
             entries = self._get_entries(s)
             assert len(entries) == 0
-        #db_session = get_db_session()
         pz_backend.delete_account(db_session, user)
 
     def test_get_csrf_token(self):
@@ -321,7 +320,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             self._check_entries_equal(entry, entries[0])
 
     def test_logout(self):
-        user, db_session= create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        user, db_session = create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
             self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
             token = self._get_csrf_token(s)
@@ -387,9 +386,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
             upload_doc_token = api.get_csrf_token(s).json()
             docs_before = api.get_documents(s).json()
             assert docs_before == []
-            r = api.post_document(s, u"test document",
-                    { "document": BytesIO(b"hello world\n") },
-                upload_doc_token)
+            doc_params = {"document": BytesIO(b"hello world\n")}
+            r = api.post_document(s, u"test document", doc_params,
+                                  upload_doc_token)
             print(r.status_code)
             print(r.text)
             assert r.status_code == 200
@@ -403,7 +402,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             # doc = api.get_document(s, doc_id).json()
             doc = r.json()
             print(doc)
-            assert doc["contents"] == "hello world\n"
+            assert base64.b64decode(doc["contents"]) == b"hello world\n"
             assert doc["name"] == "test document"
 
     def test_upload_and_get_docs(self):
@@ -413,9 +412,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
             upload_doc_token = api.get_csrf_token(s).json()
             docs_before = api.get_documents(s).json()
             assert docs_before == []
+            doc_params = {"document": BytesIO(b"hello world\n")}
             r = api.post_document(s, u"test document",
-                    { "document": BytesIO(b"hello world\n") },
-                upload_doc_token)
+                                  doc_params, upload_doc_token)
             assert r.status_code == 200
             docs_after = api.get_documents(s).json()
             assert len(docs_after) == 1
@@ -428,9 +427,10 @@ class PassZeroApiV1Tester(unittest.TestCase):
             docs_before = api.get_documents(s).json()
             assert docs_before == []
             upload_doc_token = api.get_csrf_token(s).json()
+            doc_params = {"document": BytesIO(b"hello world\n")}
             r = api.post_document(s, u"test document",
-                    { "document": BytesIO(b"hello world\n") },
-                upload_doc_token)
+                                  doc_params,
+                                  upload_doc_token)
             assert r.status_code == 200
             doc_id = r.json()["document_id"]
             delete_token = api.get_csrf_token(s).json()
