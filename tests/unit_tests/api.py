@@ -308,7 +308,7 @@ def post_document(app, doc_params, csrf_token, check_status=True):
         headers=file_upload_headers,
         follow_redirects=True)
     if check_status:
-        print("status code = %d" % r.status_code)
+        print("[post_document] status code = %d" % r.status_code)
         print(r.data)
         assert r.status_code == 200
     return r

@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import base64
 # import json
 import logging
 import os
@@ -70,9 +71,7 @@ class PassZeroDocTester(unittest.TestCase):
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
 
-    def test_upload_and_get_doc_then_delete(self):
-        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+    def __create_and_verify_text_doc(self):
         upload_doc_token = api.get_csrf_token(self.app)
         doc_params = {
             "name": "test document",
@@ -84,14 +83,44 @@ class PassZeroDocTester(unittest.TestCase):
         docs_after = api.get_documents(self.app, check_status=True)
         assert len(docs_after) == 1
         assert type(docs_after[0]["id"]) == int
-        assert docs_after[0]["name"] == "test document"
+        assert docs_after[0]["name"] == doc_params["name"]
         # decrypt the document
         doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
-        assert doc["contents"] == "hello world\n"
+        assert base64.b64decode(doc["contents"]) == b"hello world\n"
+        return docs_after[0]["id"]
+
+    def __create_and_verify_binary_doc(self):
+        with open("tests/unit_tests/data/Kutaisi-Mountain-Landscape-4K-Wallpaper.jpg", "rb") as fp:
+            contents = fp.read()
+        doc_params = {
+            "name": "4K wallpaper",
+            "document": (BytesIO(contents), "wallpaper.jpg")
+        }
+        upload_doc_token = api.get_csrf_token(self.app)
+        api.post_document(self.app, doc_params, upload_doc_token, check_status=True)
+        docs_after = api.get_documents(self.app, check_status=True)
+        assert len(docs_after) == 1
+        assert isinstance(docs_after[0]["id"], int)
+        assert docs_after[0]["name"] == doc_params["name"]
+        doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
+        assert isinstance(contents, bytes)
+        assert len(contents) > 0
+        assert base64.b64decode(doc["contents"]) == contents
+        return docs_after[0]["id"]
+
+    def __verify_delete_doc(self, document_id):
         delete_token = api.get_csrf_token(self.app)
-        api.delete_document(self.app, docs_after[0]["id"], delete_token, check_status=True)
+        api.delete_document(self.app, document_id, delete_token, check_status=True)
         docs_after_delete = api.get_documents(self.app, check_status=True)
         assert docs_after_delete == []
+
+    def test_upload_and_get_doc_then_delete(self):
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        document_id = self.__create_and_verify_text_doc()
+        self.__verify_delete_doc(document_id)
+        document_id = self.__create_and_verify_binary_doc()
+        self.__verify_delete_doc(document_id)
 
     def test_no_such_doc(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)

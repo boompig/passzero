@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Tuple
 
 import six
-from aead import AEAD
 from flask_sqlalchemy import SQLAlchemy
 import msgpack
 import nacl.pwhash
@@ -563,23 +562,24 @@ class EncryptedDocument(db.Model):
 
     def to_json(self) -> dict:
         """
-        NOTE: this is a really bad idea.
-        Since the contents are bytes and will not make any sense on the client side
+        Return an encrypted version of the document
+        Provides a base64-encoded version of the ENCRYPTED document body
         """
         assert isinstance(self.document, bytes)
         return {
             "id": self.id,
             "name": self.name,
-            "contents": self.document.decode("utf-8")
+            "contents": base64_encode(self.document).decode("utf-8")
         }
 
     def decrypt(self, master_key: str) -> "DecryptedDocument":
         assert isinstance(master_key, six.text_type)
         extended_key = self.extend_key(master_key)
-        cryptor = AEAD(base64_encode(extended_key))
+        box = nacl.secret.SecretBox(extended_key)
         assert isinstance(self.name, six.text_type)
         assert isinstance(self.document, bytes)
-        pt = cryptor.decrypt(self.document, self.name.encode("utf-8"))
+        pt = box.decrypt(self.document)
+        assert isinstance(pt, bytes)
         return DecryptedDocument(
             name=self.name,
             contents=pt
@@ -628,21 +628,22 @@ class DecryptedDocument:
         assert isinstance(extended_key, bytes)
         return (extended_key, {"kdf_salt": key_salt})
 
-    def encrypt(self, key: bytes) -> "EncryptedDocument":
+    def encrypt(self, extended_key: bytes) -> "EncryptedDocument":
         """
         :param key:         bytes
         :return:            encrypted document with the content fields set
         """
-        assert isinstance(key, bytes)
+        assert isinstance(extended_key, bytes)
         # AES_128_CBC_HMAC_SHA_256
-        assert len(key) == 32, \
-               "key must be 32 bytes long, actually %d bytes" % len(key)
+        assert len(extended_key) == 32, \
+               "key must be 32 bytes long, actually %d bytes" % len(extended_key)
         assert isinstance(self.name, six.text_type), \
                "Name must be a unicode string"
         assert isinstance(self.contents, bytes), \
                "Contents must be bytes"
-        cryptor = AEAD(base64_encode(key))
-        ct = cryptor.encrypt(self.contents, self.name.encode("utf-8"))
+        box = nacl.secret.SecretBox(extended_key)
+        # nonce generated randomly here
+        ct = box.encrypt(self.contents)
         assert isinstance(ct, bytes), \
                "ciphertext is binary"
         return EncryptedDocument(
@@ -653,13 +654,13 @@ class DecryptedDocument:
 
     def to_json(self) -> dict:
         """This is a really bad idea, to return a document this way.
-        For now decode the doc into UTF-8
+        For now, return the contents as a base64-encoded string of the contents
         """
         assert isinstance(self.name, six.text_type)
         assert isinstance(self.contents, bytes)
         return {
             "name": self.name,
-            "contents": self.contents.decode("utf-8")
+            "contents": base64_encode(self.contents).decode("utf-8")
         }
 
 
