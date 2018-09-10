@@ -1,4 +1,4 @@
-BUILD_ID = "absent_fox"
+BUILD_ID = "binding_dolphin"
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32
