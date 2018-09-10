@@ -59,6 +59,7 @@ lint: $(SRC) $(js_src_targets) $(css_src)
 	$(csslint) --quiet $(css_src)
 	yarn lint
 	pyflakes $(SRC) $(UNIT_TEST_SRC) $(E2E_TEST_SRC)
+	flake8 $(SRC)
 
 clean:
 	find . -name '*.pyc' -delete

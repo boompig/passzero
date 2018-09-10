@@ -52,7 +52,7 @@ def create_app(name: str, settings_override: dict = {}):
     # remove whitespace from json responses through the API
     app.config["RESTPLUS_JSON"] = {
         "indent": None,
-        "separators": (",",":")
+        "separators": (",", ":")
     }
 
     app.config.update(settings_override)

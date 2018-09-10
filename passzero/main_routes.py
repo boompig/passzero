@@ -45,7 +45,7 @@ def index():
         return redirect(url_for("main_routes.view_entries"))
     else:
         return render_template("landing.html")
-    
+
 
 @main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
 @auth_or_abort
@@ -92,7 +92,7 @@ def new_entry_view():
         "default_random_passphrase_length": user.default_random_passphrase_length
     }
     return render_template("new.html", title="PassZero &middot; New Entry",
-            user_prefs=user_prefs, error=None)
+                           user_prefs=user_prefs, error=None)
 
 
 @main_routes.route("/done_signup/<email>", methods=["GET"])
@@ -136,7 +136,7 @@ def post_confirm_signup():
 @main_routes.route("/signup/confirm")
 def confirm_signup():
     try:
-        token = request.args["token"] #.get("token", None)
+        token = request.args["token"]
         token_obj = db.session.query(AuthToken).filter_by(token=token).one()
         if token_obj.is_expired():
             flash("Token has expired")
@@ -164,8 +164,9 @@ def export_entries():
     export_contents = db_export(db.session, session['user_id'])
     if export_contents:
         response = make_response(export_contents)
-        response.headers["Content-Disposition"] = ("attachment; filename=%s" %\
-                current_app.config['DUMP_FILE'])
+        response.headers["Content-Disposition"] = (
+            "attachment; filename=%s" % current_app.config['DUMP_FILE']
+        )
         return response
     else:
         return "failed to export table - internal error"
@@ -193,8 +194,13 @@ def edit_entry(entry_id):
             "default_random_password_length": user.default_random_password_length,
             "default_random_passphrase_length": user.default_random_passphrase_length
         }
-        return render_template("new.html", user_prefs=user_prefs,
-            e_id=entry_id, entry=fe[0], error=None)
+        return render_template(
+            "new.html",
+            user_prefs=user_prefs,
+            e_id=entry_id,
+            entry=fe[0],
+            error=None
+        )
 
 
 @main_routes.route("/entries/strength")
@@ -236,8 +242,11 @@ def profile():
         "default_random_password_length": user.default_random_password_length,
         "default_random_passphrase_length": user.default_random_passphrase_length,
     }
-    return render_template("profile.html",
-        title="PassZero &middot; Profile", user_prefs=user_prefs)
+    return render_template(
+        "profile.html",
+        title="PassZero &middot; Profile",
+        user_prefs=user_prefs
+    )
 
 
 @main_routes.route("/recover")
@@ -275,4 +284,3 @@ def about():
 @main_routes.route("/version")
 def get_version():
     return current_app.config['BUILD_ID']
-

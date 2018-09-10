@@ -119,7 +119,7 @@ def api_login(request_data):
             db.session.commit()
             # craft message to return to user
             msg = "successfully logged in as {email}".format(
-                email = escape(session["email"])
+                email=escape(session["email"])
             )
             code, data = json_success(msg)
         else:
@@ -127,8 +127,10 @@ def api_login(request_data):
     except NoResultFound:
         code, data = json_error(401, "There is no account with that email")
     except UserNotActiveException:
-        code, data = json_error(401,
-            "The account has not been activated. Check your email!")
+        code, data = json_error(
+            401,
+            "The account has not been activated. Check your email!"
+        )
     return write_json(code, data)
 
 
@@ -210,9 +212,11 @@ def decrypt_doc_api(doc_id):
         data = dec_doc.to_json()
         code = 200
     except NoResultFound:
-        code, data = json_error(400,
-            "Document ID does not correspond to the document" + \
-            "or the document does not belong to you")
+        code, data = json_error(
+            400,
+            "Document ID does not correspond to the document"
+            "or the document does not belong to you"
+        )
     return write_json(code, data)
 
 
@@ -413,7 +417,7 @@ def api_v1_new_entry(request_data: NewEntryForm):
         user_key=session["password"]
     )
     code = 200
-    data = { "entry_id": entry.id }
+    data = {"entry_id": entry.id}
     return write_json(code, data)
 
 
@@ -466,11 +470,15 @@ def signup_api(request_data: SignupForm):
             code, data = json_internal_error("failed to send email")
     else:
         if user.active:
-            code, data = json_error(400,
-                "an account with this email address already exists")
+            code, data = json_error(
+                400,
+                "an account with this email address already exists"
+            )
         else:
-            code, data = json_error(400,
-                "This account has already been created. Check your inbox for a confirmation email.")
+            code, data = json_error(
+                400,
+                "This account has already been created. Check your inbox for a confirmation email."
+            )
     return write_json(code, data)
 
 
@@ -723,7 +731,7 @@ def api_v1_update_entry(request_data: NewEntryForm, entry_id: int):
     - 403: CSRF check failed
     """
     code = 200
-    data = {} # type: dict
+    data = {}  # type: dict
     try:
         backend.edit_entry(
             db.session,
