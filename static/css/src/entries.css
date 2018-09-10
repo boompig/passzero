@@ -1,28 +1,66 @@
-.entry {
-    border: 1px solid #999;
-    border-radius: 3px;
-
-    padding-left: 2em;
-    padding-top: 10px;
-    padding-bottom: 10px;
-
-    margin-top: .5em;
+html, body {
+    font-size: 1rem;
 }
 
+@media(max-width: 768px) {
+    .container {
+        padding-right: 5px;
+        padding-left: 5px;
+
+    }
+}
+
+.inner-container {
+    font-size: 1rem;
+}
+
+/**
+ * Hide ugly Angular stuff on load
+ */
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+  display: none !important;
+}
+
+/********* search-form **************/
 #search-form {
     /* top, right, bottom, left */
-    margin: 1em auto 0 auto;
+    margin: 1rem auto 0 auto;
     max-width: 600px;
 }
 
 #search-form input[type="text"] {
-    font-size: 1em;
+    font-size: 1rem;
+}
+/********* search-form **************/
+
+/********* entry-container **********/
+#entry-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.entry {
+    border: 1px solid #999;
+    border-radius: 3px;
+
+    padding-left: 2rem;
+    padding-top: 10px;
+    padding-bottom: 10px;
+
+    margin-top: .5rem;
+}
+
+@media(max-width: 768px) {
+    .entry {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
 }
 
 .entry-title {
     font-weight: bold;
-    font-size: 1.2em;
-    margin: .1em;
+    font-size: 1.2rem;
+    margin: .1rem;
 }
 
 .password {
@@ -44,22 +82,16 @@
     font-weight: bold;
     text-align: center;
 }
-
-#entry-container {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
 .entry-panel {
-    margin-top: 0.4em;
+    margin-top: 0.4rem;
 }
 
 .entry-panel button {
-    font-size: 1em;
+    font-size: 1rem;
 }
 
 .extra-container {
-    margin-top: 0.4em;
+    margin-top: 0.4rem;
 }
 
 .extra {
@@ -72,10 +104,4 @@
     max-width: 400px;
     min-height: 100px;
 }
-
-/**
- * Hide ugly Angular stuff on load
- */
-[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
-  display: none !important;
-}
+/********* entry-container **********/
