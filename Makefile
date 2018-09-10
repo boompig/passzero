@@ -15,7 +15,6 @@ csslint  := node_modules/csslint/dist/cli.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
 cleancss := node_modules/clean-css-cli/bin/cleancss
 tsc		 := node_modules/typescript/bin/tsc
-karma	 := node_modules/karma/
 
 all: lint test build-name
 
@@ -45,15 +44,11 @@ static/css/dist/%.min.css: static/css/src/%.css
 	mkdir -p static/css/dist
 	$(cleancss) $< >$@
 
-test: python-test js-test
+test: python-test
 	
 python-test: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest $(UNIT_TEST_SRC)
 	
-# in order to run javascript tests we need to compile the typescript
-js-test: $(js_src_targets) $(js_test_src) lint ts-compile
-	karma start
-
 test-cov: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html $(UNIT_TEST_SRC)
 
