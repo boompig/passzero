@@ -58,16 +58,11 @@ class PassZeroApiV1Tester(unittest.TestCase):
     def json_header(self):
         return {"Content-Type": "application/json"}
 
-    def setUp(self):
-        # disable certificate warnings for testing
-        requests.packages.urllib3.disable_warnings()
-
-    def tearDown(self):
+    def _fake_account_cleanup(self):
         # delete account with fake email
-        email = DEFAULT_EMAIL
         try:
             db_session = get_db_session()
-            user = pz_backend.get_account_with_email(db_session, email)
+            user = pz_backend.get_account_with_email(db_session, DEFAULT_EMAIL)
             assert user is not None
             pz_backend.delete_all_entries(db_session, user)
             pz_backend.delete_all_documents(db_session, user)
@@ -75,6 +70,15 @@ class PassZeroApiV1Tester(unittest.TestCase):
             pz_backend.delete_account(db_session, user)
         except NoResultFound:
             pass
+
+    def setUp(self):
+        # disable certificate warnings for testing
+        requests.packages.urllib3.disable_warnings()
+        # delete the account if it exists
+        self._fake_account_cleanup()
+
+    def tearDown(self):
+        self._fake_account_cleanup()
 
     def _login(self, session, email, password):
         auth_response = api.login(session, email, password)
