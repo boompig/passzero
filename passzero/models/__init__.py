@@ -78,7 +78,7 @@ class Entry(db.Model):
         Tag,
         secondary="entry_tags",
         lazy="subquery",
-        backref=db.backref("entries", lazy=True)
+        backref=db.backref("tagged_entries", lazy=True)
     )
 
     __mapper_args__ = {
@@ -105,7 +105,7 @@ class Entry(db.Model):
             "has_2fa": self.has_2fa,
             "version": self.version,
             "is_encrypted": True,
-            "tags": self.tags
+            "tags": [tag.to_json() for tag in self.tags]
         }
 
     def decrypt(self, key: str) -> dict:
@@ -130,7 +130,7 @@ class Entry(db.Model):
             "account": self.account,
             "username": dec_username,
             "password": dec_password,
-            "extra": dec_extra
+            "extra": dec_extra,
         }
 
     def encrypt(self, master_key: str, dec_entry: dict):
@@ -340,7 +340,8 @@ class Entry_v4(Entry):
             "extra": dec_messages[2],
             # add unencrypted metadata
             "has_2fa": self.has_2fa,
-            "version": self.version
+            "version": self.version,
+            "tags": self.tags
         }
 
     def encrypt(self, master_key: str, dec_entry: dict):
@@ -449,6 +450,7 @@ class Entry_v5(Entry):
         dec_contents_d["account"] = self.account
         dec_contents_d["has_2fa"] = self.has_2fa
         dec_contents_d["version"] = self.version
+        dec_contents_d["tags"] = self.tags
         return dec_contents_d
 
     def encrypt(self, master_key: str, dec_entry: dict) -> None:

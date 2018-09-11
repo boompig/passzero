@@ -8,6 +8,7 @@ interface IEntryUpload {
 	password: string;
 	extra: string;
 	has_2fa: boolean;
+	tags: string[];
 }
 
 /**
@@ -20,6 +21,7 @@ interface ICreateEntryForm {
 	extra: string;
 	has_2fa: boolean;
 	csrf_token: string;
+	tags: string[];
 }
 
 /**
@@ -33,6 +35,7 @@ interface IExistingEntry {
 	has_2fa: boolean;
 	id: number;
 	version: number;
+	tags: string[];
 }
 
 /**
@@ -46,6 +49,7 @@ interface IEditEntryForm {
 	extra: string;
 	has_2fa: boolean;
 	csrf_token: string;
+	tags: string[];
 }
 
 /**
@@ -59,6 +63,7 @@ interface IDecEntry {
 	has_2fa: boolean;
 	id: number;
 	show?: boolean;
+	tags: string[];
 }
 
 /**
@@ -70,5 +75,6 @@ interface IEncEntry {
 	has_2fa: boolean;
 	id: number;
 	show?: boolean;
+	tags: string[];
 }
 

@@ -32,7 +32,9 @@ const NewCtrl = function() {
 		password: "",
 		extra: "",
 		version: -1,
+		tags: [],
 	};
+
 
 	/**
 	 * UI settings
@@ -187,6 +189,7 @@ const NewCtrl = function() {
 		e.preventDefault();
 		const data = Utils.getFormData(e.target as HTMLElement) as IEditEntryForm;
 		const entryId = this.getEntryID();
+		data.tags = this.entry.tags.map((t) => t.name).filter((t) => t !== "");
 		pzAPI.editEntry(entryId, data)
 		.done((response) => {
 			window.location.href = "/entries/done_edit/" + data.account;
@@ -245,6 +248,32 @@ const NewCtrl = function() {
 			// hide the tooltip after a delay
 			$elem.tooltip("hide");
 		}, 3000);
+	};
+
+	/**
+	 * Add a tag to this entry
+	 */
+	this.appendTagField = () => {
+		const tag = {
+			"name": "",
+			"editing": true,
+		};
+		this.entry.tags.push(tag);
+	};
+
+	this.removeTag = (idx) => {
+		this.entry.tags.splice(idx, 1);
+	};
+
+	this.addTag = (idx) => {
+		this.entry.tags[idx].editing = false;
+		if (idx === this.entry.tags.length - 1) {
+			this.appendTagField();
+		}
+	};
+
+	this.setEditingTag = (idx) => {
+		this.entry.tags[idx].editing = true;
 	};
 
 	/**

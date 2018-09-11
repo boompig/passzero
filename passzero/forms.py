@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired
-from wtforms import BooleanField, Form, PasswordField, TextField, validators, IntegerField
+from wtforms import BooleanField, Form, PasswordField, TextField, validators, IntegerField, FieldList
 
 from passzero.limits import MAX_ENTRY_PASSWORD_LENGTH, MAX_GEN_PASSPHRASE_WORDS
 
@@ -45,6 +45,9 @@ class NewEntryForm(Form):
     extra = TextField("extra")
     has_2fa = BooleanField("has_2fa", [
         validators.AnyOf([True, False])
+    ])
+    tags = FieldList(TextField("name"), [
+        validators.DataRequired()
     ])
 
 

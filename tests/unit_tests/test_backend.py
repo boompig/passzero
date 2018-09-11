@@ -236,6 +236,7 @@ def __edit_entry(session, version):
         "password": u"test password",
         "extra": u"test extra",
         "has_2fa": True,
+        "tags": ["hello", "world"]
     }
     entry = backend.insert_entry_for_user(
         session,

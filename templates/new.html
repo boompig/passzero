@@ -51,7 +51,7 @@
         <input type="text"
             name="username"
             autocomplete="email"
-            required="true" 
+            required="true"
             class="form-control"
             ng-model="ctrl.entry.username" />
 
@@ -59,7 +59,7 @@
         <input type="password"
             name="password"
             id="password"
-            autocomplete="off" 
+            autocomplete="off"
             required="true"
             class="form-control"
             ng-model="ctrl.entry.password" />
@@ -145,7 +145,34 @@
             ng-model="ctrl.entry.has_2fa" />
         <label for="has_2fa">2FA enabled</label>
 
-        <button type="submit" class="btn btn-success form-control" 
+        <div class="tag-container">
+            {% raw %}
+            {{ this.entry.tags }}
+
+            <div data-ng-repeat="tag in ctrl.entry.tags">
+                <div ng-if="!tag.editing" class="entry-tag-name" ng-click="ctrl.setEditingTag($index)">
+                    <span class="glyphicon glyphicon-tag"></span>
+                    {{ tag.name }}
+                </div>
+                <div ng-if="tag.editing">
+                    <span class="glyphicon glyphicon-tag"></span>
+                    <input type="text" placeholder="tag" ng-model="ctrl.entry.tags[$index].name" />
+                    <button type="button" class="btn btn-danger btn-sm" ng-click="ctrl.removeTag($index)">
+                        <span class="glyphicon glyphicon-trash"></span>
+                    </button>
+                    <button type="button" class="btn btn-success btn-sm" ng-click="ctrl.addTag($index)">
+                        <span class="glyphicon glyphicon-ok" />
+                    </button>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-default" ng-click="ctrl.appendTagField()">
+                <span class="glyphicon glyphicon-tag"></span>&nbsp;Add Tag
+            </button>
+            {% endraw %}
+        </div>
+
+        <button type="submit" class="btn btn-success form-control"
             id="create-btn">{{ ("Save" if entry else "Create" ) }}</button>
     </form>
 {% endblock %}

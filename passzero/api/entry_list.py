@@ -75,6 +75,7 @@ class ApiEntryList(Resource):
         entry_parser.add_argument("password", type=str, required=True, location=("entry", ))
         entry_parser.add_argument("extra", required=False, type=str, default="", location=("entry", ))
         entry_parser.add_argument("has_2fa", required=True, type=bool, location=("entry", ))
+        entry_parser.add_argument("tags", action="append", location=("entry", ))
         entry_parser.parse_args(req=args)
         user_id = get_jwt_identity()["user_id"]
         user = db.session.query(User).filter_by(id=user_id).one()

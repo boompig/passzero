@@ -68,20 +68,20 @@ def app(request, db, my_app):
     return my_app
 
 
-@mock.patch("passzero.email.send_email")
-def create_active_account(client, email: str, password: str, m1):
+def create_active_account(client, email: str, password: str):
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
     # signup, etc etc
     #TODO for some reason can't mock out send_confirmation_email so mocking this instead
-    m1.return_value = True
-    r = api.signup(client, email, password)
-    assert r.status_code == 200
-    # get the token from calls
-    token = m1.call_args[0][2].split("?")[1].replace("token=", "")
-    # activate
-    r = api.activate_account(client, token)
-    assert r.status_code == 200
+    with mock.patch("passzero.email.send_email") as m1:
+        m1.return_value = True
+        r = api.signup(client, email, password)
+        assert r.status_code == 200
+        # get the token from calls
+        token = m1.call_args[0][2].split("?")[1].replace("token=", "")
+        # activate
+        r = api.activate_account(client, token)
+        assert r.status_code == 200
 
 
 def test_login_then_get_token(app):
@@ -398,7 +398,7 @@ def test_edit_non_existant_entry(app):
         assert r.status_code != 200
 
 
-def test_edit_entry(app):
+def test_edit_entry_no_tags(app):
     email = DEFAULT_EMAIL
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
@@ -411,7 +411,57 @@ def test_edit_entry(app):
             "username": "entry_username",
             "password": "entry_pass",
             "extra": "entry_extra",
-            "has_2fa": False
+            "has_2fa": False,
+            "tags": []
+        }
+        entry_id = api.create_entry_with_token(
+            client,
+            old_entry,
+            password,
+            token,
+            check_status=True
+        )
+        print("Created entry")
+        new_entry = {
+            "account": "new account",
+            "username": "new username",
+            "password": "new password",
+            "extra": "new extra",
+            "has_2fa": True,
+            "tags": []
+        }
+        api.edit_entry_with_token(
+            client,
+            entry_id,
+            new_entry,
+            password,
+            token,
+            check_status=True
+        )
+        entries = api.get_encrypted_entries_with_token(client,
+                token, check_status=True)
+        assert len(entries) == 1
+        assert entries[0]["id"] == entry_id
+        entry_prime = api.decrypt_entry_with_token(client,
+                entry_id, password, token, check_status=True)
+        _assert_entries_equal(new_entry, entry_prime)
+
+
+def test_edit_entry_with_tags(app):
+    email = DEFAULT_EMAIL
+    password = DEFAULT_PASSWORD
+    with app.test_client() as client:
+        create_active_account(client,
+            email, password)
+        token = api.login_with_token(client,
+            email, password, check_status=True)
+        old_entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+            "has_2fa": False,
+            "tags": ["hello", "world"]
         }
         entry_id = api.create_entry_with_token(
             client,
@@ -425,7 +475,8 @@ def test_edit_entry(app):
             "username": "new username",
             "password": "new password",
             "extra": "new extra",
-            "has_2fa": True
+            "has_2fa": True,
+            "tags": ["first tag", "second tag", "third tag"]
         }
         api.edit_entry_with_token(
             client,

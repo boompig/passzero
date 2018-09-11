@@ -7,7 +7,7 @@ from passzero import audit
 from passzero.config import SALT_SIZE, DEFAULT_ENTRY_VERSION
 from passzero.crypto_utils import get_hashed_password, get_salt, PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
-                             Entry, Service, User, Entry_v4, Entry_v3, Entry_v5)
+                             Entry, Service, User, Entry_v4, Entry_v3, Entry_v5, Tag)
 
 from .utils import base64_encode
 
@@ -35,10 +35,13 @@ def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, An
     return dec_entries_json
 
 
-def _decrypt_row(row, key: str):
+def _decrypt_row(row: Entry, key: str) -> dict:
     """Used in `decrypt_entries_pool`"""
+    assert isinstance(row, Entry)
+    assert isinstance(key, str)
     obj = row.decrypt(key)
     obj["id"] = row.id
+    obj["tags"] = [tag.to_json() for tag in row.tags]
     return obj
 
 
@@ -48,7 +51,7 @@ def decrypt_entries_pool(entry_key_pair: Tuple[dict, str]) -> List[dict]:
     return result
 
 
-def _decrypt_entries_multiprocess(entries, key: str) -> List[dict]:
+def _decrypt_entries_multiprocess(entries: List[Entry], key: str) -> List[dict]:
     from multiprocessing import Pool
     pool = Pool(5)
     entry_key_pairs = [(entry, key) for entry in entries]
@@ -58,7 +61,7 @@ def _decrypt_entries_multiprocess(entries, key: str) -> List[dict]:
     return results
 
 
-def _decrypt_entries_single_thread(entries, key: str) -> List[dict]:
+def _decrypt_entries_single_thread(entries: List[Entry], key: str) -> List[dict]:
     return [_decrypt_row(row, key) for row in entries]
 
 
@@ -197,6 +200,15 @@ def encrypt_entry(user_key: str, dec_entry: dict,
     return entry
 
 
+def find_matching_tags(session, entries: List[str]) -> Dict[str, Tag]:
+    """Find tags matching these strings"""
+    tags = session.query(Tag).filter(Tag.name.in_(entries)).all()
+    d = {}
+    for tag in tags:
+        d[tag.name] = tag
+    return d
+
+
 def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_id: int) -> Entry:
     """
     Try to edit the entry with ID <entry_id>. Commit changes to DB.
@@ -212,12 +224,14 @@ def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_i
     """
     entry = session.query(Entry).filter_by(id=entry_id).one()
     assert entry.user_id == user_id
+    assert isinstance(edited_entry["tags"], list)
     dec_entry = {
         "account": edited_entry["account"],
         "username": edited_entry["username"],
         "password": edited_entry["password"],
         "extra": (edited_entry["extra"] or ""),
-        "has_2fa": edited_entry["has_2fa"]
+        "has_2fa": edited_entry["has_2fa"],
+        "tags": edited_entry["tags"]
     }
     # do not add e2 to session, it's just a placeholder
     e2 = encrypt_entry(user_key, dec_entry,
@@ -236,6 +250,18 @@ def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_i
     # update those parameters which might have changed on encryption
     entry.iv = e2.iv
     entry.key_salt = e2.key_salt
+    # create any necessary new tags here
+    tags = find_matching_tags(session, dec_entry["tags"])
+    assert isinstance(tags, dict)
+    for tag_name in dec_entry["tags"]:
+        if tag_name not in tags:
+            # we need to create a new tag
+            new_tag = Tag(name=tag_name, user_id=user_id)
+            tags[tag_name] = new_tag
+            session.add(new_tag)
+    entry.tags = []
+    for tag_name, tag in tags.items():
+        entry.tags.append(tag)
     session.commit()
     return entry
 
