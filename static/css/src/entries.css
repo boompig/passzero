@@ -50,17 +50,21 @@ html, body {
     margin-top: .5rem;
 }
 
+.entry-title {
+    font-weight: bold;
+    margin: .1rem;
+    font-size: 1.1rem;
+}
+
 @media(max-width: 768px) {
     .entry {
         padding-left: 1rem;
         padding-right: 1rem;
     }
-}
 
-.entry-title {
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin: .1rem;
+    .entry-title {
+        font-size: 1.2rem;
+    }
 }
 
 .password {
