@@ -1,3 +1,8 @@
+/*
+ * This is the styling for the logged-out landing navbar
+ * This is *not* the same as the logged-in bootstrap navbar
+ */
+
 nav.navbar {
     text-align: center;
     max-width: 500px;

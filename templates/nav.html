@@ -14,48 +14,42 @@
         ]
 )-%}
 
-<nav class="navbar navbar-default navbar-fixed-top">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="/">PassZero</a>
-        </div>
+<nav class="navbar navbar-dark bg-primary fixed-top navbar-expand-lg">
+        <a class="navbar-brand" href="/">PassZero</a>
+        <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
         <form method="POST" action="/logout" id="logout-form" style="display: none;">
         </form>
 
-        <div class="collapse navbar-collapse navbar-right" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav">
+        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+            <ul class="navbar-nav ml-auto justify-content-end">
                 {% for href, id, caption in navbar %}
-                    <li {% if href == request.path %} class="active" {% endif %}>
+                    <li class="navbar-item{% if href == request.path %} active{% endif %}">
                         {%- if id == "logout" -%}
                         <!-- this allows the logout process to happen via POST -->
-                        <a href="#" onclick="document.getElementById('logout-form').submit();">
+                        <a class="nav-link" href="#" onclick="document.getElementById('logout-form').submit();">
                         {% else %}
-                        <a href="{{ href|e }}">
+                        <a class="nav-link" href="{{ href|e }}">
                         {%- endif -%}
                             {%- if id == "index" -%}
-                                <span class="glyphicon glyphicon-home"></span>
+                                <i class="fas fa-home"></i>
                             {%- elif id == "about" -%}
-                                <span class="glyphicon glyphicon-file"></span>
+                                <i class="fas fa-file"></i>
                             {%- elif id == "login" -%}
-                                <span class="glyphicon glyphicon-log-in"></span>
+                                <i class="fas fa-sign-in-alt"></i>
                             {%- elif id == "signup" -%}
-                                <span class="glyphicon glyphicon-edit"></span>
+                                <i class="fas fa-edit"></i>
                             {%- elif id == "entries" -%}
-                                <span class="glyphicon glyphicon-th-list"></span>
+                                <i class="fas fa-list"></i>
                             {%- elif id == "new" -%}
-                                <span class="glyphicon glyphicon-plus"></span>
+                                <i class="fas fa-plus"></i>
                             {%- elif id == "profile" -%}
-                                <span class="glyphicon glyphicon-user"></span>
+                                <i class="fas fa-user"></i>
                             {%- elif id == "advanced" -%}
-                                <span class="glyphicon glyphicon-wrench"></span>
+                                <i class="fas fa-wrench"></i>
                             {%- elif id == "logout" -%}
-                                <span class="glyphicon glyphicon-log-out"></span>
+                                <i class="fas fa-sign-out-alt"></i>
                             {%- endif -%}
                             <span class="nav-text">{{ caption|e }}</span>
                         </a>
@@ -63,7 +57,4 @@
                 {% endfor %}
             </ul>
         </div><!-- /.navbar-collapse -->
-    </div><!-- /.container-fluid -->
 </nav>
-
-<!-- vim: set ft=jinja: -->

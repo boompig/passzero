@@ -12,17 +12,17 @@
 <h1 class="title">Advanced Options</h1>
 <div id="advanced-tabpanel" role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation">
-            <a href="#password-strength" aria-controls="password-strength" role="tab" data-toggle="tab">Password Strength</a>
+        <li role="presentation" class="nav-item">
+            <a href="#password-strength" class="nav-link" aria-controls="password-strength" role="tab" data-toggle="tab" aria-selected="false">Password Strength</a>
         </li>
-        <li role="presentation">
-            <a href="#2fa-audit" aria-controls="2fa-audit" role="tab" data-toggle="tab">2FA Audit</a>
+        <li role="presentation" class="nav-item">
+            <a href="#mfa-audit" class="nav-link" aria-controls="mfa-audit" role="tab" data-toggle="tab" aria-selected="false">MFA Audit</a>
         </li>
-        <li role="presentation" class="active">
-            <a href="#export" aria-controls="export" role="tab" data-toggle="tab">Export</a>
+        <li role="presentation" class="nav-item">
+            <a href="#export" class="nav-link active" aria-controls="export" role="tab" data-toggle="tab" aria-selected="true">Export</a>
         </li>
-        <li role="presentation">
-            <a href="#nuke" aria-controls="nuke" role="tab" data-toggle="tab">Nuke</a>
+        <li role="presentation" class="nav-item">
+            <a href="#nuke" class="nav-link" aria-controls="nuke" role="tab" data-toggle="tab" aria-selected="false">Nuke</a>
         </li>
     </ul>
     <div class="tab-content">
@@ -31,12 +31,12 @@
                 <p><a href="/entries/strength">Click here</a> to see password strength for all your entries</p>
             </div>
         </div>
-        <div id="2fa-audit" class="tab-pane" role="tabpanel">
+        <div id="mfa-audit" class="tab-pane" role="tabpanel">
             <div id="2fa-audit-container" class="tab-text-container">
                 <p><a href="/entries/2fa">Click here</a> to see whether 2FA is enabled for all your entries</p>
             </div>
         </div>
-        <div id="export" class="tab-pane active" role="tabpanel">
+        <div id="export" class="tab-pane show active" role="tabpanel">
             <div id="export-container" class="tab-text-container">
                 <p>Generate a CSV file of all your entries, still encrypted. Read about how your data is encrypted so you can decrypt it locally.</p>
 
@@ -56,5 +56,3 @@
     </div>
 </div>
 {% endblock %}
-
-<!-- vim: set filetype=jinja: -->
