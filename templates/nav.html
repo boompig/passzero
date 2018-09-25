@@ -39,23 +39,23 @@
                         <a href="{{ href|e }}">
                         {%- endif -%}
                             {%- if id == "index" -%}
-                                <span class="glyphicon glyphicon-home"></span>
+                                <i class="fas fa-home"></i>
                             {%- elif id == "about" -%}
-                                <span class="glyphicon glyphicon-file"></span>
+                                <i class="fas fa-file"></i>
                             {%- elif id == "login" -%}
-                                <span class="glyphicon glyphicon-log-in"></span>
+                                <i class="fas fa-sign-in-alt"></i>
                             {%- elif id == "signup" -%}
-                                <span class="glyphicon glyphicon-edit"></span>
+                                <i class="fas fa-edit"></i>
                             {%- elif id == "entries" -%}
-                                <span class="glyphicon glyphicon-th-list"></span>
+                                <i class="fas fa-list"></i>
                             {%- elif id == "new" -%}
-                                <span class="glyphicon glyphicon-plus"></span>
+                                <i class="fas fa-plus"></i>
                             {%- elif id == "profile" -%}
-                                <span class="glyphicon glyphicon-user"></span>
+                                <i class="fas fa-user"></i>
                             {%- elif id == "advanced" -%}
-                                <span class="glyphicon glyphicon-wrench"></span>
+                                <i class="fas fa-wrench"></i>
                             {%- elif id == "logout" -%}
-                                <span class="glyphicon glyphicon-log-out"></span>
+                                <i class="fas fa-sign-out-alt"></i>
                             {%- endif -%}
                             <span class="nav-text">{{ caption|e }}</span>
                         </a>

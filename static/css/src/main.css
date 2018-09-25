@@ -51,8 +51,8 @@ ul.nav.navbar-nav>li>a:hover {
     color: #555;
 }
 
-ul.nav.navbar-nav>li>a>.glyphicon {
-    margin-right: 0.4em;
+ul.nav.navbar-nav>li>a>.fas {
+    margin-right: 0.4rem;
 }
 
 .navbar-default .navbar-toggle span.icon-bar {
