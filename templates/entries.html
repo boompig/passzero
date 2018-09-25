@@ -36,13 +36,17 @@
 
     <form id="search-form" ng-if="ctrl.loadedEntries && ctrl.entries.length > 0"
         ng-submit="ctrl.submitSearch()" ng-cloak>
-        <div class="form-group has-feedback">
+        <div class="input-group">
             <input type="text" name="search" id="search" class="form-control"
                 placeholder="search"
                 autofocus
                 ng-change="ctrl.submitSearch()"
                 ng-model="ctrl.search" />
-            <i class="fas fa-search form-control-feedback"></i>
+            <div class="input-group-append">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+            </div>
         </div>
     </form>
 

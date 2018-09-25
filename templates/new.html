@@ -43,30 +43,36 @@
             {%- endif -%}
         </h3>
 
-        <label for="account">Account</label>
-        <input type="text"
-            name="account"
-            required="true"
-            class="form-control"
-            autocomplete="off"
-            ng-model="ctrl.entry.account" />
+        <div class="form-group">
+            <label for="account">Account</label>
+            <input type="text"
+                name="account"
+                required="true"
+                class="form-control"
+                autocomplete="off"
+                ng-model="ctrl.entry.account" />
+        </div>
 
-        <label for="username">Username</label>
-        <input type="text"
-            name="username"
-            autocomplete="email"
-            required="true" 
-            class="form-control"
-            ng-model="ctrl.entry.username" />
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text"
+                name="username"
+                autocomplete="email"
+                required="true" 
+                class="form-control"
+                ng-model="ctrl.entry.username" />
+        </div>
 
-        <label for="password">Password</label>
-        <input type="password"
-            name="password"
-            id="password"
-            autocomplete="off" 
-            required="true"
-            class="form-control"
-            ng-model="ctrl.entry.password" />
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password"
+                name="password"
+                id="password"
+                autocomplete="off" 
+                required="true"
+                class="form-control"
+                ng-model="ctrl.entry.password" />
+        </div>
 
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
 
@@ -95,22 +101,20 @@
 
         {% raw %}
         <div id="settings-container" data-ng-if="ctrl.showSettings" class="ng-cloak form-group">
-            <div class="input-group">
+            <div class="form-group">
                 <h4>Password generation mode</h4>
-                <div class="radio">
-                    <label>
-                        <input type="radio" name="passwordGenMode"
-                            ng-model="ctrl.passwordGenMode" value="password">Password
-                    </label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="passwordGenMode" id="gen-mode-password"
+                        ng-model="ctrl.passwordGenMode" value="password">
+                    <label class="form-check-label" for="#gen-mode-password">Password</label>
                 </div>
-                <div class="radio">
-                    <label>
-                        <input type="radio" name="passwordGenMode"
-                            ng-model="ctrl.passwordGenMode" value="phrase">Phrase
-                    </label>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="passwordGenMode" id="gen-mode-phrase"
+                        ng-model="ctrl.passwordGenMode" value="phrase">
+                    <label class="form-check-label" for="#gen-mode-phrase">Phrase</label>
                 </div>
             </div>
-            <div class="password-settings input-group" ng-if="ctrl.passwordGenMode === 'password'">
+            <div class="password-settings form-group" ng-if="ctrl.passwordGenMode === 'password'">
                 <h4>Password Settings</h4>
                 <span>Characters in Password: {{ ctrl.passwordLength }}</span>
                 <input type="range" class="input-range" min="6" max="32" step="1"
