@@ -31,6 +31,10 @@ html, body {
 #search-form input[type="text"] {
     font-size: 1rem;
 }
+
+#search-form i {
+    padding-top: .45rem;
+}
 /********* search-form **************/
 
 /********* entry-container **********/
