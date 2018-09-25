@@ -1,11 +1,10 @@
-
-.form-control {
+main .form-control {
     /* display input on own line */
     display: block;
     width: 80%;
 }
 
-form {
+main form {
     border-radius: 10px;
     border: 1px solid #ccc;
     display: block;
@@ -16,37 +15,37 @@ form {
 }
 
 @media(min-width: 700px) {
-    .form-control {
+    main .form-control {
         width: 80%;
     }
 
-    form {
+    main form {
         padding-left: 2em;
         padding-top: 1em;
     }
 }
 
 @media(max-width: 699px) {
-    .form-control {
+    main .form-control {
         /* on small devices form should take up more of screen */
         width: 100%;
     }
 
-    form {
+    main form {
         border: none;
         padding-left: 0;
     }
 }
 
-.btn-container {
+main .btn-container {
     margin-top: 0.5em;
 }
 
-button[type="submit"] {
+main button[type="submit"] {
     margin-top: 0.5em;
 }
 
-.input-range {
+main .input-range {
     max-width: 300px;
     min-width: 250px;
 }
@@ -63,11 +62,11 @@ button[type="submit"] {
     display: block;
 }
 
-.btn-settings {
+main .btn-settings {
     border: 1px solid black;
     background-color: #fff;
 }
 
-.btn-settings .fas {
+main .btn-settings .fas {
     margin-right: 0.4rem;
 }
