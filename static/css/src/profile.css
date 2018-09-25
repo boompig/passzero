@@ -1,0 +1,11 @@
+#global-error-msg {
+    display: none;
+}
+
+#global-success-msg {
+    display: none;
+}
+
+#change-password .progress-alert {
+    display: none;
+}

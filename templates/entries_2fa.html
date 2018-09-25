@@ -13,14 +13,9 @@
 	<script
 		src="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.30.5/js/jquery.tablesorter.min.js"
 		integrity="sha256-hwBdweUyYRh66ChQYK+o9bSD1fyYShd6oQVwZ6iq7Ww="
-		crossorigin="anonymous"></script>
-	<script>
-		$(function() {
-			$("#2fa-audit-table").tablesorter({
-				theme: "bootstrap",
-			});
-		});
-	</script>
+        crossorigin="anonymous"></script>
+    <!-- custom js -->
+    <script src="{{ url_for("static", filename="js/dist/entries-2fa.min.js") }}"></script>
 {% endblock %}
 
 {% block body %}

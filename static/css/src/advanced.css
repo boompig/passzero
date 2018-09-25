@@ -38,6 +38,10 @@ form .form-error {
     margin: 0 auto;
 }
 
+#nuke-success-msg {
+    display: none;
+}
+
 
 /* change-passsword */
 

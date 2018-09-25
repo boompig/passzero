@@ -19,8 +19,6 @@
         <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <form method="POST" action="/logout" id="logout-form" style="display: none;">
-        </form>
 
         <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
             <ul class="navbar-nav ml-auto justify-content-end">
@@ -28,10 +26,13 @@
                     <li class="navbar-item{% if href == request.path %} active{% endif %}">
                         {%- if id == "logout" -%}
                         <!-- this allows the logout process to happen via POST -->
-                        <a class="nav-link" href="#" onclick="document.getElementById('logout-form').submit();">
+                        <form method="POST" action="/logout" id="nav-logout-form">
+                            <button class="btn btn-link nav-link" type="submit" role="link">
+                                <i class="fas fa-sign-out-alt"></i><span class="nav-text">Sign Out</span>
+                            </button>
+                        </form>
                         {% else %}
                         <a class="nav-link" href="{{ href|e }}">
-                        {%- endif -%}
                             {%- if id == "index" -%}
                                 <i class="fas fa-home"></i>
                             {%- elif id == "about" -%}
@@ -48,11 +49,10 @@
                                 <i class="fas fa-user"></i>
                             {%- elif id == "advanced" -%}
                                 <i class="fas fa-wrench"></i>
-                            {%- elif id == "logout" -%}
-                                <i class="fas fa-sign-out-alt"></i>
                             {%- endif -%}
                             <span class="nav-text">{{ caption|e }}</span>
                         </a>
+                        {%- endif -%}
                     </li>
                 {% endfor %}
             </ul>

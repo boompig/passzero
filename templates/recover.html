@@ -13,14 +13,14 @@
 
     <div class="alert alert-warning"><strong>Warning</strong> unless you have key rotation turned on, this will delete all your saved passwords. This is because your passwords are encrypted using your old password, so not even we can break this encryption.</div>
 
-    <div id="success-msg" class="alert" style="display: none;"></div>
+    <div id="success-msg" class="alert"></div>
 
     {%- if confirm -%}
-    <form role="form" action="/api/v1/user/recover/confirm" method="post"
-        onsubmit="recoverPasswordConfirm(event)">
+    <form role="form" action="/api/v1/user/recover/confirm" method="POST"
+        id="recover-confirm-form">
     {%- else -%}
-    <form role="form" action="/api/v1/user/recover" method="post"
-        onsubmit="recoverPassword(event)">
+    <form role="form" action="/api/v1/user/recover" method="POST"
+        id="recover-form">
     {%- endif -%}
         <div id="server-msg" class="error"></div>
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />

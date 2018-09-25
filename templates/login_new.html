@@ -7,7 +7,7 @@
 </nav>
 {% include "flash_messages.html" %}
 <div id="form-container">
-    <form method="POST" action="/signup" role="form" onsubmit="Login.createAccount(event)">
+    <form method="POST" action="/signup" role="form" id="login-new-form">
         <h1 class="title">
             Sign Up for PassZero
         </h1>
@@ -27,9 +27,6 @@
         <input type="password" class="form-control" name="confirm_password" tabindex="3"
                 placeholder="confirm password" required="true" />
 
-        <button id="submit-btn"
-            type="submit" name="submit">
-                Sign Up
-        </button>
+        <button id="submit-btn" type="submit" name="submit">Sign Up</button>
     </form>
 </div>

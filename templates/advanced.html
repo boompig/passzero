@@ -40,15 +40,15 @@
             <div id="export-container" class="tab-text-container">
                 <p>Generate a CSV file of all your entries, still encrypted. Read about how your data is encrypted so you can decrypt it locally.</p>
 
-                <button type="submit" id="export-btn" class="btn btn-success"
-                    onclick="window.location.href='/advanced/export'">Export Entries</button>
+                <a id="export-btn" class="btn btn-success"
+                    href="/advanced/export">Export Entries</a>
             </div>
         </div>
         <div id="nuke" class="tab-pane" role="tabpanel">
             <div class="alert alert-warning"><strong>Warning</strong> This action deletes all your entries and cannot be undone</div>
-            <div class="alert alert-success" id="nuke-success-msg" style="display:none;"></div>
-            <form role="form" action="/api/v1/entries/nuclear" method="post"
-                onsubmit="nukeEntries(event)">
+            <div class="alert alert-success" id="nuke-success-msg"></div>
+            <form role="form" action="/api/v1/entries/nuclear" method="POST"
+                id="nuke-entries-form">
                 <input type="hidden" name="csrf_token" value={{ csrf_token() }} />
                 <button type="submit" class="btn btn-danger">Nuke Entries</button>
             </form>

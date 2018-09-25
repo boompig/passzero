@@ -41,6 +41,15 @@ $(() => {
 		console.log("checked = %s", c);
 		$("button[type='submit']").prop("disabled", !c);
 	});
+
+	let elem = document.querySelector("#recover-form");
+	console.log(elem);
+	if (elem) {
+			elem.addEventListener("submit", recoverPassword);
+		} else {
+			elem = document.querySelector("#recover-confirm-form");
+			elem.addEventListener("submit", recoverPasswordConfirm);
+		}
 });
 
 //export { recoverPassword, recoverPasswordConfirm };
