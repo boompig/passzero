@@ -10,6 +10,10 @@
 {% endblock %}
 
 {% block css %}
+    <!-- fontawesome glyphicons -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/solid.css" integrity="sha384-VGP9aw4WtGH/uPAOseYxZ+Vz/vaTb1ehm1bwx92Fm8dTrE+3boLfF1SpAtB1z7HW" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/fontawesome.css" integrity="sha384-1rquJLNOM3ijoueaaeS5m+McXPJCGdr5HcA03/VHXxcp2kX2sUrQDmFc3jR5i/C7" crossorigin="anonymous">
+    <!-- custom style -->
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/entries.min.css") + "?build=" + config['BUILD_ID'] }}" />
     <style>
     [ng-cloak] {
@@ -32,13 +36,17 @@
 
     <form id="search-form" ng-if="ctrl.loadedEntries && ctrl.entries.length > 0"
         ng-submit="ctrl.submitSearch()" ng-cloak>
-        <div class="form-group has-feedback">
+        <div class="input-group">
             <input type="text" name="search" id="search" class="form-control"
                 placeholder="search"
                 autofocus
                 ng-change="ctrl.submitSearch()"
                 ng-model="ctrl.search" />
-            <i class="glyphicon glyphicon-search form-control-feedback"></i>
+            <div class="input-group-append">
+                <span class="input-group-text">
+                    <i class="fas fa-search"></i>
+                </span>
+            </div>
         </div>
     </form>
 

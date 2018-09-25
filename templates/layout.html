@@ -18,11 +18,12 @@
         <link rel="manifest" href="/manifest.json">
         <link rel="icon" type="image/png" href="/favicon.png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-        <link
-            href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
-            crossorigin="anonymous">
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css" integrity="sha256-SmSEXNAArTgQ8SR6kKpyP/N+jA8f8q8KpG0qQldSKos=" crossorigin="anonymous" />
+
+        <!-- fontawesome glyphicons -->
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/solid.css" integrity="sha384-VGP9aw4WtGH/uPAOseYxZ+Vz/vaTb1ehm1bwx92Fm8dTrE+3boLfF1SpAtB1z7HW" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/fontawesome.css" integrity="sha384-1rquJLNOM3ijoueaaeS5m+McXPJCGdr5HcA03/VHXxcp2kX2sUrQDmFc3jR5i/C7" crossorigin="anonymous">
 
         <!-- custom CSS -->
         <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/main.min.css") + "?build=" + config['BUILD_ID'] }}" />
@@ -31,7 +32,7 @@
     </head>
     <body ng-controller="PassZeroCtrl as ctrl">
         {% include "nav.html" %}
-        <div class="container">
+        <main class="container">
             <div class="inner-container">
                 {% with messages = get_flashed_messages() %}
                     {% if messages %}
@@ -46,17 +47,17 @@
                 {% block body %}
                 {% endblock %}
             </div>
-        </div>
+        </main>
 
         <!-- include jQuery on every page -->
         <script
             src="https://code.jquery.com/jquery-3.2.1.min.js"
             integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
             crossorigin="anonymous"></script>
-        <script
-            src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"
-            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
-            crossorigin="anonymous"></script>
+
+        <!-- include bootstrap4 for navbar expansion. popper is for bootstrap tooltips (this specific one!) -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha256-VsEqElsCHSGmnmHXGQzvoWjWwoznFSZc6hs7ARLRacQ=" crossorigin="anonymous"></script>
 
         <!-- include utilities JS file -->
         <script src="{{ url_for("static", filename="js/dist/utils.min.js") + "?build=" + config['BUILD_ID'] }}"></script>

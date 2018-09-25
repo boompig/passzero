@@ -5,12 +5,6 @@ html, body {
     padding: 0;
 }
 
-.container {
-    background-color: #fff;
-    min-height: 100%;
-    margin-top: 45px;
-}
-
 h1.title, h2.title, h3.title {
     text-align: center;
     font-weight: normal;
@@ -25,49 +19,14 @@ h1.title, h2.title, h3.title {
 }
 
 /***** customize navbar ***/
-nav.navbar {
-    background-color: #4FA8E0;
+nav .fas {
+    margin-right: .4rem;
 }
 
-ul.nav.navbar-nav>li>a, ul.nav>li {
-    color: #fff;
-}
-
-.navbar-header>a.navbar-brand {
-    color: #fff;
-}
-
-ul.nav.navbar-nav>li.active>a {
-    color: #fff;
-    background-color: #1681C4;
-}
-
-ul.nav.navbar-nav>li.active>a:hover {
-    background-color: #1681C4;
-    color: #555;
-}
-
-ul.nav.navbar-nav>li>a:hover {
-    color: #555;
-}
-
-ul.nav.navbar-nav>li>a>.glyphicon {
-    margin-right: 0.4em;
-}
-
-.navbar-default .navbar-toggle span.icon-bar {
-    color: #fff;
+main.container {
     background-color: #fff;
-}
-
-.navbar-header>button.navbar-toggle {
-    border-color: #fff;
-}
-
-.navbar-header>button.navbar-toggle:hover, .navbar-header>button.navbar-toggle:focus {
-    background-color: #1681C4;
+    min-height: 100%;
+    padding-top: 4rem;
 }
 /***************************/
 
-/**** button styling *******/
-/***************************/

@@ -16,6 +16,11 @@ html, body {
     height: 100%;
 }
 
+#hero nav.navbar {
+    max-width: 100%;
+    display: block;
+}
+
 .flashes {
     width: 80%;
     margin: 0 auto;
