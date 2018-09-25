@@ -45,10 +45,10 @@ static/css/dist/%.min.css: static/css/src/%.css
 	$(cleancss) $< >$@
 
 test: python-test
-	
+
 python-test: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest $(UNIT_TEST_SRC)
-	
+
 test-cov: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html $(UNIT_TEST_SRC)
 
