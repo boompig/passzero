@@ -1,12 +1,12 @@
 {% extends "layout.html" %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") }}" />
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/profile.min.css") }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/profile.min.css") + "?build=" + config['BUILD_ID'] }}" />
 {% endblock %}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/dist/profile.min.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/profile.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block body %}

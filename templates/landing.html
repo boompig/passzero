@@ -8,8 +8,8 @@
         <title>PassZero</title>
 
         <link rel="manifest" href="/manifest.json" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/landing.min.css") }}" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/navbar.min.css") }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/landing.min.css") + "?build=" + config['BUILD_ID'] }}" />
+        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/navbar.min.css") + "?build=" + config['BUILD_ID'] }}" />
     </head>
     <body>
         <div id="hero">

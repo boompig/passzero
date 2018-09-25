@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/about.min.css") }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/about.min.css") + "?build=" + config['BUILD_ID'] }}" />
 {% endblock %}
 
 {% block body %}

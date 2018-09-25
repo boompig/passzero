@@ -1,7 +1,7 @@
 {% extends "layout.html" %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}" />
 	<link rel="stylesheet"
 		href="https://cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.30.5/css/theme.bootstrap_3.min.css"
 		integrity="sha256-dXZ9g5NdsPlD0182JqLz9UFael+Ug5AYo63RfujWPu8="
@@ -15,7 +15,7 @@
 		integrity="sha256-hwBdweUyYRh66ChQYK+o9bSD1fyYShd6oQVwZ6iq7Ww="
         crossorigin="anonymous"></script>
     <!-- custom js -->
-    <script src="{{ url_for("static", filename="js/dist/entries-2fa.min.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/entries-2fa.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block body %}
