@@ -18,7 +18,7 @@ docutils==0.14
 execnet==1.5.0
 first==2.0.1
 flake8==3.5.0
-Flask==0.10.1
+Flask==0.12.4
 Flask-Compress==1.0.2
 Flask-Cors==3.0.3
 Flask-JWT-Extended==3.7.0
