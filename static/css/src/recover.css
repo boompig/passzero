@@ -14,3 +14,7 @@ button[type='submit'] {
 label {
     margin-top: 10px;
 }
+
+#success-msg {
+    display: none;
+}
