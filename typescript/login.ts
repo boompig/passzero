@@ -117,6 +117,14 @@ const Login = {
 			$("[name='remember']").prop("checked", true);
 			$("[name='email']").val(email);
 		}
+
+		let form = document.querySelector("#login-existing-form");
+		if (form) {
+			form.addEventListener("submit", Login.login);
+		} else {
+			form = document.querySelector("#login-new-form");
+			form.addEventListener("submit", Login.createAccount);
+		}
 	}
 };
 

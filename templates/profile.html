@@ -35,12 +35,12 @@
                 <h3 class="title">Random password generation preferences</h3>
                 <form role="form" id="user-prefs-form" onsubmit="Profile.updatePrefs(event)">
                     <label>Default number of characters in random password</label>
-                    <input type="number" name="default_random_password_length" 
+                    <input type="number" name="default_random_password_length"
                         class="form-control"
                         value="{{ user_prefs["default_random_password_length"] }}"
                         min="1" max="255" />
                         <label>Default number of words in random passphrase</label>
-                    <input type="number" name="default_random_passphrase_length" 
+                    <input type="number" name="default_random_passphrase_length"
                         class="form-control"
                         value="{{ user_prefs["default_random_passphrase_length"] }}"
                         min="1" max="10" />

@@ -5,7 +5,7 @@ from flask import Blueprint, Flask
 from flask_compress import Compress
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from flask_sslify import SSLify
+from flask_talisman import Talisman
 from jwt.exceptions import DecodeError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.contrib.fixers import ProxyFix
@@ -94,13 +94,25 @@ def create_app(name: str, settings_override: dict = {}):
     # create SSL secret keys
     if "FLASK_SECRET_KEY" in os.environ:
         app.secret_key = str(os.environ["FLASK_SECRET_KEY"])
-        SSLify(app, permanent=True)
         app.config["DEBUG"] = False
     else:
-        if "NO_SSL" not in os.environ:
-            SSLify(app, permanent=True)
-        app.secret_key = "64f5abcf8369e362c36a6220128de068"
         app.config["DEBUG"] = True
+        app.secret_key = "64f5abcf8369e362c36a6220128de068"
+
+    Talisman(
+        app,
+        force_https_permanent=True,
+        content_security_policy={
+            "default-src": "\'self\'",
+            # CDN for javascript
+            "script-src": ["\'self\'", "cdnjs.cloudflare.com"],
+            # CDN for CSS
+            "style-src": ["\'self\'", "cdnjs.cloudflare.com", "use.fontawesome.com"],
+            "font-src": ["use.fontawesome.com"],
+            # NOTE: data: is needed for https://github.com/twbs/bootstrap/issues/25394
+            "img-src": ["\'self\'", "data:"]
+        }
+    )
 
     # add the database
     db.app = app

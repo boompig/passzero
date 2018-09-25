@@ -7,7 +7,7 @@
 </nav>
 {% include "flash_messages.html" %}
 <div id="form-container">
-    <form method="POST" action="/login" role="form" onsubmit="Login.login(event)">
+    <form method="POST" action="/login" id="login-existing-form" role="form">
         <h1 class="title">
             Login to PassZero
         </h1>
@@ -30,9 +30,6 @@
 
         <a id="forgot-password" href="{{ url_for("main_routes.recover_password") }}">Forgot Password</a>
 
-        <button id="submit-btn"
-            type="submit" name="submit">
-                Log In
-        </button>
+        <button id="submit-btn" type="submit" name="submit">Log In</button>
     </form>
 </div>

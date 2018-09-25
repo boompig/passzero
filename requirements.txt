@@ -26,6 +26,7 @@ Flask-Login==0.2.11
 flask-restplus==0.10.1
 Flask-SQLAlchemy==2.0
 Flask-SSLify==0.1.4
+flask-talisman==0.5.1
 Flask-WTF==0.14.2
 greenlet==0.4.12
 gunicorn==19.9.0
