@@ -74,6 +74,7 @@ head {
     border-radius: 5px;
     cursor: pointer;
     border: 0;
+    text-decoration: none;
 
     z-index: 10;
 }
