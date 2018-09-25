@@ -68,6 +68,6 @@ button[type="submit"] {
     background-color: #fff;
 }
 
-.btn-settings .glyphicon {
-    margin-right: 0.5em;
+.btn-settings .fas {
+    margin-right: 0.4rem;
 }

@@ -1,6 +1,10 @@
 {% extends "layout.html" %}
 
 {% block css %}
+    <!-- fontawesome glyphicons -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/solid.css" integrity="sha384-VGP9aw4WtGH/uPAOseYxZ+Vz/vaTb1ehm1bwx92Fm8dTrE+3boLfF1SpAtB1z7HW" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/fontawesome.css" integrity="sha384-1rquJLNOM3ijoueaaeS5m+McXPJCGdr5HcA03/VHXxcp2kX2sUrQDmFc3jR5i/C7" crossorigin="anonymous">
+    <!-- custom style -->
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/new.min.css") + "?build=" + config['BUILD_ID'] }}" />
 {% endblock %}
 
@@ -85,7 +89,7 @@
                 data-toggle="tooltip">Copy</button>
             {% endraw %}
             <button type="button" class="btn btn-settings" data-ng-click="ctrl.showHideSettings($event)">
-                <span class="glyphicon glyphicon-cog"></span>Settings
+                <i class="fas fa-cog"></i>Settings
             </button>
         </div>
 
@@ -115,8 +119,8 @@
                     <button type="button" class="btn"
                         ng-class="{ 'btn-warning': !ctrl.useSpecialChars, 'btn-success' : ctrl.useSpecialChars }"
                         ng-click="ctrl.toggleUseSpecialChars($event)">
-                        <span class="glyphicon"
-                              ng-class="{ 'glyphicon-ok': ctrl.useSpecialChars, 'glyphicon-remove': !ctrl.useSpecialChars }"></span>
+                        <span class="fas"
+                              ng-class="{ 'fa-check': ctrl.useSpecialChars, 'fa-times': !ctrl.useSpecialChars }"></span>
                         <span>Use special characters</span>
                     </button>
                 </div>
