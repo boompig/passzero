@@ -2,6 +2,7 @@
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/profile.min.css") }}" />
 {% endblock %}
 
 {% block js %}
@@ -11,11 +12,11 @@
 {% block body %}
 <h1 class="title">Profile</h1>
 
-<div id="global-error-msg" class="alert alert-danger" role="alert" style="display: none;">
+<div id="global-error-msg" class="alert alert-danger" role="alert">
     <strong>Error</strong>
     <span class="text"></span>
 </div>
-<div class="alert alert-success" role="alert" style="display: none;"></div>
+<div id="global-success-msg" class="alert alert-success" role="alert"></div>
 
 <div id="advanced-tabpanel" role="tabpanel">
     <ul class="nav nav-tabs" role="tablist">
@@ -33,7 +34,7 @@
         <div id="user-prefs" class="tab-pane active" role="tabpanel">
             <div id="user-prefs-container">
                 <h3 class="title">Random password generation preferences</h3>
-                <form role="form" id="user-prefs-form" onsubmit="Profile.updatePrefs(event)">
+                <form role="form" id="user-prefs-form">
                     <label>Default number of characters in random password</label>
                     <input type="number" name="default_random_password_length"
                         class="form-control"
@@ -53,7 +54,7 @@
             <div class="alert alert-danger" role="alert">
                 <strong>Warning!</strong> This action cannot be undone.
             </div>
-            <form role="form" id="delete-user-form" onsubmit="Profile.deleteUser(event)">
+            <form role="form" id="delete-user-form">
                 <p>Type your master password to proceed</p>
                 <input type="password" name="password" class="form-control" required="true"
                     placeholder="master password">
@@ -62,10 +63,10 @@
             </form>
         </div>
         <div id="change-password" class="tab-pane" role="presentation">
-            <div class="progress-alert alert alert-info" role="alert"style="display: none;"></div>
+            <div class="progress-alert alert alert-info" role="alert"></div>
             <div id="change-password-container">
                 <h3 class="title">Change Account Password</h3>
-                <form role="form" id="change-password-form" onsubmit="Profile.updatePassword(event)"
+                <form role="form" id="change-password-form"
                     action="/advanced/password" method="UPDATE">
                     <div class="error-msg"></div>
                     <label for="old_password">Old Password</label>

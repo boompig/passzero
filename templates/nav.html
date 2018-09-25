@@ -26,7 +26,7 @@
                     <li class="navbar-item{% if href == request.path %} active{% endif %}">
                         {%- if id == "logout" -%}
                         <!-- this allows the logout process to happen via POST -->
-                        <form method="POST" action="/logout">
+                        <form method="POST" action="/logout" id="nav-logout-form">
                             <button class="btn btn-link nav-link" type="submit" role="link">
                                 <i class="fas fa-sign-out-alt"></i><span class="nav-text">Sign Out</span>
                             </button>

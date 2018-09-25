@@ -245,6 +245,25 @@ class Profile {
 		});
 		return false;
 	}
+
+	static onLoad() {
+		let elem = document.querySelector("#user-prefs-form");
+		if (elem) {
+			elem.addEventListener("submit", Profile.updatePrefs);
+		}
+		elem = document.querySelector("#delete-user-form");
+		if (elem) {
+			elem.addEventListener("submit", Profile.deleteUser);
+		}
+		elem = document.querySelector("#change-password-form");
+		if (elem) {
+			elem.addEventListener("submit", Profile.updatePassword);
+		}
+	}
 }
+
+$(() => {
+	Profile.onLoad();
+});
 
 //export { Profile };
