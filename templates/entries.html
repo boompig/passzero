@@ -78,7 +78,7 @@
                     </span>
                     <span ng-if="!entry.is_encrypted">
                         <button type="button" class="btn btn-info show-hide-btn"
-                            onclick="showHidePass(event)">Show
+                            ng-click="showHidePass($event)">Show
                         </button>
                     </span>
                     <button type="button" class="btn btn-danger" class="delete-btn"
