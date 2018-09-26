@@ -1,7 +1,7 @@
 import os
 from datetime import timedelta
 
-from flask import Blueprint, Flask
+from flask import Blueprint, Flask, session
 from flask_compress import Compress
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -46,6 +46,7 @@ def create_app(name: str, settings_override: dict = {}):
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["WTF_CSRF_ENABLED"] = False
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=5)
+    app.config["WEB_SESSION_EXPIRES"] = timedelta(minutes=20)
     app.config["JWT_BLACKLIST_ENABLED"] = True
     app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access"]
     app.config["SWAGGER_UI_DOC_EXPANSION"] = "list"
@@ -113,6 +114,12 @@ def create_app(name: str, settings_override: dict = {}):
             "img-src": ["\'self\'", "data:"]
         }
     )
+
+    @app.before_request
+    def set_session_expiry():
+        session.permanent = True
+        app.permanent_session_lifetime = app.config["WEB_SESSION_EXPIRES"]
+        session.modified = True
 
     # add the database
     db.app = app
