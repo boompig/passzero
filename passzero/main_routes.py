@@ -139,7 +139,7 @@ def confirm_signup():
         token = request.args["token"]
         token_obj = db.session.query(AuthToken).filter_by(token=token).one()
         if token_obj.is_expired():
-            flash("Token has expired")
+            flash("Token has expired", "error")
             # delete old token from database
             db.session.delete(token_obj)
             db.session.commit()
@@ -151,10 +151,10 @@ def confirm_signup():
             activate_account(db.session, user)
             return redirect(url_for("main_routes.post_confirm_signup"))
     except NoResultFound:
-        flash("Token is invalid")
+        flash("Token is invalid", "error")
         return redirect(url_for("main_routes.signup"))
     except KeyError:
-        flash("Token is mandatory")
+        flash("Token is mandatory", "error")
         return redirect(url_for("main_routes.signup"))
 
 
@@ -186,7 +186,7 @@ def edit_entry(entry_id):
     entries = get_entries(db.session, session["user_id"])
     my_entries = [e for e in entries if e.id == entry_id]
     if len(my_entries) == 0:
-        flash("Error: no entry with ID %d" % entry_id)
+        flash("Error: no entry with ID %d" % entry_id, "error")
         return redirect(url_for("main_routes.view_entries"))
     else:
         fe = decrypt_entries(my_entries, session['password'])
@@ -260,7 +260,7 @@ def recover_account_confirm():
         token = request.args['token']
         token_obj = db.session.query(AuthToken).filter_by(token=token).one()
         if token_obj.is_expired():
-            flash("Token has expired")
+            flash("Token has expired", "error")
             # delete old token from database
             db.session.delete(token_obj)
             db.session.commit()
@@ -269,10 +269,10 @@ def recover_account_confirm():
             # token deleted when password changed
             return render_template("recover.html", confirm=True)
     except NoResultFound:
-        flash("Token is invalid")
+        flash("Token is invalid", "error")
         return redirect(url_for("main_routes.recover_password"))
     except KeyError:
-        flash("Token is mandatory")
+        flash("Token is mandatory", "error")
         return redirect(url_for("main_routes.recover_password"))
 
 
