@@ -16,11 +16,3 @@
     padding-bottom: 0.5em;
     display: block;
 }
-
-@media(min-width: 700px) {
-    #panel-container .panel {
-        display: inline-block;
-        width: 30%;
-        vertical-align: top;
-    }
-}
