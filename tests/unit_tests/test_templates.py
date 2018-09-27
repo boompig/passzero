@@ -46,7 +46,7 @@ def _create_active_account(client, email: str, password: str):
         assert isinstance(email, str)
         assert isinstance(password, str)
         # signup, etc etc
-        #TODO for some reason can't mock out send_confirmation_email so mocking this instead
+        # TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
         api.signup(client, email, password, check_status=True)
         # get the token from calls
@@ -70,6 +70,7 @@ def _create_entry(client) -> int:
     return api.create_entry(client, entry, token, check_status=True)
 
 # ----- check pages that don't require login
+
 
 def test_landing_template(test_client):
     r = test_client.get("/", follow_redirects=True)
@@ -116,6 +117,7 @@ def test_post_confirm_signup_no_login(test_client):
 
 # ---- check redirect methods when pre-conditions not met -----
 
+
 def test_post_login_no_login(test_client):
     r = test_client.get("/done_login", follow_redirects=True)
     # only print on error
@@ -152,6 +154,7 @@ def test_post_export_no_login(test_client):
 
 # ------ check API methods when conditions not met ------------
 
+
 def test_export_no_login(test_client):
     r = test_client.get("/advanced/export", follow_redirects=True)
     # only print on error
@@ -159,6 +162,7 @@ def test_export_no_login(test_client):
     assert r.status_code == 401
 
 # ------- check pages that require login to make sure they always redirect back to login page
+
 
 def test_edit_entry_no_login(test_client):
     with test_client as c:
@@ -268,6 +272,7 @@ def test_confirm_recover_invalid_token(test_client):
     assert response.status_code == 200
 
 # ---- test pages that do require login - (auth or abort) ------------
+
 
 def test_done_login_with_login(test_client):
     with test_client as c:
@@ -397,9 +402,10 @@ def test_recover_account_confirm(test_client):
             # NOTE for whatever reason cannot patch send_recovery_email...
             recovery_token = m1.call_args[0][2].split("token=")[1]
             response = c.get("/recover/confirm?token=%s" % recovery_token,
-                follow_redirects=True)
+                             follow_redirects=True)
             assert response.status_code == 200
             assert flask.request.path == flask.url_for("main_routes.recover_account_confirm")
+
 
 def test_signup_confirm(test_client):
     with mock.patch("passzero.email.send_email") as m1:
@@ -409,7 +415,7 @@ def test_signup_confirm(test_client):
             # NOTE for whatever reason cannot patch send_recovery_email...
             recovery_token = m1.call_args[0][2].split("token=")[1]
             response = c.get("/signup/confirm?token=%s" % recovery_token,
-                follow_redirects=True)
+                             follow_redirects=True)
             assert response.status_code == 200
 
 
@@ -419,4 +425,3 @@ def test_logout_with_login(test_client):
         _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         response = c.get("/logout", follow_redirects=True)
         assert response.status_code == 200
-

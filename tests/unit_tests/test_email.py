@@ -2,12 +2,13 @@ from passzero import email
 from mock import patch, MagicMock
 import os
 
+
 @patch.dict(os.environ, {}, clear=True)
 def test_send_email_no_api_key():
     assert email.send_email('a', 'b', 'c') == False
 
 
-@patch.dict(os.environ, { "SENDGRID_API_KEY": "xxxxx" }, clear=True)
+@patch.dict(os.environ, {"SENDGRID_API_KEY": "xxxxx"}, clear=True)
 @patch("sendgrid.SendGridAPIClient")
 def test_send_email_post_failed(m):
     """This tests whether we can return a sane value in the face of
@@ -16,7 +17,7 @@ def test_send_email_post_failed(m):
     assert email.send_email('a', 'b', 'c') == False
 
 
-@patch.dict(os.environ, { "SENDGRID_API_KEY": "xxxxx" }, clear=True)
+@patch.dict(os.environ, {"SENDGRID_API_KEY": "xxxxx"}, clear=True)
 @patch("passzero.email.sendgrid")
 def test_send_email(m):
     # lots of mocking setup
@@ -32,7 +33,7 @@ def test_send_email(m):
     assert email.send_email('a', 'b', 'c') == True
 
 
-@patch.dict(os.environ, { "SENDGRID_API_KEY": "xxxxx" }, clear=True)
+@patch.dict(os.environ, {"SENDGRID_API_KEY": "xxxxx"}, clear=True)
 # we have to patch request otherwise flask freaks out
 @patch("passzero.email.request")
 def test_send_recovery_email(m):
@@ -42,7 +43,7 @@ def test_send_recovery_email(m):
         assert email.send_recovery_email('a', 'b') == False
 
 
-@patch.dict(os.environ, { "SENDGRID_API_KEY": "xxxxx" }, clear=True)
+@patch.dict(os.environ, {"SENDGRID_API_KEY": "xxxxx"}, clear=True)
 # we have to patch request otherwise flask freaks out
 @patch("passzero.email.request")
 def test_send_confirmation_email(m):

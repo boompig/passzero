@@ -147,7 +147,6 @@ class PassZeroApiTester(unittest.TestCase):
         r = api.login(self.app, email, password, check_status=False)
         assert r.status_code == 401
 
-
     def test_delete_user_bad_password(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD)
@@ -159,7 +158,7 @@ class PassZeroApiTester(unittest.TestCase):
         prefs = api.get_user_preferences(self.app, check_status=True)
         assert prefs is not None
 
-    #TODO for some reason can't mock out send_confirmation_email so mocking this instead
+    # TODO for some reason can't mock out send_confirmation_email so mocking this instead
     @mock.patch("passzero.email.send_email", return_value=True)
     def test_delete_user_with_recovery_token(self, m1):
         email = DEFAULT_EMAIL
@@ -175,7 +174,7 @@ class PassZeroApiTester(unittest.TestCase):
         # now we want to use that token to complete account recovery
         confirm_csrf_token = api.get_csrf_token(self.app)
         r = api.recover_account_confirm(self.app, "new password", recovery_token, confirm_csrf_token,
-            check_status=False)
+                                        check_status=False)
         print(r.data)
         assert r.status_code != 200
 
@@ -183,7 +182,7 @@ class PassZeroApiTester(unittest.TestCase):
         token = m1.call_args[0][2].split("?")[1].replace("token=", "")
         return token
 
-    #TODO for some reason can't mock out send_confirmation_email so mocking this instead
+    # TODO for some reason can't mock out send_confirmation_email so mocking this instead
     @mock.patch("passzero.email.send_email", return_value=True)
     def test_signup(self, m1):
         email = DEFAULT_EMAIL
@@ -230,7 +229,7 @@ class PassZeroApiTester(unittest.TestCase):
         assert isinstance(email, six.text_type)
         assert isinstance(password, six.text_type)
         # signup, etc etc
-        #TODO for some reason can't mock out send_confirmation_email so mocking this instead
+        # TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
         r = api.signup(self.app, email, password)
         print(r.data)
@@ -419,7 +418,6 @@ class PassZeroApiTester(unittest.TestCase):
         api.login(self.app, emails[0], password)
         actual_entries = api.get_entries(self.app)
         self._check_entries_equal(actual_entries[0], old_entry)
-
 
     def test_change_master_password(self):
         email = DEFAULT_EMAIL

@@ -51,7 +51,7 @@ class PassZeroApiTester(unittest.TestCase):
                 "has_2fa": True
             }
             backend.insert_entry_for_user(
-                    session, dec_entry, user.id, DEFAULT_MASTER_KEY)
+                session, dec_entry, user.id, DEFAULT_MASTER_KEY)
         result = db_export(session, user.id)
         # make sure the rows are all in valid CSV form
         num_rows = 0

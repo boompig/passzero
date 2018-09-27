@@ -1,12 +1,12 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileRequired
-from wtforms import BooleanField, Form, PasswordField, TextField, validators, IntegerField
+from wtforms import BooleanField, Form, PasswordField, StringField, validators, IntegerField
 
 from passzero.limits import MAX_ENTRY_PASSWORD_LENGTH, MAX_GEN_PASSPHRASE_WORDS
 
 
 class SignupForm(Form):
-    email = TextField("email", [
+    email = StringField("email", [
         validators.DataRequired(),
         validators.Email()
     ])
@@ -20,7 +20,7 @@ class SignupForm(Form):
 
 
 class LoginForm(Form):
-    email = TextField("email", [
+    email = StringField("email", [
         validators.DataRequired(),
         validators.Email()
     ])
@@ -32,17 +32,17 @@ class DeleteUserForm(Form):
 
 
 class NewEntryForm(Form):
-    account = TextField("account", [
+    account = StringField("account", [
         validators.DataRequired()
     ])
-    username = TextField("username", [
+    username = StringField("username", [
         validators.DataRequired()
     ])
     password = PasswordField("password", [
         validators.DataRequired(),
         validators.Length(max=MAX_ENTRY_PASSWORD_LENGTH)
     ])
-    extra = TextField("extra")
+    extra = StringField("extra")
     has_2fa = BooleanField("has_2fa", [
         validators.AnyOf([True, False])
     ])
@@ -58,7 +58,7 @@ class UpdatePasswordForm(Form):
 
 
 class RecoverPasswordForm(Form):
-    email = TextField("email", [
+    email = StringField("email", [
         validators.DataRequired(),
         validators.Email()
     ])
@@ -76,11 +76,11 @@ class UpdatePreferencesForm(Form):
 
 
 class ActivateAccountForm(Form):
-    token = TextField("token", [validators.DataRequired()])
+    token = StringField("token", [validators.DataRequired()])
 
 
 class ConfirmRecoverPasswordForm(Form):
-    token = TextField("token", [validators.DataRequired()])
+    token = StringField("token", [validators.DataRequired()])
     password = PasswordField("password", [
         validators.DataRequired(),
         validators.EqualTo("confirm_password", message="Passwords must match")
@@ -91,7 +91,7 @@ class ConfirmRecoverPasswordForm(Form):
 
 
 class NewDocumentForm(FlaskForm):
-    name = TextField("name", [
+    name = StringField("name", [
         validators.DataRequired()
     ])
     document = FileField("document", [

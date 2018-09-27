@@ -40,7 +40,7 @@ class PassZeroDocTester(unittest.TestCase):
         assert isinstance(email, six.text_type)
         assert isinstance(password, six.text_type)
         # signup, etc etc
-        #TODO for some reason can't mock out send_confirmation_email so mocking this instead
+        # TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
         r = api.signup(self.app, email, password)
         print(r.data)
@@ -56,7 +56,6 @@ class PassZeroDocTester(unittest.TestCase):
         # r = api.login(self.app, email, password)
         # print(r.data)
         # assert r.status_code == 200
-
 
     def create_test_doc(self):
         fname = "/tmp/foo.txt"

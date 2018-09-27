@@ -20,4 +20,3 @@ def test_send_email() -> None:
         "Running local live test for build with ID %s" % BUILD_ID
     )
     assert success == True
-

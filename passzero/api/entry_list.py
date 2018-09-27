@@ -85,7 +85,7 @@ class ApiEntryList(Resource):
                 user_id=user_id,
                 user_key=args.password
             )
-            return { "entry_id": entry.id }
+            return {"entry_id": entry.id}
         else:
             return json_error_v2("Password is not correct", 401)
 
@@ -153,4 +153,3 @@ class ApiEntryList(Resource):
         if any([entry.version < 4 for entry in enc_entries]):
             return json_error_v2("This method does not work if there are entries below version 4", 500)
         return jsonify_entries(enc_entries)
-

@@ -32,4 +32,3 @@ def test_authenticate_user_argon2():
 
 if __name__ == "__main__":
     nose.run()
-

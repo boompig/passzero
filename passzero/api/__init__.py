@@ -6,8 +6,8 @@ from passzero.api.entry_list import ns as ApiEntryListNamespace
 api = Api(title="PassZero v3 API", version="3.0", doc="/doc/")
 
 api.add_namespace(ApiTokenNamespace,
-    path="/api/v3/token")
+                  path="/api/v3/token")
 api.add_namespace(ApiEntryListNamespace,
-    path="/api/v3/entries")
+                  path="/api/v3/entries")
 api.add_namespace(ApiEntryNamespace,
-    path="/api/v3/entries/<int:entry_id>")
+                  path="/api/v3/entries/<int:entry_id>")

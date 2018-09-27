@@ -20,6 +20,7 @@ from .jwt_auth import authorizations
 class UserNotActiveException(Exception):
     pass
 
+
 ns = Namespace("ApiToken", authorizations=authorizations)
 
 
@@ -46,7 +47,7 @@ class ApiTokenResource(Resource):
         db.session.add(api_token)
         db.session.commit()
         return token
-    
+
     @ns.doc(security="session-cookie")
     @requires_json_auth
     def get(self):
@@ -72,7 +73,7 @@ class ApiTokenResource(Resource):
         - 401: not authenticated
         """
         token = self.maybe_create_token_and_add_to_database(session["user_id"])
-        return { "token": token }
+        return {"token": token}
 
     def maybe_create_token_and_add_to_database(self, user_id: int) -> str:
         try:
@@ -132,7 +133,7 @@ class ApiTokenResource(Resource):
                 db.session.add(user)
                 db.session.commit()
                 token = self.maybe_create_token_and_add_to_database(user.id)
-                return { "token": token }
+                return {"token": token}
             else:
                 return json_error_v2("Either the email or password is incorrect", 401)
         except NoResultFound:
@@ -164,4 +165,3 @@ class ApiTokenResource(Resource):
         db.session.query(ApiToken).filter_by(user_id=user_id).delete()
         db.session.commit()
         return json_success_v2("Successfully destroyed token")
-
