@@ -342,7 +342,7 @@ def delete_document(app, doc_id, csrf_token, check_status=True):
     return r
 
 
-# v2 API starts here
+# --- v2 API starts here
 
 def get_entries_v2(app):
     r = json_get(app, "/api/v2/entries")
@@ -360,7 +360,7 @@ def get_entry_v2(app, entry_id, check_status=True):
     else:
         return r
 
-#### v3 (tokens)
+# --- v3 (tokens) starts here
 
 
 def get_api_token_with_login(app, check_status: bool = True):

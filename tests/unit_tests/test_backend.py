@@ -340,10 +340,10 @@ def test_password_strength_scores():
         "password": "-",
         "has_2fa": False
     })
-    l = password_strength_scores(email, dec_entries)
+    scores = password_strength_scores(email, dec_entries)
     # check that the no-password account is ignored
-    assert len(dec_entries) - 1 == len(l)
-    for entry, score in zip(dec_entries, l):
+    assert len(dec_entries) - 1 == len(scores)
+    for entry, score in zip(dec_entries, scores):
         assert entry["account"] == score["account"]
 
 
