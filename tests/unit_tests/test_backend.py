@@ -156,7 +156,7 @@ def test_insert_entry_for_user(session):
 def test_delete_all_entries(session):
     user_key = u"master key"
     user = create_inactive_user(session, u"fake@em.com",
-        user_key)
+                                user_key)
     for i in range(10):
         dec_entry_in = {
             "account": "a-%d" % i,
@@ -166,7 +166,7 @@ def test_delete_all_entries(session):
             "has_2fa": False
         }
         insert_entry_for_user(session, dec_entry_in,
-                user.id, user_key)
+                              user.id, user_key)
     enc_entries = get_entries(session, user.id)
     assert len(enc_entries) == 10
     delete_all_entries(session, user)
@@ -199,16 +199,16 @@ def test_encrypt_decrypt_entry_v5():
 
 
 def test_encrypt_decrypt_entry_v4():
-   __encrypt_decrypt_entry(4)
+    __encrypt_decrypt_entry(4)
 
 
 def test_encrypt_decrypt_entry_v3():
-   __encrypt_decrypt_entry(3)
+    __encrypt_decrypt_entry(3)
 
 
 def test_fail_encrypt_entry_v2():
     """Should fail to encrypt entry v2 because it's too old"""
-   # create multiple entries for this user
+    # create multiple entries for this user
     dec_entry = {
         "account": u"test account",
         "username": u"test username",
@@ -306,6 +306,7 @@ def create_fake_entry(i):
         "has_2fa": False
     }
 
+
 def test_change_password(session):
     old_pwd = u"hello"
     new_pwd = u"world"
@@ -314,7 +315,7 @@ def test_change_password(session):
     for i in range(10):
         dec_entry_in = create_fake_entry(i)
         insert_entry_for_user(session, dec_entry_in,
-                user.id, old_pwd)
+                              user.id, old_pwd)
     enc_entries = get_entries(session, user.id)
     logging.info("Decrypting newly created entries")
     dec_entries = decrypt_entries(enc_entries, old_pwd)
@@ -339,10 +340,10 @@ def test_password_strength_scores():
         "password": "-",
         "has_2fa": False
     })
-    l = password_strength_scores(email, dec_entries)
+    scores = password_strength_scores(email, dec_entries)
     # check that the no-password account is ignored
-    assert len(dec_entries) - 1 == len(l)
-    for entry, score in zip(dec_entries, l):
+    assert len(dec_entries) - 1 == len(scores)
+    for entry, score in zip(dec_entries, scores):
         assert entry["account"] == score["account"]
 
 

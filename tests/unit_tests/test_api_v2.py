@@ -46,7 +46,7 @@ class PassZeroApiTester(unittest.TestCase):
         assert isinstance(email, six.text_type)
         assert isinstance(password, six.text_type)
         # signup, etc etc
-        #TODO for some reason can't mock out send_confirmation_email so mocking this instead
+        # TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
         r = api.signup(self.app, email, password)
         print(r.data)
@@ -67,11 +67,11 @@ class PassZeroApiTester(unittest.TestCase):
             "extra": "entry_extra",
         }
         self._create_active_account(DEFAULT_EMAIL,
-                DEFAULT_PASSWORD)
+                                    DEFAULT_PASSWORD)
         api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         csrf_token = api.get_csrf_token(self.app)
         entry_id = api.create_entry(self.app,
-                entry, csrf_token)
+                                    entry, csrf_token)
         entries = api.get_entries_v2(self.app)
         assert len(entries) == 1
         for plaintext_field in ["account"]:
@@ -105,4 +105,3 @@ class PassZeroApiTester(unittest.TestCase):
         print(r.data)
         assert r.status_code != 200
         assert json.loads(r.data)["status"] == "error"
-

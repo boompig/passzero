@@ -13,7 +13,6 @@ from . import api
 import pytest
 
 
-
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"
 INVALID_TOKEN_CODE = 403
@@ -44,6 +43,7 @@ def my_app(request):
 @pytest.fixture(scope="module")
 def db(request, my_app):
     _db.create_all()
+
     def teardown():
         _db.drop_all()
     request.addfinalizer(teardown)
@@ -73,7 +73,7 @@ def create_active_account(client, email: str, password: str, m1):
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
     # signup, etc etc
-    #TODO for some reason can't mock out send_confirmation_email so mocking this instead
+    # TODO for some reason can't mock out send_confirmation_email so mocking this instead
     m1.return_value = True
     r = api.signup(client, email, password)
     assert r.status_code == 200
@@ -88,7 +88,7 @@ def test_login_then_get_token(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login(client,
-                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         assert isinstance(token, six.text_type)
 
@@ -98,7 +98,7 @@ def test_login_then_get_token_twice(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login(client,
-                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         t2 = api.get_api_token_with_login(client, check_status=True)
         assert token == t2
@@ -107,18 +107,18 @@ def test_login_then_get_token_twice(app):
 def test_login_with_token(app):
     with app.test_client() as client:
         create_active_account(client,
-            DEFAULT_EMAIL, DEFAULT_PASSWORD)
+                              DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_token(client,
-            DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         assert isinstance(token, six.text_type)
 
 
 def test_login_logout(app):
     with app.test_client() as client:
         create_active_account(client,
-            DEFAULT_EMAIL, DEFAULT_PASSWORD)
+                              DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_token(client,
-            DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token, check_status=True)
         # really checking if this operation succeeded
         assert len(entries) == 0
@@ -131,21 +131,20 @@ def test_login_invalid_account(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         r = api.login_with_token(client,
-                "wrong email", "wrong password", check_status=False)
+                                 "wrong email", "wrong password", check_status=False)
         # only printed on error
         print(r.data)
         assert r.status_code == 401
+
 
 def test_login_invalid_password(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         r = api.login_with_token(client,
-                DEFAULT_EMAIL, "wrong password", check_status=False)
+                                 DEFAULT_EMAIL, "wrong password", check_status=False)
         # only printed on error
         print(r.data)
         assert r.status_code == 401
-
-
 
 
 def test_get_entries_no_login(app):
@@ -161,7 +160,7 @@ def test_get_entries_no_login(app):
 def test_delete_entry_no_login(app):
     with app.test_client() as client:
         rv = api.delete_entry_with_token(client,
-                1, "foo", check_status=False)
+                                         1, "foo", check_status=False)
         # only print on test failure
         print(rv.data)
         assert rv.status_code == INVALID_TOKEN_CODE
@@ -193,7 +192,7 @@ def test_delete_all_entries(app):
         password = DEFAULT_PASSWORD
         create_active_account(client, DEFAULT_EMAIL, password)
         token = api.login_with_token(client,
-            DEFAULT_EMAIL, password, check_status=True)
+                                     DEFAULT_EMAIL, password, check_status=True)
         for i in range(20):
             entry = {
                 "account": "foo-%d" % i,
@@ -203,7 +202,7 @@ def test_delete_all_entries(app):
                 "has_2fa": (i % 2 == 0)
             }
             api.create_entry_with_token(client,
-                    entry, password, token, check_status=True)
+                                        entry, password, token, check_status=True)
         entries = api.get_encrypted_entries_with_token(
             client,
             token,
@@ -211,8 +210,8 @@ def test_delete_all_entries(app):
         )
         assert len(entries) == 20
         api.delete_all_entries_with_token(client,
-                token,
-                check_status=True)
+                                          token,
+                                          check_status=True)
         entries = api.get_encrypted_entries_with_token(
             client,
             token,
@@ -225,9 +224,9 @@ def test_delete_invalid_entry(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_token(client,
-            DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         rv = api.delete_entry_with_token(client,
-                2014, token, check_status=False)
+                                         2014, token, check_status=False)
         # only print on test failure
         print(rv.data)
         assert rv.status_code != 200
@@ -237,9 +236,9 @@ def test_get_entries_empty(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_token(client,
-            DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         entries = api.get_encrypted_entries_with_token(client,
-                token, check_status=True)
+                                                       token, check_status=True)
         assert entries == []
 
 
@@ -249,7 +248,7 @@ def test_create_entry(app):
         password = DEFAULT_PASSWORD
         create_active_account(client, email, password)
         token = api.login_with_token(client, email, password,
-                check_status=True)
+                                     check_status=True)
         entry = {
             "account": "fake",
             "username": "entry_username",
@@ -258,10 +257,11 @@ def test_create_entry(app):
             "has_2fa": True
         }
         api.create_entry_with_token(client, entry, password, token,
-                check_status=True)
+                                    check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token,
-                check_status=True)
+                                                       check_status=True)
         assert len(entries) == 1
+
 
 def test_create_entry_no_account(app):
     email = DEFAULT_EMAIL
@@ -275,11 +275,12 @@ def test_create_entry_no_account(app):
             "extra": "entry_extra",
         }
         r = api.create_entry_with_token(client, entry, password, token,
-                check_status=False)
+                                        check_status=False)
         assert r.status_code != 200
         entries = api.get_encrypted_entries_with_token(client, token,
-                check_status=True)
+                                                       check_status=True)
         assert len(entries) == 0
+
 
 def test_create_entry_bad_token(app):
     email = DEFAULT_EMAIL
@@ -294,9 +295,9 @@ def test_create_entry_bad_token(app):
             "extra": "entry_extra",
         }
         r = api.create_entry_with_token(client, entry,
-                password=DEFAULT_PASSWORD,
-                token="foo",
-                check_status=False)
+                                        password=DEFAULT_PASSWORD,
+                                        token="foo",
+                                        check_status=False)
         assert r.status_code != 200
         entries = api.get_encrypted_entries_with_token(client, real_token)
         assert len(entries) == 0
@@ -307,9 +308,9 @@ def test_create_entry_bad_password(app):
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         create_active_account(client,
-            email, password)
+                              email, password)
         token = api.login_with_token(client,
-            email, password, check_status=True)
+                                     email, password, check_status=True)
         entry = {
             "account": "my entry",
             "username": "entry_username",
@@ -327,7 +328,7 @@ def test_create_entry_bad_password(app):
         assert r.status_code != 200
         # make sure the entry hasn't been created
         entries = api.get_encrypted_entries_with_token(client,
-                token, check_status=True)
+                                                       token, check_status=True)
         assert len(entries) == 0
 
 
@@ -339,7 +340,7 @@ def test_create_and_delete_entry(app):
         token = api.login_with_token(client, email, password, check_status=True)
         # make sure we start with 0 entries
         entries = api.get_encrypted_entries_with_token(client, token,
-                check_status=True)
+                                                       check_status=True)
         assert len(entries) == 0
         entry = {
             "account": "fake",
@@ -350,17 +351,17 @@ def test_create_and_delete_entry(app):
         }
         print("creating entry")
         entry_id = api.create_entry_with_token(client, entry, password, token,
-                check_status=True)
+                                               check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token,
-                check_status=True)
+                                                       check_status=True)
         assert entry_id == entries[0]["id"]
         out_entry = api.decrypt_entry_with_token(client, entry_id,
-                password, token, check_status=True)
+                                                 password, token, check_status=True)
         _assert_entries_equal(entry, out_entry)
         assert len(entries) == 1
         api.delete_entry_with_token(client, entry_id, token, check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token,
-                check_status=True)
+                                                       check_status=True)
         assert len(entries) == 0
 
 
@@ -378,10 +379,10 @@ def test_edit_non_existant_entry(app):
             "has_2fa": False
         }
         entry_id = api.create_entry_with_token(client,
-                old_entry,
-                password,
-                token,
-                check_status=True)
+                                               old_entry,
+                                               password,
+                                               token,
+                                               check_status=True)
         new_entry = {
             "account": "new account",
             "username": "new username",
@@ -390,11 +391,11 @@ def test_edit_non_existant_entry(app):
             "has_2fa": True
         }
         r = api.edit_entry_with_token(client,
-                entry_id + 1,
-                new_entry,
-                password,
-                token,
-                check_status=False)
+                                      entry_id + 1,
+                                      new_entry,
+                                      password,
+                                      token,
+                                      check_status=False)
         assert r.status_code != 200
 
 
@@ -403,9 +404,9 @@ def test_edit_entry(app):
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         create_active_account(client,
-            email, password)
+                              email, password)
         token = api.login_with_token(client,
-            email, password, check_status=True)
+                                     email, password, check_status=True)
         old_entry = {
             "account": "fake",
             "username": "entry_username",
@@ -436,11 +437,11 @@ def test_edit_entry(app):
             check_status=True
         )
         entries = api.get_encrypted_entries_with_token(client,
-                token, check_status=True)
+                                                       token, check_status=True)
         assert len(entries) == 1
         assert entries[0]["id"] == entry_id
         entry_prime = api.decrypt_entry_with_token(client,
-                entry_id, password, token, check_status=True)
+                                                   entry_id, password, token, check_status=True)
         _assert_entries_equal(new_entry, entry_prime)
 
 
@@ -449,9 +450,9 @@ def test_edit_entry_bad_password(app):
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         create_active_account(client,
-            email, password)
+                              email, password)
         token = api.login_with_token(client,
-            email, password, check_status=True)
+                                     email, password, check_status=True)
         old_entry = {
             "account": "fake",
             "username": "entry_username",
@@ -484,11 +485,11 @@ def test_edit_entry_bad_password(app):
         assert r.status_code != 200
         # make sure the entry hasn't changed
         entries = api.get_encrypted_entries_with_token(client,
-                token, check_status=True)
+                                                       token, check_status=True)
         assert len(entries) == 1
         assert entries[0]["id"] == entry_id
         entry_prime = api.decrypt_entry_with_token(client,
-                entry_id, password, token, check_status=True)
+                                                   entry_id, password, token, check_status=True)
         _assert_entries_equal(old_entry, entry_prime)
 
 
@@ -498,10 +499,10 @@ def test_edit_not_your_entry(app):
     with app.test_client() as client:
         for email, password in zip(emails, passwords):
             create_active_account(client,
-                    email, password)
+                                  email, password)
         # create an entry for user[0]
         t1 = api.login_with_token(client,
-                emails[0], passwords[0], check_status=True)
+                                  emails[0], passwords[0], check_status=True)
         old_entry = {
             "account": "fake",
             "username": "entry_username",
@@ -510,7 +511,7 @@ def test_edit_not_your_entry(app):
             "has_2fa": False
         }
         entry_id = api.create_entry_with_token(client,
-                old_entry, passwords[0], t1, check_status=True)
+                                               old_entry, passwords[0], t1, check_status=True)
         entries = api.get_encrypted_entries_with_token(client, t1, check_status=True)
         assert len(entries) == 1
         # make sure user[1] has no entries
@@ -527,7 +528,7 @@ def test_edit_not_your_entry(app):
         }
         # try editing the entry for user[0] as user[1]
         r = api.edit_entry_with_token(client,
-                entry_id, new_entry, passwords[1], t2, check_status=False)
+                                      entry_id, new_entry, passwords[1], t2, check_status=False)
         assert r.status_code != 200
         e2 = api.get_encrypted_entries_with_token(client, t2, check_status=True)
         assert e2 == []
@@ -536,7 +537,7 @@ def test_edit_not_your_entry(app):
         assert len(actual_entries) == 1
         assert actual_entries[0]["id"] == entry_id
         actual_entry = api.decrypt_entry_with_token(client,
-                entry_id, passwords[0], t1, check_status=True)
+                                                    entry_id, passwords[0], t1, check_status=True)
         _assert_entries_equal(actual_entry, old_entry)
 
 
@@ -545,9 +546,9 @@ def test_decrypt_entry_bad_password(app):
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         create_active_account(client,
-            email, password)
+                              email, password)
         token = api.login_with_token(client,
-            email, password, check_status=True)
+                                     email, password, check_status=True)
         entry = {
             "account": "my entry",
             "username": "entry_username",
@@ -563,7 +564,7 @@ def test_decrypt_entry_bad_password(app):
             check_status=True
         )
         r = api.decrypt_entry_with_token(client, entry_id,
-                password="bad password", token=token, check_status=False)
+                                         password="bad password", token=token, check_status=False)
         assert r.status_code != 200
 
 
@@ -576,10 +577,10 @@ def test_decrypt_entry_not_your_entry(app):
     with app.test_client() as client:
         for email, password in zip(emails, passwords):
             create_active_account(client,
-                    email, password)
+                                  email, password)
         # create an entry for user[0]
         t1 = api.login_with_token(client,
-                emails[0], passwords[0], check_status=True)
+                                  emails[0], passwords[0], check_status=True)
         entry = {
             "account": "fake",
             "username": "entry_username",
@@ -588,7 +589,7 @@ def test_decrypt_entry_not_your_entry(app):
             "has_2fa": False
         }
         entry_id = api.create_entry_with_token(client,
-                entry, passwords[0], t1, check_status=True)
+                                               entry, passwords[0], t1, check_status=True)
         # make sure user[1] has no entries
         t2 = api.login_with_token(client, emails[1], passwords[1], check_status=True)
         assert t1 != t2
@@ -608,10 +609,10 @@ def test_delete_entry_not_your_entry(app):
     with app.test_client() as client:
         for email, password in zip(emails, passwords):
             create_active_account(client,
-                    email, password)
+                                  email, password)
         # create an entry for user[0]
         t1 = api.login_with_token(client,
-                emails[0], passwords[0], check_status=True)
+                                  emails[0], passwords[0], check_status=True)
         entry = {
             "account": "fake",
             "username": "entry_username",
@@ -620,9 +621,9 @@ def test_delete_entry_not_your_entry(app):
             "has_2fa": False
         }
         entry_id = api.create_entry_with_token(client,
-                entry, passwords[0], t1, check_status=True)
+                                               entry, passwords[0], t1, check_status=True)
         out_entry_1 = api.decrypt_entry_with_token(client,
-                entry_id, passwords[0], t1, check_status=True)
+                                                   entry_id, passwords[0], t1, check_status=True)
         _assert_entries_equal(out_entry_1, entry)
         # make sure user[1] has no entries
         t2 = api.login_with_token(client, emails[1], passwords[1], check_status=True)
@@ -634,7 +635,7 @@ def test_delete_entry_not_your_entry(app):
         assert r.status_code != 200
         # make sure the entry is still there
         out_entry_2 = api.decrypt_entry_with_token(client,
-                entry_id, passwords[0], t1, check_status=True)
+                                                   entry_id, passwords[0], t1, check_status=True)
         _assert_entries_equal(out_entry_2, entry)
 
 
@@ -648,16 +649,16 @@ def test_get_entries(app):
             "has_2fa": True,
         }
         create_active_account(client,
-                DEFAULT_EMAIL, DEFAULT_PASSWORD)
+                              DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_token(client,
-            DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         entry_id = api.create_entry_with_token(client,
-                entry,
-                password=DEFAULT_PASSWORD,
-                token=token,
-                check_status=True)
+                                               entry,
+                                               password=DEFAULT_PASSWORD,
+                                               token=token,
+                                               check_status=True)
         entries = api.get_encrypted_entries_with_token(client,
-            token, check_status=True)
+                                                       token, check_status=True)
         assert len(entries) == 1
         for plaintext_field in ["account"]:
             assert entries[0][plaintext_field] == entry[plaintext_field]
@@ -666,7 +667,7 @@ def test_get_entries(app):
                 assert entries[0][encrypted_field] != entry[encrypted_field]
         # now decrypt this individual entry
         dec_entry_out = api.decrypt_entry_with_token(client,
-                entry_id, DEFAULT_PASSWORD, token, check_status=True)
+                                                     entry_id, DEFAULT_PASSWORD, token, check_status=True)
         _assert_entries_equal(dec_entry_out, entry)
 
 
@@ -685,7 +686,7 @@ def test_get_entries_not_your_entry(app):
         create_active_account(client, emails[0], passwords[0])
         create_active_account(client, emails[1], passwords[1])
         token = api.login_with_token(client,
-                emails[0], passwords[0], check_status=True)
+                                     emails[0], passwords[0], check_status=True)
         # create entry for account #1
         entry_id = api.create_entry_with_token(
             client,
@@ -703,7 +704,7 @@ def test_get_entries_not_your_entry(app):
         assert len(entries) == 1
         # get a token for the second account
         token = api.login_with_token(client,
-            emails[1], passwords[1], check_status=True)
+                                     emails[1], passwords[1], check_status=True)
         # cannot decrypt entry of person #1 with password of person #2
         r = api.decrypt_entry_with_token(
             client,
@@ -714,4 +715,3 @@ def test_get_entries_not_your_entry(app):
         )
         print(r.data)
         assert r.status_code != 200
-

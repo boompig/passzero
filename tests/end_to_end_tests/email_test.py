@@ -19,5 +19,4 @@ def test_send_email() -> None:
         "Live Test Local with build ID %s" % BUILD_ID,
         "Running local live test for build with ID %s" % BUILD_ID
     )
-    assert success == True
-
+    assert success

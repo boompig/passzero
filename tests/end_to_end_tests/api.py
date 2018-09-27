@@ -7,15 +7,15 @@ from typing import Optional, Dict, List
 import copy
 import requests
 
-json_header = { "Content-Type": "application/json" }
-file_upload_headers = { "Content-Type": "multipart/form-data" }
+json_header = {"Content-Type": "application/json"}
+file_upload_headers = {"Content-Type": "multipart/form-data"}
 
 assert 'LIVE_TEST_HOST' in os.environ, \
     "Did not find 'LIVE_TEST_HOST' among environment variables"
 BASE_URL = os.environ['LIVE_TEST_HOST']
 
 
-### utils
+# utils
 def json_header_with_token(token: str) -> Dict[str, str]:
     assert token is not None
     h = copy.copy(json_header)
@@ -35,6 +35,7 @@ def json_get(session, relative_url: str, data: dict = {}, token: Optional[str] =
         verify=False
     )
 
+
 def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] = None) -> Response:
     if token:
         headers = json_header_with_token(token)
@@ -47,6 +48,7 @@ def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] 
         verify=False
     )
 
+
 def json_put(session, relative_url: str, data: dict = {}, token: Optional[str] = None) -> Response:
     if token:
         headers = json_header_with_token(token)
@@ -58,6 +60,7 @@ def json_put(session, relative_url: str, data: dict = {}, token: Optional[str] =
         headers=headers,
         verify=False
     )
+
 
 def json_delete(session, relative_url: str, token: Optional[str] = None) -> Response:
     if token:
@@ -72,12 +75,12 @@ def json_delete(session, relative_url: str, token: Optional[str] = None) -> Resp
     )
 
 
-### v1 API starts here
+# v1 API starts here
 
 def login(session, email: str, password: str) -> Response:
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
-    data={
+    data = {
         "email": email,
         "password": password
     }
@@ -153,10 +156,10 @@ def post_document(session, name: str, doc_params, csrf_token: str) -> Response:
     assert isinstance(csrf_token, six.text_type)
     url = BASE_URL + "/api/v1/docs"
     r = session.post(url,
-        data={"name": name, "csrf_token": csrf_token},
-        files=doc_params,
-        verify=False
-    )
+                     data={"name": name, "csrf_token": csrf_token},
+                     files=doc_params,
+                     verify=False
+                     )
     return r
 
 
@@ -173,7 +176,7 @@ def delete_document(session, doc_id: int, csrf_token: str) -> Response:
     return json_delete(session, url)
 
 
-#### v2 API starts here
+# v2 API starts here
 
 def get_entries_v2(session) -> Response:
     return json_get(session, "/api/v2/entries")
@@ -198,12 +201,13 @@ def get_entry_v2(session, entry_id: int) -> Response:
     return json_get(session, "/api/v2/entries/{}".format(entry_id))
 
 
-#### v3 API starts here
+# v3 API starts here
 def login_with_token(session, email: str, password: str) -> Response:
     return json_post(session, "/api/v3/token", data={
         "email": email,
         "password": password
     })
+
 
 def get_encrypted_entries_with_token(session, token: str) -> Response:
     """
@@ -219,7 +223,7 @@ def decrypt_entry_with_token(session,
     return json_post(
         session,
         "/api/v3/entries/{}".format(entry_id),
-        data={ "password": password },
+        data={"password": password},
         token=token
     )
 

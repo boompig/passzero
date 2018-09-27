@@ -4,17 +4,18 @@ import json
 import six
 from typing import Dict
 
-json_header = { "Content-Type": "application/json" }
-file_upload_headers = { "Content-Type": "multipart/form-data" }
+json_header = {"Content-Type": "application/json"}
+file_upload_headers = {"Content-Type": "multipart/form-data"}
 
 
-### utils
+# utils
 
 def json_header_with_token(token: str) -> Dict[str, str]:
     assert token is not None
     h = copy.copy(json_header)
     h["Authorization"] = "Bearer %s" % token
     return h
+
 
 def json_get(app, relative_url: str, token: str = None):
     if token:
@@ -27,6 +28,7 @@ def json_get(app, relative_url: str, token: str = None):
         follow_redirects=True
     )
 
+
 def json_post(session, relative_url: str, data: dict = {}, token: str = None):
     if token:
         headers = json_header_with_token(token)
@@ -38,6 +40,7 @@ def json_post(session, relative_url: str, data: dict = {}, token: str = None):
         headers=headers,
         follow_redirects=True
     )
+
 
 def json_put(session, relative_url: str, data: dict = {}, token: str = None):
     if token:
@@ -78,20 +81,21 @@ def json_delete(session, relative_url: str, token: str = None):
     )
 
 
-### v1 API starts here
+# v1 API starts here
 
 def login(app, email: str, password: str, check_status: bool = True):
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
     assert isinstance(check_status, bool)
-    data={
+    data = {
         "email": email,
         "password": password
     }
     r = json_post(app, "/api/v1/login", data)
     print(r.data)
     if check_status:
-        assert r.status_code == 200, "Failed to login with email '%s' and password '%s' (code %d)" % (email, password, r.status_code)
+        assert r.status_code == 200, "Failed to login with email '%s' and password '%s' (code %d)" % (
+            email, password, r.status_code)
     return r
 
 
@@ -137,9 +141,9 @@ def put_user_preferences(app, prefs, csrf_token, check_status=True):
     data = copy.copy(prefs)
     data["csrf_token"] = csrf_token
     r = app.put(url,
-        data=json.dumps(data),
-        headers=json_header,
-        follow_redirects=True)
+                data=json.dumps(data),
+                headers=json_header,
+                follow_redirects=True)
     if check_status:
         print(r.data)
         assert r.status_code == 200
@@ -168,7 +172,7 @@ def delete_entry(app, entry_id, csrf_token, check_status=True):
     url = "/api/v1/entries/{}?csrf_token={}".format(
         entry_id, csrf_token)
     r = app.delete(url,
-        headers=json_header, follow_redirects=True)
+                   headers=json_header, follow_redirects=True)
     print(r.data)
     if check_status:
         assert r.status_code == 200
@@ -179,7 +183,7 @@ def delete_all_entries(app, csrf_token, check_status=True):
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/entries/nuclear"
-    data = { "csrf_token": csrf_token }
+    data = {"csrf_token": csrf_token}
     r = json_post(app, url, data)
     print(r.data)
     if check_status:
@@ -193,11 +197,11 @@ def delete_user(app, password, csrf_token, check_status=True):
     assert isinstance(check_status, bool)
     url = "/api/v1/user".format(password, csrf_token)
     r = app.delete(url,
-        data=json.dumps({
-            "csrf_token": csrf_token,
-            "password": password
-        }),
-        headers=json_header, follow_redirects=True)
+                   data=json.dumps({
+                       "csrf_token": csrf_token,
+                       "password": password
+                   }),
+                   headers=json_header, follow_redirects=True)
     print(r.data)
     if check_status:
         assert r.status_code == 200
@@ -264,7 +268,7 @@ def recover_account_confirm(app, password, recovery_token, csrf_token, check_sta
 def activate_account(app, token: six.text_type, check_status: bool = True):
     assert isinstance(token, six.text_type)
     assert isinstance(check_status, bool)
-    data = { "token": token }
+    data = {"token": token}
     r = json_post(app, "/api/v1/user/activate", data)
     print(r.data)
     if check_status:
@@ -281,9 +285,9 @@ def update_user_password(app, old_password, new_password, csrf_token, check_stat
         "confirm_new_password": new_password
     }
     r = app.put(url,
-        data=json.dumps(data),
-        headers=json_header,
-        follow_redirects=True)
+                data=json.dumps(data),
+                headers=json_header,
+                follow_redirects=True)
     if check_status:
         print(r.data)
         assert r.status_code == 200
@@ -304,14 +308,15 @@ def post_document(app, doc_params, csrf_token, check_status=True):
     url = "/api/v1/docs"
     doc_params["csrf_token"] = csrf_token
     r = app.post(url,
-        data=doc_params,
-        headers=file_upload_headers,
-        follow_redirects=True)
+                 data=doc_params,
+                 headers=file_upload_headers,
+                 follow_redirects=True)
     if check_status:
         print("[post_document] status code = %d" % r.status_code)
         print(r.data)
         assert r.status_code == 200
     return r
+
 
 def get_document(app, doc_id, check_status=True):
     url = "/api/v1/docs/%d" % doc_id
@@ -323,20 +328,21 @@ def get_document(app, doc_id, check_status=True):
     else:
         return r
 
+
 def delete_document(app, doc_id, csrf_token, check_status=True):
     url = "/api/v1/docs/{}".format(doc_id)
     r = app.delete(url,
-        data=json.dumps({
-            "csrf_token": csrf_token
-        }),
-        headers=json_header, follow_redirects=True)
+                   data=json.dumps({
+                       "csrf_token": csrf_token
+                   }),
+                   headers=json_header, follow_redirects=True)
     print(r.data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-#### v2 API starts here
+# --- v2 API starts here
 
 def get_entries_v2(app):
     r = json_get(app, "/api/v2/entries")
@@ -354,7 +360,8 @@ def get_entry_v2(app, entry_id, check_status=True):
     else:
         return r
 
-#### v3 (tokens)
+# --- v3 (tokens) starts here
+
 
 def get_api_token_with_login(app, check_status: bool = True):
     r = json_get(app, "/api/v3/token")
@@ -364,6 +371,7 @@ def get_api_token_with_login(app, check_status: bool = True):
         return json.loads(r.data)["token"]
     else:
         return r
+
 
 def login_with_token(app, email: str, password: str, check_status: bool = True):
     r = json_post(app, "/api/v3/token", data={
@@ -431,14 +439,14 @@ def delete_entry_with_token(app, entry_id: int, token: str, check_status: bool =
 
 
 def decrypt_entry_with_token(app,
-        entry_id: int,
-        password: str,
-        token: str,
-        check_status: bool = True):
+                             entry_id: int,
+                             password: str,
+                             token: str,
+                             check_status: bool = True):
     r = json_post(
         app,
         "/api/v3/entries/{}".format(entry_id),
-        { "password": password },
+        {"password": password},
         token=token
     )
     # will not be printed unless there is an error
@@ -451,15 +459,15 @@ def decrypt_entry_with_token(app,
 
 
 def edit_entry_with_token(app,
-        entry_id: int,
-        new_entry: dict,
-        password: str,
-        token: str,
-        check_status: bool = True):
+                          entry_id: int,
+                          new_entry: dict,
+                          password: str,
+                          token: str,
+                          check_status: bool = True):
     r = json_patch(
         app,
         "/api/v3/entries/{}".format(entry_id),
-        { "entry": new_entry, "password": password },
+        {"entry": new_entry, "password": password},
         token=token
     )
     print(r.data)
@@ -468,5 +476,3 @@ def edit_entry_with_token(app,
         return json.loads(r.data)
     else:
         return r
-
-

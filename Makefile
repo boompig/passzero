@@ -1,6 +1,6 @@
 .PHONY: all install lint test live-test-local build-name clean minify-js minify-css minify ts-compile
 
-SRC=server.py passzero/*.py
+SRC=server.py passzero/*.py passzero/api/*.py passzero/models/*.py
 UNIT_TEST_SRC=tests/unit_tests/*.py
 E2E_TEST_SRC=tests/end_to_end_tests/*.py
 CWD=$(shell pwd)
@@ -58,8 +58,7 @@ live-test-local: $(SRC) $(E2E_TEST_SRC) lint
 lint: $(SRC) $(js_src_targets) $(css_src)
 	$(csslint) --quiet $(css_src)
 	yarn lint
-	pyflakes $(SRC) $(UNIT_TEST_SRC) $(E2E_TEST_SRC)
-	flake8 $(SRC)
+	flake8 $(SRC) $(UNIT_TEST_SRC) $(E2E_TEST_SRC)
 
 clean:
 	find . -name '*.pyc' -delete
