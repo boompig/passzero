@@ -6,22 +6,12 @@ import unittest
 
 import mock
 import six
-from flask import Flask
 from six import BytesIO
 
-from passzero.api_v1 import api_v1
+from passzero.app_factory import create_app
 from passzero.models import db
 
 from . import api
-
-app = Flask(__name__, template_folder="../../templates")
-app.secret_key = 'foo'
-app.register_blueprint(api_v1, prefix="")
-
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["BUILD_ID"] = "test"
-app.config['WTF_CSRF_ENABLED'] = False
 
 DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"
@@ -37,10 +27,22 @@ class PassZeroApiTester(unittest.TestCase):
 
     def setUp(self):
         logging.basicConfig(level=logging.DEBUG)
-        self.app = app.test_client()
-        db.app = app
-        db.init_app(app)
-        db.create_all()
+        _app = create_app(__name__, settings_override={
+            "SQLALCHEMY_DATABASE_URI": "sqlite://",
+            "SQLALCHEMY_TRACK_MODIFICATIONS": False,
+            "BUILD_ID": "test",
+            "WTF_CSRF_ENABLED": False,
+            "JSONIFY_PRETTYPRINT_REGULAR": False,
+            "TESTING": True,
+        })
+        self.app = _app.test_client()
+        with _app.app_context():
+            db.app = _app
+            db.init_app(_app)
+            db.create_all()
+
+    def tearDown(self):
+        db.drop_all()
 
     def test_delete_all_entries(self):
         self._create_active_account(DEFAULT_EMAIL, u"pass")

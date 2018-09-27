@@ -24,20 +24,22 @@ TEMPLATE_FOLDER = os.path.realpath(os.path.dirname(__file__) + "/../../templates
 @pytest.fixture(scope="function")
 def test_client():
     logging.basicConfig(level=logging.DEBUG)
-    app = create_app(__name__, {
+    _app = create_app(__name__, {
         "SQLALCHEMY_DATABASE_URI": "sqlite://",
         "SQLALCHEMY_TRACK_MODIFICATIONS": False,
         "BUILD_ID": "test",
         "WTF_CSRF_ENABLED": False,
-        "JSONIFY_PRETTYPRINT_REGULAR": False
+        "JSONIFY_PRETTYPRINT_REGULAR": False,
+        "TESTING": True
     })
 
-    app.testing = True
     # template folder has to be explicitly specified
-    app.template_folder = TEMPLATE_FOLDER
-
-    test_client = app.test_client()
-    db.create_all()
+    _app.template_folder = TEMPLATE_FOLDER
+    test_client = _app.test_client()
+    with _app.app_context():
+        db.app = _app
+        db.init_app(_app)
+        db.create_all()
     return test_client
 
 
