@@ -45,17 +45,6 @@ function deselectText() {
 	}
 }
 
-function showHidePass(event: Event) {
-	const $elem = $(event.target).parent().parent().parent().find(".hidden-toggle");
-	if ($elem.hasClass("password-hidden")) {
-		$elem.removeClass("password-hidden");
-		$(event.target).text("Hide");
-	} else {
-		$elem.addClass("password-hidden");
-		$(event.target).text("Show");
-	}
-}
-
 const PassZeroCtrl = function($scope, $location, $http, $window, $timeout) {
 	this.search = null;
 	this.entries = [];
@@ -105,6 +94,19 @@ const PassZeroCtrl = function($scope, $location, $http, $window, $timeout) {
 			that.loadedEntries = true;
 			that.submitSearch();
 		});
+	};
+
+	this.showHidePass = (event: Event) => {
+		console.log(event);
+		const $elem = $(event.target).parent().parent().parent().find(".hidden-toggle");
+		console.log($elem);
+		if ($elem.hasClass("password-hidden")) {
+			$elem.removeClass("password-hidden");
+			$(event.target).text("Hide");
+		} else {
+			$elem.addClass("password-hidden");
+			$(event.target).text("Show");
+		}
 	};
 
 	this.submitSearch = () => {
