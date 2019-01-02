@@ -1,7 +1,8 @@
 const path = require('path');
+const mode = (process.env.NODE_ENV === 'dev' ? 'development' : 'production');
 
 module.exports = {
-    mode: 'development',
+    mode: mode,
     entry: './typescript/entries-bundle/index.tsx',
     output: {
         filename: 'entries.bundle.js',

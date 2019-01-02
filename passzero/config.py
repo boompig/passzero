@@ -1,4 +1,4 @@
-BUILD_ID = "new_crocodile"
+BUILD_ID = "bitter_hippo"
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32

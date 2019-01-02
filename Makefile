@@ -62,7 +62,7 @@ test-cov: $(SRC) $(UNIT_TEST_SRC) lint
 live-test-local: $(SRC) $(E2E_TEST_SRC) lint
 	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5050' pytest $(E2E_TEST_SRC)
 
-lint: $(SRC) $(js_src_targets) $(css_src)
+lint: $(SRC) $(standalone_typescript_src) $(css_src)
 	$(csslint) --quiet $(css_src)
 	yarn lint
 	flake8 $(SRC) $(UNIT_TEST_SRC) $(E2E_TEST_SRC)
