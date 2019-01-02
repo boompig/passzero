@@ -7,16 +7,15 @@ CWD=$(shell pwd)
 
 css_src 		:= static/css/src/*.css
 standalone_typescript_src := typescript/standalone/*.ts
-js_dist_targets := $(patsubst typescript/standalone/%.ts, static/js/dist/%.min.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/dist/%.min.js, $(wildcard typescript/common/*.ts))
 css_targets 	:= $(patsubst static/css/src/%.css, static/css/dist/%.min.css, $(wildcard static/css/src/*.css))
 js_src_targets 	:= $(patsubst typescript/standalone/%.ts, static/js/src/standalone/%.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/src/common/%.js, $(wildcard typescript/common/*.ts))
+js_dist_targets := $(patsubst typescript/standalone/%.ts, static/js/dist/%.min.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/dist/%.min.js, $(wildcard typescript/common/*.ts))
 js_test_src 	:= tests/angular/*.js
 entries_bundle_src := typescript/entries-bundle/*.tsx typescript/entries-bundle/components/*.tsx
 
 csslint  := node_modules/csslint/dist/cli.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
 cleancss := node_modules/clean-css-cli/bin/cleancss
-tsc		 := node_modules/typescript/bin/tsc
 
 all: lint test build-name
 
@@ -38,7 +37,7 @@ ts-compile: $(standalone_typescript_src) typescript/standalone/tsconfig.json
 
 minify-js: ts-compile $(js_dist_targets) static/js/dist/entries.bundle.js
 
-static/js/dist/%.min.js: $(js_src_targets)
+static/js/dist/%.min.js: static/js/src/**/%.js
 	mkdir -p static/js/dist
 	$(uglifyjs) $< -o $@
 
