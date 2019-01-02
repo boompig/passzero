@@ -8,10 +8,11 @@
 
 
 // type-checking
-//import * as $ from "jquery";
-//import { Utils } from "./utils";
-//import { pzAPI } from "./common/passzero_api";
-//import { LogoutTimer } from "./LogoutTimer";
+// import * as $ from "jquery";
+// import { Utils } from "./utils";
+// import { pzAPI } from "../common/passzero_api";
+// import * as Clipboard from "clipboard";
+// import { LogoutTimer } from "./LogoutTimer";
 
 
 /**
@@ -275,7 +276,8 @@ const NewCtrl = function() {
 	};
 };
 
-const app = angular.module("PassZero", [])
-	.controller("PassZeroCtrl", NewCtrl);
+let app = angular.module("PassZero", [])
+    .controller("PassZeroCtrl", NewCtrl);
+// window.app = app;
 
 //export { NewCtrl, app };

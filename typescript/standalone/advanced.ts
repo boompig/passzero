@@ -3,9 +3,9 @@
 /// <reference path="./utils.ts" />
 
 // module imports (tsc doesn't like these)
-//import * as $ from "jquery";
-//import { Utils } from "./utils";
-//import * as { pzAPI } from "../common/passzero_api";
+// import * as $ from "jquery";
+// import { Utils } from "./utils";
+// import { pzAPI } from "../common/passzero_api";
 
 function nukeEntries(e: Event) {
 	"use strict";

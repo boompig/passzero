@@ -3,7 +3,7 @@
 
 
 // type-checking
-//import * as $ from "jquery";
+// import * as $ from "jquery";
 
 
 const pzAPI = {

@@ -8,6 +8,7 @@
         "noUnusedLocals": true,
         "outDir": "../../static/js/src",
         "removeComments": true,
+        // "rootDir": ".",
         "rootDirs": [
             ".",
             "common"
@@ -19,6 +20,7 @@
         "../../_OLD",
         "../../static/js",
         "entries-bundle",
-        "node_modules"
+        "node_modules",
+        // "common"
     ]
 }

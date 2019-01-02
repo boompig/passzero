@@ -9,9 +9,10 @@ import DecryptedEntry from './components/decrypted-entry';
 import NumEntries from './components/num-entries';
 import SearchForm from './components/search-form';
 import {IEntry, IDecryptedEntry, IEncryptedEntry} from './components/entries';
-import * as api from '../common/passzero_api';
 
-let pzAPI = api.pzAPI;
+// instead of importing passzero_api, include it using a reference (since it's not a module)
+// introduces pzAPI variable
+/// <reference path="../common/passzero_api.ts" />
 
 interface IAppProps {}
 

@@ -2,8 +2,8 @@
 /// <reference path="../common/passzero_api.ts" />
 
 // module imports (tsc does not like these)
-//import * as $ from "jquery";
-//import { pzAPI } from "./common/passzero_api";
+// import * as $ from "jquery";
+// import { pzAPI } from "../common/passzero_api";
 
 
 function recoverPassword(e: Event) {

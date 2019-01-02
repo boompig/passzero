@@ -13,6 +13,7 @@
     },
     "exclude": [
         "_OLD",
-        "static/js"
+        "static/js",
+        "typescript/standalone"
     ]
 }

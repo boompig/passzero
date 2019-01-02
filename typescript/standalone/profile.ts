@@ -9,7 +9,7 @@
 // module imports (tsc does not like these)
 //import * as $ from "jquery";
 //import { Utils } from "./utils";
-//import { pzAPI } from "./common/passzero_api";
+// import { pzAPI } from "../common/passzero_api";
 
 interface IPrefsForm {
 	default_random_passphrase_length: number;
