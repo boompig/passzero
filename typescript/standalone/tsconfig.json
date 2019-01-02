@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+        // "jsx": "react",
+        "module": "none",
+        "moduleResolution": "node",
+        // "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noUnusedLocals": true,
+        "outDir": "../../static/js/src",
+        "removeComments": true,
+        // "rootDir": ".",
+        "rootDirs": [
+            ".",
+            "common"
+        ],
+        // "sourceMap": true,
+        "target": "es5"
+    },
+    "exclude": [
+        "../../_OLD",
+        "../../static/js",
+        "entries-bundle",
+        "node_modules",
+        // "common"
+    ]
+}

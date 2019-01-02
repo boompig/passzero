@@ -2,23 +2,17 @@ html, body {
     font-size: 1rem;
 }
 
+/* more compact display on phones and old tablets */
 @media(max-width: 768px) {
-    .container {
-        padding-right: 5px;
-        padding-left: 5px;
-
+    main.container {
+        padding-right: 4px;
+        padding-left: 4px;
+        padding-top: 2rem;
     }
 }
 
 .inner-container {
     font-size: 1rem;
-}
-
-/**
- * Hide ugly Angular stuff on load
- */
-[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
-  display: none !important;
 }
 
 /********* search-form **************/
@@ -58,27 +52,44 @@ html, body {
 
 @media(max-width: 768px) {
     .entry {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: .9rem;
+        padding-right: .9rem;
     }
 
     .entry-title {
         font-size: 1.2rem;
     }
+
+    /* the copy button is going to be as long as the password */
+    .entry-panel .copy-pwd-btn {
+        width: 280px;
+        margin-bottom: .5rem;
+    }
 }
 
-.password {
+.entry .password {
     min-width: 200px;
     max-width: 280px;
-    padding: 2px 5px;
-    border-radius: 3px;
-    border: 1px solid #555;
 }
 
-.hidden-toggle.password-hidden {
+.entry .password.hidden-toggle,
+.entry .extra.hidden-toggle {
+    background-color: white;
+}
+
+.entry .password.text-hidden,
+.entry .extra.text-hidden {
     color: #555;
     background-color: #555;
-    cursor: pointer;
+}
+
+/**
+ * For long passwords, so they don't overflow
+ */
+.entry .password.text-hidden {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
 }
 
 #num-entries, #loading-text {
@@ -92,6 +103,10 @@ html, body {
 
 .entry-panel button {
     font-size: 1rem;
+}
+
+.entry-panel button:not(:last-of-type) {
+    margin-right: .3rem;
 }
 
 .extra-container {

@@ -15,8 +15,8 @@ const Utils = {
 	/**
 	 * Parse serliazed array into object
 	 */
-	parseArray: (arr: INameValuePair[]) => {
-		const obj = {};
+	parseArray: (arr: INameValuePair[]): any => {
+		const obj: any = {};
 		for (let i = 0; i < arr.length; i++) {
 			obj[arr[i].name] = arr[i].value || "";
 		}
