@@ -108,7 +108,8 @@ def create_app(name: str, settings_override: dict = {}):
             # CDN for javascript
             "script-src": ["\'self\'", "cdnjs.cloudflare.com"],
             # CDN for CSS
-            "style-src": ["\'self\'", "cdnjs.cloudflare.com", "use.fontawesome.com"],
+            # NOTE: unsafe-inline is needed for tooltips
+            "style-src": ["\'self\'", "\'unsafe-inline\'", "cdnjs.cloudflare.com", "use.fontawesome.com"],
             "font-src": ["use.fontawesome.com"],
             # NOTE: data: is needed for https://github.com/twbs/bootstrap/issues/25394
             "img-src": ["\'self\'", "data:"]

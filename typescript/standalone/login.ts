@@ -3,13 +3,13 @@
  */
 /// <reference types="jquery" />
 /// <reference types="js-cookie" />
-/// <reference path="./passzero_api.ts" />
+/// <reference path="../common/passzero_api.ts" />
 /// <reference path="./utils.ts" />
 
 
 // module imports (tsc does not like these)
 //import * as $ from "jquery";
-//import { pzAPI } from "./passzero_api";
+//import { pzAPI } from "../common/passzero_api";
 //import { Utils } from "./utils";
 
 

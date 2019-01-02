@@ -12,9 +12,9 @@
     "postinstall": "make ts-compile && make minify"
   },
   "dependencies": {
-    "@types/angular": "^1.6.42",
+    "@types/angular": "^1.6.53",
     "@types/clipboard": "^1.5.36",
-    "@types/jquery": "^3.3.0",
+    "@types/jquery": "^3.3.29",
     "@types/js-cookie": "^2.1.0",
     "@types/node": "^7.0.31",
     "angular": "1.6.4",
@@ -22,16 +22,26 @@
     "clean-css-cli": "^4.1.4",
     "clipboard": "^1.6.1",
     "csslint": "^1.0.5",
+    "csstype": "^2.6.0",
     "jquery": "3.2.1",
     "js-cookie": "2.1.4",
-    "typescript": "^2.3.4",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0",
+    "react-tooltip": "^3.9.1",
+    "typescript": "^3.2.2",
     "uglify-js": "^3.0.15"
   },
   "devDependencies": {
     "@types/node": "^7.0.31",
+    "@types/react": "^16.7.18",
+    "@types/react-dom": "^16.0.11",
+    "@types/react-tooltip": "^3.9.0",
     "angular-mocks": "^1.6.8",
+    "awesome-typescript-loader": "^5.2.1",
+    "source-map-loader": "^0.2.4",
     "tablesorter": "^2.31.0",
     "tslint": "^5.9.1",
-    "typescript": "^2.3.4"
+    "webpack": "^4.28.3",
+    "webpack-cli": "^3.1.2"
   }
 }

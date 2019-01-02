@@ -2,15 +2,15 @@
 /// <reference types="angular" />
 /// <reference types="clipboard" />
 /// <reference path="./logoutTimer.ts" />
-/// <reference path="./passzero_api.ts" />
+/// <reference path="../common/passzero_api.ts" />
 /// <reference path="./utils.ts" />
-/// <reference path="./interfaces.ts" />
+/// <reference path="../common/interfaces.ts" />
 
 
 // type-checking
 //import * as $ from "jquery";
 //import { Utils } from "./utils";
-//import { pzAPI } from "./passzero_api";
+//import { pzAPI } from "./common/passzero_api";
 //import { LogoutTimer } from "./LogoutTimer";
 
 

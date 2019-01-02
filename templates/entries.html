@@ -1,93 +1,19 @@
-{% extends "layout.html" -%}
+{% extends "layout-react.html" -%}
 
 {% block js %}
-    <!-- load libraries from CDN to decrease page load time -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.6.4/angular.min.js" integrity="sha256-jFCqhWdzGFjoG8/SAncY2afI/Xv1TPSWSZrb9dpXQbk=" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.6.1/clipboard.min.js" integrity="sha256-El0fEiD3YOM7uIVZztyQzmbbPlgEj0oJVxRWziUh4UE=" crossorigin="anonymous"></script>
-    <!-- custom JS -->
-    <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
-    <script src="{{ url_for("static", filename="js/dist/entries.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <!-- custom JS - webpack bundle -->
+    <script src="{{ url_for("static", filename="js/dist/entries.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block css %}
-    <!-- fontawesome glyphicons -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/solid.css" integrity="sha384-VGP9aw4WtGH/uPAOseYxZ+Vz/vaTb1ehm1bwx92Fm8dTrE+3boLfF1SpAtB1z7HW" crossorigin="anonymous">
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/fontawesome.css" integrity="sha384-1rquJLNOM3ijoueaaeS5m+McXPJCGdr5HcA03/VHXxcp2kX2sUrQDmFc3jR5i/C7" crossorigin="anonymous">
+    <!-- NOTE: bootstrap 4 already included in layout template -->
+    <!-- NOTE: fontawesome solid glyphicons already included in layout template -->
     <!-- custom style -->
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/entries.min.css") + "?build=" + config['BUILD_ID'] }}" />
 {% endblock %}
 
 {% block body %}
-    {% raw %}
-    <div id="num-entries" ng-cloak>
-        <h2 class="title" ng-if="!ctrl.loadedEntries">Loading entries...</h2>
-        <h2 class="title" ng-if="ctrl.loadedEntries && ctrl.entries.length === 1">
-            You have 1 entry
-        </h2>
-        <h2 class="title" ng-if="ctrl.loadedEntries && ctrl.entries.length !== 1">
-            You have {{ ctrl.entries.length }} entries
-        </h2>
-    </div>
-
-    <form id="search-form" ng-if="ctrl.loadedEntries && ctrl.entries.length > 0"
-        ng-submit="ctrl.submitSearch()" ng-cloak>
-        <div class="input-group">
-            <input type="text" name="search" id="search" class="form-control"
-                placeholder="search"
-                autofocus
-                ng-change="ctrl.submitSearch()"
-                ng-model="ctrl.search" />
-            <div class="input-group-append">
-                <span class="input-group-text">
-                    <i class="fas fa-search"></i>
-                </span>
-            </div>
-        </div>
-    </form>
-
-    <div id="entry-container" ng-cloak>
-        <div ng-if="ctrl.loadedEntries && ctrl.entries.length === 0">
-            <div class="empty-msg">No entries yet. Try <a href="/entries/new">making some</a>.</div>
-        </div>
-
-        <div ng-repeat="entry in ctrl.filteredEntries track by entry.id" ng-cloak>
-            <div class="entry" id="entry-{{ entry.id }}">
-                <div class="entry-title account">{{ entry.account }}</div>
-                <div ng-if="!entry.is_encrypted" class="username">{{ entry.username }}</div>
-                <div ng-if="!entry.is_encrypted" class="password hidden-toggle password-hidden"
-                    ng-click="ctrl.toggleHidden(entry)">
-                    <span class="inner-password" id="inner-password-{{ entry.id }}">{{ entry.password }}</span>
-                </div>
-                <div ng-if="entry.extra && !entry.is_encrypted">
-                    <div class="extra-container">
-                        <label for="extra">Extra Info</label>
-                        <div name="extra" class="extra hidden-toggle password-hidden">{{ entry.extra }}</div>
-                    </div>
-                </div>
-                <div class="entry-panel">
-                    <button type="button" ng-if="!entry.is_encrypted"
-                        data-clipboard-text="{{ entry.password }}"
-                        class="btn btn-success copy-pwd-btn"
-                        data-toggle="tooltip">Copy Password</button>
-                    <button type="button" class="btn btn-warning edit-btn"
-                        ng-click="ctrl.editEntry(entry.id)">Edit</button>
-                    <span ng-if="entry.is_encrypted">
-                        <button type="button" class="btn btn-info decrypt-btn"
-                            ng-click="ctrl.decryptEntry($event, entry, $index)">Decrypt
-                        </button>
-                    </span>
-                    <span ng-if="!entry.is_encrypted">
-                        <button type="button" class="btn btn-info show-hide-btn"
-                            ng-click="ctrl.showHidePass($event)">Show
-                        </button>
-                    </span>
-                    <button type="button" class="btn btn-danger" class="delete-btn"
-                        ng-click="ctrl.deleteEntry(entry)">Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endraw %}
+    <div id="root"></div>
     <form class="hidden">
         <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}" />
     </form>

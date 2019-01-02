@@ -1,14 +1,18 @@
 {
     "compilerOptions": {
+        "jsx": "react",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        // "noImplicitAny": true,
+        "noImplicitReturns": true,
         "noUnusedLocals": true,
-		"outDir": "static/js/src",
-		"module": "none",
-		"removeComments": true,
-		"noImplicitReturns": true
+        "outDir": "static/js/src",
+        "removeComments": true,
+        "sourceMap": true,
+        "target": "es6"
     },
-    "target": "es6",
-	"exclude": [
-		"node_modules",
-		"static/js"
-	]
+    "exclude": [
+        "_OLD",
+        "static/js"
+    ]
 }

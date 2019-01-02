@@ -6,10 +6,12 @@ E2E_TEST_SRC=tests/end_to_end_tests/*.py
 CWD=$(shell pwd)
 
 css_src 		:= static/css/src/*.css
-js_dist_targets := $(patsubst typescript/%.ts, static/js/dist/%.min.js, $(wildcard typescript/*.ts))
+standalone_typescript_src := typescript/standalone/*.ts
+js_dist_targets := $(patsubst typescript/standalone/%.ts, static/js/dist/%.min.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/dist/%.min.js, $(wildcard typescript/common/*.ts))
 css_targets 	:= $(patsubst static/css/src/%.css, static/css/dist/%.min.css, $(wildcard static/css/src/*.css))
-js_src_targets 	:= $(patsubst typescript/%.ts, static/js/src/%.js, $(wildcard typescript/*.ts))
+js_src_targets 	:= $(patsubst typescript/standalone/%.ts, static/js/src/standalone/%.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/src/common/%.js, $(wildcard typescript/common/*.ts))
 js_test_src 	:= tests/angular/*.js
+entries_bundle_src := typescript/entries-bundle/*.tsx typescript/entries-bundle/components/*.tsx
 
 csslint  := node_modules/csslint/dist/cli.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
@@ -26,17 +28,22 @@ build-name: scripts/add_build_name.py passzero/config.py
 
 minify: minify-js minify-css
 
-ts-compile: $(js_src_targets)
+static/js/dist/entries.bundle.js: $(entries_bundle_src)
+	yarn run webpack
 
-static/js/src/%.js: typescript/%.ts
+ts-compile: $(standalone_typescript_src) typescript/standalone/tsconfig.json
 	mkdir -p static/js/src
-	$(tsc) $< --outDir static/js/src --module none
+	# use the standalone tsconfig.json file for this
+	yarn run tsc --project typescript/standalone/
 
-minify-js: ts-compile $(js_dist_targets)
+minify-js: ts-compile $(js_dist_targets) static/js/dist/entries.bundle.js
 
-static/js/dist/%.min.js: static/js/src/%.js
+static/js/dist/%.min.js: $(js_src_targets)
 	mkdir -p static/js/dist
 	$(uglifyjs) $< -o $@
+
+static/js/src/standalone/%.js: $(standalone_typescript_src) ts-compile
+static/js/src/common/%.js: $(standalone_typescript_src) ts-compile
 
 minify-css: $(css_targets)
 
