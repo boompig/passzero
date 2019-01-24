@@ -59,10 +59,16 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
     }
 
     handleCopy(event: React.SyntheticEvent): void {
-        // console.log('Copy button pressed');
-        // console.log(this.passwordFieldRef.current);
-        // select the copy button
-        this.passwordFieldRef.current.select();
+        // focus first due to weird iOS stuff
+        this.passwordFieldRef.current.focus();
+        // after focus can actually select
+        /*
+         * NOTE: commented out code below does *not work* on mobile safari
+         * see https://stackoverflow.com/a/6302507/755934
+         */
+        // this.passwordFieldRef.current.select();
+        this.passwordFieldRef.current.setSelectionRange(0, 9999);
+        // finally copy the text
         document.execCommand('copy');
 
         ReactTooltip.show(this.copyTooltipRef.current);
@@ -72,7 +78,7 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
         });
         window.setTimeout(this.hideTooltip, this.tooltipHideDelay);
 
-        // focus back on the button
+        // focus back on the button to keep text from being selected
         (event.target as HTMLButtonElement).focus();
     }
 
@@ -95,17 +101,24 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
         // the password field
         let password = null, extra = null;
         if(this.state.isPasswordHidden) {
-            password = (<input type='text' readOnly={true} value={ this.props.entry.password }
-                className='form-control password hidden-toggle text-hidden'
-                ref={ this.passwordFieldRef } />
-            );
+            password = (
+                <form>
+                    <input type='text' value={this.props.entry.password}
+                        readOnly={true}
+                        className='form-control password hidden-toggle text-hidden'
+                        ref={this.passwordFieldRef} />
+                </form>);
             extra = (
                 <div className='extra hidden-toggle text-hidden'>{ this.props.entry.extra}</div>
             );
         } else {
-            password = (<input type='text' readOnly={true} value={ this.props.entry.password }
-                className='form-control password hidden-toggle'
-                ref={ this.passwordFieldRef } />
+            password = (
+                <form>
+                    <input type='text' value={this.props.entry.password}
+                        readOnly={true}
+                        className='form-control password hidden-toggle'
+                        ref={this.passwordFieldRef} />
+                </form>
             );
             extra = (
                 <div className='extra hidden-toggle'>{ this.props.entry.extra}</div>
