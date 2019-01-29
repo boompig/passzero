@@ -7,7 +7,7 @@ from passzero import audit
 from passzero.config import SALT_SIZE, DEFAULT_ENTRY_VERSION
 from passzero.crypto_utils import get_hashed_password, get_salt, PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
-                             Entry, Service, User, Entry_v4, Entry_v3, Entry_v5)
+                             Entry, Service, User, Entry_v4, Entry_v3, Entry_v5, Link)
 
 from .utils import base64_encode
 
@@ -78,6 +78,14 @@ def get_entries(db_session, user_id: int) -> List[Entry]:
     return db_session.query(Entry)\
         .filter_by(user_id=user_id, pinned=False)\
         .order_by(asc(func.lower(Entry.account)))\
+        .all()
+
+
+def get_links(db_session, user_id: int) -> List[Link]:
+    """Return a list of links without decrypting them"""
+    assert isinstance(user_id, int)
+    return db_session.query(Link)\
+        .filter_by(user_id=user_id)\
         .all()
 
 

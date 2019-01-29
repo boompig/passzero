@@ -1,5 +1,5 @@
 /// <reference types="jquery" />
-/// <reference path="./logoutTimer.ts" />
+/// <reference path="../common/logoutTimer.ts" />
 
 
 // type-checking

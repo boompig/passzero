@@ -115,10 +115,24 @@ def post_create(account_name):
     return redirect(url_for("main_routes.view_entries"))
 
 
-@main_routes.route("/view", methods=["GET"])
+@main_routes.route("/entries", methods=["GET"])
 @auth_or_redirect_login
 def view_entries():
     return render_template("entries.html")
+
+
+@main_routes.route("/links", methods=["GET"])
+# TODO:
+# @auth_or_redirect_login
+def view_links():
+    return render_template("links.html")
+
+
+@main_routes.route("/links/new", methods=["GET"])
+# TODO:
+# @auth_or_redirect_login
+def new_link_view():
+    return render_template("new-link.html", title="PassZero &middot; New Link")
 
 
 @main_routes.route("/signup", methods=["GET"])

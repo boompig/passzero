@@ -240,7 +240,59 @@ const pzAPI = {
 			.then((response) => {
 				return pzAPI._deleteAllEntries(response);
 			});
-	}
+	},
+
+	/** below this line use API v3 */
+
+	getJsonWithBearer: async (url: string, apiToken: string) => {
+		const options = {
+			method: "GET",
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": `Bearer ${apiToken}`
+			},
+		};
+		const response = await window.fetch(url, options);
+		return response.json();
+	},
+
+	postJsonWithBearer: async (url: string, apiToken: string, data: any) => {
+		const options = {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"Authorization": `Bearer ${apiToken}`
+			},
+			body: JSON.stringify(data),
+		};
+		const response = await window.fetch(url, options);
+		return response.json();
+	},
+
+	getApiKey: async () => {
+		const url = "/api/v3/token";
+		return pzAPI.getJSON(url);
+	},
+
+	_getEncryptedLinks: async (apiKey: string) => {
+		const url = "/api/v3/links";
+		return pzAPI.getJsonWithBearer(url, apiKey);
+	},
+
+	getEncryptedLinks: async () => {
+		const apiKey = await pzAPI.getApiKey();
+		const response = await pzAPI._getEncryptedLinks(apiKey.token);
+		return {
+			"links": response,
+			"apiKey": apiKey
+		};
+	},
+
+	decryptLink: async (linkId: number, apiToken: string, masterPassword: string) => {
+		const url = `/api/v3/links/${linkId}`;
+		const data = { "password": masterPassword };
+		return await pzAPI.postJsonWithBearer(url, apiToken, data);
+	},
 };
 
 // export { pzAPI };
