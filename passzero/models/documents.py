@@ -111,7 +111,7 @@ class DecryptedDocument:
         """
         assert isinstance(extended_key, bytes)
         # AES_128_CBC_HMAC_SHA_256
-        assert len(extended_key) == 32, f"key must be 32 bytes long, actually {len(extend_key)} bytes"
+        assert len(extended_key) == 32, f"key must be 32 bytes long, actually {len(extended_key)} bytes"
         assert isinstance(self.name, six.text_type), "Name must be a unicode string"
         assert isinstance(self.contents, bytes), "Contents must be bytes"
         box = nacl.secret.SecretBox(extended_key)

@@ -96,6 +96,4 @@ class Link(db.Model):
         assert isinstance(self.contents, bytes)
         self.kdf_salt = kdf_salt
         self.version = 1
-        # preserve ID if possible
-        if "id" in dec_link:
-            self.id = dec_link["id"]
+        # NOTE: do not use ID from dec_link

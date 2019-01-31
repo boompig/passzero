@@ -55,13 +55,13 @@ def decrypt_link(link: Link, master_key: str) -> dict:
     return dec_link
 
 
-def decrypt_entries_pool(entry_key_pair: Tuple[dict, str]) -> List[dict]:
+def decrypt_entries_pool(entry_key_pair: Tuple[Entry, str]) -> dict:
     row, key = entry_key_pair
     result = _decrypt_row(row, key)
     return result
 
 
-def _decrypt_entries_multiprocess(entries, key: str) -> List[dict]:
+def _decrypt_entries_multiprocess(entries: List[Entry], key: str) -> List[dict]:
     from multiprocessing import Pool
     pool = Pool(5)
     entry_key_pairs = [(entry, key) for entry in entries]
@@ -71,7 +71,7 @@ def _decrypt_entries_multiprocess(entries, key: str) -> List[dict]:
     return results
 
 
-def _decrypt_entries_single_thread(entries, key: str) -> List[dict]:
+def _decrypt_entries_single_thread(entries: List[Entry], key: str) -> List[dict]:
     return [_decrypt_row(row, key) for row in entries]
 
 
@@ -239,6 +239,34 @@ def encrypt_entry(user_key: str, dec_entry: dict,
         raise Exception("We do not support encrypting very old entries (version specified = {})".format(version))
     entry.encrypt(user_key, dec_entry)
     return entry
+
+
+def edit_link(session, link_id: int, user_key: str, edited_link: dict, user_id: int) -> Link:
+    """
+    Try to edit the link with ID <link_id>. Commit changes to DB.
+    Check first if the entry belongs to the current user
+    DO NOT bump the version
+    :param session:         Database session
+    :param link_id:        ID of an existing link to be edited
+    :param user_key:        Password of the logged-in user
+    :param edited_link:    Dictionary of changes to the link
+    :param user_id:         ID of the user
+    :return:                Newly edited entry
+    :rtype:                 Entry
+    """
+    link = session.query(Link).filter_by(id=link_id).one()
+    assert link.user_id == user_id
+    dec_link = {
+        "service_name": edited_link["service_name"],
+        "link": edited_link["link"],
+    }
+    # do not add l2 to session, it's just a placeholder
+    l2 = encrypt_link(user_key, dec_link)
+    # update encrypted fields
+    link.contents = l2.contents
+    # and save `links`; discard l2
+    session.commit()
+    return link
 
 
 def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_id: int) -> Entry:
