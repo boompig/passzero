@@ -11,7 +11,7 @@ import six
 from .shared import db
 
 
-def __get_key(master_key: str, kdf_salt: bytes):
+def _get_key(master_key: str, kdf_salt: bytes):
     """Deliberately similar to `Entry_v5.__get_entry_key`"""
     assert isinstance(master_key, six.text_type)
     assert isinstance(kdf_salt, bytes)
@@ -46,13 +46,20 @@ class Link(db.Model):
         "polymorphic_on": version
     }
 
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "version": self.version,
+        }
+
     def decrypt(self, master_key: str) -> dict:
         """
         Deliberately similar to `Entry_v5.decrypt`
         Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
         """
         assert isinstance(master_key, six.text_type)
-        key = __get_key(master_key, self.kdf_salt)
+        key = _get_key(master_key, self.kdf_salt)
         assert isinstance(key, bytes)
         box = nacl.secret.SecretBox(key)
         assert isinstance(self.contents, bytes)
@@ -72,6 +79,7 @@ class Link(db.Model):
             - id (optional): int
             - version (optional): int -> ignored
         """
+        # NOTE: user_id not set here
         assert isinstance(master_key, six.text_type)
         assert isinstance(dec_link, dict)
         dec_contents_d = {
@@ -81,14 +89,11 @@ class Link(db.Model):
         dec_contents = msgpack.packb(dec_contents_d, use_bin_type=True)
         kdf_salt = nacl.utils.random(nacl.pwhash.argon2id.SALTBYTES)
         assert isinstance(kdf_salt, bytes)
-        key = __get_key(master_key, kdf_salt)
+        key = _get_key(master_key, kdf_salt)
         assert isinstance(key, bytes)
         box = nacl.secret.SecretBox(key)
         self.contents = box.encrypt(dec_contents)
         assert isinstance(self.contents, bytes)
-        # fill in metadata
-        self.user_id = dec_link["user_id"]
-        assert isinstance(self.user_id, int)
         self.kdf_salt = kdf_salt
         self.version = 1
         # preserve ID if possible

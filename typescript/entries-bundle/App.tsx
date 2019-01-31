@@ -25,12 +25,12 @@ interface IAppState {
 }
 
 class App extends Component<IAppProps, IAppState> {
-	logoutTimer: LogoutTimer;
+    logoutTimer: LogoutTimer;
 
     constructor(props: IAppProps) {
-		super(props);
+        super(props);
 
-		this.logoutTimer = new LogoutTimer();
+        this.logoutTimer = new LogoutTimer();
 
         this.state = {
             // entries, eventually loaded from the server
@@ -49,8 +49,8 @@ class App extends Component<IAppProps, IAppState> {
     }
 
     componentDidMount() {
-		// start the logout timer
-		this.logoutTimer.startLogoutTimer();
+        // start the logout timer
+        this.logoutTimer.startLogoutTimer();
 
         pzAPI.getEntriesV2()
             .then((entries: IEncryptedEntry[]) => {
@@ -106,7 +106,7 @@ class App extends Component<IAppProps, IAppState> {
                 // replace the encrypted entry with the decrypted entry
                 let newEntries = this.state.entries;
                 newEntries.splice(entryIndex, 1, decryptedEntry);
-
+                // force state reload
                 this.setState({
                     entries: newEntries
                 });

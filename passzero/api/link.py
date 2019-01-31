@@ -152,9 +152,9 @@ class ApiLink(Resource):
         if user.authenticate(args.password):
             try:
                 link = db.session.query(Link)\
-                    .filter_by(id=link_id, user_id=user_id, pinned=False)\
+                    .filter_by(id=link_id, user_id=user_id)\
                     .one()
-                data = backend._decrypt_row(link, args.password)
+                data = backend.decrypt_link(link, args.password)
                 return data
             except NoResultFound:
                 return json_error_v2("no such link or the link does not belong to you", 400)

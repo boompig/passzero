@@ -35,11 +35,24 @@ def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, An
     return dec_entries_json
 
 
-def _decrypt_row(row, key: str):
+def _decrypt_row(entry: Entry, master_key: str):
     """Used in `decrypt_entries_pool`"""
-    obj = row.decrypt(key)
-    obj["id"] = row.id
-    return obj
+    dec_entry = entry.decrypt(master_key)
+    dec_entry["id"] = entry.id
+    return dec_entry
+
+
+def decrypt_entry(entry: Entry, master_key: str) -> dict:
+    """Alias for _decrypt_row
+    entry is SOME VERSION of Entry
+    """
+    return _decrypt_row(entry, master_key)
+
+
+def decrypt_link(link: Link, master_key: str) -> dict:
+    dec_link = link.decrypt(master_key)
+    dec_link["id"] = link.id
+    return dec_link
 
 
 def decrypt_entries_pool(entry_key_pair: Tuple[dict, str]) -> List[dict]:
@@ -172,6 +185,29 @@ def insert_entry_for_user(db_session, dec_entry: dict,
     insert_new_entry(db_session, entry, user_id)
     db_session.commit()
     return entry
+
+
+def insert_link_for_user(db_session, dec_link: dict,
+                         user_id: int, user_key: str) -> Link:
+    assert isinstance(user_id, int)
+    assert isinstance(user_key, six.text_type)
+    link = encrypt_link(user_key, dec_link)
+    insert_new_link(db_session, link, user_id)
+    db_session.commit()
+    return link
+
+
+def encrypt_link(user_key: str, dec_link: dict) -> Link:
+    assert isinstance(user_key, six.text_type)
+    assert isinstance(dec_link, dict)
+    link = Link()
+    link.encrypt(user_key, dec_link)
+    return link
+
+
+def insert_new_link(session, link: Link, user_id: int) -> None:
+    link.user_id = user_id
+    session.add(link)
 
 
 def insert_new_entry(session, entry: Entry, user_id: int) -> None:

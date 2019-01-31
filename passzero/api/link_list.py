@@ -9,18 +9,8 @@ from ..models import Link, User, db
 from .jwt_auth import authorizations
 
 
-def jsonify_links_pool(link: Link) -> dict:
-    assert link.version >= 4
-    out = link.to_json()
-    # remove the encrypted elements in order to conserve bandwidth
-    out.pop("username")
-    out.pop("password")
-    out.pop("extra")
-    return out
-
-
-def jsonify_links(enc_links: List[Link]):
-    return [jsonify_links_pool(link) for link in enc_links]
+def jsonify_links(enc_links: List[Link]) -> List[dict]:
+    return [link.to_json() for link in enc_links]
 
 
 ns = Namespace("LinkList", authorizations=authorizations)
@@ -41,11 +31,8 @@ class ApiLinkList(Resource):
         Arguments
         ---------
         - link: dict (required)
-            - account: string (required)
-            - username: string (required)
-            - password: string(required)
-            - extra: string (optional)
-            - has_2fa: boolean (required)
+            - service_name: string (required)
+            - link: string (required)
         - password: string (required)
 
         Response
@@ -70,11 +57,8 @@ class ApiLinkList(Resource):
         args = parser.parse_args()
 
         link_parser = reqparse.RequestParser()
-        link_parser.add_argument("account", type=str, required=True, location=("link", ))
-        link_parser.add_argument("username", type=str, required=True, location=("link", ))
-        link_parser.add_argument("password", type=str, required=True, location=("link", ))
-        link_parser.add_argument("extra", required=False, type=str, default="", location=("link", ))
-        link_parser.add_argument("has_2fa", required=True, type=bool, location=("link", ))
+        link_parser.add_argument("service_name", type=str, required=True, location=("link", ))
+        link_parser.add_argument("link", type=str, required=True, location=("link", ))
         link_parser.parse_args(req=args)
         user_id = get_jwt_identity()["user_id"]
         user = db.session.query(User).filter_by(id=user_id).one()
@@ -150,6 +134,4 @@ class ApiLinkList(Resource):
         """
         user_id = get_jwt_identity()["user_id"]
         enc_links = backend.get_links(db.session, user_id)
-        if any([link.version < 4 for link in enc_links]):
-            return json_error_v2("This method does not work if there are links below version 4", 500)
         return jsonify_links(enc_links)

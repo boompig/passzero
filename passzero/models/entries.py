@@ -412,6 +412,7 @@ class Entry_v5(Entry):
         return dec_contents_d
 
     def encrypt(self, master_key: str, dec_entry: dict) -> None:
+        # NOTE: user_id not set here
         assert isinstance(master_key, six.text_type)
         assert isinstance(dec_entry, dict)
         dec_contents_d = {
