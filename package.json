@@ -8,7 +8,12 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "lint": "tslint typescript/standalone/*.ts typescript/common/*.ts",
+	"lint": "yarn run lint:standalone & yarn run lint:common & yarn run lint:links-bundle & yarn run lint:new-link-bundle & yarn run lint:entries-bundle",
+	"lint:standalone": "tslint typescript/standalone/*.ts",
+	"lint:common": "tslint typescript/common/*.ts",
+	"lint:links-bundle": "tslint typescript/links-bundle/*.ts",
+	"lint:new-link-bundle": "tslint typescript/new-link-bundle/*.ts",
+	"lint:entries-bundle": "tslint typescript/entries-bundle/*.ts",
     "postinstall": "make ts-compile && make minify"
   },
   "dependencies": {

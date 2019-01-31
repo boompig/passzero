@@ -8,6 +8,6 @@
 
 
 $(() => {
-	const timer = new LogoutTimer();
-	timer.startLogoutTimer();
+    const timer = new LogoutTimer();
+    timer.startLogoutTimer();
 });
