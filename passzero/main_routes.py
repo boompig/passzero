@@ -122,15 +122,13 @@ def view_entries():
 
 
 @main_routes.route("/links", methods=["GET"])
-# TODO:
-# @auth_or_redirect_login
+@auth_or_redirect_login
 def view_links():
     return render_template("links.html")
 
 
 @main_routes.route("/links/new", methods=["GET"])
-# TODO:
-# @auth_or_redirect_login
+@auth_or_redirect_login
 def new_link_view():
     return render_template("new-link.html", title="PassZero &middot; New Link")
 
@@ -195,7 +193,7 @@ def done_export():
 
 @main_routes.route("/edit/<int:entry_id>", methods=["GET"])
 @auth_or_redirect_login
-def edit_entry(entry_id):
+def edit_entry(entry_id: int):
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     entries = get_entries(db.session, session["user_id"])
     my_entries = [e for e in entries if e.id == entry_id]
@@ -215,6 +213,13 @@ def edit_entry(entry_id):
             entry=fe[0],
             error=None
         )
+
+
+@main_routes.route("/links/<int:link_id>", methods=["GET"])
+@auth_or_redirect_login
+def edit_link(link_id: int):
+    # user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    return render_template("under_construction.html")
 
 
 @main_routes.route("/entries/strength")
