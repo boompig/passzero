@@ -219,7 +219,7 @@ def test_fail_encrypt_entry_v2():
     user_key = u"test master key"
     try:
         backend.encrypt_entry(user_key, dec_entry, version=2)
-    except Exception as e:
+    except Exception:
         pass
     else:
         assert False, "Should throw exception"

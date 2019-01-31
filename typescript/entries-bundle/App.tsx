@@ -13,6 +13,8 @@ import {IEntry, IDecryptedEntry, IEncryptedEntry} from './components/entries';
 // instead of importing passzero_api, include it using a reference (since it's not a module)
 // introduces pzAPI variable
 /// <reference path="../common/passzero_api.ts" />
+// similarly for LogoutTimer variable
+/// <reference path="../common/logoutTimer.ts" />
 
 interface IAppProps {}
 
@@ -23,8 +25,12 @@ interface IAppState {
 }
 
 class App extends Component<IAppProps, IAppState> {
+    logoutTimer: LogoutTimer;
+
     constructor(props: IAppProps) {
         super(props);
+
+        this.logoutTimer = new LogoutTimer();
 
         this.state = {
             // entries, eventually loaded from the server
@@ -43,6 +49,9 @@ class App extends Component<IAppProps, IAppState> {
     }
 
     componentDidMount() {
+        // start the logout timer
+        this.logoutTimer.startLogoutTimer();
+
         pzAPI.getEntriesV2()
             .then((entries: IEncryptedEntry[]) => {
                 this.setState({
@@ -97,7 +106,7 @@ class App extends Component<IAppProps, IAppState> {
                 // replace the encrypted entry with the decrypted entry
                 let newEntries = this.state.entries;
                 newEntries.splice(entryIndex, 1, decryptedEntry);
-
+                // force state reload
                 this.setState({
                     entries: newEntries
                 });

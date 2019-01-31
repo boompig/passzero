@@ -1,5 +1,5 @@
 /// <reference types="jquery" />
-/// <reference path="./logoutTimer.ts" />
+/// <reference path="../common/logoutTimer.ts" />
 
 
 // type-checking
@@ -8,6 +8,6 @@
 
 
 $(() => {
-	const timer = new LogoutTimer();
-	timer.startLogoutTimer();
+    const timer = new LogoutTimer();
+    timer.startLogoutTimer();
 });

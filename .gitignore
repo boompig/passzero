@@ -59,6 +59,7 @@ static/js/src/standalone/*.js
 # editor
 .vimrc
 .nvimrc
+.vscode
 
 # private future work document
 TODO.md

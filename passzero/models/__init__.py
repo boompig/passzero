@@ -1,4 +1,5 @@
 from .entries import Entry, Entry_v2, Entry_v3, Entry_v4, Entry_v5
+from .links import Link
 from .user import User
 from .auth_tokens import AuthToken
 from .api_token import ApiToken
@@ -18,5 +19,6 @@ __all__ = [
     EncryptedDocument,
     DecryptedDocument,
     Service,
+    Link,
     db
 ]

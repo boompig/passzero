@@ -3,9 +3,13 @@ const mode = (process.env.NODE_ENV === 'dev' ? 'development' : 'production');
 
 module.exports = {
     mode: mode,
-    entry: './typescript/entries-bundle/index.tsx',
+    entry: {
+		'entries': './typescript/entries-bundle/index.tsx',
+		'links': './typescript/links-bundle/index.tsx',
+		'new-link': './typescript/new-link-bundle/index.tsx',
+	},
     output: {
-        filename: 'entries.bundle.js',
+        filename: '[name].bundle.js',
         path: __dirname + '/static/js/dist'
     },
 
@@ -25,6 +29,8 @@ module.exports = {
                 loader: 'awesome-typescript-loader',
                 include: [
                     path.resolve(__dirname, 'typescript/entries-bundle'),
+                    path.resolve(__dirname, 'typescript/links-bundle'),
+                    path.resolve(__dirname, 'typescript/new-link-bundle'),
                     path.resolve(__dirname, 'typescript/common'),
                 ],
                 exclude: [

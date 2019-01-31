@@ -382,6 +382,8 @@ class Entry_v5(Entry):
     contents = db.Column(db.LargeBinary)
 
     def __get_entry_key(self, master_key: str, kdf_salt: bytes) -> bytes:
+        assert isinstance(master_key, six.text_type)
+        assert isinstance(kdf_salt, bytes)
         return nacl.pwhash.argon2id.kdf(
             size=nacl.secret.SecretBox.KEY_SIZE,
             # TODO: this may not always be possible if a unicode password is used
@@ -410,6 +412,7 @@ class Entry_v5(Entry):
         return dec_contents_d
 
     def encrypt(self, master_key: str, dec_entry: dict) -> None:
+        # NOTE: user_id not set here
         assert isinstance(master_key, six.text_type)
         assert isinstance(dec_entry, dict)
         dec_contents_d = {

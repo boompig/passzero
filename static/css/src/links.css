@@ -1,0 +1,21 @@
+.link {
+	border: 1px solid black;
+	border-radius: 1rem;
+	padding: .5rem 1rem;
+	margin-bottom: 1rem;
+}
+
+.link .link-id {
+	font-weight: bold;
+	size: 1.1rem;
+}
+
+.link-service-name {
+	display: block;
+	font-weight: bold;
+	size: 1.1rem;
+}
+
+.button-panel button:not(:last-of-type) {
+	margin-right: .5rem;
+}
