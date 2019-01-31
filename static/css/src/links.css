@@ -12,6 +12,8 @@
 
 .link-service-name {
 	display: block;
+	font-weight: bold;
+	size: 1.1rem;
 }
 
 .button-panel button:not(:last-of-type) {

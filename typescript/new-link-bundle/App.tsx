@@ -75,7 +75,7 @@ class App extends Component<any, any> {
             <div className="container">
                 <h2 className="title">New Link</h2>
                 <form role="form" id="main-form">
-                    <input type="text" className="form-control"
+                    <input type="text" className="link-service-name form-control"
                         required={true} name="service_name"
                         placeholder="Name"
                         onChange={ this.handleNameChange }/>
