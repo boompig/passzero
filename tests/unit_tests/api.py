@@ -195,7 +195,7 @@ def delete_user(app, password, csrf_token, check_status=True):
     assert isinstance(password, six.text_type)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
-    url = "/api/v1/user".format(password, csrf_token)
+    url = "/api/v1/user"
     r = app.delete(url,
                    data=json.dumps({
                        "csrf_token": csrf_token,
@@ -466,7 +466,7 @@ def edit_entry_with_token(app,
                           check_status: bool = True):
     r = json_patch(
         app,
-        "/api/v3/entries/{}".format(entry_id),
+        f"/api/v3/entries/{entry_id}",
         {"entry": new_entry, "password": password},
         token=token
     )
@@ -513,6 +513,16 @@ class ApiV3:
         else:
             return r
 
+    def json_patch(self, url: str, data: dict, check_status: bool = True):
+        assert self.api_token is not None
+        r = json_patch(self.client, url, data=data, token=self.api_token)
+        print(r.data)
+        if check_status:
+            assert r.status_code == 200
+            return json.loads(r.data)
+        else:
+            return r
+
     def json_delete(self, url: str, check_status: bool = True):
         assert self.api_token is not None
         r = json_delete(self.client, url, token=self.api_token)
@@ -523,7 +533,10 @@ class ApiV3:
         else:
             return r
 
+    # link
+
     def create_link(self, link: dict) -> int:
+        assert self.password is not None and self.password != ""
         url = "/api/v3/links"
         data = {
             "link": link,
@@ -536,6 +549,7 @@ class ApiV3:
         )["link_id"]
 
     def decrypt_link(self, link_id: int) -> dict:
+        assert self.password is not None and self.password != ""
         url = f"/api/v3/links/{link_id}"
         data = {
             "password": self.password
@@ -553,12 +567,27 @@ class ApiV3:
             check_status=True
         )
 
-    def delete_link(self, link_id: int) -> bool:
+    def delete_link(self, link_id: int) -> None:
         url = f"/api/v3/links/{link_id}"
-        return self.json_delete(
+        self.json_delete(
             url=url,
             check_status=True
         )
+
+    def edit_link(self, link_id: int, new_link: dict) -> None:
+        assert self.password is not None and self.password != ""
+        url = f"/api/v3/links/{link_id}"
+        data = {
+            "link": new_link,
+            "password": self.password
+        }
+        self.json_patch(
+            url=url,
+            data=data,
+            check_status=True
+        )
+
+    # services
 
     def get_services(self) -> List[dict]:
         url = "/api/v3/services"

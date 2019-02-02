@@ -122,6 +122,9 @@ def delete_account(db_session, user: User) -> None:
     docs = db_session.query(EncryptedDocument).filter_by(user_id=user.id).all()
     for doc in docs:
         db_session.delete(doc)
+    links = db_session.query(Link).filter_by(user_id=user.id).all()
+    for link in links:
+        db_session.delete(link)
     db_session.delete(user)
     db_session.commit()
 
@@ -182,6 +185,7 @@ def encrypt_link(user_key: str, dec_link: dict) -> Link:
     assert isinstance(dec_link, dict)
     link = Link()
     link.encrypt(user_key, dec_link)
+    # NOTE: DO NOT save the link here
     return link
 
 
@@ -224,15 +228,14 @@ def encrypt_entry(user_key: str, dec_entry: dict,
 def edit_link(session, link_id: int, user_key: str, edited_link: dict, user_id: int) -> Link:
     """
     Try to edit the link with ID <link_id>. Commit changes to DB.
-    Check first if the entry belongs to the current user
-    DO NOT bump the version
-    :param session:         Database session
+    Check first if the link belongs to the current user
+    :param session:        Database session
     :param link_id:        ID of an existing link to be edited
-    :param user_key:        Password of the logged-in user
+    :param user_key:       Password of the logged-in user
     :param edited_link:    Dictionary of changes to the link
-    :param user_id:         ID of the user
-    :return:                Newly edited entry
-    :rtype:                 Entry
+    :param user_id:        ID of the user
+    :return:               Newly edited link
+    :rtype:                Link
     """
     link = session.query(Link).filter_by(id=link_id).one()
     assert link.user_id == user_id
@@ -244,6 +247,8 @@ def edit_link(session, link_id: int, user_key: str, edited_link: dict, user_id: 
     l2 = encrypt_link(user_key, dec_link)
     # update encrypted fields
     link.contents = l2.contents
+    # update metadata
+    link.kdf_salt = l2.kdf_salt
     # and save `links`; discard l2
     session.commit()
     return link

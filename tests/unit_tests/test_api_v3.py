@@ -786,6 +786,29 @@ def test_delete_link(app):
         assert links_after_delete == []
 
 
+def test_edit_link(app):
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        input_link = {
+            "service_name": "hello",
+            "link": "world",
+        }
+        # create the link
+        link_id = api_v3.create_link(input_link)
+        assert link_id is not None
+        # edit the link
+        edited_link = {
+            "service_name": "foobar",
+            "link": "mars"
+        }
+        api_v3.edit_link(link_id, edited_link)
+        # get the link back
+        edited_link_out = api_v3.decrypt_link(link_id)
+        _assert_links_equal(edited_link, edited_link_out)
+
+
 def test_get_services(app):
     with app.test_client() as client:
         api_v3 = api.ApiV3(client)
