@@ -81,7 +81,7 @@ def _decrypt_entry_v2(pair):
     if entry.version >= 4:
         return entry.to_json()
     else:
-        return backend._decrypt_row(entry, master_key)
+        return entry.decrypt(master_key)
 
 def _decrypt_entries_multiprocess_v2(entries, master_key):
     from multiprocessing import Pool
@@ -99,7 +99,7 @@ def _decrypt_entries_normal_v2(db_session, user_id, master_key):
         if entry.version == 4:
             l.append(entry.to_json())
         else:
-            l.append(backend._decrypt_row(entry, master_key))
+            l.append(entry.decrypt(master_key))
     return l
 
 def decrypt_entries_v2(enc_entries, master_key):

@@ -35,29 +35,9 @@ def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, An
     return dec_entries_json
 
 
-def _decrypt_row(entry: Entry, master_key: str):
-    """Used in `decrypt_entries_pool`"""
-    dec_entry = entry.decrypt(master_key)
-    dec_entry["id"] = entry.id
-    return dec_entry
-
-
-def decrypt_entry(entry: Entry, master_key: str) -> dict:
-    """Alias for _decrypt_row
-    entry is SOME VERSION of Entry
-    """
-    return _decrypt_row(entry, master_key)
-
-
-def decrypt_link(link: Link, master_key: str) -> dict:
-    dec_link = link.decrypt(master_key)
-    dec_link["id"] = link.id
-    return dec_link
-
-
 def decrypt_entries_pool(entry_key_pair: Tuple[Entry, str]) -> dict:
-    row, key = entry_key_pair
-    result = _decrypt_row(row, key)
+    entry, key = entry_key_pair
+    result = entry.decrypt(key)
     return result
 
 
@@ -72,7 +52,7 @@ def _decrypt_entries_multiprocess(entries: List[Entry], key: str) -> List[dict]:
 
 
 def _decrypt_entries_single_thread(entries: List[Entry], key: str) -> List[dict]:
-    return [_decrypt_row(row, key) for row in entries]
+    return [entry.decrypt(key) for entry in entries]
 
 
 def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:

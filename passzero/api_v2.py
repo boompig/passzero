@@ -93,7 +93,7 @@ def api_get_entry(entry_id: int):
         entry = db.session.query(Entry)\
             .filter_by(id=entry_id, user_id=session["user_id"], pinned=False)\
             .one()
-        data = backend._decrypt_row(entry, session["password"])
+        data = entry.decrypt(session["password"])
     except NoResultFound:
         code, data = json_error(400, "no such entry or the entry does not belong to you")
     return write_json(code, data)

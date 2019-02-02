@@ -161,7 +161,7 @@ class ApiEntry(Resource):
                 entry = db.session.query(Entry)\
                     .filter_by(id=entry_id, user_id=user_id, pinned=False)\
                     .one()
-                data = backend._decrypt_row(entry, args.password)
+                data = entry.decrypt(args.password)
                 return data
             except NoResultFound:
                 return json_error_v2("no such entry or the entry does not belong to you", 400)

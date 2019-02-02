@@ -67,6 +67,7 @@ class Link(db.Model):
         dec_contents_d = msgpack.unpackb(dec_contents, raw=False)
         # add unencrypted data and metadata
         dec_contents_d["version"] = self.version
+        dec_contents_d["id"] = self.id
         return dec_contents_d
 
     def encrypt(self, master_key, dec_link: dict) -> None:
