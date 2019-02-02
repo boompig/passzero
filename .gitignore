@@ -9,6 +9,7 @@ dump.sql
 
 # virtualenv
 venv*
+env
 
 # code coverage
 .coverage*

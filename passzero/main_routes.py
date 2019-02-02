@@ -2,13 +2,13 @@ from functools import wraps
 
 from flask import (Blueprint, abort, current_app, escape, flash, make_response,
                    redirect, render_template, request, session, url_for)
-from sqlalchemy.orm.exc import NoResultFound
-
 from passzero.api_utils import check_auth
 from passzero.backend import (activate_account, decrypt_entries, get_entries,
                               get_services_map, password_strength_scores)
-from passzero.datastore_postgres import db_export
 from passzero.models import AuthToken, User, db
+from sqlalchemy.orm.exc import NoResultFound
+
+from . import export_utils
 
 main_routes = Blueprint("main_routes", __name__)
 
@@ -173,15 +173,16 @@ def confirm_signup():
 @main_routes.route("/advanced/export", methods=["GET"])
 @auth_or_abort
 def export_entries():
-    export_contents = db_export(db.session, session['user_id'])
-    if export_contents:
-        response = make_response(export_contents)
-        response.headers["Content-Disposition"] = (
-            "attachment; filename=%s" % current_app.config['DUMP_FILE']
-        )
-        return response
-    else:
-        return "failed to export table - internal error"
+    export_contents = export_utils.export_decrypted_entries(
+        db.session,
+        session["user_id"],
+        session["password"]
+    )
+    response = make_response(export_contents)
+    response.headers["Content-Disposition"] = (
+        "attachment; filename=%s" % current_app.config['DUMP_FILE']
+    )
+    return response
 
 
 @main_routes.route("/advanced/done_export")

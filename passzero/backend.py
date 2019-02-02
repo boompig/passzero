@@ -287,7 +287,8 @@ def get_services_map(session) -> Dict[str, Any]:
     services = session.query(Service).all()
     d = {}
     for service in services:
-        d[service.name] = {
+        d[service.name.lower()] = {
+            "service": service.name,
             "has_two_factor": service.has_two_factor,
             "link": service.link
         }
