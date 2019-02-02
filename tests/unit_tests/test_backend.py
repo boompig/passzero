@@ -10,11 +10,12 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries,
                               get_account_with_email, get_entries,
                               get_services_map, insert_document_for_user,
-                              insert_entry_for_user, password_strength_scores)
+                              insert_entry_for_user, password_strength_scores,
+                              insert_link_for_user)
 from passzero import backend
 from passzero.change_password import change_password
 from passzero.crypto_utils import PasswordHashAlgo
-from passzero.models import DecryptedDocument, Entry, Service, User
+from passzero.models import DecryptedDocument, Entry, Service, User, AuthToken, Link
 from passzero.models import db as _db
 
 DB_FILENAME = "passzero.db"
@@ -77,6 +78,8 @@ def session(db, request):
         session.query(User).delete()
         session.query(Entry).delete()
         session.query(Service).delete()
+        session.query(AuthToken).delete()
+        session.query(Link).delete()
         session.commit()
 
         connection.close()
@@ -120,10 +123,21 @@ def test_delete_account(session):
     insert_entry_for_user(session, dec_entry_in, user.id, user_key)
     # add a document to that account
     dec_doc = DecryptedDocument(
-        name=u"test doc",
+        name="test doc",
         contents="hello"
     )
     insert_document_for_user(session, dec_doc, user.id, user_key)
+    # add a link to that account
+    dec_link = {
+        "service_name": "link",
+        "link": "some link"
+    }
+    insert_link_for_user(session, dec_link, user.id, user_key)
+    # add an auth token to that account
+    token = AuthToken(user_id=user.id)
+    token.random_token()
+    _db.session.add(token)
+    _db.session.commit()
     delete_account(session, user)
     try:
         u2 = get_account_with_email(session, email)

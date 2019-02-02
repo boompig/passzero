@@ -94,20 +94,6 @@ def delete_all_entries(db_session, user: User) -> None:
     db_session.commit()
 
 
-def delete_all_documents(db_session, user: User) -> None:
-    docs = db_session.query(EncryptedDocument).filter_by(user_id=user.id).all()
-    for doc in docs:
-        db_session.delete(doc)
-    db_session.commit()
-
-
-def delete_all_auth_tokens(db_session, user: User) -> None:
-    auth_tokens = db_session.query(AuthToken).filter_by(user_id=user.id).all()
-    for token in auth_tokens:
-        db_session.delete(token)
-    db_session.commit()
-
-
 def delete_account(db_session, user: User) -> None:
     """Delete the given user from the database.
     Also delete all entries associated with that user

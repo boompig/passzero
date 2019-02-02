@@ -64,9 +64,6 @@ class PassZeroApiV1Tester(unittest.TestCase):
             db_session = get_db_session()
             user = pz_backend.get_account_with_email(db_session, DEFAULT_EMAIL)
             assert user is not None
-            pz_backend.delete_all_entries(db_session, user)
-            pz_backend.delete_all_documents(db_session, user)
-            pz_backend.delete_all_auth_tokens(db_session, user)
             pz_backend.delete_account(db_session, user)
         except NoResultFound:
             pass
