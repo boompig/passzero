@@ -10,9 +10,9 @@ import NumEntries from './components/num-entries';
 import SearchForm from './components/search-form';
 import {IEntry, IDecryptedEntry, IEncryptedEntry} from './components/entries';
 
-// instead of importing passzero_api, include it using a reference (since it's not a module)
-// introduces pzAPI variable
-/// <reference path="../common/passzero_api.ts" />
+import PasszeroApiV3 from '../common-modules/passzero-api-v3';
+
+// instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
 /// <reference path="../common/logoutTimer.ts" />
 
@@ -22,15 +22,18 @@ interface IAppState {
     entries: IEntry[];
     entriesLoaded: boolean;
     searchString: string;
+    masterPassword: string;
 }
 
 class App extends Component<IAppProps, IAppState> {
     logoutTimer: LogoutTimer;
+    pzApi: PasszeroApiV3;
 
     constructor(props: IAppProps) {
         super(props);
 
         this.logoutTimer = new LogoutTimer();
+        this.pzApi = new PasszeroApiV3();
 
         this.state = {
             // entries, eventually loaded from the server
@@ -39,6 +42,8 @@ class App extends Component<IAppProps, IAppState> {
             entriesLoaded: false,
             // search string entered by the user
             searchString: '',
+            // filled in componentDidMount
+            masterPassword: '',
         };
 
         this.findEntryIndex = this.findEntryIndex.bind(this);
@@ -52,7 +57,12 @@ class App extends Component<IAppProps, IAppState> {
         // start the logout timer
         this.logoutTimer.startLogoutTimer();
 
-        pzAPI.getEntriesV2()
+        const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
+        this.setState({
+            masterPassword: masterPassword,
+        });
+
+        this.pzApi.getEncryptedEntries()
             .then((entries: IEncryptedEntry[]) => {
                 this.setState({
                     entries: entries,
@@ -82,7 +92,7 @@ class App extends Component<IAppProps, IAppState> {
         }
 
         console.log('Deleting entry...');
-        pzAPI.deleteEntry(entryId)
+        this.pzApi.deleteEntry(entryId)
             .then(() => {
                 window.location.reload();
             });
@@ -96,7 +106,7 @@ class App extends Component<IAppProps, IAppState> {
         }
         const entry = this.state.entries[entryIndex];
 
-        pzAPI.decryptEntry(entryId)
+        this.pzApi.decryptEntry(entryId, this.state.masterPassword)
             .then((decryptedEntry: IDecryptedEntry) => {
                 decryptedEntry.is_encrypted = false;
                 // TODO this is a hack for the sole purpose of using the fake data

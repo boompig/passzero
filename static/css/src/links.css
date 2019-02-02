@@ -19,3 +19,10 @@
 .button-panel button:not(:last-of-type) {
 	margin-right: .5rem;
 }
+
+.new-link-btn {
+	margin: 1rem auto;
+	text-align: center;
+	display: block;
+	max-width: 300px;
+}

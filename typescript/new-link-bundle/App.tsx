@@ -1,14 +1,14 @@
 import { Component } from 'react';
 import * as React from 'react';
+import PasszeroApiV3 from '../common-modules/passzero-api-v3';
 
-// instead of importing passzero_api, include it using a reference (since it's not a module)
-// introduces pzAPI variable
-/// <reference path="../common/passzero_api.ts" />
+// instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
 /// <reference path="../common/logoutTimer.ts" />
 
 class App extends Component<any, any> {
-    logoutTimer: LogoutTimer;
+	logoutTimer: LogoutTimer;
+	pzApi: PasszeroApiV3;
 
     constructor(props: any) {
         super(props);
@@ -20,6 +20,7 @@ class App extends Component<any, any> {
         };
 
         this.logoutTimer = new LogoutTimer();
+		this.pzApi = new PasszeroApiV3();
 
         this.saveLink = this.saveLink.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
@@ -59,7 +60,7 @@ class App extends Component<any, any> {
             },
             password: this.state.masterPassword
         };
-        pzAPI.saveLink(linkData)
+        this.pzApi.saveLink(linkData)
             .then(() => {
                 console.log("Link saved");
                 window.location.href = "/links";

@@ -5,8 +5,6 @@
 // type-checking
 // import * as $ from "jquery";
 
-class UnauthorizedError extends Error {}
-
 
 const pzAPI = {
     base_url: window.location.protocol + "//" + window.location.host,
@@ -243,96 +241,6 @@ const pzAPI = {
                 return pzAPI._deleteAllEntries(response);
             });
     },
-
-    /** below this line use API v3 */
-
-    getJsonWithBearer: async (url: string, apiToken?: string) => {
-        const options = {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        } as RequestInit;
-        if (apiToken) {
-            (options.headers as any).Authorization = `Bearer ${apiToken}`;
-        }
-        const response = await window.fetch(url, options);
-        if (response.ok) {
-            return response.json();
-        } else {
-            const text = await response.text();
-            throw new UnauthorizedError(text);
-        }
-    },
-
-    postJsonWithBearer: async (url: string, apiToken: string, data: any) => {
-        const options = {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiToken}`
-            },
-            body: JSON.stringify(data),
-        } as RequestInit;
-        const response = await window.fetch(url, options);
-        return response.json();
-    },
-
-    deleteWithBearer: async (url: string, apiToken: string) => {
-        const options = {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiToken}`
-            },
-        } as RequestInit;
-        const response = await window.fetch(url, options);
-        if (response.ok) {
-            return response.json();
-        } else {
-            const text = await response.text();
-            throw new Error(text);
-        }
-    },
-
-    getApiKey: async () => {
-        const url = "/api/v3/token";
-        return pzAPI.getJsonWithBearer(url);
-    },
-
-    _getEncryptedLinks: async (apiToken: string) => {
-        const url = "/api/v3/links";
-        return pzAPI.getJsonWithBearer(url, apiToken);
-    },
-
-    getEncryptedLinks: async () => {
-        const apiKey = await pzAPI.getApiKey();
-        const response = await pzAPI._getEncryptedLinks(apiKey.token);
-        return {
-            links: response,
-            apiToken: apiKey.token
-        };
-    },
-
-    decryptLink: async (linkId: number, apiToken: string, masterPassword: string) => {
-        const url = `/api/v3/links/${linkId}`;
-        const data = { "password": masterPassword };
-        return await pzAPI.postJsonWithBearer(url, apiToken, data);
-    },
-
-    saveLink: async (linkData: any, apiToken?: string) => {
-        const url = "/api/v3/links";
-        if (!apiToken) {
-            const apiKey = await pzAPI.getApiKey();
-            apiToken = apiKey.token;
-        }
-        return pzAPI.postJsonWithBearer(url, apiToken, linkData);
-    },
-
-    deleteLink: async (linkId: number, apiToken: string) => {
-        const url = `/api/v3/links/${linkId}`;
-        return pzAPI.deleteWithBearer(url, apiToken);
-    },
 };
 
-// export { pzAPI, UnathorizedError };
+// export { pzAPI };

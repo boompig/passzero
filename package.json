@@ -14,6 +14,7 @@
 	"lint:links-bundle": "tslint typescript/links-bundle/*.ts",
 	"lint:new-link-bundle": "tslint typescript/new-link-bundle/*.ts",
 	"lint:entries-bundle": "tslint typescript/entries-bundle/*.ts",
+	"lint:common-modules": "tslint typescript/common-modules/*.ts",
     "postinstall": "make ts-compile && make minify"
   },
   "dependencies": {

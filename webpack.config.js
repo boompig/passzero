@@ -35,7 +35,6 @@ module.exports = {
                 ],
                 exclude: [
                     path.resolve(__dirname, 'typescript/standalone'),
-                    path.resolve(__dirname, '_OLD'),
                     path.resolve(__dirname, 'static')
                 ]
             },
