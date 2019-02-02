@@ -85,6 +85,7 @@ class Entry(db.Model):
         except TypeError:
             dec_username = self.username
         return {
+            "id": self.id,
             "account": self.account,
             "username": dec_username,
             "password": dec_password,
@@ -138,6 +139,7 @@ class Entry_v2(Entry):
         except TypeError:
             dec_username = self.username
         return {
+            "id": self.id,
             "account": self.account,
             "username": dec_username,
             "password": dec_password,
@@ -234,6 +236,7 @@ class Entry_v3(Entry):
         ]
         dec_messages = decrypt_messages(extended_key, iv, messages)
         return {
+            "id": self.id,
             "account": dec_messages[0],
             "username": dec_messages[1],
             "password": dec_messages[2],
@@ -292,6 +295,7 @@ class Entry_v4(Entry):
         ]
         dec_messages = decrypt_messages(extended_key, iv, messages)
         return {
+            "id": self.id,
             "account": self.account,
             "username": dec_messages[0],
             "password": dec_messages[1],
@@ -406,6 +410,7 @@ class Entry_v5(Entry):
         dec_contents = box.decrypt(self.contents)
         dec_contents_d = msgpack.unpackb(dec_contents, raw=False)
         # fill in the unencrypted data
+        dec_contents_d["id"] = self.id
         dec_contents_d["account"] = self.account
         dec_contents_d["has_2fa"] = self.has_2fa
         dec_contents_d["version"] = self.version

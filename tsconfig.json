@@ -12,7 +12,6 @@
         "target": "es6"
     },
     "exclude": [
-        "_OLD",
         "static/js",
         "typescript/standalone"
     ]

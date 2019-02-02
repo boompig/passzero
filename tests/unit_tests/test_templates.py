@@ -187,6 +187,20 @@ def test_view_entries_no_login(test_client):
         assert flask.request.path == flask.url_for("main_routes.login")
 
 
+def test_view_links_no_login(test_client):
+    with test_client as c:
+        response = c.get("/links", follow_redirects=True)
+        print(response.data)
+        assert flask.request.path == flask.url_for("main_routes.login")
+
+
+def test_new_link_no_login(test_client):
+    with test_client as c:
+        response = c.get("/links/new", follow_redirects=True)
+        print(response.data)
+        assert flask.request.path == flask.url_for("main_routes.login")
+
+
 def test_password_strength_no_login(test_client):
     with test_client as c:
         response = c.get("/entries/strength", follow_redirects=True)
@@ -328,10 +342,26 @@ def test_new_entry_view_with_login(test_client):
         assert flask.request.path != flask.url_for("main_routes.login")
 
 
-def test_entry_view_with_login(test_client):
+def test_entres_view_with_login(test_client):
     with test_client as c:
         _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         response = c.get("/entries", follow_redirects=True)
+        assert response.status_code == 200
+        assert flask.request.path != flask.url_for("main_routes.login")
+
+
+def test_new_link_view_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        response = c.get("/links/new", follow_redirects=True)
+        assert response.status_code == 200
+        assert flask.request.path != flask.url_for("main_routes.login")
+
+
+def test_links_view_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        response = c.get("/links", follow_redirects=True)
         assert response.status_code == 200
         assert flask.request.path != flask.url_for("main_routes.login")
 

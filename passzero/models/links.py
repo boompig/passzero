@@ -24,6 +24,26 @@ def _get_key(master_key: str, kdf_salt: bytes):
     )
 
 
+class DecryptedLink:
+    def __init__(self, service_name: str, link: str,
+                 id: int = None, user_id: int = None,
+                 version: int = None) -> None:
+        self.service_name = service_name
+        self.link = link
+        self.id = id
+        self.user_id = user_id
+        self.version = version
+
+    def to_json(self) -> dict:
+        return {
+            "service_name": self.service_name,
+            "link": self.link,
+            "id": self.id,
+            "user_id": self.user_id,
+            "version": self.version,
+        }
+
+
 class Link(db.Model):
     """Storage idea is similar to Entry_v5
     Small difference: kdf_salt is stored directly as a binary type
@@ -53,7 +73,7 @@ class Link(db.Model):
             "version": self.version,
         }
 
-    def decrypt(self, master_key: str) -> dict:
+    def decrypt(self, master_key: str) -> DecryptedLink:
         """
         Deliberately similar to `Entry_v5.decrypt`
         Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
@@ -65,11 +85,15 @@ class Link(db.Model):
         assert isinstance(self.contents, bytes)
         dec_contents = box.decrypt(self.contents)
         dec_contents_d = msgpack.unpackb(dec_contents, raw=False)
-        # add unencrypted data and metadata
-        dec_contents_d["version"] = self.version
-        return dec_contents_d
+        return DecryptedLink(
+            service_name=dec_contents_d["service_name"],
+            link=dec_contents_d["link"],
+            id=self.id,
+            user_id=self.user_id,
+            version=self.version
+        )
 
-    def encrypt(self, master_key, dec_link: dict) -> None:
+    def encrypt(self, master_key: str, dec_link: dict) -> None:
         """
         Deliberately similar to `Entry_v5.encrypt`
         Assumed structure of `dec_link`:

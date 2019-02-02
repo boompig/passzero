@@ -2,7 +2,7 @@ import copy
 import json
 
 import six
-from typing import Dict
+from typing import Dict, List
 
 json_header = {"Content-Type": "application/json"}
 file_upload_headers = {"Content-Type": "multipart/form-data"}
@@ -13,16 +13,16 @@ file_upload_headers = {"Content-Type": "multipart/form-data"}
 def json_header_with_token(token: str) -> Dict[str, str]:
     assert token is not None
     h = copy.copy(json_header)
-    h["Authorization"] = "Bearer %s" % token
+    h["Authorization"] = f"Bearer {token}"
     return h
 
 
-def json_get(app, relative_url: str, token: str = None):
+def json_get(session, relative_url: str, token: str = None):
     if token:
         headers = json_header_with_token(token)
     else:
         headers = json_header
-    return app.get(
+    return session.get(
         relative_url,
         headers=headers,
         follow_redirects=True
@@ -195,7 +195,7 @@ def delete_user(app, password, csrf_token, check_status=True):
     assert isinstance(password, six.text_type)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
-    url = "/api/v1/user".format(password, csrf_token)
+    url = "/api/v1/user"
     r = app.delete(url,
                    data=json.dumps({
                        "csrf_token": csrf_token,
@@ -466,7 +466,7 @@ def edit_entry_with_token(app,
                           check_status: bool = True):
     r = json_patch(
         app,
-        "/api/v3/entries/{}".format(entry_id),
+        f"/api/v3/entries/{entry_id}",
         {"entry": new_entry, "password": password},
         token=token
     )
@@ -476,3 +476,119 @@ def edit_entry_with_token(app,
         return json.loads(r.data)
     else:
         return r
+
+
+# Links:
+
+class ApiV3:
+    def __init__(self, client) -> None:
+        self.api_token = None
+        self.client = client
+        self.password = None
+
+    def login(self, email: str, password: str) -> None:
+        self.api_token = login_with_token(self.client, email, password, check_status=True)
+        self.password = password
+
+    def json_post(self, url: str, data: dict, check_status: bool = True):
+        assert self.api_token is not None
+        r = json_post(self.client, url, data=data, token=self.api_token)
+        print(r.data)
+        if check_status:
+            assert r.status_code == 200
+            return json.loads(r.data)
+        else:
+            return r
+
+    def json_get(self, url: str, check_status: bool = True, use_token: bool = True):
+        if use_token:
+            assert self.api_token is not None
+            r = json_get(self.client, url, token=self.api_token)
+        else:
+            r = json_get(self.client, url)
+        print(r.data)
+        if check_status:
+            assert r.status_code == 200
+            return json.loads(r.data)
+        else:
+            return r
+
+    def json_patch(self, url: str, data: dict, check_status: bool = True):
+        assert self.api_token is not None
+        r = json_patch(self.client, url, data=data, token=self.api_token)
+        print(r.data)
+        if check_status:
+            assert r.status_code == 200
+            return json.loads(r.data)
+        else:
+            return r
+
+    def json_delete(self, url: str, check_status: bool = True):
+        assert self.api_token is not None
+        r = json_delete(self.client, url, token=self.api_token)
+        print(r.data)
+        if check_status:
+            assert r.status_code == 200
+            return json.loads(r.data)
+        else:
+            return r
+
+    # link
+
+    def create_link(self, link: dict) -> int:
+        assert self.password is not None and self.password != ""
+        url = "/api/v3/links"
+        data = {
+            "link": link,
+            "password": self.password
+        }
+        return self.json_post(
+            url=url,
+            data=data,
+            check_status=True
+        )["link_id"]
+
+    def decrypt_link(self, link_id: int) -> dict:
+        assert self.password is not None and self.password != ""
+        url = f"/api/v3/links/{link_id}"
+        data = {
+            "password": self.password
+        }
+        return self.json_post(
+            url=url,
+            data=data,
+            check_status=True
+        )
+
+    def get_encrypted_links(self) -> List[dict]:
+        url = "/api/v3/links"
+        return self.json_get(
+            url=url,
+            check_status=True
+        )
+
+    def delete_link(self, link_id: int) -> None:
+        url = f"/api/v3/links/{link_id}"
+        self.json_delete(
+            url=url,
+            check_status=True
+        )
+
+    def edit_link(self, link_id: int, new_link: dict) -> None:
+        assert self.password is not None and self.password != ""
+        url = f"/api/v3/links/{link_id}"
+        data = {
+            "link": new_link,
+            "password": self.password
+        }
+        self.json_patch(
+            url=url,
+            data=data,
+            check_status=True
+        )
+
+    # services
+
+    def get_services(self) -> List[dict]:
+        url = "/api/v3/services"
+        return self.json_get(url=url, check_status=True, use_token=False)["services"]

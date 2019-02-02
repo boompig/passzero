@@ -17,7 +17,6 @@
         "target": "es5"
     },
     "exclude": [
-        "../../_OLD",
         "../../static/js",
         "entries-bundle",
         "node_modules",

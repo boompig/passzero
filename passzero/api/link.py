@@ -103,7 +103,7 @@ class ApiLink(Resource):
                     user_id=user_id
                 )
                 return json_success_v2(
-                    "successfully edited account %s" % escape(args.link["account"])
+                    "successfully edited link %s" % escape(args.link["service_name"])
                 )
             except NoResultFound:
                 return json_error_v2("no such link", 400)
@@ -154,8 +154,8 @@ class ApiLink(Resource):
                 link = db.session.query(Link)\
                     .filter_by(id=link_id, user_id=user_id)\
                     .one()
-                data = backend.decrypt_link(link, args.password)
-                return data
+                dec_link = link.decrypt(args.password)
+                return dec_link.to_json()
             except NoResultFound:
                 return json_error_v2("no such link or the link does not belong to you", 400)
         else:

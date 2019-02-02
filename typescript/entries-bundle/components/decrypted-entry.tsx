@@ -124,10 +124,17 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
                 <div className='extra hidden-toggle'>{ this.props.entry.extra}</div>
             );
         }
+        let accountElem = null;
+        if(this.props.entry.service_link) {
+            accountElem = <a className='entry-title account'
+                href={this.props.entry.service_link}>{this.props.entry.account}</a>;
+        } else {
+            accountElem = <div className='entry-title account'>{this.props.entry.account}</div>;
+        }
 
         return (
             <div className='entry' id={ `entry-${this.props.entry.id}` }>
-                <div className='entry-title account'>{ this.props.entry.account }</div>
+                {accountElem}
                 <div className='username'>{ this.props.entry.username }</div>
                 { password }
                 { this.props.entry.extra ?

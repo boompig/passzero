@@ -59,6 +59,8 @@ interface IDecEntry {
     has_2fa: boolean;
     id: number;
     show?: boolean;
+
+    service_link?: string;
 }
 
 /**
@@ -70,5 +72,12 @@ interface IEncEntry {
     has_2fa: boolean;
     id: number;
     show?: boolean;
+
+    service_link?: string;
 }
 
+interface IService {
+    name: string;
+    link: string;
+    has_two_factor: boolean;
+}

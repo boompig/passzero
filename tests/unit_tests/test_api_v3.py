@@ -6,7 +6,7 @@ import mock
 import six
 
 from passzero.app_factory import create_app
-from passzero.models import ApiToken, User, Entry, AuthToken
+from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service
 from passzero.models import db as _db
 
 from . import api
@@ -58,10 +58,14 @@ def app(request, db, my_app):
         db.session.query(ApiToken).delete()
         # delete entries
         db.session.query(Entry).delete()
+        # delete links
+        db.session.query(Link).delete()
         # delete auth token
         db.session.query(AuthToken).delete()
         # delete user
         db.session.query(User).delete()
+        # delete services
+        db.session.query(Service).delete()
         db.session.commit()
 
     request.addfinalizer(teardown)
@@ -715,3 +719,104 @@ def test_get_entries_not_your_entry(app):
         )
         print(r.data)
         assert r.status_code != 200
+
+
+def _assert_links_equal(l1: dict, l2: dict) -> None:
+    for key in ["service_name", "link"]:
+        assert key in l1
+        assert key in l2
+        assert l1[key] == l2[key]
+
+
+def test_get_links_empty(app):
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        links = api_v3.get_encrypted_links()
+        assert links == []
+
+
+def test_create_link(app):
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        input_link = {
+            "service_name": "hello",
+            "link": "world",
+        }
+        link_id = api_v3.create_link(input_link)
+        assert link_id is not None
+        links = api_v3.get_encrypted_links()
+        assert len(links) == 1
+        assert links[0]["id"] == link_id
+
+
+def test_decrypt_link(app):
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        input_link = {
+            "service_name": "hello",
+            "link": "world",
+        }
+        link_id = api_v3.create_link(input_link)
+        assert link_id is not None
+        output_link = api_v3.decrypt_link(link_id)
+        _assert_links_equal(input_link, output_link)
+
+
+def test_delete_link(app):
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        input_link = {
+            "service_name": "hello",
+            "link": "world",
+        }
+        link_id = api_v3.create_link(input_link)
+        assert link_id is not None
+        links = api_v3.get_encrypted_links()
+        assert len(links) == 1
+        api_v3.delete_link(link_id)
+        links_after_delete = api_v3.get_encrypted_links()
+        assert links_after_delete == []
+
+
+def test_edit_link(app):
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        input_link = {
+            "service_name": "hello",
+            "link": "world",
+        }
+        # create the link
+        link_id = api_v3.create_link(input_link)
+        assert link_id is not None
+        # edit the link
+        edited_link = {
+            "service_name": "foobar",
+            "link": "mars"
+        }
+        api_v3.edit_link(link_id, edited_link)
+        # get the link back
+        edited_link_out = api_v3.decrypt_link(link_id)
+        _assert_links_equal(edited_link, edited_link_out)
+
+
+def test_get_services(app):
+    with app.test_client() as client:
+        api_v3 = api.ApiV3(client)
+        service = Service(name="foo", link="bar")
+        _db.session.add(service)
+        _db.session.commit()
+        services = api_v3.get_services()
+        assert isinstance(services, list)
+        assert len(services) > 0
+        assert services[0]["name"] == "foo"
+        assert services[0]["link"] == "bar"

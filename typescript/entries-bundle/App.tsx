@@ -10,9 +10,9 @@ import NumEntries from './components/num-entries';
 import SearchForm from './components/search-form';
 import {IEntry, IDecryptedEntry, IEncryptedEntry} from './components/entries';
 
-// instead of importing passzero_api, include it using a reference (since it's not a module)
-// introduces pzAPI variable
-/// <reference path="../common/passzero_api.ts" />
+import PasszeroApiV3 from '../common-modules/passzero-api-v3';
+
+// instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
 /// <reference path="../common/logoutTimer.ts" />
 
@@ -22,15 +22,20 @@ interface IAppState {
     entries: IEntry[];
     entriesLoaded: boolean;
     searchString: string;
+    masterPassword: string;
+    servicesLoaded: boolean;
+    services: IService[];
 }
 
 class App extends Component<IAppProps, IAppState> {
     logoutTimer: LogoutTimer;
+    pzApi: PasszeroApiV3;
 
     constructor(props: IAppProps) {
         super(props);
 
         this.logoutTimer = new LogoutTimer();
+        this.pzApi = new PasszeroApiV3();
 
         this.state = {
             // entries, eventually loaded from the server
@@ -39,6 +44,10 @@ class App extends Component<IAppProps, IAppState> {
             entriesLoaded: false,
             // search string entered by the user
             searchString: '',
+            // filled in componentDidMount
+            masterPassword: '',
+            services: [],
+            servicesLoaded: false,
         };
 
         this.findEntryIndex = this.findEntryIndex.bind(this);
@@ -46,20 +55,74 @@ class App extends Component<IAppProps, IAppState> {
         this.handleDecrypt = this.handleDecrypt.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
+
+        this.addServicesToEntries = this.addServicesToEntries.bind(this);
     }
 
     componentDidMount() {
         // start the logout timer
         this.logoutTimer.startLogoutTimer();
 
-        pzAPI.getEntriesV2()
+        const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
+        this.setState({
+            masterPassword: masterPassword,
+        });
+
+        this.pzApi.getServices()
+            .then((response) => {
+                console.log("services:");
+                console.log(response);
+                this.setState({
+                    services: response.services,
+                    servicesLoaded: true,
+                }, this.addServicesToEntries);
+            }).catch((err) => {
+                console.error("Failed to load services from server");
+                console.error(err)
+            });
+
+        this.pzApi.getEncryptedEntries()
             .then((entries: IEncryptedEntry[]) => {
+                console.log("entries loaded from server");
                 this.setState({
                     entries: entries,
                     entriesLoaded: true,
-                });
+                }, this.addServicesToEntries);
+            }).catch((err) => {
+                console.error("Failed to load entries from server");
+                console.error(err);
             });
+    }
 
+    addServicesToEntries(): void {
+        if(!this.state.servicesLoaded || !this.state.entriesLoaded) {
+            return;
+        }
+
+        // create the services map
+        const serviceMap = {};
+        let changed = false;
+
+        for(let service of this.state.services) {
+            serviceMap[service.name.toLowerCase()] = service.link;
+        }
+
+        for(let entry of this.state.entries) {
+            if(serviceMap.hasOwnProperty(entry.account.toLowerCase())) {
+                entry.service_link = serviceMap[entry.account.toLowerCase()];
+                changed = true;
+            }
+        }
+
+        if(changed) {
+            this.setState({
+                entries: this.state.entries,
+            }, () => {
+                console.log("service links added to entries");
+            });
+        } else {
+            console.log("no service links added to entries");
+        }
     }
 
     /**
@@ -82,7 +145,7 @@ class App extends Component<IAppProps, IAppState> {
         }
 
         console.log('Deleting entry...');
-        pzAPI.deleteEntry(entryId)
+        this.pzApi.deleteEntry(entryId)
             .then(() => {
                 window.location.reload();
             });
@@ -96,12 +159,14 @@ class App extends Component<IAppProps, IAppState> {
         }
         const entry = this.state.entries[entryIndex];
 
-        pzAPI.decryptEntry(entryId)
+        this.pzApi.decryptEntry(entryId, this.state.masterPassword)
             .then((decryptedEntry: IDecryptedEntry) => {
                 decryptedEntry.is_encrypted = false;
                 // TODO this is a hack for the sole purpose of using the fake data
                 decryptedEntry.account = entry.account;
                 decryptedEntry.id = entry.id;
+                // this allows us to not rerun the service map stuff again
+                decryptedEntry.service_link = entry.service_link;
 
                 // replace the encrypted entry with the decrypted entry
                 let newEntries = this.state.entries;
