@@ -1,7 +1,6 @@
 {% extends "layout-react.html" -%}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/dist/passzero_api.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <!-- custom JS - webpack bundle -->
     <script src="{{ url_for("static", filename="js/dist/entries.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>

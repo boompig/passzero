@@ -77,7 +77,14 @@ export default class PasszeroApiV3 {
     async getToken() {
         const url = "/api/v3/token";
         return this.getJsonWithBearer(url);
-    }
+	}
+
+	/* services */
+
+	async getServices() {
+		const url = "/api/v3/services";
+		return this.getJsonWithBearer(url);
+	}
 
     /* entries */
 

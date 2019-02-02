@@ -2,6 +2,8 @@ export interface IEntry {
     is_encrypted: boolean;
     id: number;
     account: string;
+
+    service_link?: string;
 }
 
 export interface IDecryptedEntry extends IEntry {
@@ -13,6 +15,8 @@ export interface IDecryptedEntry extends IEntry {
     extra?: string;
 
     is_encrypted: false;
+
+    service_link?: string;
 }
 
 export interface IEncryptedEntry extends IEntry {
@@ -20,4 +24,6 @@ export interface IEncryptedEntry extends IEntry {
     account: string;
 
     is_encrypted: true;
+
+    service_link?: string;
 }
