@@ -2,13 +2,41 @@ import copy
 import json
 
 import six
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 json_header = {"Content-Type": "application/json"}
 file_upload_headers = {"Content-Type": "multipart/form-data"}
+BASE_URL = "http://localhost:5050"
 
 
-# utils
+class BadStatusCodeException(Exception):
+    pass
+
+
+def _is_requests_session(session) -> bool:
+    """
+    FIXME: massive hack to allow use of this file in end-to-end tests
+    """
+    return "requests" in str(type(session))
+
+
+def _get_response_data(session, response) -> str:
+    """
+    FIXME: massive hack to allow use of this file in end-to-end tests
+    """
+    if _is_requests_session(session):
+        return response.text
+    else:
+        return response.data
+
+
+def _print_if_test(session, data) -> None:
+    """
+    FIXME: massive hack to allow use of this file in end-to-end tests
+    """
+    if not _is_requests_session(session):
+        print(data)
+
 
 def json_header_with_token(token: str) -> Dict[str, str]:
     assert token is not None
@@ -17,32 +45,46 @@ def json_header_with_token(token: str) -> Dict[str, str]:
     return h
 
 
-def json_get(session, relative_url: str, token: str = None):
+def json_get(session, relative_url: str, token: Optional[str] = None):
     if token:
         headers = json_header_with_token(token)
     else:
         headers = json_header
+    # FIXME: massive hack around unit test vs real test
+    kwargs = {}
+    url = relative_url
+    if _is_requests_session(session):
+        url = BASE_URL + relative_url
+    else:
+        kwargs["follow_redirects"] = True
     return session.get(
-        relative_url,
+        url,
         headers=headers,
-        follow_redirects=True
+        **kwargs
     )
 
 
-def json_post(session, relative_url: str, data: dict = {}, token: str = None):
+def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] = None):
     if token:
         headers = json_header_with_token(token)
     else:
         headers = json_header
+    # FIXME: massive hack around unit test vs real test
+    kwargs = {}
+    url = relative_url
+    if _is_requests_session(session):
+        url = BASE_URL + relative_url
+    else:
+        kwargs["follow_redirects"] = True
     return session.post(
-        relative_url,
+        url,
         data=json.dumps(data),
         headers=headers,
-        follow_redirects=True
+        **kwargs
     )
 
 
-def json_put(session, relative_url: str, data: dict = {}, token: str = None):
+def json_put(session, relative_url: str, data: dict = {}, token: Optional[str] = None):
     if token:
         headers = json_header_with_token(token)
     else:
@@ -55,7 +97,7 @@ def json_put(session, relative_url: str, data: dict = {}, token: str = None):
     )
 
 
-def json_patch(session, relative_url: str, data: dict = {}, token: str = None):
+def json_patch(session, relative_url: str, data: dict = {}, token: Optional[str] = None):
     if token:
         headers = json_header_with_token(token)
     else:
@@ -68,7 +110,7 @@ def json_patch(session, relative_url: str, data: dict = {}, token: str = None):
     )
 
 
-def json_delete(session, relative_url: str, token: str = None):
+def json_delete(session, relative_url: str, token: Optional[str] = None):
     if token:
         headers = json_header_with_token(token)
     else:
@@ -363,114 +405,131 @@ def get_entry_v2(app, entry_id, check_status=True):
 # --- v3 (tokens) starts here
 
 
-def get_api_token_with_login(app, check_status: bool = True):
-    r = json_get(app, "/api/v3/token")
-    print(r.data)
+def get_api_token_with_login(session, check_status: bool = True):
+    r = json_get(session, "/api/v3/token")
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return json.loads(r.data)["token"]
+        return json.loads(response_data)["token"]
     else:
         return r
 
 
-def login_with_token(app, email: str, password: str, check_status: bool = True):
-    r = json_post(app, "/api/v3/token", data={
+def login_with_token(session, email: str, password: str, check_status: bool = True):
+    assert isinstance(email, str)
+    r = json_post(session, "/api/v3/token", data={
         "email": email,
         "password": password
     })
-    print(r.data)
-    if check_status:
-        assert r.status_code == 200
-        return json.loads(r.data)["token"]
-    else:
-        return r
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
+    try:
+        if check_status:
+            assert r.status_code == 200
+            return json.loads(response_data)["token"]
+        else:
+            return r
+    except AssertionError:
+        raise BadStatusCodeException(r.status_code)
 
 
-def delete_token(app, token: str, check_status: bool = True):
-    r = json_delete(app, "/api/v3/token", token=token)
-    print(r.data)
+def delete_token(session, token: str, check_status: bool = True):
+    r = json_delete(session, "/api/v3/token", token=token)
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-def create_entry_with_token(app, entry: dict, password: str, token: str, check_status: bool = True):
+def create_entry_with_token(session, entry: dict, password: str, token: str, check_status: bool = True):
     data = {
         "entry": entry,
         "password": password
     }
-    r = json_post(app, "/api/v3/entries", data=data, token=token)
-    print(r.data)
+    r = json_post(session, "/api/v3/entries", data=data, token=token)
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return json.loads(r.data)["entry_id"]
+        return json.loads(response_data)["entry_id"]
     else:
         return r
 
 
-def delete_all_entries_with_token(app, token: str, check_status: bool = True):
-    r = json_delete(app, "/api/v3/entries", token=token)
-    print(r.data)
+def delete_all_entries_with_token(session, token: str, check_status: bool = True):
+    r = json_delete(session, "/api/v3/entries", token=token)
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-def get_encrypted_entries_with_token(app, token: str, check_status: bool = True):
+def get_encrypted_entries_with_token(session, token: str, check_status: bool = True):
     """
     Return entry metadata without decrypting the entries
     """
-    r = json_get(app, "/api/v3/entries", token=token)
+    r = json_get(session, "/api/v3/entries", token=token)
     # will not be printed unless there is an error
-    print(r.data)
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return json.loads(r.data)
+        return json.loads(response_data)
     else:
         return r
 
 
-def delete_entry_with_token(app, entry_id: int, token: str, check_status: bool = True):
-    r = json_delete(app, "/api/v3/entries/%d" % entry_id, token=token)
-    print(r.data)
+def delete_entry_with_token(session, entry_id: int, token: str, check_status: bool = True):
+    r = json_delete(session, "/api/v3/entries/%d" % entry_id, token=token)
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-def decrypt_entry_with_token(app,
+def decrypt_entry_with_token(session,
                              entry_id: int,
                              password: str,
                              token: str,
                              check_status: bool = True):
+    assert isinstance(entry_id, int)
+    assert isinstance(password, str) and password != ""
+    assert isinstance(token, str)
+    assert isinstance(check_status, bool)
     r = json_post(
-        app,
+        session,
         "/api/v3/entries/{}".format(entry_id),
         {"password": password},
         token=token
     )
+    response_data = _get_response_data(session, r)
     # will not be printed unless there is an error
-    print(r.data)
+    _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return json.loads(r.data)
+        return json.loads(response_data)
     else:
         return r
 
 
-def edit_entry_with_token(app,
+def edit_entry_with_token(session,
                           entry_id: int,
                           new_entry: dict,
                           password: str,
                           token: str,
                           check_status: bool = True):
     r = json_patch(
-        app,
+        session,
         f"/api/v3/entries/{entry_id}",
         {"entry": new_entry, "password": password},
         token=token
     )
-    print(r.data)
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
         return json.loads(r.data)
@@ -482,23 +541,53 @@ def edit_entry_with_token(app,
 
 class ApiV3:
     def __init__(self, client) -> None:
-        self.api_token = None
+        """
+        :param client: Client object must be a request session or similar.
+        """
+        self.api_token = None  # type: Optional[str]
         self.client = client
-        self.password = None
+        self.password = None  # type: Optional[str]
 
     def login(self, email: str, password: str) -> None:
-        self.api_token = login_with_token(self.client, email, password, check_status=True)
+        assert isinstance(email, str)
+        assert isinstance(password, str) and password != ""
+        token = login_with_token(self.client, email, password, check_status=True)
+        self.api_token = token
         self.password = password
+        """
+        assert isinstance(email, str)
+        assert isinstance(password, str)
+        assert password is not None and password != ""
+        url = "/api/v3/token"
+        data = {
+            "email": email,
+            "password": password
+        }
+        json_response = self.json_post(url, data, check_status=True, use_token=False)
+        print(json_response)
+        self.api_token = json_response["token"]
+        """
 
-    def json_post(self, url: str, data: dict, check_status: bool = True):
-        assert self.api_token is not None
-        r = json_post(self.client, url, data=data, token=self.api_token)
-        print(r.data)
-        if check_status:
-            assert r.status_code == 200
-            return json.loads(r.data)
-        else:
-            return r
+    def json_post(self, url: str, data: dict, check_status: bool = True,
+                  use_token: bool = True):
+        if use_token:
+            assert self.api_token is not None
+        r = json_post(
+            self.client,
+            url,
+            data=data,
+            token=(self.api_token if use_token else None)
+        )
+        response_data = _get_response_data(self.client, r)
+        _print_if_test(self.client, response_data)
+        try:
+            if check_status:
+                assert r.status_code == 200
+                return json.loads(response_data)
+            else:
+                return r
+        except AssertionError:
+            raise BadStatusCodeException(r.status_code)
 
     def json_get(self, url: str, check_status: bool = True, use_token: bool = True):
         if use_token:
@@ -506,7 +595,7 @@ class ApiV3:
             r = json_get(self.client, url, token=self.api_token)
         else:
             r = json_get(self.client, url)
-        print(r.data)
+        _print_if_test(self.client, r.data)
         if check_status:
             assert r.status_code == 200
             return json.loads(r.data)
@@ -516,7 +605,7 @@ class ApiV3:
     def json_patch(self, url: str, data: dict, check_status: bool = True):
         assert self.api_token is not None
         r = json_patch(self.client, url, data=data, token=self.api_token)
-        print(r.data)
+        _print_if_test(self.client, r.data)
         if check_status:
             assert r.status_code == 200
             return json.loads(r.data)
@@ -526,17 +615,38 @@ class ApiV3:
     def json_delete(self, url: str, check_status: bool = True):
         assert self.api_token is not None
         r = json_delete(self.client, url, token=self.api_token)
-        print(r.data)
+        _print_if_test(self.client, r.data)
         if check_status:
             assert r.status_code == 200
             return json.loads(r.data)
         else:
             return r
 
+    # entries
+
+    def get_encrypted_entries(self):
+        assert self.api_token is not None
+        return get_encrypted_entries_with_token(
+            self.client,
+            self.api_token,
+            check_status=True
+        )
+
+    def decrypt_entry(self, entry_id: int):
+        assert self.api_token is not None
+        assert self.password is not None
+        return decrypt_entry_with_token(
+            self.client,
+            entry_id,
+            self.password,
+            self.api_token,
+            check_status=True
+        )
+
     # link
 
     def create_link(self, link: dict) -> int:
-        assert self.password is not None and self.password != ""
+        assert self.password is not None
         url = "/api/v3/links"
         data = {
             "link": link,
@@ -549,7 +659,7 @@ class ApiV3:
         )["link_id"]
 
     def decrypt_link(self, link_id: int) -> dict:
-        assert self.password is not None and self.password != ""
+        assert self.password is not None
         url = f"/api/v3/links/{link_id}"
         data = {
             "password": self.password
