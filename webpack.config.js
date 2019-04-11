@@ -4,10 +4,10 @@ const mode = (process.env.NODE_ENV === 'dev' ? 'development' : 'production');
 module.exports = {
     mode: mode,
     entry: {
-		'entries': './typescript/entries-bundle/index.tsx',
-		'links': './typescript/links-bundle/index.tsx',
-		'new-link': './typescript/new-link-bundle/index.tsx',
-	},
+        'entries': './typescript/entries-bundle/index.tsx',
+        'links': './typescript/links-bundle/index.tsx',
+        'new-link': './typescript/new-link-bundle/index.tsx',
+    },
     output: {
         filename: '[name].bundle.js',
         path: __dirname + '/static/js/dist'

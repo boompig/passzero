@@ -258,7 +258,7 @@ const NewCtrl = function() {
         console.log(entry);
 
         // init clip button
-        const clipboard = new Clipboard(".copy-pwd-btn");
+        const clipboard = new ClipboardJS(".copy-pwd-btn");
         clipboard.on("success", this._onClip);
 
         // set up the logout timer
