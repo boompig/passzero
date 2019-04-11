@@ -137,7 +137,7 @@ class App extends Component<IProps, IState> {
 
             const newArr = this.state.links;
             for (const linkIndex in newLinks) {
-                newArr.splice(Number.parseInt(linkIndex), 1, newLinks[linkIndex]);
+                newArr.splice(Number.parseInt(linkIndex, 10), 1, newLinks[linkIndex]);
             }
 
             this.setState({

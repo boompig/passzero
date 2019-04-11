@@ -2,8 +2,8 @@
  * This component manages the search functionality
  */
 
-import {Component} from 'react';
-import * as React from 'react';
+import {Component} from "react";
+import * as React from "react";
 
 interface ISearchFormProps {
     onSearch(searchString: string): void;
@@ -18,7 +18,7 @@ export default class SearchForm extends Component<ISearchFormProps, ISearchFormS
         super(props);
 
         this.state = {
-            searchText: '',
+            searchText: "",
         };
 
         this.handleChange = this.handleChange.bind(this);
@@ -30,16 +30,16 @@ export default class SearchForm extends Component<ISearchFormProps, ISearchFormS
 
     render() {
         return (
-            <form id='search-form'>
-                <div className='input-group'>
-                    <input type='text' name='search' id='search'
-                        className='form-control'
-                        placeholder='search'
+            <form id="search-form">
+                <div className="input-group">
+                    <input type="text" name="search" id="search"
+                        className="form-control"
+                        placeholder="search"
                         autoFocus={ true }
                         onChange={ this.handleChange } />
-                    <div className='input-group-append'>
-                        <span className='input-group-text'>
-                            <i className='fas fa-search'></i>
+                    <div className="input-group-append">
+                        <span className="input-group-text">
+                            <i className="fas fa-search"></i>
                         </span>
                     </div>
                 </div>
