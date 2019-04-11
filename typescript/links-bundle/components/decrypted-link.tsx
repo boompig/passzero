@@ -26,7 +26,10 @@ export default class DecryptedLink extends React.Component<IDecryptedLinkProps, 
     render() {
         return (
             <div className='link'>
-                <a href={ this.props.link.link} className='link-service-name'>{ this.props.link.service_name }</a>
+                <a href={this.props.link.link} className='link-service-name' target='_blank'>
+                    {this.props.link.service_name}
+                    <span className="fas fa-external-link-alt"></span>
+                </a>
                 <div className='button-panel'>
                     <button type='button' className='btn btn-warning'
                         onClick={ this.handleEdit }>Edit</button>
