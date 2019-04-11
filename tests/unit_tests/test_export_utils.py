@@ -1,22 +1,19 @@
 import csv
-import logging
 import os
 
 from io import StringIO
-import six
 
-import mock
 import pytest
 from passzero import backend, export_utils
 from passzero.app_factory import create_app
-from passzero.models import ApiToken, Entry, Entry_v5, Service, User
+from passzero.models import ApiToken, Entry, Service, User
 from passzero.models import db as _db
 
-from . import api
 
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"
 DB_FILENAME = "passzero.db"
+
 
 @pytest.fixture(scope="session")
 def app(request):
