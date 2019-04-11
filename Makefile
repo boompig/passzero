@@ -67,6 +67,7 @@ lint: $(SRC) $(standalone_typescript_src) $(css_src)
 	yarn lint
 	flake8 $(SRC) $(UNIT_TEST_SRC) $(E2E_TEST_SRC)
 	mypy --ignore-missing-imports $(SRC)
+	mypy --ignore-missing-imports $(UNIT_TEST_SRC)
 
 clean:
 	find . -name '*.pyc' -delete
