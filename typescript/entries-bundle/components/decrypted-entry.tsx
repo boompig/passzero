@@ -1,11 +1,11 @@
-import {Component} from 'react';
-import * as React from 'react';
-import * as ReactTooltip from 'react-tooltip';
-import {IDecryptedEntry} from './entries';
+import {Component} from "react";
+import * as React from "react";
+import * as ReactTooltip from "react-tooltip";
+import {IDecryptedEntry} from "./entries";
 
 interface IDecryptedEntryProps {
-    onDelete(entryId: number): void;
     entry: IDecryptedEntry;
+    onDelete(entryId: number): void;
 }
 
 interface IDecryptedEntryState {
@@ -13,7 +13,7 @@ interface IDecryptedEntryState {
 
     isTooltipHidden: boolean;
     tooltipLastShown: Date | null;
-};
+}
 
 export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDecryptedEntryState> {
     passwordFieldRef: React.RefObject<HTMLInputElement>;
@@ -47,7 +47,7 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
     hideTooltip() {
         const now = new Date();
         const diff = now.valueOf() - (this.state.tooltipLastShown as Date).valueOf();
-        if(diff >= this.tooltipHideDelay) {
+        if (diff >= this.tooltipHideDelay) {
             ReactTooltip.hide(this.copyTooltipRef.current);
             // console.log('Hiding tooltip');
             this.setState({
@@ -69,7 +69,7 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
         // this.passwordFieldRef.current.select();
         this.passwordFieldRef.current.setSelectionRange(0, 9999);
         // finally copy the text
-        document.execCommand('copy');
+        document.execCommand("copy");
 
         ReactTooltip.show(this.copyTooltipRef.current);
         this.setState({
@@ -91,7 +91,7 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
     }
 
     toggleHidePassword(): void {
-        let isPasswordHidden = !this.state.isPasswordHidden;
+        const isPasswordHidden = !this.state.isPasswordHidden;
         this.setState({
             isPasswordHidden: isPasswordHidden
         });
@@ -99,66 +99,67 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
 
     render() {
         // the password field
-        let password = null, extra = null;
-        if(this.state.isPasswordHidden) {
+        let password = null;
+        let extra = null;
+        if (this.state.isPasswordHidden) {
             password = (
                 <form>
-                    <input type='text' value={this.props.entry.password}
+                    <input type="text" value={this.props.entry.password}
                         readOnly={true}
-                        className='form-control password hidden-toggle text-hidden'
+                        className="form-control password hidden-toggle text-hidden"
                         ref={this.passwordFieldRef} />
                 </form>);
             extra = (
-                <div className='extra hidden-toggle text-hidden'>{ this.props.entry.extra}</div>
+                <div className="extra hidden-toggle text-hidden">{ this.props.entry.extra}</div>
             );
         } else {
             password = (
                 <form>
-                    <input type='text' value={this.props.entry.password}
+                    <input type="text" value={this.props.entry.password}
                         readOnly={true}
-                        className='form-control password hidden-toggle'
+                        className="form-control password hidden-toggle"
                         ref={this.passwordFieldRef} />
                 </form>
             );
             extra = (
-                <div className='extra hidden-toggle'>{ this.props.entry.extra}</div>
+                <div className="extra hidden-toggle">{ this.props.entry.extra}</div>
             );
         }
         let accountElem = null;
-        if(this.props.entry.service_link) {
-            accountElem = <a className='entry-title account'
+        if (this.props.entry.service_link) {
+            accountElem = <a className="entry-title account"
                 href={this.props.entry.service_link}>{this.props.entry.account}</a>;
         } else {
-            accountElem = <div className='entry-title account'>{this.props.entry.account}</div>;
+            accountElem = <div className="entry-title account">{this.props.entry.account}</div>;
         }
 
         return (
-            <div className='entry' id={ `entry-${this.props.entry.id}` }>
+            <div className="entry" id={ `entry-${this.props.entry.id}` }>
                 {accountElem}
-                <div className='username'>{ this.props.entry.username }</div>
+                <div className="username">{ this.props.entry.username }</div>
                 { password }
                 { this.props.entry.extra ?
-                    (<div className='extra-container'>
-                        <label htmlFor='extra'>Extra Info</label>
+                    (<div className="extra-container">
+                        <label htmlFor="extra">Extra Info</label>
                         { extra }
                     </div>) : null}
-                <div className='entry-panel'>
+                <div className="entry-panel">
                     <ReactTooltip
-                        effect='solid'
+                        effect="solid"
                         id={`copy-tooltip-${this.props.entry.id}`}></ReactTooltip>
-                    <button type='button' className='btn btn-success copy-pwd-btn'
+                    <button type="button" className="btn btn-success copy-pwd-btn"
                         onClick={ this.handleCopy }
                         ref={ this.copyTooltipRef }
-                        data-tip='Copied'
-                        data-event='dblclick'
+                        data-tip="Copied"
+                        data-event="dblclick"
                         data-for={ `copy-tooltip-${this.props.entry.id}` }>
                         Copy Password
                     </button>
-                    <button type='button' className='btn btn-warning edit-btn' onClick={ this.handleEdit }>Edit</button>
-                    <button type='button' className='btn btn-info show-hide-btn' onClick={ this.toggleHidePassword }>
-                        { this.state.isPasswordHidden ? 'Show' : 'Hide' }
+                    <button type="button" className="btn btn-warning edit-btn" onClick={ this.handleEdit }>Edit</button>
+                    <button type="button" className="btn btn-info show-hide-btn" onClick={ this.toggleHidePassword }>
+                        { this.state.isPasswordHidden ? "Show" : "Hide" }
                     </button>
-                    <button type='button' className='btn btn-danger' onClick={ this.handleDelete }>Delete</button>
+                    <button type="button" className="btn btn-danger" onClick={ this.handleDelete }>Delete</button>
                 </div>
             </div>
         );

@@ -36,6 +36,23 @@ All instructions in "running locally", as well as:
 - install nodejs and npm
 - `make install`
 
+### Building React Components
+
+Most of the client-side components are written using React. You need to re-compile the react bundle for each page after modifying. Run this command:
+
+```
+yarn run webpack
+```
+
+### Changing CSS
+
+Most CSS is not included in the respective bundles.
+When modifying the CSS you have to rebuild the minified CSS using the command:
+
+```
+make minify-css
+```
+
 ## Deploying
 
 * run `make` to generate new build ID so caches are invalidated for old CSS and JS resources

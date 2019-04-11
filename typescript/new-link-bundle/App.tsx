@@ -1,14 +1,14 @@
-import { Component } from 'react';
-import * as React from 'react';
-import PasszeroApiV3 from '../common-modules/passzero-api-v3';
+import { Component } from "react";
+import * as React from "react";
+import PasszeroApiV3 from "../common-modules/passzero-api-v3";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
 /// <reference path="../common/logoutTimer.ts" />
 
 class App extends Component<any, any> {
-	logoutTimer: LogoutTimer;
-	pzApi: PasszeroApiV3;
+    logoutTimer: LogoutTimer;
+    pzApi: PasszeroApiV3;
 
     constructor(props: any) {
         super(props);
@@ -20,7 +20,7 @@ class App extends Component<any, any> {
         };
 
         this.logoutTimer = new LogoutTimer();
-		this.pzApi = new PasszeroApiV3();
+        this.pzApi = new PasszeroApiV3();
 
         this.saveLink = this.saveLink.bind(this);
         this.handleNameChange = this.handleNameChange.bind(this);
@@ -67,7 +67,7 @@ class App extends Component<any, any> {
             })
             .catch((err) => {
                 console.error("Failed to save link");
-                console.error(err)
+                console.error(err);
             });
     }
 

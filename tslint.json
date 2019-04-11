@@ -8,6 +8,7 @@
 		"no-consecutive-blank-lines": [false],
 		"no-reference-import": [false],
 		"no-reference": [false],
+		"no-empty-interface": [false],
 		"indent": [true, "spaces", 4],
 		"prefer-for-of": [false],
 		"member-access": [false],
