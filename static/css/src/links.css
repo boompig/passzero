@@ -26,9 +26,12 @@
 	margin-right: .5rem;
 }
 
-.new-link-btn {
+.links-control-panel {
+	display: block;
 	margin: 1rem auto;
 	text-align: center;
-	display: block;
-	max-width: 300px;
+}
+
+.links-control-panel .control-panel-btn:not(:first-child) {
+	margin-left: 1rem;
 }

@@ -1,27 +1,29 @@
-import { Component } from 'react';
-import * as React from 'react';
-import DecryptedLink from './components/decrypted-link';
-import EncryptedLink from './components/encrypted-link';
-import {IEncryptedLink, IDecryptedLink, ILink} from './components/links';
-import PasszeroApiV3 from '../common-modules/passzero-api-v3';
+import { Component } from "react";
+import * as React from "react";
+import PasszeroApiV3 from "../common-modules/passzero-api-v3";
+import DecryptedLink from "./components/decrypted-link";
+import EncryptedLink from "./components/encrypted-link";
+import {IDecryptedLink, IEncryptedLink, ILink} from "./components/links";
 
 // instead of importing, include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
-/// <reference path='../common/logoutTimer.ts' />
+/// <reference path="../common/logoutTimer.ts" />
 
 interface IProps {}
 
 interface IState {
-    links: (ILink)[];
+    links: ILink[];
     // true iff the encrypted links have been loaded from the server
     linksLoaded: boolean;
     // filled on componentDidMount
     masterPassword: (string | null);
+    // true iff currently decrypting something
+    isDecrypting: boolean;
 }
 
 class App extends Component<IProps, IState> {
-	logoutTimer: LogoutTimer;
-	pzApi: PasszeroApiV3;
+    logoutTimer: LogoutTimer;
+    pzApi: PasszeroApiV3;
 
     constructor(props: any) {
         super(props);
@@ -30,10 +32,11 @@ class App extends Component<IProps, IState> {
             links: [],
             linksLoaded: false,
             masterPassword: null,
-        }
+            isDecrypting: false,
+        };
 
-		this.logoutTimer = new LogoutTimer();
-		this.pzApi = new PasszeroApiV3();
+        this.logoutTimer = new LogoutTimer();
+        this.pzApi = new PasszeroApiV3();
 
         // javascript is terrible
         this.handleDecrypt = this.handleDecrypt.bind(this);
@@ -41,25 +44,26 @@ class App extends Component<IProps, IState> {
         this.renderLoading = this.renderLoading.bind(this);
         this.renderEmpty = this.renderEmpty.bind(this);
         this.renderLinks = this.renderLinks.bind(this);
+        this.handleDecryptAll = this.handleDecryptAll.bind(this);
     }
 
     componentDidMount() {
         this.logoutTimer.startLogoutTimer();
 
-        const masterPassword = (document.getElementById('master_password') as HTMLInputElement).value;
+        const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
         this.setState({
             masterPassword: masterPassword,
         });
 
-        console.log('Fetching links...');
+        console.log("Fetching links...");
         // fetch all the encrypted links
         this.pzApi.getEncryptedLinks()
             .then((response) => {
-                console.log('links:');
+                console.log("links:");
                 console.log(response);
 
                 // alter each link to set encrypted = true
-                for(let link of response) {
+                for (const link of response) {
                     link.is_encrypted = true;
                 }
 
@@ -69,9 +73,9 @@ class App extends Component<IProps, IState> {
                 });
             })
             .catch((err) => {
-                console.error('Failed to get links');
+                console.error("Failed to get links");
                 console.error(err);
-                if(err.name === 'UnauthorizedError') {
+                if (err.name === "UnauthorizedError") {
                     window.location.href = "/login";
                 } else {
                     console.log("different type of error: " + err.name);
@@ -86,7 +90,7 @@ class App extends Component<IProps, IState> {
     renderEmpty() {
         return (
             <div>
-                You don't have any saved links yet. Create some <a href='/links/new'>here</a>.
+                You don't have any saved links yet. Create some <a href="/links/new">here</a>.
             </div>
         );
     }
@@ -97,7 +101,7 @@ class App extends Component<IProps, IState> {
         this.pzApi.deleteLink(link.id)
             .then((response) => {
                 console.log("Got decrypted link from server");
-                let newLinks = this.state.links;
+                const newLinks = this.state.links;
                 newLinks.splice(linkIndex, 1);
                 // force state reload
                 this.setState({
@@ -106,23 +110,69 @@ class App extends Component<IProps, IState> {
             });
     }
 
-    handleDecrypt(linkIndex: number): void {
-        const link = this.state.links[linkIndex];
-        console.log(`Decrypting link with ID ${link.id}...`);
-        this.pzApi.decryptLink(link.id, this.state.masterPassword)
-            .then((response) => {
-                console.log("Got decrypted link from server");
-                // console.log(response);
-                const decLink = response;
-                decLink.is_encrypted = false;
-                // replace encrypted link with new link
-                let newLinks = this.state.links;
-                newLinks.splice(linkIndex, 1, decLink);
-                // force state reload
-                this.setState({
-                    links: newLinks,
-                });
+    handleDecryptAll(): void {
+        // step 1 - disable the button
+        if (this.state.isDecrypting) {
+            // do nothing while there is a decryption operation already in progress
+            return;
+        }
+
+        this.setState({
+            isDecrypting: true,
+        }, async () => {
+            const newLinks = {};
+
+            // NOTE: this will be slow because sending out the requests in sequence
+            for (let i = 0; i < this.state.links.length; i++) {
+                const link = this.state.links[i];
+                if (link.is_encrypted) {
+                    const response = await this.pzApi.decryptLink(link.id, this.state.masterPassword);
+                    console.log("Got decrypted link from server");
+                    // console.log(response);
+                    const decLink = response;
+                    decLink.is_encrypted = false;
+                    newLinks[i] = decLink;
+                }
+            }
+
+            const newArr = this.state.links;
+            for (const linkIndex in newLinks) {
+                newArr.splice(Number.parseInt(linkIndex), 1, newLinks[linkIndex]);
+            }
+
+            this.setState({
+                links: newArr,
+                isDecrypting: false,
             });
+        });
+    }
+
+    handleDecrypt(linkIndex: number): void {
+        if (this.state.isDecrypting) {
+            // do nothing while there is a decryption operation already in progress
+            return;
+        }
+        this.setState({
+            isDecrypting: true
+        }, () => {
+            const link = this.state.links[linkIndex];
+            console.log(`Decrypting link with ID ${link.id}...`);
+            this.pzApi.decryptLink(link.id, this.state.masterPassword)
+                .then((response) => {
+                    console.log("Got decrypted link from server");
+                    // console.log(response);
+                    const decLink = response;
+                    decLink.is_encrypted = false;
+                    // replace encrypted link with new link
+                    const newLinks = this.state.links;
+                    newLinks.splice(linkIndex, 1, decLink);
+                    // force state reload
+                    this.setState({
+                        links: newLinks,
+                        isDecrypting: false,
+                    });
+                });
+        });
     }
 
     /**
@@ -130,13 +180,13 @@ class App extends Component<IProps, IState> {
      */
     renderLinks() {
         const linkElems = [];
-        for(let i = 0; i < this.state.links.length; i++) {
-            let link = this.state.links[i];
+        for (let i = 0; i < this.state.links.length; i++) {
+            const link = this.state.links[i];
             let linkElem = null;
-            if(link.is_encrypted) {
+            if (link.is_encrypted) {
                 linkElem = <EncryptedLink link={ (link as IEncryptedLink) } index={ i }
                     onDecrypt={ this.handleDecrypt }
-					onDelete={ this.handleDelete }/>;
+                    onDelete={ this.handleDelete }/>;
             } else {
                 linkElem = <DecryptedLink link={ (link as IDecryptedLink) } index={ i }
                     onDelete={ this.handleDelete }/>;
@@ -145,22 +195,29 @@ class App extends Component<IProps, IState> {
         }
 
         return (
-			<div>
-				<a href='/links/new' className='new-link-btn btn btn-lg btn-success'>
-					{/* <i className='fas fa-plus'></i>&nbsp; */}
-					Create New Link
-				</a>
-				<div className='link-container'>
-					{ linkElems }
-				</div>
-			</div>
+            <div>
+                <div className="links-control-panel">
+                    <a href="/links/new" className="new-link-btn control-panel-btn btn btn-lg btn-success">
+                        Create New Link
+                    </a>
+                    <button type="button"
+                        className="decrypt-all-btn control-panel-btn btn btn-lg btn-info"
+                        disabled={ this.state.isDecrypting }
+                        onClick={ this.handleDecryptAll }>
+                        Decrypt All
+                    </button>
+                </div>
+                <div className="link-container">
+                    { linkElems }
+                </div>
+            </div>
         );
     }
 
     render() {
-        if(!this.state.linksLoaded) {
+        if (!this.state.linksLoaded) {
             return this.renderLoading();
-        } else if(this.state.linksLoaded && this.state.links.length === 0) {
+        } else if (this.state.linksLoaded && this.state.links.length === 0) {
             return this.renderEmpty();
         } else {
             return this.renderLinks();
