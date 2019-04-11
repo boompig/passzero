@@ -1,5 +1,6 @@
 import copy
 import json
+import logging
 
 import six
 from typing import Dict, List, Optional
@@ -522,6 +523,7 @@ def edit_entry_with_token(session,
                           password: str,
                           token: str,
                           check_status: bool = True):
+    assert isinstance(token, str)
     r = json_patch(
         session,
         f"/api/v3/entries/{entry_id}",
@@ -537,7 +539,7 @@ def edit_entry_with_token(session,
         return r
 
 
-# Links:
+# API classes
 
 class ApiV3:
     def __init__(self, client) -> None:
@@ -547,6 +549,7 @@ class ApiV3:
         self.api_token = None  # type: Optional[str]
         self.client = client
         self.password = None  # type: Optional[str]
+        logging.debug("Using BASE_URL %s", BASE_URL)
 
     def login(self, email: str, password: str) -> None:
         assert isinstance(email, str)
@@ -640,6 +643,33 @@ class ApiV3:
             entry_id,
             self.password,
             self.api_token,
+            check_status=True
+        )
+
+    def create_entry(self, entry: dict) -> int:
+        assert self.password is not None
+        url = "/api/v3/entries"
+        data = {
+            "entry": entry,
+            "password": self.password
+        }
+        return self.json_post(
+            url=url,
+            data=data,
+            check_status=True
+        )["entry_id"]
+
+    def edit_entry(self, entry_id: int, new_entry: dict) -> None:
+        assert self.password is not None
+        assert self.api_token is not None
+        url = f"/api/v3/entries/{entry_id}"
+        data = {
+            "entry": new_entry,
+            "password": self.password,
+        }
+        self.json_patch(
+            url,
+            data=data,
             check_status=True
         )
 

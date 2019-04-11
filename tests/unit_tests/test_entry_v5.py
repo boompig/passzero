@@ -16,6 +16,8 @@ def test_encrypt_and_decrypt_entry_v5():
     dec_entry_out = entry.decrypt(user_key)
     for field in dec_entry_in:
         assert dec_entry_out[field] == dec_entry_in[field]
+    # make sure that the resultant entry has a last_modified field
+    assert "last_modified" in dec_entry_out
 
 
 def test_encrypt_and_decrypt_entry_v5_utf_password():
@@ -34,3 +36,5 @@ def test_encrypt_and_decrypt_entry_v5_utf_password():
     dec_entry_out = entry.decrypt(user_key)
     for field in dec_entry_in:
         assert dec_entry_out[field] == dec_entry_in[field]
+    # make sure that the resultant entry has a last_modified field
+    assert "last_modified" in dec_entry_out

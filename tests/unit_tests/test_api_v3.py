@@ -407,10 +407,10 @@ def test_edit_entry(app):
     email = DEFAULT_EMAIL
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
+        api_v3 = api.ApiV3(client)
         create_active_account(client,
                               email, password)
-        token = api.login_with_token(client,
-                                     email, password, check_status=True)
+        api_v3.login(email, password)
         old_entry = {
             "account": "fake",
             "username": "entry_username",
@@ -418,12 +418,11 @@ def test_edit_entry(app):
             "extra": "entry_extra",
             "has_2fa": False
         }
-        entry_id = api.create_entry_with_token(
-            client,
+        entry_id = api_v3.create_entry(
             old_entry,
-            password,
-            token,
-            check_status=True
+        )
+        old_entry_out = api_v3.decrypt_entry(
+            entry_id,
         )
         new_entry = {
             "account": "new account",
@@ -432,21 +431,19 @@ def test_edit_entry(app):
             "extra": "new extra",
             "has_2fa": True
         }
-        api.edit_entry_with_token(
-            client,
+        api_v3.edit_entry(
             entry_id,
             new_entry,
-            password,
-            token,
-            check_status=True
         )
-        entries = api.get_encrypted_entries_with_token(client,
-                                                       token, check_status=True)
+        entries = api_v3.get_encrypted_entries()
         assert len(entries) == 1
         assert entries[0]["id"] == entry_id
-        entry_prime = api.decrypt_entry_with_token(client,
-                                                   entry_id, password, token, check_status=True)
-        _assert_entries_equal(new_entry, entry_prime)
+        new_entry_out = api_v3.decrypt_entry(
+            entry_id,
+        )
+        _assert_entries_equal(new_entry, new_entry_out)
+        # verify that the last_modified time has changed UP after editing
+        assert old_entry_out["last_modified"] < new_entry_out["last_modified"]
 
 
 def test_edit_entry_bad_password(app):
@@ -673,6 +670,7 @@ def test_get_entries(app):
         dec_entry_out = api.decrypt_entry_with_token(client,
                                                      entry_id, DEFAULT_PASSWORD, token, check_status=True)
         _assert_entries_equal(dec_entry_out, entry)
+        assert "last_modified" in dec_entry_out
 
 
 def test_get_entries_not_your_entry(app):
