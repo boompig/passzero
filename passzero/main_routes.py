@@ -193,6 +193,7 @@ def done_export():
 
 
 @main_routes.route("/edit/<int:entry_id>", methods=["GET"])
+@main_routes.route("/entries/<int:entry_id>", methods=["GET"])
 @auth_or_redirect_login
 def edit_entry(entry_id: int):
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
