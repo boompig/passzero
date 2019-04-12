@@ -1,5 +1,6 @@
 import six
 from sqlalchemy import func
+from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import asc
 from typing import Any, Dict, List, Tuple
 
@@ -12,7 +13,7 @@ from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
 from .utils import base64_encode
 
 
-def activate_account(db_session, user: User):
+def activate_account(db_session: Session, user: User):
     """Set the user to active and commit changes"""
     user.active = True
     db_session.add(user)
@@ -65,7 +66,7 @@ def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:
     return _decrypt_entries_single_thread(entries, key)
 
 
-def get_entries(db_session, user_id: int) -> List[Entry]:
+def get_entries(db_session: Session, user_id: int) -> List[Entry]:
     """Return a list of entries without decrypting them"""
     assert isinstance(user_id, int)
     return db_session.query(Entry)\
@@ -74,7 +75,7 @@ def get_entries(db_session, user_id: int) -> List[Entry]:
         .all()
 
 
-def get_links(db_session, user_id: int) -> List[Link]:
+def get_links(db_session: Session, user_id: int) -> List[Link]:
     """Return a list of links without decrypting them"""
     assert isinstance(user_id, int)
     return db_session.query(Link)\
@@ -82,19 +83,19 @@ def get_links(db_session, user_id: int) -> List[Link]:
         .all()
 
 
-def get_account_with_email(db_session, email: str) -> User:
+def get_account_with_email(db_session: Session, email: str) -> User:
     assert isinstance(email, six.text_type)
     return db_session.query(User).filter_by(email=email).one()
 
 
-def delete_all_entries(db_session, user: User) -> None:
+def delete_all_entries(db_session: Session, user: User) -> None:
     entries = db_session.query(Entry).filter_by(user_id=user.id).all()
     for entry in entries:
         db_session.delete(entry)
     db_session.commit()
 
 
-def delete_account(db_session, user: User) -> None:
+def delete_account(db_session: Session, user: User) -> None:
     """Delete the given user from the database.
     Also delete all entries associated with that user
     Also delete all documents associated with that user
@@ -115,7 +116,7 @@ def delete_account(db_session, user: User) -> None:
     db_session.commit()
 
 
-def create_inactive_user(db_session, email: str, password: str,
+def create_inactive_user(db_session: Session, email: str, password: str,
                          password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
     """Create an account which has not been activated.
     Return the user object (model)
@@ -144,7 +145,7 @@ def create_inactive_user(db_session, email: str, password: str,
     return user
 
 
-def insert_entry_for_user(db_session, dec_entry: dict,
+def insert_entry_for_user(db_session: Session, dec_entry: dict,
                           user_id: int, user_key: str,
                           version: int = DEFAULT_ENTRY_VERSION) -> Entry:
     assert isinstance(user_id, int)
@@ -156,7 +157,7 @@ def insert_entry_for_user(db_session, dec_entry: dict,
     return entry
 
 
-def insert_link_for_user(db_session, dec_link: dict,
+def insert_link_for_user(db_session: Session, dec_link: dict,
                          user_id: int, user_key: str) -> Link:
     assert isinstance(user_id, int)
     assert isinstance(user_key, six.text_type)
@@ -175,12 +176,12 @@ def encrypt_link(user_key: str, dec_link: dict) -> Link:
     return link
 
 
-def insert_new_link(session, link: Link, user_id: int) -> None:
+def insert_new_link(session: Session, link: Link, user_id: int) -> None:
     link.user_id = user_id
     session.add(link)
 
 
-def insert_new_entry(session, entry: Entry, user_id: int) -> None:
+def insert_new_entry(session: Session, entry: Entry, user_id: int) -> None:
     entry.user_id = user_id
     session.add(entry)
 
@@ -211,7 +212,7 @@ def encrypt_entry(user_key: str, dec_entry: dict,
     return entry
 
 
-def edit_link(session, link_id: int, user_key: str, edited_link: dict, user_id: int) -> Link:
+def edit_link(session: Session, link_id: int, user_key: str, edited_link: dict, user_id: int) -> Link:
     """
     Try to edit the link with ID <link_id>. Commit changes to DB.
     Check first if the link belongs to the current user
@@ -240,7 +241,7 @@ def edit_link(session, link_id: int, user_key: str, edited_link: dict, user_id: 
     return link
 
 
-def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_id: int) -> Entry:
+def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dict, user_id: int) -> Entry:
     """
     Try to edit the entry with ID <entry_id>. Commit changes to DB.
     Check first if the entry belongs to the current user
@@ -283,7 +284,7 @@ def edit_entry(session, entry_id: int, user_key: str, edited_entry: dict, user_i
     return entry
 
 
-def get_services_map(session) -> Dict[str, Any]:
+def get_services_map(session: Session) -> Dict[str, Any]:
     services = session.query(Service).all()
     d = {}
     for service in services:
@@ -295,7 +296,8 @@ def get_services_map(session) -> Dict[str, Any]:
     return d
 
 
-def encrypt_document(session, user_id: int, master_key: str, document_name: str, document) -> EncryptedDocument:
+def encrypt_document(session: Session, user_id: int, master_key: str,
+                     document_name: str, document) -> EncryptedDocument:
     """
     Create an encrypted document, fill in the fields, and save in the database
     :param session: database session, NOT flask session
@@ -309,7 +311,7 @@ def encrypt_document(session, user_id: int, master_key: str, document_name: str,
     return insert_document_for_user(session, doc, user_id, master_key)
 
 
-def insert_document_for_user(session, decrypted_document, user_id, master_key) -> EncryptedDocument:
+def insert_document_for_user(session: Session, decrypted_document, user_id, master_key) -> EncryptedDocument:
     """
     :param session: database session, NOT flask session
     :param decrypted_document: DecryptedDocument

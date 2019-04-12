@@ -265,24 +265,29 @@ class ApiClient:
         self.__assert_status_code_200(r)
         # save the token
         self.api_token = r.json()["token"]
+        assert self.api_token is not None
         return self.api_token
 
     def get_encrypted_entries(self) -> List[dict]:
+        assert self.api_token is not None
         r = get_encrypted_entries_with_token(self.session, self.api_token)
         self.__assert_status_code_200(r)
         return r.json()
 
     def decrypt_entry(self, entry_id: int, password: str) -> dict:
+        assert self.api_token is not None
         r = decrypt_entry_with_token(self.session, entry_id, password, self.api_token)
         self.__assert_status_code_200(r)
         return r.json()
 
     def create_entry(self, new_entry: dict, password: str) -> int:
+        assert self.api_token is not None
         r = create_entry_with_token(self.session, new_entry, password, self.api_token)
         self.__assert_status_code_200(r)
         return r.json()["entry_id"]
 
-    def delete_entry(self, entry_id) -> dict:
+    def delete_entry(self, entry_id: int) -> dict:
+        assert self.api_token is not None
         r = delete_entry_with_token(self.session, entry_id, self.api_token)
         self.__assert_status_code_200(r)
         return r.json()

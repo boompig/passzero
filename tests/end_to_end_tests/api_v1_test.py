@@ -10,8 +10,11 @@ from six import BytesIO
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.session import Session
+from typing import Tuple, List
 
 from passzero import backend as pz_backend
+from passzero.models.user import User
 from passzero.my_env import DATABASE_URL
 
 from . import api
@@ -20,13 +23,13 @@ DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"
 
 
-def get_db_session():
+def get_db_session() -> Session:
     engine = create_engine(DATABASE_URL)
-    Session = sessionmaker(bind=engine)
-    return Session()
+    session_factory = sessionmaker(bind=engine)
+    return session_factory()
 
 
-def create_active_account(email: str, password: str):
+def create_active_account(email: str, password: str) -> Tuple[User, Session]:
     """Create account and return the user object.
     Use this function instead of API because we do email verification in real API
     """
@@ -77,17 +80,17 @@ class PassZeroApiV1Tester(unittest.TestCase):
     def tearDown(self):
         self._fake_account_cleanup()
 
-    def _login(self, session, email, password):
+    def _login(self, session: Session, email: str, password: str):
         auth_response = api.login(session, email, password)
         assert auth_response is not None
         assert auth_response.status_code == 200
 
-    def _logout(self, session):
+    def _logout(self, session: Session):
         auth_response = api.logout(session)
         self.assertIsNotNone(auth_response)
         auth_response.status_code == 200
 
-    def _signup(self, session, email, password):
+    def _signup(self, session: Session, email: str, password: str):
         auth_response = api.signup(session, email, password)
         assert auth_response is not None
         response_json = auth_response.json()
@@ -97,7 +100,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             print(response_json)
             raise e
 
-    def _get_csrf_token(self, session):
+    def _get_csrf_token(self, session: Session) -> str:
         """Return CSRF token"""
         csrf_response = api.get_csrf_token(session)
         self.assertIsNotNone(csrf_response)
@@ -107,7 +110,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
         assert len(token) != 0
         return token
 
-    def _create_entry(self, session, entry, token):
+    def _create_entry(self, session: Session, entry: dict, token: str) -> int:
         """Return entry ID"""
         entry_create_response = api.create_entry(session, entry, token)
         print(entry_create_response.text)
@@ -117,7 +120,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
         assert isinstance(entry_id, int)
         return entry_id
 
-    def _edit_entry(self, session, entry_id, entry, token):
+    def _edit_entry(self, session: Session, entry_id: int, entry: dict, token: str):
         """Returns nothing"""
         entry_edit_response = api.edit_entry(session, entry_id, entry, token)
         assert entry_edit_response is not None
@@ -128,7 +131,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
             print(response_json)
             raise e
 
-    def _get_entries(self, session):
+    def _get_entries(self, session: Session) -> List[dict]:
         """Return list of entries"""
         entry_response = api.get_entries(session)
         assert entry_response is not None
@@ -138,7 +141,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
         assert isinstance(entries, list)
         return entries
 
-    def _delete_entry(self, session, entry_id, token):
+    def _delete_entry(self, session: Session, entry_id: int, token: str):
         """Returns nothing"""
         entry_delete_response = api.delete_entry(session, entry_id, token)
         self.assertIsNotNone(entry_delete_response)
