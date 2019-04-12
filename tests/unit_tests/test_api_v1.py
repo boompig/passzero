@@ -18,7 +18,7 @@ DEFAULT_PASSWORD = u"right_pass"
 
 
 class PassZeroApiTester(unittest.TestCase):
-    def _check_entries_equal(self, e1: dict, e2: dict) -> bool:
+    def _assert_entries_equal(self, e1: dict, e2: dict) -> None:
         entry_fields = ["account", "username", "password", "extra"]
         for field in entry_fields:
             assert field in e1
@@ -383,7 +383,7 @@ class PassZeroApiTester(unittest.TestCase):
         api.edit_entry(self.app, entry_id, new_entry, edit_token)
         entries = api.get_entries(self.app)
         assert len(entries) == 1
-        self._check_entries_equal(new_entry, entries[0])
+        self._assert_entries_equal(new_entry, entries[0])
 
     def test_edit_not_your_entry(self):
         emails = [u"email1@fake.com", u"email2@fake.com"]
@@ -419,7 +419,7 @@ class PassZeroApiTester(unittest.TestCase):
         api.logout(self.app)
         api.login(self.app, emails[0], password)
         actual_entries = api.get_entries(self.app)
-        self._check_entries_equal(actual_entries[0], old_entry)
+        self._assert_entries_equal(actual_entries[0], old_entry)
 
     def test_change_master_password(self):
         email = DEFAULT_EMAIL
@@ -445,7 +445,7 @@ class PassZeroApiTester(unittest.TestCase):
         print(r.data)
         entries = api.get_entries(self.app)
         assert len(entries) == 1
-        self._check_entries_equal(entry, entries[0])
+        self._assert_entries_equal(entry, entries[0])
 
     def test_put_user_prefs(self):
         """Check that you can update preferences"""
@@ -515,7 +515,7 @@ class PassZeroApiTester(unittest.TestCase):
         entries = api.get_entries(self.app)
         # but this should still work
         assert len(entries) == 1
-        self._check_entries_equal(entry, entries[0])
+        self._assert_entries_equal(entry, entries[0])
         # and logging out and logging in again should work
         r = api.login(self.app, email, old_password)
         assert r.status_code == 200

@@ -5,6 +5,7 @@ import nacl.pwhash
 import nacl.secret
 import nacl.utils
 import six
+import time
 
 from passzero.crypto_utils import (byte_to_hex_legacy, decrypt_field_v1,
                                    decrypt_field_v2, decrypt_messages,
@@ -356,6 +357,7 @@ class Entry_v5(Entry):
     - username
     - password
     - extra
+    - last_modified - UNIX timestamp (possibly not in the data structure)
 
     And leaves the following fields unencrypted:
     - account
@@ -423,7 +425,8 @@ class Entry_v5(Entry):
         dec_contents_d = {
             "username": dec_entry["username"],
             "password": dec_entry["password"],
-            "extra": dec_entry["extra"]
+            "extra": dec_entry["extra"],
+            "last_modified": time.time(),
         }
         dec_contents = msgpack.packb(dec_contents_d, use_bin_type=True)
         kdf_salt = nacl.utils.random(nacl.pwhash.argon2id.SALTBYTES)
