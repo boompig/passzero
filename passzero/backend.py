@@ -1,14 +1,17 @@
+from typing import Any, Dict, List, Tuple
+
 import six
 from sqlalchemy import func
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import asc
-from typing import Any, Dict, List, Tuple
 
 from passzero import audit
-from passzero.config import SALT_SIZE, DEFAULT_ENTRY_VERSION
-from passzero.crypto_utils import get_hashed_password, get_salt, PasswordHashAlgo
-from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
-                             Entry, Service, User, Entry_v4, Entry_v3, Entry_v5, Link)
+from passzero.config import DEFAULT_ENTRY_VERSION, SALT_SIZE
+from passzero.crypto_utils import (PasswordHashAlgo, get_hashed_password,
+                                   get_salt)
+from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
+                             EncryptedDocument, Entry, Entry_v3, Entry_v4,
+                             Entry_v5, Link, Service, User)
 
 from .utils import base64_encode
 
@@ -23,13 +26,15 @@ def activate_account(db_session: Session, user: User):
 def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, Any]]:
     dec_entries_json = []
     for entry in dec_entries:
-        d = {}
-        d["account"] = entry["account"]
         results = audit.password_strength(entry["password"], user_inputs=[
             entry["account"], entry["username"], email
         ])
-        d["score"] = results["score"]
-        d["feedback"] = " ".join(results["feedback"]["suggestions"])
+        d = {
+            "id": entry["id"],
+            "account": entry["account"],
+            "score": results["score"],
+            "feedback": " ".join(results["feedback"]["suggestions"]),
+        }
         if entry["password"] == "" or entry["password"] == "-":
             continue
         dec_entries_json.append(d)
@@ -105,6 +110,9 @@ def delete_account(db_session: Session, user: User) -> None:
         db_session.delete(entry)
     auth_tokens = db_session.query(AuthToken).filter_by(user_id=user.id).all()
     for token in auth_tokens:
+        db_session.delete(token)
+    api_tokens = db_session.query(ApiToken).filter_by(user_id=user.id).all()
+    for token in api_tokens:
         db_session.delete(token)
     docs = db_session.query(EncryptedDocument).filter_by(user_id=user.id).all()
     for doc in docs:

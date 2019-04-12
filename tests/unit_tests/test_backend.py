@@ -348,11 +348,14 @@ def test_change_password(session):
 def test_password_strength_scores():
     email = "fake@foo.io"
     dec_entries = [create_fake_entry(i) for i in range(10)]
+    for i, entry in enumerate(dec_entries):
+        entry["id"] = i
     dec_entries.append({
+        "id": 10,
         "account": "no password here",
         "username": "foo",
         "password": "-",
-        "has_2fa": False
+        "has_2fa": False,
     })
     scores = password_strength_scores(email, dec_entries)
     # check that the no-password account is ignored
