@@ -17,9 +17,10 @@ coverage==4.5.1
 cryptography==2.3
 decorator==4.2.1
 docutils==0.14
+entrypoints==0.3
 execnet==1.5.0
 first==2.0.1
-flake8==3.6.0
+flake8==3.7.7
 Flask==1.0.2
 Flask-Compress==1.0.2
 Flask-Cors==3.0.3
@@ -63,10 +64,10 @@ psycopg2-binary==2.7.4
 ptyprocess==0.5.2
 py==1.5.2
 pyasn1==0.1.7
-pycodestyle==2.4.0
+pycodestyle==2.5.0
 pycparser==2.18
 pycrypto==2.6.1
-pyflakes==2.0.0
+pyflakes==2.1.1
 Pygments==2.2.0
 PyJWT==1.4.2
 pylint==2.2.2

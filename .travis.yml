@@ -2,10 +2,10 @@ sudo: false
 dist: xenial
 language: python
 python:
-    - 3.6
+    - "3.7"
 matrix:
     include:
-        - python: "3.7.0"
+        - python: "3.7.3"
           dist: xenial
           sudo: true
 install:
