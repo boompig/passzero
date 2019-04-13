@@ -121,19 +121,26 @@ class App extends Component<IProps, IState> {
             isDecrypting: true,
         }, async () => {
             const newLinks = {};
+            const promises = [];
 
             // NOTE: this will be slow because sending out the requests in sequence
             for (let i = 0; i < this.state.links.length; i++) {
                 const link = this.state.links[i];
                 if (link.is_encrypted) {
-                    const response = await this.pzApi.decryptLink(link.id, this.state.masterPassword);
-                    console.log("Got decrypted link from server");
-                    // console.log(response);
-                    const decLink = response;
-                    decLink.is_encrypted = false;
-                    newLinks[i] = decLink;
+                    promises.push(
+                        this.pzApi.decryptLink(link.id, this.state.masterPassword)
+                            .then((response) => {
+                                console.log(`Got decrypted link from server: ${response.service_name}`);
+                                // console.log(response);
+                                const decLink = response as IDecryptedLink;
+                                decLink.is_encrypted = false;
+                                newLinks[i] = decLink;
+                            })
+                    );
                 }
             }
+            await Promise.all(promises);
+            console.log("all links decrypted");
 
             const newArr = this.state.links;
             for (const linkIndex in newLinks) {
