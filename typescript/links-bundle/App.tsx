@@ -123,10 +123,10 @@ class App extends Component<IProps, IState> {
             const newLinks = {};
             const promises = [];
 
-            // NOTE: this will be slow because sending out the requests in sequence
             for (let i = 0; i < this.state.links.length; i++) {
                 const link = this.state.links[i];
                 if (link.is_encrypted) {
+                    // send out all requests to decrypt individual items, but do not wait on responses here
                     promises.push(
                         this.pzApi.decryptLink(link.id, this.state.masterPassword)
                             .then((response) => {
@@ -139,6 +139,7 @@ class App extends Component<IProps, IState> {
                     );
                 }
             }
+            // wait for all asynchronous decryption requests to come back
             await Promise.all(promises);
             console.log("all links decrypted");
 
