@@ -103,6 +103,7 @@ class App extends Component<{}, INewEntryState> {
 		this.handleGenPassword = this.handleGenPassword.bind(this);
 
 		this.handleCopy = this.handleCopy.bind(this);
+		this.handleCopyInner = this.handleCopyInner.bind(this);
 		this.hideTooltip = this.hideTooltip.bind(this);
 
 		this.handleSubmit = this.handleSubmit.bind(this);
@@ -131,8 +132,21 @@ class App extends Component<{}, INewEntryState> {
 		});
 	}
 
-	submitExistingEntry() {
-		throw new Error("not implemented");
+	async submitExistingEntry() {
+		const entry = {
+			account: this.state.account,
+			username: this.state.username,
+			password: this.state.password,
+			has_2fa: this.state.has_2fa,
+			extra: this.state.extra
+		};
+		const r = await this.pzApi.updateEntry(this.state.id, entry, this.state.masterPassword);
+		if(r.status === 200) {
+			window.location.href = `/entries/done_edit/${entry.account}`;
+		} else {
+			console.error(r.status);
+			console.error(r);
+		}
 	}
 
 	async submitNewEntry() {
@@ -154,6 +168,7 @@ class App extends Component<{}, INewEntryState> {
 
 	handleSubmit(e: React.SyntheticEvent) {
 		e.preventDefault();
+		// note that both of the called functions are async
 		if(this.state.isEntryNew) {
 			this.submitNewEntry();
 		} else {
@@ -187,7 +202,7 @@ class App extends Component<{}, INewEntryState> {
 
 	handle2faChange(event) {
 		this.setState({
-			has_2fa: event.target.value
+			has_2fa: event.target.checked
 		});
 	}
 
@@ -204,7 +219,11 @@ class App extends Component<{}, INewEntryState> {
 		}
 	}
 
-	handleCopy() {
+	/**
+	 * Note that you cannot copy a password field
+	 * Therefore this method can only be called when the password is visible
+	 */
+	handleCopyInner() {
 		this.passwordFieldRef.current.focus();
 		this.passwordFieldRef.current.setSelectionRange(0, 9999);
 		document.execCommand("copy");
@@ -217,6 +236,25 @@ class App extends Component<{}, INewEntryState> {
 		window.setTimeout(this.hideTooltip, this.tooltipHideDelay);
 
 		(event.target as HTMLButtonElement).focus();
+	}
+
+	/**
+	 * Wrapper for copy, which neatly handles copying regardless of if the password is visible
+	 */
+	handleCopy(): void {
+		// NOTE: copy does not work on password field directly, so have to create a hack
+		if(!this.state.isPasswordVisible) {
+			this.setState({
+				isPasswordVisible: true
+			}, () => {
+				this.handleCopyInner();
+				this.setState({
+					isPasswordVisible: false
+				})
+			})
+		} else {
+			this.handleCopyInner();
+		}
 	}
 
 	handleGenModeChange(newGenMode: string): void {
