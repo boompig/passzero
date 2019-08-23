@@ -1,0 +1,26 @@
+{% extends "layout-react.html" %}
+
+{% block css %}
+	//- bootstrap already loaded in layout-react
+	//- font-awesome glyphs already loaded in layout-react
+	//- custom style
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/new.min.css") + "?build=" + config['BUILD_ID'] }}">
+{% endblock %}
+
+{% block js %}
+    <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/new-entry.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
+{% endblock %}
+
+{% block body %}
+    <div id="root"></div>
+    <form class="hidden">
+		<input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+		<input type="hidden" name="master_password" id="master-password" value="{{ session['password'] }}">
+		{%- if entry -%}
+			<input type="hidden" name="serialized_entry" id="serialized-entry" value="{{ to_base64(entry) }}">
+		{%- else -%}
+			<input type="hidden" name="serialized_entry" id="serialized-entry" value="null">
+		{%- endif -%}
+    </form>
+{% endblock %}

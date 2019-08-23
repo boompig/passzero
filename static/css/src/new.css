@@ -16,11 +16,12 @@ main form {
 
 @media(min-width: 700px) {
     main .form-control {
-        width: 80%;
+        width: 100%;
     }
 
     main form {
-        padding-left: 2em;
+		padding-left: 2em;
+		padding-right: 2em;
         padding-top: 1em;
     }
 }
@@ -38,7 +39,19 @@ main form {
 }
 
 main .btn-container {
-    margin-top: 0.5em;
+	margin-top: 0.5rem;
+}
+
+main .btn-container button:not(:last-of-type) {
+	margin-right: .5rem
+}
+
+main #settings-container {
+	margin-top: .5rem;
+}
+
+main #settings-container .toggle-special-chars-btn .fas {
+	margin-right: .5rem;
 }
 
 main button[type="submit"] {
@@ -47,7 +60,8 @@ main button[type="submit"] {
 
 main .input-range {
     max-width: 300px;
-    min-width: 250px;
+	min-width: 250px;
+	display: block;
 }
 
 #create-btn {
@@ -69,4 +83,12 @@ main .btn-settings {
 
 main .btn-settings .fas {
     margin-right: 0.4rem;
+}
+
+main .has-2fa-checkbox {
+	margin-right: .5rem;
+}
+
+main form.hidden {
+	display: none;
 }

@@ -1,3 +1,5 @@
+import binascii
+import json
 import os
 from datetime import timedelta
 
@@ -17,6 +19,12 @@ from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
 from passzero.main_routes import main_routes
 from passzero.models import ApiToken, db
+
+
+def dict_to_base64(d: dict) -> str:
+    # NOTE: internal use only
+    s = binascii.b2a_base64(json.dumps(d).encode('utf-8')).rstrip()
+    return s.decode('utf-8')
 
 
 def create_app(name: str, settings_override: dict = {}):
@@ -91,6 +99,7 @@ def create_app(name: str, settings_override: dict = {}):
 
     # register CSRF generation function
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
+    app.jinja_env.globals["to_base64"] = dict_to_base64
 
     # create SSL secret keys
     if "FLASK_SECRET_KEY" in os.environ:

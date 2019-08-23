@@ -34,7 +34,6 @@ class App extends Component<any, any> {
 
         // load master password
         const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
-        console.log(masterPassword);
         this.setState({
             masterPassword: masterPassword,
         });

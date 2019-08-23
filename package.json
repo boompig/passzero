@@ -30,6 +30,7 @@
     "csstype": "^2.6.0",
     "jquery": "3.4.1",
     "js-cookie": "2.1.4",
+    "lodash": "^4.17.15",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
     "react-tooltip": "^3.9.1",
