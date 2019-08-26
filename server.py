@@ -1,7 +1,5 @@
 import os
 
-from werkzeug.contrib.profiler import ProfilerMiddleware
-
 from passzero.app_factory import create_app
 from passzero.models import db
 
@@ -13,9 +11,6 @@ if __name__ == "__main__":
         app.debug = True
         assert(os.path.exists("cert.pem"))
         assert(os.path.exists("key.pem"))
-        if "PROFILE" in os.environ:
-            app.config["PROFILE"] = True
-            app.wsgi_app = ProfilerMiddleware(app.wsgi_app, restrictions=[30])
         if "NO_SSL" in os.environ:
             # used for testing service workers
             app.run(port=app.config["PORT"])
