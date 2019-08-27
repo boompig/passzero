@@ -17,6 +17,7 @@
     <form class="hidden">
 		<input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
 		<input type="hidden" name="master_password" id="master-password" value="{{ session['password'] }}">
+		<input type="hidden" name="user_prefs" id="user-prefs" value="{{ to_base64(user_prefs) }}">
 		{%- if entry -%}
 			<input type="hidden" name="serialized_entry" id="serialized-entry" value="{{ to_base64(entry) }}">
 		{%- else -%}

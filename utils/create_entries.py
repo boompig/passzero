@@ -45,7 +45,6 @@ def create_fake_entry(i):
 
 
 if __name__ == "__main__":
-    num_entries_per_version = 40
     args = parse_args()
     setup_logging(args.verbose)
     db_session = get_db_session()
@@ -54,7 +53,7 @@ if __name__ == "__main__":
         logging.critical("Incorrect password for user %s", args.email)
         sys.exit(1)
     # evenly split between the different versions: 2, 3, 4
-    versions = [3, 4, 5]
+    versions = [4, 5]
     created_so_far = 0
     for j, version in enumerate(versions):
         num_entries_per_version = int(args.num_entries / len(versions))

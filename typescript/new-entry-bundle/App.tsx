@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { PureComponent } from "react";
 import * as React from "react";
 import * as ReactTooltip from "react-tooltip";
 import { Settings } from "./components/settings";
@@ -34,7 +34,12 @@ interface INewEntryState {
 	tooltipLastShown: Date | null;
 }
 
-class App extends Component<{}, INewEntryState> {
+interface IUserPrefs {
+	default_random_passphrase_length: number;
+	default_random_password_length: number;
+}
+
+class App extends PureComponent<{}, INewEntryState> {
 	logoutTimer: LogoutTimer;
 	pzApi: PasszeroApiV3;
 
@@ -358,14 +363,23 @@ class App extends Component<{}, INewEntryState> {
 	}
 
 	componentDidMount() {
+		// async
 		this.fetchDictionaryWords();
 
 		// load master password
 		const masterPassword = (document.getElementById("master-password") as HTMLInputElement).value;
+
+		// load user preferences
+		const userPrefsEncoded = (document.getElementById("user-prefs") as HTMLInputElement).value;
+		const userPrefs = JSON.parse(atob(userPrefsEncoded)) as IUserPrefs;
+
 		this.setState({
-			masterPassword: masterPassword
+			masterPassword: masterPassword,
+			passwordLength: userPrefs.default_random_password_length,
+			numWords: userPrefs.default_random_passphrase_length,
 		}, () => {
 			console.log("master password loaded");
+			console.log("user password generation preferences loaded");
 		});
 
 		// determine if this is a new entry and the entryID if not

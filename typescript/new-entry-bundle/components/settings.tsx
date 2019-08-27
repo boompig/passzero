@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { PureComponent } from "react";
 import * as React from "react";
 
 interface ISettingsProps {
@@ -12,7 +12,7 @@ interface ISettingsProps {
 	onPhraseLengthChange(length: number): void;
 }
 
-export class Settings extends Component<ISettingsProps, any> {
+export class Settings extends PureComponent<ISettingsProps, any> {
 	constructor(props: ISettingsProps) {
 		super(props);
 
