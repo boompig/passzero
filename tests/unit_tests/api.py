@@ -10,6 +10,9 @@ file_upload_headers = {"Content-Type": "multipart/form-data"}
 BASE_URL = "http://localhost:5050"
 
 
+logger = logging.getLogger(__name__)
+
+
 class BadStatusCodeException(Exception):
     pass
 
@@ -542,14 +545,17 @@ def edit_entry_with_token(session,
 # API classes
 
 class ApiV3:
-    def __init__(self, client) -> None:
+    def __init__(self, client, base_url: Optional[str] = None) -> None:
         """
         :param client: Client object must be a request session or similar.
         """
         self.api_token = None  # type: Optional[str]
         self.client = client
         self.password = None  # type: Optional[str]
-        logging.debug("Using BASE_URL %s", BASE_URL)
+        if base_url:
+            global BASE_URL
+            BASE_URL = base_url
+        logger.debug("Using BASE_URL %s", BASE_URL)
 
     def login(self, email: str, password: str) -> None:
         assert isinstance(email, str)
