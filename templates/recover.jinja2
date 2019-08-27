@@ -1,7 +1,7 @@
-{% extends "layout.html" %}
+{% extends "layout.jinja2" %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/recover.min.css") + "?build=" + config['BUILD_ID'] }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/recover.min.css") + "?build=" + config['BUILD_ID'] }}">
 {% endblock %}
 
 {% block js %}
@@ -23,21 +23,21 @@
         id="recover-form">
     {%- endif -%}
         <div id="server-msg" class="error"></div>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         {%- if confirm -%}
             <label for="password">Password</label>
             <input type="password" name="password" class="form-control"
-                required="true" placeholder="password" />
+                required="true" placeholder="password">
             <label for="confirm_password">Confirm Password</label>
             <input type="password" name="confirm_password" class="form-control"
-                required="true" placeholder="confirm password" />
+                required="true" placeholder="confirm password">
         {%- else -%}
             <label for="email">Email</label>
             <input type="email" class="form-control" name="email"
-                required="true" placeholder="email" />
+                required="true" placeholder="email">
         {%- endif -%}
         <div class="check-container">
-            <input type="checkbox" name="accept-risk" required="true" id="accept-risk" />
+            <input type="checkbox" name="accept-risk" required="true" id="accept-risk">
             I understand the risks
         </div>
         <button type="submit" class="btn btn-primary form-control" disabled="true">

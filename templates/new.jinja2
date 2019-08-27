@@ -1,9 +1,9 @@
-{% extends "layout-react.html" %}
+{% extends "layout-react.jinja2" %}
 
 {% block css %}
-	//- bootstrap already loaded in layout-react
-	//- font-awesome glyphs already loaded in layout-react
-	//- custom style
+	{# bootstrap already loaded in layout-react #}
+	{# font-awesome glyphs already loaded in layout-react #}
+	{# custom style #}
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/new.min.css") + "?build=" + config['BUILD_ID'] }}">
 {% endblock %}
 

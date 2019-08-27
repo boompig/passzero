@@ -2,9 +2,9 @@
 <html lang="en" >
     <head>
         <meta charset="utf-8">
-        <!-- for mobile -->
+        {# for mobile #}
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <!-- for IE - use latest engine -->
+        {# for IE - use latest engine #}
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
 
         <title>
@@ -19,17 +19,17 @@
         <link rel="icon" type="image/png" href="/favicon.png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css" integrity="sha256-SmSEXNAArTgQ8SR6kKpyP/N+jA8f8q8KpG0qQldSKos=" crossorigin="anonymous" />
-        <!-- fontawesome glyphicons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css" integrity="sha256-SmSEXNAArTgQ8SR6kKpyP/N+jA8f8q8KpG0qQldSKos=" crossorigin="anonymous">
+        {# fontawesome glyphicons #}
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/solid.css" integrity="sha384-VGP9aw4WtGH/uPAOseYxZ+Vz/vaTb1ehm1bwx92Fm8dTrE+3boLfF1SpAtB1z7HW" crossorigin="anonymous">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/fontawesome.css" integrity="sha384-1rquJLNOM3ijoueaaeS5m+McXPJCGdr5HcA03/VHXxcp2kX2sUrQDmFc3jR5i/C7" crossorigin="anonymous">
-        <!-- custom CSS -->
-        <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/main.min.css") + "?build=" + config['BUILD_ID'] }}" />
+        {# custom CSS #}
+        <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/main.min.css") + "?build=" + config['BUILD_ID'] }}">
         {% block css %}
         {% endblock %}
     </head>
     <body>
-        {% include "nav.html" %}
+        {% include "nav.jinja2" %}
         <main class="container">
             <div class="inner-container">
                 {% with messages = get_flashed_messages() %}
@@ -47,10 +47,14 @@
             </div>
         </main>
 
-        <!-- include jQuery on every page - needed for bootstrap4 navbar expansion -->
+        {# include jQuery on every page #}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-        <!-- include bootstrap4 for navbar expansion. -->
+        {# include bootstrap4 for navbar expansion. popper is for bootstrap tooltips (this specific one!) #}
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha256-VsEqElsCHSGmnmHXGQzvoWjWwoznFSZc6hs7ARLRacQ=" crossorigin="anonymous"></script>
+        {# include utilities JS file #}
+        <script src="{{ url_for("static", filename="js/dist/utils.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+        <script src="{{ url_for("static", filename="js/dist/passzero_api.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
         {% block js %}
         {% endblock %}
     </body>
