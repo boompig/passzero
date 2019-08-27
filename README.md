@@ -37,6 +37,24 @@ All instructions in "running locally", as well as:
 - install nodejs and npm
 - `make install`
 
+Your secret environment file (`passzero/my_env.py`) should look like this:
+
+```
+import os
+
+
+DATABASE_URL = "<your database URL here>"
+REAL_EMAIL = "<your real email here>
+SENDGRID_API_KEY = "<your real SendGrid API key here>"
+
+
+def setup_env():
+    os.environ["DATABASE_URL"] = DATABASE_URL
+    os.environ["REAL_EMAIL"] = REAL_EMAIL
+    os.environ["SENDGRID_API_KEY"] = SENDGRID_API_KEY
+
+```
+
 ### Building React Components
 
 Most of the client-side components are written using React. You need to re-compile the react bundle for each page after modifying. Run this command:
