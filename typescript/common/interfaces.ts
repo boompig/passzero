@@ -11,7 +11,7 @@ interface IEntryUpload {
 }
 
 /**
- * Reflects the form in new.html for new entries
+ * Reflects the form in new.jinja2 for new entries
  */
 interface ICreateEntryForm {
     account: string;
@@ -36,7 +36,7 @@ interface IExistingEntry {
 }
 
 /**
- * Reflects the form in new.html for existing entries
+ * Reflects the form in new.jinja2 for existing entries
  * right now same as the creation form
  */
 interface IEditEntryForm {

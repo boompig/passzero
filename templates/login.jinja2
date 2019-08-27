@@ -8,22 +8,22 @@
         <link rel="manifest" href="/manifest.json">
         <link rel="icon" type="image/png" href="/favicon.png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css" integrity="sha256-SmSEXNAArTgQ8SR6kKpyP/N+jA8f8q8KpG0qQldSKos=" crossorigin="anonymous" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css" integrity="sha256-SmSEXNAArTgQ8SR6kKpyP/N+jA8f8q8KpG0qQldSKos=" crossorigin="anonymous">
 
-        <!-- custom CSS -->
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/login.min.css") + "?build=" + config['BUILD_ID'] }}" />
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/navbar.min.css") + "?build=" + config['BUILD_ID'] }}" />
+        {# custom CSS #}
+        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/login.min.css") + "?build=" + config['BUILD_ID'] }}">
+        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/navbar.min.css") + "?build=" + config['BUILD_ID'] }}">
     </head>
     <body>
         <div id="hero">
             {% if login %}
-                {% include "login_existing.html" %}
+                {% include "login_existing.jinja2" %}
             {% else %}
-                {% include "login_new.html" %}
+                {% include "login_new.jinja2" %}
             {% endif %}
         </div>
 
-        <!-- CDN jquery -->
+        {# CDN jquery #}
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha256-VsEqElsCHSGmnmHXGQzvoWjWwoznFSZc6hs7ARLRacQ=" crossorigin="anonymous"></script>
         <script

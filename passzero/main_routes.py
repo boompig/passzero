@@ -44,7 +44,7 @@ def index():
     if check_auth():
         return redirect(url_for("main_routes.view_entries"))
     else:
-        return render_template("landing.html")
+        return render_template("landing.jinja2")
 
 
 @main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
@@ -63,7 +63,7 @@ def post_login():
 
 @main_routes.route("/login", methods=["GET"])
 def login():
-    return render_template("login.html", login=True, error=None)
+    return render_template("login.jinja2", login=True, error=None)
 
 
 @main_routes.route("/logout", methods=["GET", "POST"])
@@ -91,7 +91,7 @@ def new_entry_view():
         "default_random_password_length": user.default_random_password_length,
         "default_random_passphrase_length": user.default_random_passphrase_length
     }
-    return render_template("new.pug", title="PassZero &middot; New Entry",
+    return render_template("new.jinja2", title="PassZero &middot; New Entry",
                            user_prefs=user_prefs, error=None)
 
 
@@ -118,25 +118,25 @@ def post_create(account_name):
 @main_routes.route("/entries", methods=["GET"])
 @auth_or_redirect_login
 def view_entries():
-    return render_template("entries.html")
+    return render_template("entries.jinja2")
 
 
 @main_routes.route("/links", methods=["GET"])
 @auth_or_redirect_login
 def view_links():
-    return render_template("links.html")
+    return render_template("links.jinja2")
 
 
 @main_routes.route("/links/new", methods=["GET"])
 @auth_or_redirect_login
 def new_link_view():
-    return render_template("new-link.html", title="PassZero &middot; New Link")
+    return render_template("new-link.jinja2", title="PassZero &middot; New Link")
 
 
 @main_routes.route("/signup", methods=["GET"])
 def signup():
     error = None
-    return render_template("login.html", login=False, error=error)
+    return render_template("login.jinja2", login=False, error=error)
 
 
 @main_routes.route("/signup/post_confirm")
@@ -209,7 +209,7 @@ def edit_entry(entry_id: int):
             "default_random_passphrase_length": user.default_random_passphrase_length
         }
         return render_template(
-            "new.pug",
+            "new.jinja2",
             user_prefs=user_prefs,
             e_id=entry_id,
             entry=fe[0],
@@ -221,7 +221,7 @@ def edit_entry(entry_id: int):
 @auth_or_redirect_login
 def edit_link(link_id: int):
     # user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    return render_template("under_construction.html")
+    return render_template("under_construction.jinja2")
 
 
 @main_routes.route("/entries/strength")
@@ -230,7 +230,7 @@ def password_strength():
     entries = get_entries(db.session, session["user_id"])
     dec_entries = decrypt_entries(entries, session['password'])
     entry_scores = password_strength_scores(session["email"], dec_entries)
-    return render_template("password_strength.html", entry_scores=entry_scores)
+    return render_template("password_strength.jinja2", entry_scores=entry_scores)
 
 
 @main_routes.route("/entries/2fa")
@@ -246,13 +246,13 @@ def two_factor():
             "entry_has_2fa": entry.has_2fa,
             "entry_id": entry.id
         }
-    return render_template("entries_2fa.html", two_factor_map=two_factor_map)
+    return render_template("entries_2fa.jinja2", two_factor_map=two_factor_map)
 
 
 @main_routes.route("/advanced")
 @auth_or_redirect_login
 def advanced():
-    return render_template("advanced.html")
+    return render_template("advanced.jinja2")
 
 
 @main_routes.route("/profile")
@@ -264,7 +264,7 @@ def profile():
         "default_random_passphrase_length": user.default_random_passphrase_length,
     }
     return render_template(
-        "profile.html",
+        "profile.jinja2",
         title="PassZero &middot; Profile",
         user_prefs=user_prefs
     )
@@ -272,7 +272,7 @@ def profile():
 
 @main_routes.route("/recover")
 def recover_password():
-    return render_template("recover.html")
+    return render_template("recover.jinja2")
 
 
 @main_routes.route("/recover/confirm")
@@ -288,7 +288,7 @@ def recover_account_confirm():
             return redirect(url_for("main_routes.recover_password"))
         else:
             # token deleted when password changed
-            return render_template("recover.html", confirm=True)
+            return render_template("recover.jinja2", confirm=True)
     except NoResultFound:
         flash("Token is invalid", "error")
         return redirect(url_for("main_routes.recover_password"))
@@ -299,7 +299,7 @@ def recover_account_confirm():
 
 @main_routes.route("/about")
 def about():
-    return render_template("about.html")
+    return render_template("about.jinja2")
 
 
 @main_routes.route("/version")

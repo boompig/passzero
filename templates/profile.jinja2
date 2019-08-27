@@ -1,8 +1,8 @@
-{% extends "layout.html" %}
+{% extends "layout.jinja2" %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}" />
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/profile.min.css") + "?build=" + config['BUILD_ID'] }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}">
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/profile.min.css") + "?build=" + config['BUILD_ID'] }}">
 {% endblock %}
 
 {% block js %}
@@ -39,12 +39,12 @@
                     <input type="number" name="default_random_password_length"
                         class="form-control"
                         value="{{ user_prefs["default_random_password_length"] }}"
-                        min="1" max="255" />
+                        min="1" max="255>
                         <label>Default number of words in random passphrase</label>
                     <input type="number" name="default_random_passphrase_length"
                         class="form-control"
                         value="{{ user_prefs["default_random_passphrase_length"] }}"
-                        min="1" max="10" />
+                        min="1" max="10">
                     <button type="submit" class="btn btn-success form-control">Save</button>
                 </form>
             </div>
@@ -72,16 +72,16 @@
                     <label for="old_password">Old Password</label>
                     <span class="form-error" id="form-error-old_password"></span>
                     <input type="password" name="old_password" class="form-control"
-                        placeholder="old password" required="true" />
+                        placeholder="old password" required="true">
                     <label for="new_password">New Password</label>
                     <span class="form-error" id="form-error-new_password"></span>
                     <input type="password" name="new_password" class="form-control"
-                        placeholder="new password" required="true" />
+                        placeholder="new password" required="true">
                     <label for="confirm_new_password">Confirm New Password</label>
                     <span class="form-error" id="form-error-confirm_new_password"></span>
                     <input type="password" name="confirm_new_password" class="form-control"
-                        placeholder="confirm new password" required="true" />
-                    <input type="hidden" name="csrf_token" value={{ csrf_token() }} />
+                        placeholder="confirm new password" required="true">
+                    <input type="hidden" name="csrf_token" value={{ csrf_token() }}>
                     <button type="submit" class="btn btn-success form-control"
                             id="change-password-btn">Change Password</button>
                 </form>
@@ -90,5 +90,3 @@
     </div>
 </div>
 {% endblock %}
-
-<!-- vim: set filetype=jinja: -->

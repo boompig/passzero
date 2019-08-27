@@ -1,0 +1,22 @@
+{%- extends "layout-react.jinja2" -%}
+
+{% block js %}
+    <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    {# custom JS - webpack bundle #}
+    <script src="{{ url_for("static", filename="js/dist/links.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
+{% endblock %}
+
+{% block css %}
+    {# NOTE: bootstrap 4 already included in layout template #}
+    {# NOTE: fontawesome solid glyphicons already included in layout template #}
+    {# custom style #}
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/links.min.css") + "?build=" + config['BUILD_ID'] }}">
+{% endblock %}
+
+{% block body %}
+    <div id="root"></div>
+    <form class="hidden">
+		<input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
+		<input type="hidden" name="master_password" id="master_password" value="{{ session['password'] }}">
+    </form>
+{% endblock %}

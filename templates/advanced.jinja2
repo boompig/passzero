@@ -1,7 +1,7 @@
-{% extends "layout.html" %}
+{% extends "layout.jinja2" %}
 
 {% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}" />
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}">
 {% endblock %}
 
 {% block js %}
@@ -49,7 +49,7 @@
             <div class="alert alert-success" id="nuke-success-msg"></div>
             <form role="form" action="/api/v1/entries/nuclear" method="POST"
                 id="nuke-entries-form">
-                <input type="hidden" name="csrf_token" value={{ csrf_token() }} />
+                <input type="hidden" name="csrf_token" value={{ csrf_token() }}>
                 <button type="submit" class="btn btn-danger">Nuke Entries</button>
             </form>
         </div>
