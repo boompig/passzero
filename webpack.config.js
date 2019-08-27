@@ -5,8 +5,9 @@ module.exports = {
     mode: mode,
     entry: {
         'entries': './typescript/entries-bundle/index.tsx',
+		'new-entry': './typescript/new-entry-bundle/index.tsx',
         'links': './typescript/links-bundle/index.tsx',
-        'new-link': './typescript/new-link-bundle/index.tsx',
+		'new-link': './typescript/new-link-bundle/index.tsx',
     },
     output: {
         filename: '[name].bundle.js',
@@ -29,6 +30,7 @@ module.exports = {
                 loader: 'awesome-typescript-loader',
                 include: [
                     path.resolve(__dirname, 'typescript/entries-bundle'),
+                    path.resolve(__dirname, 'typescript/new-entry-bundle'),
                     path.resolve(__dirname, 'typescript/links-bundle'),
                     path.resolve(__dirname, 'typescript/new-link-bundle'),
                     path.resolve(__dirname, 'typescript/common'),

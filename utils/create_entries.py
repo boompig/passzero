@@ -6,6 +6,8 @@ from passzero.backend import get_account_with_email, insert_entry_for_user
 from passzero.my_env import DATABASE_URL
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import sys
+import logging
 
 
 def get_db_session():
@@ -18,7 +20,17 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument("--email", required=True)
     parser.add_argument("--password", required=True)
+    parser.add_argument("-v", "--verbose", action="store_true")
+    parser.add_argument("-n", "--num-entries", type=int, default=120)
     return parser.parse_args()
+
+
+def setup_logging(verbose: bool = True):
+    if verbose:
+        log_level = logging.DEBUG
+    else:
+        log_level = logging.INFO
+    logging.basicConfig(level=log_level)
 
 
 def create_fake_entry(i):
@@ -26,22 +38,30 @@ def create_fake_entry(i):
         "account": "fake account %d" % i,
         "username": "fake email %d" % i,
         "password": "fake password %d" % i,
-        "extra": ""
+        "extra": "",
+        "has_2fa": (i % 2 == 0)
     }
     return dec_entry
 
 
 if __name__ == "__main__":
-    num_entries_per_version = 40
     args = parse_args()
+    setup_logging(args.verbose)
     db_session = get_db_session()
     user = get_account_with_email(db_session, args.email)
     if not user.authenticate(args.password):
-        print("Incorrect password for user")
+        logging.critical("Incorrect password for user %s", args.email)
+        sys.exit(1)
     # evenly split between the different versions: 2, 3, 4
-    versions = [2, 3, 4]
-    for version in versions:
+    versions = [4, 5]
+    created_so_far = 0
+    for j, version in enumerate(versions):
+        num_entries_per_version = int(args.num_entries / len(versions))
+        if j == len(versions) - 1:
+            num_entries_per_version = args.num_entries - created_so_far
+        logging.debug("Creating %d entries of version %d", num_entries_per_version, version)
         for i in range(num_entries_per_version):
             entry = create_fake_entry(i)
             insert_entry_for_user(db_session, entry, user.id, args.password, version=version)
-    print("Created %d entries for user with email %s" % (num_entries_per_version * len(versions), args.email))
+            created_so_far += 1
+    print("Created {} entries for user with email {}".format(num_entries_per_version * len(versions), args.email))

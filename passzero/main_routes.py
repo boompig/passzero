@@ -91,7 +91,7 @@ def new_entry_view():
         "default_random_password_length": user.default_random_password_length,
         "default_random_passphrase_length": user.default_random_passphrase_length
     }
-    return render_template("new.html", title="PassZero &middot; New Entry",
+    return render_template("new.pug", title="PassZero &middot; New Entry",
                            user_prefs=user_prefs, error=None)
 
 
@@ -209,7 +209,7 @@ def edit_entry(entry_id: int):
             "default_random_passphrase_length": user.default_random_passphrase_length
         }
         return render_template(
-            "new.html",
+            "new.pug",
             user_prefs=user_prefs,
             e_id=entry_id,
             entry=fe[0],

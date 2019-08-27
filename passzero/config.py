@@ -1,4 +1,4 @@
-BUILD_ID = "alright_raven"
+BUILD_ID = "good_manatee"
 SALT_SIZE = 32
 PORT = 5050
 TOKEN_SIZE = 32

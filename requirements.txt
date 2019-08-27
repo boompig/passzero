@@ -88,7 +88,7 @@ traitlets==4.3.2
 typed-ast==1.2.0
 urllib3==1.25.2
 wcwidth==0.1.7
-Werkzeug==0.14.1
+Werkzeug==0.15.5
 wrapt==1.10.11
 WTForms==2.0.2
 zxcvbn-python==4.4.18

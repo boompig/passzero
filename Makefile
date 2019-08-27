@@ -10,7 +10,6 @@ standalone_typescript_src := typescript/standalone/*.ts
 css_targets 	:= $(patsubst static/css/src/%.css, static/css/dist/%.min.css, $(wildcard static/css/src/*.css))
 js_src_targets 	:= $(patsubst typescript/standalone/%.ts, static/js/src/standalone/%.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/src/common/%.js, $(wildcard typescript/common/*.ts))
 js_dist_targets := $(patsubst typescript/standalone/%.ts, static/js/dist/%.min.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/dist/%.min.js, $(wildcard typescript/common/*.ts))
-js_test_src 	:= tests/angular/*.js
 entries_bundle_src := typescript/entries-bundle/*.tsx typescript/entries-bundle/components/*.tsx
 
 csslint  := node_modules/csslint/dist/cli.js

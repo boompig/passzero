@@ -4,6 +4,14 @@ interface IApiKey {
     token: string;
 }
 
+interface IEntry {
+	account: string;
+	username: string;
+	password: string;
+	extra: string;
+	has_2fa: boolean;
+}
+
 export default class PasszeroApiV3 {
     private apiKey: (IApiKey | null);
 
@@ -30,7 +38,13 @@ export default class PasszeroApiV3 {
         }
     }
 
-    async postJsonWithBearer(url: string, apiToken: string, data: any) {
+	/**
+	 * If rawResponse is not defined, default to false
+	 */
+	async postJsonWithBearer(url: string, apiToken: string, data: any, rawResponse?: boolean) {
+		if(!rawResponse) {
+			rawResponse = false;
+		}
         const options = {
             method: "POST",
             headers: {
@@ -39,8 +53,35 @@ export default class PasszeroApiV3 {
             },
             body: JSON.stringify(data),
         } as RequestInit;
-        const response = await window.fetch(url, options);
-        return response.json();
+		const response = await window.fetch(url, options);
+		if(rawResponse) {
+			return response;
+		} else {
+			return response.json();
+		}
+	}
+
+	/**
+	 * If rawResponse is not defined, default to false
+	 */
+	async patchJsonWithBearer(url: string, apiToken: string, data: any, rawResponse?: boolean) {
+		if(!rawResponse) {
+			rawResponse = false;
+		}
+        const options = {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiToken}`
+            },
+            body: JSON.stringify(data),
+        } as RequestInit;
+		const response = await window.fetch(url, options);
+		if(rawResponse) {
+			return response;
+		} else {
+			return response.json();
+		}
     }
 
     async deleteWithBearer(url: string, apiToken: string) {
@@ -110,7 +151,29 @@ export default class PasszeroApiV3 {
         };
         const response = await this.postJsonWithBearer(url, apiToken, data);
         return response;
-    }
+	}
+
+	async createEntry(entry: IEntry, masterPassword: string) {
+		const apiToken = await this.fillToken();
+		const url = "/api/v3/entries";
+		const data = {
+			entry: entry,
+			password: masterPassword
+		};
+		const response = await this.postJsonWithBearer(url, apiToken, data, true);
+		return response;
+	}
+
+	async updateEntry(entryId: number, entry: IEntry, masterPassword: string) {
+		const apiToken = await this.fillToken();
+		const url = `/api/v3/entries/${entryId}`;
+		const data = {
+			entry: entry,
+			password: masterPassword
+		};
+		const response = await this.patchJsonWithBearer(url, apiToken, data, true);
+		return response;
+	}
 
     /* links */
 
