@@ -124,13 +124,19 @@ def view_entries():
 @main_routes.route("/links", methods=["GET"])
 @auth_or_redirect_login
 def view_links():
-    return render_template("links.jinja2")
+    return render_template("links/links.jinja2")
 
 
 @main_routes.route("/links/new", methods=["GET"])
 @auth_or_redirect_login
 def new_link_view():
-    return render_template("new-link.jinja2", title="PassZero &middot; New Link")
+    return render_template("links/new-link.jinja2", title="PassZero &middot; New Link", link_id=-1)
+
+
+@main_routes.route("/links/<int:link_id>", methods=["GET"])
+@auth_or_redirect_login
+def edit_link(link_id: int):
+    return render_template("links/new-link.jinja2", title="PassZero &middot; Edit Link", link_id=link_id)
 
 
 @main_routes.route("/signup", methods=["GET"])
@@ -215,13 +221,6 @@ def edit_entry(entry_id: int):
             entry=fe[0],
             error=None
         )
-
-
-@main_routes.route("/links/<int:link_id>", methods=["GET"])
-@auth_or_redirect_login
-def edit_link(link_id: int):
-    # user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    return render_template("under_construction.jinja2")
 
 
 @main_routes.route("/entries/strength")
