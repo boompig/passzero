@@ -2,11 +2,13 @@ from functools import wraps
 
 from flask import (Blueprint, abort, current_app, escape, flash, make_response,
                    redirect, render_template, request, session, url_for)
+from sqlalchemy.orm.exc import NoResultFound
+
 from passzero.api_utils import check_auth
 from passzero.backend import (activate_account, decrypt_entries, get_entries,
-                              get_services_map, password_strength_scores)
+                              get_link_by_id, get_services_map,
+                              password_strength_scores)
 from passzero.models import AuthToken, User, db
-from sqlalchemy.orm.exc import NoResultFound
 
 from . import export_utils
 
@@ -136,7 +138,16 @@ def new_link_view():
 @main_routes.route("/links/<int:link_id>", methods=["GET"])
 @auth_or_redirect_login
 def edit_link(link_id: int):
-    return render_template("links/new-link.jinja2", title="PassZero &middot; Edit Link", link_id=link_id)
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    link = get_link_by_id(db.session, user.id, link_id)
+    if link is None:
+        flash("Error: no link with ID %d" % link_id, "error")
+        return redirect(url_for("main_routes.view_entries"))
+    dec_link = link.decrypt(session["password"])
+    return render_template("links/new-link.jinja2", title="PassZero &middot; Edit Link",
+                           link_id=link_id,
+                           service_name=dec_link.service_name,
+                           link=dec_link.link)
 
 
 @main_routes.route("/signup", methods=["GET"])

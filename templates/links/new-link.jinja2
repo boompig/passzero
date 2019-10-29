@@ -23,5 +23,9 @@
 		<input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
 		<input type="hidden" name="master_password" id="master_password" value="{{ session['password'] }}">
         <input type="hidden" name="link_id" id="link_id" value="{{ link_id }}">
+        {% if link_id > 0 %}
+            <input type="hidden" name="service_name" id="service_name" value="{{ service_name }}">
+            <input type="hidden" name="link" id="link_value" value="{{ link }}">
+        {% endif %}
     </form>
 {% endblock %}

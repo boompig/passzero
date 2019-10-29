@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { PureComponent } from "react";
 import * as React from "react";
 import PasszeroApiV3 from "../common-modules/passzero-api-v3";
 
@@ -14,15 +14,10 @@ interface INewLinkState {
     isNewLink: boolean;
 }
 
-interface IServerLinkData {
-    service_name: string;
-    link: string;
-}
-
 /**
  * Represents editing a new or existing link
  */
-class App extends Component<any, INewLinkState> {
+class App extends PureComponent<any, INewLinkState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
 
@@ -56,33 +51,20 @@ class App extends Component<any, INewLinkState> {
         const linkId = Number.parseInt((document.getElementById("link_id") as HTMLInputElement).value, 10);
         console.log(`Got linkID ${linkId}`);
         let isNewLink = true;
+        let serviceName = this.state.name;
+        let linkValue = this.state.link;
         if (linkId > 0) {
             isNewLink = false;
+            serviceName = (document.getElementById("service_name") as HTMLInputElement).value;
+            linkValue = (document.getElementById("link_value") as HTMLInputElement).value;
         }
 
         this.setState({
             masterPassword: masterPassword,
             isNewLink: isNewLink,
             linkId: linkId,
-        }, () => {
-            if (!this.state.isNewLink) {
-                this.getLinkData();
-            }
-        });
-    }
-
-    /**
-     * Fetch decrypted data about links from server
-     */
-    async getLinkData() {
-        const data = (
-            await this.pzApi.decryptLink(this.state.linkId, this.state.masterPassword)
-        ) as IServerLinkData;
-        this.setState({
-            name: data.service_name,
-            link: data.link,
-        }, () => {
-            console.log(this.state.name);
+            name: serviceName,
+            link: linkValue,
         });
     }
 

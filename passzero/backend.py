@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import six
 from sqlalchemy import func
@@ -86,6 +86,15 @@ def get_links(db_session: Session, user_id: int) -> List[Link]:
     return db_session.query(Link)\
         .filter_by(user_id=user_id)\
         .all()
+
+
+def get_link_by_id(db_session: Session, user_id: int, link_id: int) -> Optional[Link]:
+    """Return link with given ID. If it doesn't belong to the user return None
+    If it doesn't exist also return None"""
+    link = db_session.query(Link).filter_by(id=link_id).one()
+    if link.user_id != user_id:
+        return None
+    return link
 
 
 def get_account_with_email(db_session: Session, email: str) -> User:

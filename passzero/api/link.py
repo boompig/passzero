@@ -41,8 +41,8 @@ class ApiLink(Resource):
         """
         user_id = get_jwt_identity()["user_id"]
         try:
-            link = db.session.query(Link).filter_by(id=link_id).one()
-            assert link.user_id == user_id
+            link = backend.get_link_by_id(db.session, user_id, link_id)
+            assert link is not None
             db.session.delete(link)
             db.session.commit()
             return json_success_v2("successfully deleted link with ID %d" % link_id)
