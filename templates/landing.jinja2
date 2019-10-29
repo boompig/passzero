@@ -8,6 +8,11 @@
         <title>PassZero</title>
 
         <link rel="manifest" href="/manifest.json">
+        {# various icons #}
+        <link rel="icon" type="image/png" href="/favicon.png">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+        {# custom CSS #}
         <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/landing.min.css") + "?build=" + config['BUILD_ID'] }}">
         <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/navbar.min.css") + "?build=" + config['BUILD_ID'] }}">
     </head>
