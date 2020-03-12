@@ -67,15 +67,15 @@ def pad_key_legacy(key: str) -> str:
         raise Exception("Key too long (%d chars)" % len(key))
 
 
-def encrypt_password_legacy(padded_key: str, password: str):
+def encrypt_password_legacy(padded_key: str, password: str) -> str:
     """Return encrypted password where encrypted password is a hex string"""
     iv = Random.new().read(AES.block_size)
-    cipher = AES.new(padded_key, AES.MODE_CFB, iv)
-    enc_password = iv + cipher.encrypt(password)
+    cipher = AES.new(padded_key.encode("utf-8"), AES.MODE_CFB, iv)
+    enc_password = iv + cipher.encrypt(password.encode("utf-8"))
     return byte_to_hex_legacy(enc_password)
 
 
-def encrypt_field_v1(key: str, salt: str, field: str):
+def encrypt_field_v1(key: str, salt: str, field: str) -> str:
     """
     WARNING: do not use
     Return encrypted hex string of field
@@ -90,16 +90,16 @@ def encrypt_field_v1(key: str, salt: str, field: str):
     assert isinstance(key, six.text_type)
     assert isinstance(salt, six.text_type)
     assert isinstance(field, six.text_type)
-    salted_key = (key + salt).encode('utf-8')
+    salted_key = (key + salt).encode("utf-8")
     actual_key = hashlib.sha256(salted_key).digest()
     iv = Random.new().read(AES.block_size)
     cipher = AES.new(actual_key, AES.MODE_CFB, iv)
-    enc_field = cipher.encrypt(field) + iv
+    enc_field = cipher.encrypt(field.encode("utf-8")) + iv
     hex_ciphertext = byte_to_hex_legacy(enc_field)
     return hex_ciphertext
 
 
-def encrypt_field_v2(extended_key, message, iv):
+def encrypt_field_v2(extended_key: bytes, message: str, iv: bytes) -> str:
     """Return encrypted hex string of extra field
     :param extended_key:        Bytes for the extended key
     :type extended_key:         bytes
@@ -114,19 +114,19 @@ def encrypt_field_v2(extended_key, message, iv):
     assert isinstance(message, six.text_type)
     assert isinstance(iv, bytes)
     cipher = AES.new(extended_key, AES.MODE_CFB, iv)
-    enc_msg = cipher.encrypt(message)
+    enc_msg = cipher.encrypt(message.encode("utf-8"))
     hex_ciphertext = byte_to_hex_legacy(enc_msg)
     assert isinstance(hex_ciphertext, six.text_type)
     return hex_ciphertext
 
 
-def encrypt_messages(extended_key, iv, messages):
+def encrypt_messages(extended_key: bytes, iv: bytes, messages: List[str]) -> List[bytes]:
     """Encrypt a bunch of messages, in order, with the same IV.
     This approach uses a stream cipher"""
     assert isinstance(extended_key, bytes)
     assert isinstance(iv, bytes)
     cipher = AES.new(extended_key, AES.MODE_CFB, iv)
-    enc_messages = [cipher.encrypt(message) for message in messages]
+    enc_messages = [cipher.encrypt(message.encode("utf-8")) for message in messages]
     return enc_messages
 
 
@@ -237,7 +237,7 @@ def decrypt_password_legacy(padded_key: str, hex_ciphertext: str) -> str:
     assert isinstance(ciphertext, bytes)
     iv = ciphertext[:AES.block_size]
     enc_password = ciphertext[AES.block_size:]
-    cipher = AES.new(padded_key, AES.MODE_CFB, iv)
+    cipher = AES.new(padded_key.encode("utf-8"), AES.MODE_CFB, iv)
     dec_password = cipher.decrypt(enc_password).decode("utf-8")
     return dec_password
 

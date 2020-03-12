@@ -7,7 +7,7 @@ import sys
 import sendgrid
 import six
 from flask import request
-from sendgrid.helpers.mail import Content, Email, Mail
+from sendgrid.helpers.mail import Mail
 
 
 def send_email_sendgrid(to_email: str, subject: str, msg: str) -> bool:
@@ -21,11 +21,15 @@ def send_email_sendgrid(to_email: str, subject: str, msg: str) -> bool:
         print("SENDGRID_API_KEY not found in env", file=sys.stderr)
         return False
     try:
-        sg = sendgrid.SendGridAPIClient(apikey=os.environ['SENDGRID_API_KEY'])
-        from_email = Email("noreply@passzero.local")
-        mail = Mail(from_email, subject, Email(to_email),
-                    Content("text/plain", msg))
-        response = sg.client.mail.send.post(request_body=mail.get())
+        sg = sendgrid.SendGridAPIClient(os.environ['SENDGRID_API_KEY'])
+        from_email = "PassZero <noreply@passzero.local>"
+        message = Mail(
+            from_email=from_email,
+            subject=subject,
+            to_emails=to_email,
+            plain_text_content=msg
+        )
+        response = sg.send(message)
     except Exception as e:
         logging.error("Failed to send email:")
         logging.error(str(e))

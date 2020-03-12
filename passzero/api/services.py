@@ -1,4 +1,4 @@
-from flask_restplus import Namespace, Resource
+from flask_restx import Namespace, Resource
 
 from ..models import Service, db
 from .jwt_auth import authorizations

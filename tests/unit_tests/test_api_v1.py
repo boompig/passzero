@@ -4,7 +4,7 @@ import json
 import logging
 import unittest
 
-import mock
+from unittest import mock
 import six
 from six import BytesIO
 

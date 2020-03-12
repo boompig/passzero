@@ -6,7 +6,7 @@ import logging
 import os
 import unittest
 
-import mock
+from unittest import mock
 import six
 from six import BytesIO
 

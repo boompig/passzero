@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import logging
 
-import mock
+from unittest import mock
 import six
 
 from passzero.app_factory import create_app

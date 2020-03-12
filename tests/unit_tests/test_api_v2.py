@@ -1,11 +1,10 @@
-
 from __future__ import print_function
 
 import json
 import logging
 import unittest
 
-import mock
+from unittest import mock
 import six
 from flask import Flask
 
