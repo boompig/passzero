@@ -1,5 +1,4 @@
-import nose
-from mock import MagicMock
+from unittest.mock import MagicMock
 
 from passzero.backend import create_inactive_user
 from passzero.crypto_utils import PasswordHashAlgo
@@ -28,7 +27,3 @@ def test_authenticate_user_argon2():
     assert user.authenticate(user_key)
     assert not user.authenticate(u"")
     assert not user.authenticate(u"fake password!")
-
-
-if __name__ == "__main__":
-    nose.run()

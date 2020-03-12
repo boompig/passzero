@@ -1,4 +1,4 @@
-from flask_restplus import Api
+from flask_restx import Api
 from passzero.api.api_token import ns as ApiTokenNamespace
 from passzero.api.entry import ns as ApiEntryNamespace
 from passzero.api.entry_list import ns as ApiEntryListNamespace

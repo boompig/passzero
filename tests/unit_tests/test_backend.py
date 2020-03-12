@@ -2,7 +2,7 @@ import logging
 import os
 
 import pytest
-from mock import MagicMock
+from unittest.mock import MagicMock
 from sqlalchemy.orm.exc import NoResultFound
 
 from passzero.app_factory import create_app

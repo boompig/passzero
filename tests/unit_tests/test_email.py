@@ -1,6 +1,7 @@
 from passzero import email
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 import os
+from flask import Flask
 
 
 @patch.dict(os.environ, {}, clear=True)
@@ -23,7 +24,7 @@ def test_send_email(m):
     # lots of mocking setup
     mock_client = MagicMock()
     mock_response = MagicMock()
-    mock_client.client.mail.send.post.return_value = mock_response
+    mock_client.send.return_value = mock_response
     m.SendGridAPIClient.return_value = mock_client
     # this one will fail
     mock_response.status_code = 400
@@ -34,20 +35,22 @@ def test_send_email(m):
 
 
 @patch.dict(os.environ, {"SENDGRID_API_KEY": "xxxxx"}, clear=True)
-# we have to patch request otherwise flask freaks out
-@patch("passzero.email.request")
-def test_send_recovery_email(m):
-    with patch("passzero.email.send_email", return_value=True):
-        assert email.send_recovery_email('a', 'b')
-    with patch("passzero.email.send_email", return_value=False):
-        assert not email.send_recovery_email('a', 'b')
+def test_send_recovery_email():
+    # we have to patch request otherwise flask freaks out
+    app = Flask(__name__)
+    with app.test_request_context("/foo"):
+        with patch("passzero.email.send_email", return_value=True):
+            assert email.send_recovery_email('a', 'b')
+        with patch("passzero.email.send_email", return_value=False):
+            assert not email.send_recovery_email('a', 'b')
 
 
 @patch.dict(os.environ, {"SENDGRID_API_KEY": "xxxxx"}, clear=True)
-# we have to patch request otherwise flask freaks out
-@patch("passzero.email.request")
-def test_send_confirmation_email(m):
-    with patch("passzero.email.send_email", return_value=True):
-        assert email.send_confirmation_email(u'fake_email@fake.com', u'tokentoken')
-    with patch("passzero.email.send_email", return_value=False):
-        assert not email.send_confirmation_email(u'fake_email@fake.com', u'tokentoken')
+def test_send_confirmation_email():
+    # we have to patch request otherwise flask freaks out
+    app = Flask(__name__)
+    with app.test_request_context("/foo"):
+        with patch("passzero.email.send_email", return_value=True):
+            assert email.send_confirmation_email(u'fake_email@fake.com', u'tokentoken')
+        with patch("passzero.email.send_email", return_value=False):
+            assert not email.send_confirmation_email(u'fake_email@fake.com', u'tokentoken')

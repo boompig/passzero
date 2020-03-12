@@ -8,7 +8,7 @@ import logging
 import os
 
 import flask
-import mock
+from unittest import mock
 import pytest
 
 from passzero.app_factory import create_app

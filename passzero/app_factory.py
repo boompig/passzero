@@ -10,7 +10,7 @@ from flask_jwt_extended import JWTManager
 from flask_talisman import Talisman
 from jwt.exceptions import DecodeError
 from sqlalchemy.orm.exc import NoResultFound
-from werkzeug.contrib.fixers import ProxyFix
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import passzero.config as pz_config
 from passzero.api import api
@@ -40,7 +40,7 @@ def create_app(name: str, settings_override: dict = {}):
     compress.init_app(app)
 
     # necessary to fix some bugs in webservers?
-    app.wsgi_app = ProxyFix(app.wsgi_app)
+    app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore
 
     # setup environment
     if os.path.exists("passzero/my_env.py"):
