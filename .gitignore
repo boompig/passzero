@@ -49,9 +49,7 @@ static/css/dist
 static/lib
 
 # typescript-compiled files
-static/js/src/*.js
-static/js/src/common/*.js
-static/js/src/standalone/*.js
+static/js/src
 
 # python3
 .mypy_cache

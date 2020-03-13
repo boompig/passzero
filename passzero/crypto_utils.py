@@ -328,8 +328,11 @@ def constant_time_compare_passwords(password_hash: str, password: str, salt: byt
             return False
     elif hash_algo == PasswordHashAlgo.SHA512:
         hashed_password = __get_hashed_password_sha512(password, salt)
-        d1 = hmac.new(hashed_password).digest()
-        d2 = hmac.new(password_hash.encode("utf-8")).digest()
+        # NOTE: I am aware that this is not very secure.
+        # When users change passwords they will be converted to upgraded algo
+        # MD5 only used for backwards compatibility reasons only
+        d1 = hmac.new(hashed_password, digestmod=hashlib.md5).digest()
+        d2 = hmac.new(password_hash.encode("utf-8"), digestmod=hashlib.md5).digest()
         return hmac.compare_digest(d1, d2)
     else:
         raise Exception("Unknown hash algorithm: {}".format(hash_algo))
