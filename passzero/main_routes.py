@@ -49,13 +49,6 @@ def index():
         return render_template("landing.jinja2")
 
 
-@main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
-@auth_or_abort
-def post_delete(account_name: str):
-    flash("Successfully deleted account %s" % escape(account_name))
-    return redirect(url_for("main_routes.view_entries"))
-
-
 @main_routes.route("/done_login", methods=["GET"])
 @auth_or_abort
 def post_login():
@@ -85,6 +78,20 @@ def post_account_delete():
     return redirect(url_for("main_routes.logout"))
 
 
+@main_routes.route("/done_signup/<email>", methods=["GET"])
+def post_signup(email: str):
+    flash("Successfully created account with email %s. A confirmation email was sent to this address." % escape(email))
+    return redirect(url_for("main_routes.login"))
+
+
+# --- entries --- #
+@main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
+@auth_or_abort
+def post_delete(account_name: str):
+    flash("Successfully deleted account %s" % escape(account_name))
+    return redirect(url_for("main_routes.view_entries"))
+
+
 @main_routes.route("/entries/new", methods=["GET"])
 @auth_or_redirect_login
 def new_entry_view():
@@ -95,12 +102,6 @@ def new_entry_view():
     }
     return render_template("new.jinja2", title="PassZero &middot; New Entry",
                            user_prefs=user_prefs, error=None)
-
-
-@main_routes.route("/done_signup/<email>", methods=["GET"])
-def post_signup(email: str):
-    flash("Successfully created account with email %s. A confirmation email was sent to this address." % escape(email))
-    return redirect(url_for("main_routes.login"))
 
 
 @main_routes.route("/entries/done_edit/<account_name>")
@@ -121,8 +122,10 @@ def post_create(account_name):
 @auth_or_redirect_login
 def view_entries():
     return render_template("entries.jinja2")
+# --- entries --- #
 
 
+# --- links --- #
 @main_routes.route("/links", methods=["GET"])
 @auth_or_redirect_login
 def view_links():

@@ -109,20 +109,26 @@ def create_app(name: str, settings_override: dict = {}):
         app.config["DEBUG"] = True
         app.secret_key = "64f5abcf8369e362c36a6220128de068"
 
+    csp = {
+        "default-src": "\'self\'",
+        # CDN for javascript
+        "script-src": ["\'self\'", "cdnjs.cloudflare.com"],
+        # CDN for CSS
+        # NOTE: unsafe-inline is needed for tooltips
+        "style-src": ["\'self\'", "\'unsafe-inline\'", "cdnjs.cloudflare.com", "use.fontawesome.com"],
+        "font-src": ["use.fontawesome.com"],
+        # NOTE: data: is needed for https://github.com/twbs/bootstrap/issues/25394
+        "img-src": ["\'self\'", "data:"],
+    }
+    if app.config["DEBUG"]:
+        # allow eval in DEBUG mode for React devtools
+        assert isinstance(csp["script-src"], list)
+        csp["script-src"].append("\'unsafe-eval\'")
+
     Talisman(
         app,
         force_https_permanent=True,
-        content_security_policy={
-            "default-src": "\'self\'",
-            # CDN for javascript
-            "script-src": ["\'self\'", "cdnjs.cloudflare.com"],
-            # CDN for CSS
-            # NOTE: unsafe-inline is needed for tooltips
-            "style-src": ["\'self\'", "\'unsafe-inline\'", "cdnjs.cloudflare.com", "use.fontawesome.com"],
-            "font-src": ["use.fontawesome.com"],
-            # NOTE: data: is needed for https://github.com/twbs/bootstrap/issues/25394
-            "img-src": ["\'self\'", "data:"]
-        }
+        content_security_policy=csp
     )
 
     @app.before_request
