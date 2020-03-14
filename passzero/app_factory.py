@@ -50,6 +50,9 @@ def create_app(name: str, settings_override: dict = {}):
     # app config
     app.config.from_object(pz_config)
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+    app.config["OFFLINE"] = os.environ.get("OFFLINE", "0") == "1"
+    if app.config["OFFLINE"]:
+        print("Working offline")
     app.config["DUMP_FILE"] = "passzero_dump.csv"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["WTF_CSRF_ENABLED"] = False
