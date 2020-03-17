@@ -1,4 +1,3 @@
-import { PureComponent } from "react";
 import * as React from "react";
 import PassZeroAPIv1 from "../common-modules/passzero-api-v1";
 
@@ -16,7 +15,7 @@ interface INewDocumentState {
 /**
  * Represents editing a new or existing link
  */
-class NewDocumentApp extends PureComponent<{}, INewDocumentState> {
+class NewDocumentApp extends React.Component<{}, INewDocumentState> {
     logoutTimer: LogoutTimer;
     pzAPI: PassZeroAPIv1;
 
@@ -69,19 +68,18 @@ class NewDocumentApp extends PureComponent<{}, INewDocumentState> {
         });
     }
 
-    saveNewDocument(event: React.SyntheticEvent) {
+    async saveNewDocument(event: React.SyntheticEvent) {
         event.preventDefault();
         const formData = new FormData();
         formData.append("document", this.state.file);
-        this.pzAPI.createDocument(this.state.fileName, formData)
-            .then(() => {
-                console.log("Document saved");
-                window.location.href = "/docs";
-            })
-            .catch((err) => {
-                console.error("Failed to save document");
-                console.error(err);
-            });
+        const r = await this.pzAPI.createDocument(this.state.fileName, formData)
+        if(r.ok) {
+            console.log("Document saved");
+            window.location.href = "/docs";
+        } else {
+            console.error("Failed to save document");
+            console.error(r);
+        }
         return false;
     }
 

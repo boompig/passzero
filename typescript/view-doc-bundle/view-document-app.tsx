@@ -1,6 +1,10 @@
 import * as React from "react";
 import PassZeroAPIv1 from "../common-modules/passzero-api-v1";
 
+// instead of importing include it using a reference (since it's not a module)
+// similarly for LogoutTimer variable
+/// <reference path="../common/logoutTimer.ts" />
+
 
 interface IViewDocumentAppState {
     documentId: number;
@@ -13,13 +17,16 @@ interface IViewDocumentAppState {
 }
 
 
-export default class ViewDocumentApp extends React.PureComponent<{}, IViewDocumentAppState> {
+export default class ViewDocumentApp extends React.Component<{}, IViewDocumentAppState> {
     pzAPI: PassZeroAPIv1;
+    logoutTimer: LogoutTimer;
 
     constructor(props) {
         super(props);
 
         this.pzAPI = new PassZeroAPIv1();
+        this.logoutTimer = new LogoutTimer();
+
         this.state = {
             // filled in componentDidMount
             documentId: -1,
@@ -46,6 +53,8 @@ export default class ViewDocumentApp extends React.PureComponent<{}, IViewDocume
     }
 
     componentDidMount() {
+        this.logoutTimer.startLogoutTimer();
+
         const documentId = Number.parseInt((document.getElementById("document_id") as HTMLInputElement).value, 10);
         console.log(`Got documentId ${documentId}`);
 

@@ -7,6 +7,7 @@ import { UnauthorizedError } from './errors';
 
 export default class PassZeroAPIv1 {
     constructor() {
+        this.getJSON = this.getJSON.bind(this);
     }
 
     async getJSON(url: string) {
@@ -23,6 +24,16 @@ export default class PassZeroAPIv1 {
             const text = await response.text();
             throw new UnauthorizedError(text);
         }
+    }
+
+    async deleteJSON(url: string): Promise<Response> {
+        const options = {
+            method: "DELETE",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        } as RequestInit;
+        return window.fetch(url, options);
     }
 
 	async postJSON(url: string, data: any) {
@@ -45,17 +56,16 @@ export default class PassZeroAPIv1 {
     }
 
     async getCSRFToken() {
-        const url = pzAPI.base_url + "/api/v1/csrf_token";
-        return pzAPI.getJSON(url);
-    }
-
-    async getEncryptedDocuments() {
-        const url = "/api/v1/docs";
+        const url = "/api/v1/csrf_token";
         return this.getJSON(url);
     }
 
-    async decryptDocument(id: number) {
-        const url = `/api/v1/docs/${id}`;
+    /**
+     * Returns the JSON response, not the Response object
+     * In the case of error, throws an error
+     */
+    async getEncryptedDocuments() {
+        const url = "/api/v1/docs";
         return this.getJSON(url);
     }
 
@@ -68,5 +78,14 @@ export default class PassZeroAPIv1 {
         formData.set("csrf_token", token);
         formData.set("mimetype", file.type);
         return this.postFile(url, formData);
+    }
+
+    async deleteDocument(id: number): Promise<Response> {
+        window.location.host
+        const url = new URL(window.location.origin);
+        url.pathname = `/api/v1/docs/${id}`;
+        const token = await this.getCSRFToken();
+        url.searchParams.append("csrf_token", token);
+        return this.deleteJSON(url.toString());
     }
 }
