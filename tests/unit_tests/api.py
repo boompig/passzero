@@ -372,7 +372,7 @@ def get_document(app, doc_id, check_status=True):
     if check_status:
         print(r.data)
         assert r.status_code == 200
-        return json.loads(r.data)
+        return r.data
     else:
         return r
 

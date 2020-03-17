@@ -1,7 +1,8 @@
 import logging
 from datetime import datetime
+from io import BytesIO
 
-from flask import Blueprint, escape, session
+from flask import Blueprint, escape, session, abort, send_file
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend, change_password
@@ -180,7 +181,7 @@ def get_docs_api():
 @requires_json_auth
 def decrypt_doc_api(doc_id):
     """
-    Decrypt the specified document
+    Decrypt the specified document and return the *resource*
 
     Arguments
     ---------
@@ -190,14 +191,11 @@ def decrypt_doc_api(doc_id):
     --------
     on success::
 
-        {
-            "name": string,
-            "contents": binary
-        }
+        file
 
     on error::
 
-        { "status": "error", "msg": string }
+        blank page with error code
 
     Status codes
     ------------
@@ -209,15 +207,20 @@ def decrypt_doc_api(doc_id):
         enc_doc = db.session.query(EncryptedDocument).\
             filter_by(id=doc_id, user_id=session["user_id"]).one()
         dec_doc = enc_doc.decrypt(session["password"])
-        data = dec_doc.to_json()
-        code = 200
-    except NoResultFound:
-        code, data = json_error(
-            400,
-            "Document ID does not correspond to the document"
-            "or the document does not belong to you"
+        f = BytesIO(dec_doc.contents)
+        mimetype = dec_doc.mimetype
+        # read the content type
+        if mimetype.startswith("text/"):
+            # otherwise client won't display it properly
+            mimetype = "text/plain"
+        return send_file(
+            f, mimetype=mimetype,
+            as_attachment=False,
         )
-    return write_json(code, data)
+    except NoResultFound:
+        abort(400,
+              "Document ID does not correspond to the document"
+              "or the document does not belong to you")
 
 
 @api_v1.route("/api/v1/docs", methods=["POST"])

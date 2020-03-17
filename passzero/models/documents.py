@@ -138,5 +138,6 @@ class DecryptedDocument:
         assert isinstance(self.contents, bytes)
         return {
             "name": self.name,
-            "contents": base64_encode(self.contents).decode("utf-8")
+            "contents": base64_encode(self.contents).decode("utf-8"),
+            "mimetype": self.mimetype
         }

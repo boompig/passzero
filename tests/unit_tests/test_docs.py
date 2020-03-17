@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-import base64
-# import json
 import logging
 import os
 import unittest
@@ -90,7 +88,7 @@ class PassZeroDocTester(unittest.TestCase):
         assert docs_after[0]["name"] == doc_params["name"]
         # decrypt the document
         doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
-        assert base64.b64decode(doc["contents"]) == b"hello world\n"
+        assert doc == b"hello world\n"
         return docs_after[0]["id"]
 
     def __create_and_verify_binary_doc(self):
@@ -110,7 +108,7 @@ class PassZeroDocTester(unittest.TestCase):
         doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
         assert isinstance(contents, bytes)
         assert len(contents) > 0
-        assert base64.b64decode(doc["contents"]) == contents
+        assert doc == contents
         return docs_after[0]["id"]
 
     def __verify_delete_doc(self, document_id):

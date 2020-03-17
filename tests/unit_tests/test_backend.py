@@ -124,7 +124,8 @@ def test_delete_account(session):
     # add a document to that account
     dec_doc = DecryptedDocument(
         name="test doc",
-        contents="hello"
+        contents="hello",
+        mimetype="text/plain"
     )
     insert_document_for_user(session, dec_doc, user.id, user_key)
     # add a link to that account

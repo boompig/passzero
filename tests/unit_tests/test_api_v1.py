@@ -135,7 +135,8 @@ class PassZeroApiTester(unittest.TestCase):
         token = api.get_csrf_token(self.app)
         doc_params = {
             "name": "test document",
-            "document": (BytesIO(b"hello world\n"), "hello_world.txt")
+            "document": (BytesIO(b"hello world\n"), "hello_world.txt"),
+            "mimetype": "text/plain"
         }
         api.post_document(self.app, doc_params, token, check_status=True)
         docs = api.get_documents(self.app, check_status=True)

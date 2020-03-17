@@ -9,7 +9,6 @@ import PassZeroAPIv1 from "../common-modules/passzero-api-v1";
 interface INewDocumentState {
     fileName: string;
     file: File;
-    masterPassword: string;
     documentId: number;
     isNewDocument: boolean;
 }
@@ -27,7 +26,6 @@ class NewDocumentApp extends PureComponent<{}, INewDocumentState> {
         this.state = {
             fileName: "",
             file: null,
-            masterPassword: "",
             documentId: -1,
             isNewDocument: true,
         };
@@ -44,9 +42,6 @@ class NewDocumentApp extends PureComponent<{}, INewDocumentState> {
         // start logout timer
         this.logoutTimer.startLogoutTimer();
 
-        // load master password
-        const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
-
         // load link ID
         const documentId = Number.parseInt((document.getElementById("document_id") as HTMLInputElement).value, 10);
         console.log(`Got documentId ${documentId}`);
@@ -57,7 +52,6 @@ class NewDocumentApp extends PureComponent<{}, INewDocumentState> {
         }
 
         this.setState({
-            masterPassword: masterPassword,
             isNewDocument: isNewDocument,
             documentId: documentId,
         });
@@ -78,7 +72,6 @@ class NewDocumentApp extends PureComponent<{}, INewDocumentState> {
     saveNewDocument(event: React.SyntheticEvent) {
         event.preventDefault();
         const formData = new FormData();
-        // formData.append("password", this.state.masterPassword);
         formData.append("document", this.state.file);
         this.pzAPI.createDocument(this.state.fileName, formData)
             .then(() => {

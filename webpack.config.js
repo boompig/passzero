@@ -10,6 +10,7 @@ module.exports = {
 		'new-link': './typescript/new-link-bundle/index.tsx',
 		'docs': './typescript/docs-bundle/index.tsx',
 		'new-doc': './typescript/new-doc-bundle/index.tsx',
+		'view-doc': './typescript/view-doc-bundle/index.tsx',
     },
     output: {
         filename: '[name].bundle.js',
@@ -37,6 +38,7 @@ module.exports = {
                     path.resolve(__dirname, 'typescript/new-link-bundle'),
                     path.resolve(__dirname, 'typescript/docs-bundle'),
                     path.resolve(__dirname, 'typescript/new-doc-bundle'),
+                    path.resolve(__dirname, 'typescript/view-doc-bundle'),
                     path.resolve(__dirname, 'typescript/common'),
                 ],
                 exclude: [

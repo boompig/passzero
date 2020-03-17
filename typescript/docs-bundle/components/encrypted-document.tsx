@@ -27,7 +27,7 @@ export default class EncryptedDocument extends React.PureComponent<IEncDocProps,
     }
 
     handleDelete() {
-        this.props.onDelete
+        this.props.onDelete(this.props.index);
     }
 
     render() {
@@ -35,7 +35,7 @@ export default class EncryptedDocument extends React.PureComponent<IEncDocProps,
             <div className="document-name">{ this.props.document.name }</div>
             <div className="button-panel">
                 <button type="button" className="btn btn-info"
-                    onClick={ this.handleDecrypt }>Decrypt</button>
+                    onClick={ this.handleDecrypt }>View</button>
                 <button type="button" className="btn btn-warning"
                     onClick={ this.handleEdit }>Edit</button>
                 <button type="button" className="btn btn-danger"

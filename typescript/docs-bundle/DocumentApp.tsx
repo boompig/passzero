@@ -1,7 +1,7 @@
 import { Component } from "react";
 import * as React from "react";
 import EncryptedDocument from "./components/encrypted-document";
-import { IEncryptedDocument, IDecryptedDocument, IDocument } from "./interfaces";
+import { IEncryptedDocument, IDocument } from "./interfaces";
 import PassZeroAPIv1 from "../common-modules/passzero-api-v1";
 
 // import "bootstrap/dist/css/bootstrap.min.css";
@@ -17,10 +17,8 @@ interface IState {
     documents: IDocument[];
     // true iff the encrypted documents have been loaded from the server
     isDocumentsLoaded: boolean;
-    // filled on componentDidMount
-    masterPassword: (string | null);
     // true iff currently decrypting something
-    isDecrypting: boolean;
+    // isDecrypting: boolean;
 }
 
 class DocumentApp extends Component<IProps, IState> {
@@ -33,8 +31,7 @@ class DocumentApp extends Component<IProps, IState> {
         this.state = {
             documents: [],
             isDocumentsLoaded: false,
-            masterPassword: null,
-            isDecrypting: false,
+            // isDecrypting: false,
         };
 
         this.logoutTimer = new LogoutTimer();
@@ -50,11 +47,6 @@ class DocumentApp extends Component<IProps, IState> {
 
     componentDidMount() {
         this.logoutTimer.startLogoutTimer();
-
-        const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
-        this.setState({
-            masterPassword: masterPassword,
-        });
 
         console.log("Fetching documents...");
         // fetch all the encrypted links

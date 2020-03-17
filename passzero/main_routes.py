@@ -52,7 +52,7 @@ def index():
 @main_routes.route("/done_login", methods=["GET"])
 @auth_or_abort
 def post_login():
-    flash("Successfully logged in as %s" % escape(session['email']))
+    flash(f"Successfully logged in as {escape(session['email'])}")
     return redirect(url_for("main_routes.view_entries"))
 
 
@@ -88,7 +88,7 @@ def post_signup(email: str):
 @main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
 @auth_or_abort
 def post_delete(account_name: str):
-    flash("Successfully deleted account %s" % escape(account_name))
+    flash(f"Successfully deleted account {escape(account_name)}")
     return redirect(url_for("main_routes.view_entries"))
 
 
@@ -107,14 +107,14 @@ def new_entry_view():
 @main_routes.route("/entries/done_edit/<account_name>")
 @auth_or_abort
 def post_edit(account_name):
-    flash("Successfully changed entry for account %s" % escape(account_name))
+    flash(f"Successfully changed entry for account {escape(account_name)}")
     return redirect(url_for("main_routes.view_entries"))
 
 
 @main_routes.route("/entries/done_new/<account_name>", methods=["GET"])
 @auth_or_abort
 def post_create(account_name):
-    flash("Successfully created entry for account %s" % escape(account_name))
+    flash(f"Successfully created entry for account {escape(account_name)}")
     return redirect(url_for("main_routes.view_entries"))
 
 
@@ -163,7 +163,8 @@ def view_docs():
 @main_routes.route("/docs/new", methods=["GET"])
 @auth_or_redirect_login
 def new_docs_view():
-    return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document", document_id=-1)
+    return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
+                           document_id=-1)
 
 
 @main_routes.route("/docs/<int:document_id>/view", methods=["GET"])
@@ -172,12 +173,15 @@ def view_decrypted_doc(document_id: int):
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     doc = get_document_by_id(db.session, user.id, document_id)
     if doc is None:
-        flash("Error: no document with ID %d" % document_id, "error")
+        flash(f"Error: no document with ID {document_id}", "error")
         return redirect(url_for("main_routes.view_docs"))
     dec_doc = doc.decrypt(session["password"])
-    return render_template("docs/view-doc.jinja2", title="PassZero &middot; View Document",
+    return render_template(
+        "docs/view-doc.jinja2",
+        title="PassZero &middot; View Document",
         document_id=document_id,
-        dec_document=dec_doc
+        document_mimetype=dec_doc.mimetype,
+        document_name=dec_doc.name
     )
 
 # --- documents --- #
