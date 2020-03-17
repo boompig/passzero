@@ -16,7 +16,9 @@ class EncryptedDocument(db.Model):
     __tablename__ = "documents"
     id = db.Column(db.Integer, db.Sequence("documents_id_seq"), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    # not encrypted
     name = db.Column(db.String, nullable=False)
+    mimetype = db.Column(db.String, nullable=False)
     # encrypted and base64-encoded
     document = db.Column(db.LargeBinary, nullable=False)
     # base64-encoded
@@ -45,6 +47,7 @@ class EncryptedDocument(db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "mimetype": self.mimetype,
             "contents": base64_encode(self.document).decode("utf-8")
         }
 
@@ -58,19 +61,21 @@ class EncryptedDocument(db.Model):
         assert isinstance(pt, bytes)
         return DecryptedDocument(
             name=self.name,
+            mimetype=self.mimetype,
             contents=pt
         )
 
 
 class DecryptedDocument:
 
-    def __init__(self, name: str, contents) -> None:
+    def __init__(self, name: str, mimetype: str, contents) -> None:
         """
         :param name: String, the user's name for the file. Not a filename.
         :param document: object for the file
         """
         assert isinstance(name, six.text_type)
         self.name = name
+        self.mimetype = mimetype
         if isinstance(contents, bytes):
             # data is already binary data
             self.contents = contents
@@ -121,6 +126,7 @@ class DecryptedDocument:
         return EncryptedDocument(
             # contents
             name=self.name,
+            mimetype=self.mimetype,
             document=ct
         )
 

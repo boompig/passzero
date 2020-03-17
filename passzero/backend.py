@@ -313,8 +313,17 @@ def get_services_map(session: Session) -> Dict[str, Any]:
     return d
 
 
+def get_document_by_id(db_session: Session, user_id: int, document_id: int) -> Optional[EncryptedDocument]:
+    """Return document with given ID. If it doesn't belong to the user return None
+    If it doesn't exist also return None"""
+    doc = db_session.query(EncryptedDocument).filter_by(id=document_id).one()
+    if doc.user_id != user_id:
+        return None
+    return doc
+
+
 def encrypt_document(session: Session, user_id: int, master_key: str,
-                     document_name: str, document) -> EncryptedDocument:
+                     document_name: str, mimetype: str, document) -> EncryptedDocument:
     """
     Create an encrypted document, fill in the fields, and save in the database
     :param session: database session, NOT flask session
@@ -324,7 +333,9 @@ def encrypt_document(session: Session, user_id: int, master_key: str,
     assert isinstance(user_id, int)
     assert isinstance(master_key, six.text_type)
     assert isinstance(document_name, six.text_type)
-    doc = DecryptedDocument(document_name, document)
+    assert isinstance(mimetype, six.text_type) and mimetype is not None
+    doc = DecryptedDocument(document_name, mimetype, document)
+    assert doc.mimetype is not None
     return insert_document_for_user(session, doc, user_id, master_key)
 
 

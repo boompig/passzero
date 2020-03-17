@@ -8,6 +8,8 @@ module.exports = {
 		'new-entry': './typescript/new-entry-bundle/index.tsx',
         'links': './typescript/links-bundle/index.tsx',
 		'new-link': './typescript/new-link-bundle/index.tsx',
+		'docs': './typescript/docs-bundle/index.tsx',
+		'new-doc': './typescript/new-doc-bundle/index.tsx',
     },
     output: {
         filename: '[name].bundle.js',
@@ -33,12 +35,19 @@ module.exports = {
                     path.resolve(__dirname, 'typescript/new-entry-bundle'),
                     path.resolve(__dirname, 'typescript/links-bundle'),
                     path.resolve(__dirname, 'typescript/new-link-bundle'),
+                    path.resolve(__dirname, 'typescript/docs-bundle'),
+                    path.resolve(__dirname, 'typescript/new-doc-bundle'),
                     path.resolve(__dirname, 'typescript/common'),
                 ],
                 exclude: [
                     path.resolve(__dirname, 'typescript/standalone'),
                     path.resolve(__dirname, 'static')
                 ]
+            },
+
+            {
+                test: /\.css$/,
+                use: ["style-loader", "css-loader"],
             },
 
             // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.

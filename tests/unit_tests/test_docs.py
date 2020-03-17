@@ -78,7 +78,8 @@ class PassZeroDocTester(unittest.TestCase):
         upload_doc_token = api.get_csrf_token(self.app)
         doc_params = {
             "name": "test document",
-            "document": (BytesIO(b"hello world\n"), "hello_world.txt")
+            "document": (BytesIO(b"hello world\n"), "hello_world.txt"),
+            "mimetype": "text/plain"
         }
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
@@ -97,6 +98,7 @@ class PassZeroDocTester(unittest.TestCase):
             contents = fp.read()
         doc_params = {
             "name": "4K wallpaper",
+            "mimetype": "image/jpg",
             "document": (BytesIO(contents), "wallpaper.jpg")
         }
         upload_doc_token = api.get_csrf_token(self.app)

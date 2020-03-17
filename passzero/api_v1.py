@@ -231,6 +231,7 @@ def create_doc_api(form_data: NewDocumentForm):
     ---------
     - name: string (required)
     - document: File (required)
+    - mimetype: string (required)
 
     Response
     --------
@@ -253,8 +254,9 @@ def create_doc_api(form_data: NewDocumentForm):
         db.session,
         session["user_id"],
         session["password"],
-        form_data["name"],
-        form_data["document"]
+        document_name=form_data["name"],
+        mimetype=form_data["mimetype"],
+        document=form_data["document"]
     )
     return write_json(200, {"document_id": encrypted_file.id})
 

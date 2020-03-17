@@ -350,13 +350,15 @@ def get_documents(app, check_status=True):
         return r
 
 
-def post_document(app, doc_params, csrf_token, check_status=True):
+def post_document(app, doc_params: dict, csrf_token: str, check_status: bool = True):
     url = "/api/v1/docs"
     doc_params["csrf_token"] = csrf_token
-    r = app.post(url,
-                 data=doc_params,
-                 headers=file_upload_headers,
-                 follow_redirects=True)
+    r = app.post(
+        url,
+        data=doc_params,
+        headers=file_upload_headers,
+        follow_redirects=True
+    )
     if check_status:
         print("[post_document] status code = %d" % r.status_code)
         print(r.data)

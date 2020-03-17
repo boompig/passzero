@@ -7,7 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from passzero.api_utils import check_auth
 from passzero.backend import (activate_account, decrypt_entries, get_entries,
                               get_link_by_id, get_services_map,
-                              password_strength_scores)
+                              password_strength_scores, get_document_by_id)
 from passzero.models import AuthToken, User, db
 
 from . import export_utils
@@ -151,6 +151,36 @@ def edit_link(link_id: int):
                            link_id=link_id,
                            service_name=dec_link.service_name,
                            link=dec_link.link)
+# --- links --- #
+
+# --- documents --- #
+@main_routes.route("/docs", methods=["GET"])
+# @auth_or_redirect_login
+def view_docs():
+    return render_template("docs/docs.jinja2")
+
+
+@main_routes.route("/docs/new", methods=["GET"])
+@auth_or_redirect_login
+def new_docs_view():
+    return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document", document_id=-1)
+
+
+@main_routes.route("/docs/<int:document_id>/view", methods=["GET"])
+@auth_or_redirect_login
+def view_decrypted_doc(document_id: int):
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    doc = get_document_by_id(db.session, user.id, document_id)
+    if doc is None:
+        flash("Error: no document with ID %d" % document_id, "error")
+        return redirect(url_for("main_routes.view_docs"))
+    dec_doc = doc.decrypt(session["password"])
+    return render_template("docs/view-doc.jinja2", title="PassZero &middot; View Document",
+        document_id=document_id,
+        dec_document=dec_doc
+    )
+
+# --- documents --- #
 
 
 @main_routes.route("/signup", methods=["GET"])
