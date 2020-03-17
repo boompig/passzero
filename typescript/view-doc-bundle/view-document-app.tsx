@@ -82,16 +82,26 @@ export default class ViewDocumentApp extends React.Component<{}, IViewDocumentAp
     }
 
     render() {
+        const isResizable = this.state.mimetype.startsWith("text/");
+        if(isResizable) {
+            return (<div>
+                <h1>{ this.state.name }</h1>
+                <object data={ `/api/v1/docs/${this.state.documentId}` }
+                    type={ this.state.mimetype }
+                    height={ this.state.vh }
+                    width={ this.state.vw * 0.9 }>
+                        <p>some stuff inside</p>
+                    </object>
+            </div>);
+        } else {
+            return (<div>
+                <h1>{ this.state.name }</h1>
+                <object data={ `/api/v1/docs/${this.state.documentId}` }
+                    type={ this.state.mimetype }>
+                        <p>some stuff inside</p>
+                    </object>
+            </div>);
+        }
 
-
-        return (<div>
-            <h1>{ this.state.name }</h1>
-            <object data={ `/api/v1/docs/${this.state.documentId}` }
-                type={ this.state.mimetype }
-                height={ this.state.vh }
-                width={ this.state.vw * 0.9 }>
-                    <p>some stuff inside</p>
-                </object>
-        </div>);
     }
 }
