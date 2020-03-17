@@ -47,7 +47,6 @@ class NewDocumentApp extends React.Component<{}, INewDocumentState> {
         let isNewDocument = true;
         if (documentId > 0) {
             isNewDocument = false;
-            throw new Error("not implemented");
         }
 
         this.setState({
@@ -96,30 +95,36 @@ class NewDocumentApp extends React.Component<{}, INewDocumentState> {
     }
 
     render() {
-        let title = "New Document";
-        let buttonText = "Save";
-        if (!this.state.isNewDocument) {
-            title = "Edit Document";
-            buttonText = "Update";
-        }
-        return (
-            <div className="container">
-                <h2 className="title">{ title }</h2>
-                <form role="form" id="main-form" onSubmit={this.saveDocument}>
-                    <input type="text" className="document-filename form-control"
-                        required={true} name="filename"
-                        placeholder="Name"
-                        value={ this.state.fileName }
-                        onChange={ this.handleNameChange }/>
-                    <input type="file" className="form-control"
-                        required={true} name="file"
-                        onChange={ this.handleFileChange }/>
-                    <button type="submit"
-                        className="form-control btn btn-success"
-                        >{ buttonText }</button>
-                </form>
+        if(this.state.isNewDocument) {
+            let title = "New Document";
+            let buttonText = "Save";
+            if (!this.state.isNewDocument) {
+                title = "Edit Document";
+                buttonText = "Update";
+            }
+            return (
+                <div className="container">
+                    <h2 className="title">{ title }</h2>
+                    <form role="form" id="main-form" onSubmit={this.saveDocument}>
+                        <input type="text" className="document-filename form-control"
+                            required={true} name="filename"
+                            placeholder="Name"
+                            value={ this.state.fileName }
+                            onChange={ this.handleNameChange }/>
+                        <input type="file" className="form-control"
+                            required={true} name="file"
+                            onChange={ this.handleFileChange }/>
+                        <button type="submit"
+                            className="form-control btn btn-success"
+                            >{ buttonText }</button>
+                    </form>
+                </div>
+            );
+        } else {
+            return <div className="alert alert-warning">
+                <strong>Warning!</strong> Under construction
             </div>
-        );
+        }
     }
 }
 

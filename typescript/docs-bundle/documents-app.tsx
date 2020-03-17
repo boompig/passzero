@@ -89,21 +89,25 @@ class DocumentApp extends Component<IProps, IState> {
     }
 
     async handleDelete(index: number): Promise<void> {
-        const doc = this.state.documents[index];
-        console.log(`Deleting document with ID ${doc.id}...`);
-        const r = await this.pzAPI.deleteDocument(doc.id)
-        if(r.ok) {
-            console.log("Deleted document successfully");
-            const newDocs = [...this.state.documents.slice(0, index),
-                ...this.state.documents.slice(index + 1)
-            ];
-            // force state reload
-            this.setState({
-                documents: newDocs,
-            });
+        if(window.confirm("Do you really want to delete this document?")) {
+            const doc = this.state.documents[index];
+            console.log(`Deleting document with ID ${doc.id}...`);
+            const r = await this.pzAPI.deleteDocument(doc.id)
+            if(r.ok) {
+                console.log("Deleted document successfully");
+                const newDocs = [...this.state.documents.slice(0, index),
+                    ...this.state.documents.slice(index + 1)
+                ];
+                // force state reload
+                this.setState({
+                    documents: newDocs,
+                });
+            } else {
+                console.error("Deletion failed");
+                console.error(r);
+            }
         } else {
-            console.error("Deletion failed");
-            console.error(r);
+            console.log("not deleting - user aborted");
         }
     }
 

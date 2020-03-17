@@ -162,9 +162,16 @@ def view_docs():
 
 @main_routes.route("/docs/new", methods=["GET"])
 @auth_or_redirect_login
-def new_docs_view():
+def create_new_doc():
     return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
                            document_id=-1)
+
+
+@main_routes.route("/docs/<int:document_id>/edit", methods=["GET"])
+@auth_or_redirect_login
+def edit_doc(document_id: int):
+    return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
+                           document_id=document_id)
 
 
 @main_routes.route("/docs/<int:document_id>/view", methods=["GET"])

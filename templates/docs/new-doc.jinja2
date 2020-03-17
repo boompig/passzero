@@ -19,9 +19,5 @@
     <form class="hidden">
 		<input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="document_id" id="document_id" value="{{ document_id }}">
-        {% if document_id > 0 %}
-            <!-- not implemented -->
-            <input type="hidden" name="link" id="link_value" value="{{ link }}">
-        {% endif %}
     </form>
 {% endblock %}
