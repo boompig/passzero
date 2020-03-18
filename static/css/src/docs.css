@@ -1,0 +1,30 @@
+.document {
+	border: 1px solid black;
+	border-radius: 1rem;
+	padding: .5rem 1rem;
+	margin-bottom: 1rem;
+}
+
+.document .document-name {
+	font-weight: bold;
+	font-size: 1.1rem;
+	margin-bottom: .25rem;
+}
+
+.link .fas {
+	margin-left: .25rem;
+}
+
+.button-panel button:not(:last-of-type) {
+	margin-right: .5rem;
+}
+
+.docs-control-panel {
+	display: block;
+	margin: 1rem auto;
+	text-align: center;
+}
+
+.docs-control-panel .control-panel-btn:not(:first-child) {
+	margin-left: 1rem;
+}

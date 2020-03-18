@@ -7,7 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from passzero.api_utils import check_auth
 from passzero.backend import (activate_account, decrypt_entries, get_entries,
                               get_link_by_id, get_services_map,
-                              password_strength_scores)
+                              password_strength_scores, get_document_by_id)
 from passzero.models import AuthToken, User, db
 
 from . import export_utils
@@ -49,17 +49,10 @@ def index():
         return render_template("landing.jinja2")
 
 
-@main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
-@auth_or_abort
-def post_delete(account_name: str):
-    flash("Successfully deleted account %s" % escape(account_name))
-    return redirect(url_for("main_routes.view_entries"))
-
-
 @main_routes.route("/done_login", methods=["GET"])
 @auth_or_abort
 def post_login():
-    flash("Successfully logged in as %s" % escape(session['email']))
+    flash(f"Successfully logged in as {escape(session['email'])}")
     return redirect(url_for("main_routes.view_entries"))
 
 
@@ -85,6 +78,20 @@ def post_account_delete():
     return redirect(url_for("main_routes.logout"))
 
 
+@main_routes.route("/done_signup/<email>", methods=["GET"])
+def post_signup(email: str):
+    flash("Successfully created account with email %s. A confirmation email was sent to this address." % escape(email))
+    return redirect(url_for("main_routes.login"))
+
+
+# --- entries --- #
+@main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
+@auth_or_abort
+def post_delete(account_name: str):
+    flash(f"Successfully deleted account {escape(account_name)}")
+    return redirect(url_for("main_routes.view_entries"))
+
+
 @main_routes.route("/entries/new", methods=["GET"])
 @auth_or_redirect_login
 def new_entry_view():
@@ -97,23 +104,17 @@ def new_entry_view():
                            user_prefs=user_prefs, error=None)
 
 
-@main_routes.route("/done_signup/<email>", methods=["GET"])
-def post_signup(email: str):
-    flash("Successfully created account with email %s. A confirmation email was sent to this address." % escape(email))
-    return redirect(url_for("main_routes.login"))
-
-
 @main_routes.route("/entries/done_edit/<account_name>")
 @auth_or_abort
 def post_edit(account_name):
-    flash("Successfully changed entry for account %s" % escape(account_name))
+    flash(f"Successfully changed entry for account {escape(account_name)}")
     return redirect(url_for("main_routes.view_entries"))
 
 
 @main_routes.route("/entries/done_new/<account_name>", methods=["GET"])
 @auth_or_abort
 def post_create(account_name):
-    flash("Successfully created entry for account %s" % escape(account_name))
+    flash(f"Successfully created entry for account {escape(account_name)}")
     return redirect(url_for("main_routes.view_entries"))
 
 
@@ -121,8 +122,10 @@ def post_create(account_name):
 @auth_or_redirect_login
 def view_entries():
     return render_template("entries.jinja2")
+# --- entries --- #
 
 
+# --- links --- #
 @main_routes.route("/links", methods=["GET"])
 @auth_or_redirect_login
 def view_links():
@@ -142,12 +145,59 @@ def edit_link(link_id: int):
     link = get_link_by_id(db.session, user.id, link_id)
     if link is None:
         flash("Error: no link with ID %d" % link_id, "error")
-        return redirect(url_for("main_routes.view_entries"))
+        return redirect(url_for("main_routes.view_links"))
     dec_link = link.decrypt(session["password"])
     return render_template("links/new-link.jinja2", title="PassZero &middot; Edit Link",
                            link_id=link_id,
                            service_name=dec_link.service_name,
                            link=dec_link.link)
+# --- links --- #
+
+# --- documents --- #
+@main_routes.route("/docs", methods=["GET"])
+@auth_or_redirect_login
+def view_docs():
+    return render_template("docs/docs.jinja2")
+
+
+@main_routes.route("/docs/new", methods=["GET"])
+@auth_or_redirect_login
+def new_doc_view():
+    return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
+                           document_id=-1)
+
+
+@main_routes.route("/docs/<int:document_id>/edit", methods=["GET"])
+@auth_or_redirect_login
+def edit_doc(document_id: int):
+    # get the document
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    doc = get_document_by_id(db.session, user.id, document_id)
+    if doc is None:
+        flash(f"Error: no document with ID {document_id}", "error")
+        return redirect(url_for("main_routes.view_docs"))
+    return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
+                           document_id=document_id)
+
+
+@main_routes.route("/docs/<int:document_id>/view", methods=["GET"])
+@auth_or_redirect_login
+def view_decrypted_doc(document_id: int):
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    doc = get_document_by_id(db.session, user.id, document_id)
+    if doc is None:
+        flash(f"Error: no document with ID {document_id}", "error")
+        return redirect(url_for("main_routes.view_docs"))
+    dec_doc = doc.decrypt(session["password"])
+    return render_template(
+        "docs/view-doc.jinja2",
+        title="PassZero &middot; View Document",
+        document_id=document_id,
+        document_mimetype=dec_doc.mimetype,
+        document_name=dec_doc.name
+    )
+
+# --- documents --- #
 
 
 @main_routes.route("/signup", methods=["GET"])

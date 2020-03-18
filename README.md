@@ -55,12 +55,14 @@ def setup_env():
 
 ```
 
+There is limited support for running the server without an internet connection. Some parts of the site may not work, but if you set OFFLINE=1 as an environment variable then portions of the site take that into account and try to work anyway.
+
 ### Building React Components
 
 Most of the client-side components are written using React. You need to re-compile the react bundle for each page after modifying. Run this command:
 
 ```
-yarn run webpack
+yarn build
 ```
 
 ### Changing CSS

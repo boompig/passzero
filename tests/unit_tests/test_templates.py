@@ -6,9 +6,10 @@ from __future__ import print_function
 
 import logging
 import os
+from io import BytesIO
+from unittest import mock
 
 import flask
-from unittest import mock
 import pytest
 
 from passzero.app_factory import create_app
@@ -70,6 +71,16 @@ def _create_entry(client) -> int:
         "has_2fa": True
     }
     return api.create_entry(client, entry, token, check_status=True)
+
+
+def _create_document(client) -> int:
+    token = api.get_csrf_token(client)
+    doc_params = {
+        "name": "test document",
+        "document": (BytesIO(b"hello world\n"), "hello_world.txt"),
+        "mimetype": "text/plain"
+    }
+    return api.post_document(client, doc_params, token, check_status=True)
 
 # ----- check pages that don't require login
 
@@ -197,6 +208,41 @@ def test_view_links_no_login(test_client):
 def test_new_link_no_login(test_client):
     with test_client as c:
         response = c.get("/links/new", follow_redirects=True)
+        print(response.data)
+        assert flask.request.path == flask.url_for("main_routes.login")
+
+
+def test_edit_link_no_login(test_client):
+    with test_client as c:
+        response = c.get("/links/1", follow_redirects=True)
+        print(response.data)
+        assert flask.request.path == flask.url_for("main_routes.login")
+
+
+def test_view_docs_no_login(test_client):
+    with test_client as c:
+        response = c.get("/docs", follow_redirects=True)
+        print(response.data)
+        assert flask.request.path == flask.url_for("main_routes.login")
+
+
+def test_new_doc_no_login(test_client):
+    with test_client as c:
+        response = c.get("/docs/new", follow_redirects=True)
+        print(response.data)
+        assert flask.request.path == flask.url_for("main_routes.login")
+
+
+def test_edit_doc_no_login(test_client):
+    with test_client as c:
+        response = c.get("/docs/1/edit", follow_redirects=True)
+        print(response.data)
+        assert flask.request.path == flask.url_for("main_routes.login")
+
+
+def test_view_decrypted_doc_no_login(test_client):
+    with test_client as c:
+        response = c.get("/docs/1/view", follow_redirects=True)
         print(response.data)
         assert flask.request.path == flask.url_for("main_routes.login")
 
@@ -334,20 +380,28 @@ def test_root_with_login(test_client):
         assert flask.request.path == flask.url_for("main_routes.view_entries")
 
 
+def test_view_entries_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        response = c.get("/entries", follow_redirects=True)
+        assert response.status_code == 200
+        assert flask.request.path == flask.url_for("main_routes.view_entries")
+
+
 def test_new_entry_view_with_login(test_client):
     with test_client as c:
         _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         response = c.get("/entries/new", follow_redirects=True)
         assert response.status_code == 200
-        assert flask.request.path != flask.url_for("main_routes.login")
+        assert flask.request.path == flask.url_for("main_routes.new_entry_view")
 
 
-def test_entres_view_with_login(test_client):
+def test_view_links_with_login(test_client):
     with test_client as c:
         _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        response = c.get("/entries", follow_redirects=True)
+        response = c.get("/links", follow_redirects=True)
         assert response.status_code == 200
-        assert flask.request.path != flask.url_for("main_routes.login")
+        assert flask.request.path == flask.url_for("main_routes.view_links")
 
 
 def test_new_link_view_with_login(test_client):
@@ -355,15 +409,75 @@ def test_new_link_view_with_login(test_client):
         _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         response = c.get("/links/new", follow_redirects=True)
         assert response.status_code == 200
-        assert flask.request.path != flask.url_for("main_routes.login")
+        assert flask.request.path == flask.url_for("main_routes.new_link_view")
 
 
-def test_links_view_with_login(test_client):
+def test_edit_link_no_link_with_login(test_client):
     with test_client as c:
         _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        response = c.get("/links", follow_redirects=True)
+        response = c.get("/links/1", follow_redirects=True)
         assert response.status_code == 200
-        assert flask.request.path != flask.url_for("main_routes.login")
+        # redirect to view links
+        assert flask.request.path == flask.url_for("main_routes.view_links")
+
+
+def test_view_docs_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        response = c.get("/docs", follow_redirects=True)
+        assert response.status_code == 200
+        assert flask.request.path == flask.url_for("main_routes.view_docs")
+
+
+def test_new_doc_view_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        response = c.get("/docs/new", follow_redirects=True)
+        assert response.status_code == 200
+        assert flask.request.path == flask.url_for("main_routes.new_doc_view")
+
+
+def test_view_decrypted_doc_no_doc_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        response = c.get("/docs/1/view", follow_redirects=True)
+        assert response.status_code == 200
+        # redirect to view docs
+        assert flask.request.path == flask.url_for("main_routes.view_docs")
+
+
+def test_view_decrypted_doc_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        document_id = _create_document(c)
+        response = c.get(f"/docs/{document_id}/view", follow_redirects=True)
+        assert response.status_code == 200
+        assert flask.request.path == flask.url_for(
+            "main_routes.view_decrypted_doc",
+            document_id=document_id
+        )
+
+
+def test_edit_doc_no_doc_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        response = c.get("/docs/1/edit", follow_redirects=True)
+        assert response.status_code == 200
+        # redirect to view docs
+        assert flask.request.path == flask.url_for("main_routes.view_docs")
+
+
+def test_edit_doc_with_login(test_client):
+    with test_client as c:
+        _create_active_account(c, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        document_id = _create_document(c)
+        response = c.get(f"/docs/{document_id}/edit", follow_redirects=True)
+        assert response.status_code == 200
+        # redirect to view docs
+        assert flask.request.path == flask.url_for(
+            "main_routes.edit_doc",
+            document_id=document_id
+        )
 
 
 def test_edit_entry_view_with_login_invalid_entry(test_client):

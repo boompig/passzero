@@ -12,8 +12,13 @@ from passzero.crypto_utils import (PasswordHashAlgo, get_hashed_password,
 from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
                              EncryptedDocument, Entry, Entry_v3, Entry_v4,
                              Entry_v5, Link, Service, User)
+from sqlalchemy.orm.exc import NoResultFound
 
 from .utils import base64_encode
+
+
+class UserNotAuthorizedError(Exception):
+    pass
 
 
 def activate_account(db_session: Session, user: User):
@@ -89,12 +94,16 @@ def get_links(db_session: Session, user_id: int) -> List[Link]:
 
 
 def get_link_by_id(db_session: Session, user_id: int, link_id: int) -> Optional[Link]:
-    """Return link with given ID. If it doesn't belong to the user return None
+    """Return link with given ID.
+    If it doesn't belong to the user return None
     If it doesn't exist also return None"""
-    link = db_session.query(Link).filter_by(id=link_id).one()
-    if link.user_id != user_id:
+    try:
+        link = db_session.query(Link).filter_by(id=link_id).one()
+        if link.user_id != user_id:
+            return None
+        return link
+    except NoResultFound:
         return None
-    return link
 
 
 def get_account_with_email(db_session: Session, email: str) -> User:
@@ -313,8 +322,21 @@ def get_services_map(session: Session) -> Dict[str, Any]:
     return d
 
 
+def get_document_by_id(db_session: Session, user_id: int, document_id: int) -> Optional[EncryptedDocument]:
+    """Return document with given ID.
+    If it doesn't belong to the user return None
+    If it doesn't exist also return None"""
+    try:
+        doc = db_session.query(EncryptedDocument).filter_by(id=document_id).one()
+        if doc.user_id != user_id:
+            return None
+        return doc
+    except NoResultFound:
+        return None
+
+
 def encrypt_document(session: Session, user_id: int, master_key: str,
-                     document_name: str, document) -> EncryptedDocument:
+                     document_name: str, mimetype: str, document) -> EncryptedDocument:
     """
     Create an encrypted document, fill in the fields, and save in the database
     :param session: database session, NOT flask session
@@ -324,11 +346,14 @@ def encrypt_document(session: Session, user_id: int, master_key: str,
     assert isinstance(user_id, int)
     assert isinstance(master_key, six.text_type)
     assert isinstance(document_name, six.text_type)
-    doc = DecryptedDocument(document_name, document)
+    assert isinstance(mimetype, six.text_type) and mimetype is not None
+    doc = DecryptedDocument(document_name, mimetype, document)
+    assert doc.mimetype is not None
     return insert_document_for_user(session, doc, user_id, master_key)
 
 
-def insert_document_for_user(session: Session, decrypted_document, user_id, master_key) -> EncryptedDocument:
+def insert_document_for_user(session: Session, decrypted_document: DecryptedDocument,
+                             user_id: int, master_key: str) -> EncryptedDocument:
     """
     :param session: database session, NOT flask session
     :param decrypted_document: DecryptedDocument
@@ -349,3 +374,41 @@ def insert_document_for_user(session: Session, decrypted_document, user_id, mast
     session.add(enc_doc)
     session.commit()
     return enc_doc
+
+
+def edit_document(session: Session, document_id: int, master_key: str,
+                  form_data: dict, user_id: int) -> EncryptedDocument:
+    """
+    Try to edit the document with ID <document_id>. Commit changes to DB.
+    Check first if the document belongs to the current user.
+    :param session:         Database session
+    :param document_id:     ID of existing document to be edited
+    :param master_key:      Document decryption key
+    :param form_data:       Dictionary of changes to the document
+    :param user_id:         ID of the logged-in user
+    :return:                Newly edited document
+    :rtype:                 EncryptedDocument
+    """
+    assert isinstance(document_id, int)
+    assert isinstance(master_key, six.text_type)
+    assert isinstance(form_data, dict)
+    assert isinstance(user_id, int)
+    doc = session.query(EncryptedDocument).filter_by(id=document_id).one()  # type: EncryptedDocument
+    if doc.user_id != user_id:
+        raise UserNotAuthorizedError
+    dec_doc = doc.decrypt(master_key)
+    dec_doc.contents = form_data["contents"]
+    dec_doc.name = form_data["name"]
+    dec_doc.mimetype = form_data["mimetype"]
+    # create a second encrypted document, which we are *not* saving
+    extended_key, extension_params = DecryptedDocument.extend_key(master_key)
+    enc_doc2 = dec_doc.encrypt(extended_key)
+    # edit the existing encrypted document so ID will not change
+    doc.document = enc_doc2.document
+    doc.key_salt = base64_encode(extension_params["kdf_salt"]).decode("utf-8")
+    doc.name = enc_doc2.name
+    doc.mimetype = enc_doc2.mimetype
+    # make sure that the updated document maintains the same ID
+    assert doc.id == document_id
+    session.commit()
+    return doc

@@ -50,6 +50,12 @@ def create_app(name: str, settings_override: dict = {}):
     # app config
     app.config.from_object(pz_config)
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+    app.config["OFFLINE"] = os.environ.get("OFFLINE", "0") == "1"
+    if app.config["OFFLINE"]:
+        print("Working offline")
+    # app.config["DISABLE_LOGOUT_TIMER"] = os.environ.get("DISABLE_LOGOUT_TIMER", "0") == "1"
+    # if app.config["DISABLE_LOGOUT_TIMER"]:
+    #     print("logout timer disabled")
     app.config["DUMP_FILE"] = "passzero_dump.csv"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["WTF_CSRF_ENABLED"] = False
@@ -109,20 +115,26 @@ def create_app(name: str, settings_override: dict = {}):
         app.config["DEBUG"] = True
         app.secret_key = "64f5abcf8369e362c36a6220128de068"
 
+    csp = {
+        "default-src": "\'self\'",
+        # CDN for javascript
+        "script-src": ["\'self\'", "cdnjs.cloudflare.com"],
+        # CDN for CSS
+        # NOTE: unsafe-inline is needed for tooltips
+        "style-src": ["\'self\'", "\'unsafe-inline\'", "cdnjs.cloudflare.com", "use.fontawesome.com"],
+        "font-src": ["use.fontawesome.com"],
+        # NOTE: data: is needed for https://github.com/twbs/bootstrap/issues/25394
+        "img-src": ["\'self\'", "data:"],
+    }
+    if app.config["DEBUG"]:
+        # allow eval in DEBUG mode for React devtools
+        assert isinstance(csp["script-src"], list)
+        csp["script-src"].extend(["\'unsafe-eval\'", "\'unsafe-inline\'"])
+
     Talisman(
         app,
         force_https_permanent=True,
-        content_security_policy={
-            "default-src": "\'self\'",
-            # CDN for javascript
-            "script-src": ["\'self\'", "cdnjs.cloudflare.com"],
-            # CDN for CSS
-            # NOTE: unsafe-inline is needed for tooltips
-            "style-src": ["\'self\'", "\'unsafe-inline\'", "cdnjs.cloudflare.com", "use.fontawesome.com"],
-            "font-src": ["use.fontawesome.com"],
-            # NOTE: data: is needed for https://github.com/twbs/bootstrap/issues/25394
-            "img-src": ["\'self\'", "data:"]
-        }
+        content_security_policy=csp
     )
 
     @app.before_request

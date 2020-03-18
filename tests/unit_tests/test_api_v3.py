@@ -10,6 +10,7 @@ from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service
 from passzero.models import db as _db
 
 from . import api
+from .api import BadStatusCodeException
 import pytest
 
 
@@ -782,6 +783,56 @@ def test_delete_link(app):
         api_v3.delete_link(link_id)
         links_after_delete = api_v3.get_encrypted_links()
         assert links_after_delete == []
+
+
+def test_delete_link_not_your_link(app):
+    with app.test_client() as client:
+        api_v3 = api.ApiV3(client)
+
+        # create link as user #1
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        link_id = api_v3.create_link({
+            "service_name": "hello",
+            "link": "world"
+        })
+        api_v3.logout()
+
+        # try to delete the link as user #2
+        create_active_account(client, "user2@fake.com", DEFAULT_PASSWORD)
+        api_v3.login("user2@fake.com", DEFAULT_PASSWORD)
+        try:
+            api_v3.delete_link(link_id)
+            assert False, "must raise error"
+        except BadStatusCodeException:
+            assert True, "status code should be 400 or similar"
+        api_v3.logout()
+
+        # user #1 should still have their link
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        links = api_v3.get_encrypted_links()
+        assert len(links) == 1
+        assert links[0]["id"] == link_id
+
+
+def test_delete_link_invalid_link(app):
+    with app.test_client() as client:
+        api_v3 = api.ApiV3(client)
+        # create link as user #1
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        link_id = api_v3.create_link({
+            "service_name": "hello",
+            "link": "world"
+        })
+        # should only have a single link
+        links = api_v3.get_encrypted_links()
+        assert len(links) == 1
+        try:
+            api_v3.delete_link(link_id + 1)
+            assert False, "must raise error"
+        except BadStatusCodeException as e:
+            assert e.status_code == 400
 
 
 def test_edit_link(app):

@@ -94,6 +94,9 @@ class NewDocumentForm(FlaskForm):
     name = StringField("name", [
         validators.DataRequired()
     ])
+    mimetype = StringField("mimetype", [
+        validators.DataRequired()
+    ])
     document = FileField("document", [
         FileRequired()
     ])

@@ -1,9 +1,6 @@
 from __future__ import print_function
 
-import base64
-# import json
 import logging
-import os
 import unittest
 
 from unittest import mock
@@ -61,24 +58,18 @@ class PassZeroDocTester(unittest.TestCase):
         # print(r.data)
         # assert r.status_code == 200
 
-    def create_test_doc(self):
-        fname = "/tmp/foo.txt"
-        if os.path.exists(fname):
-            os.remove(fname)
-        with open(fname, "w") as fp:
-            fp.write("hello world\n")
-
     def test_no_docs(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
 
-    def __create_and_verify_text_doc(self):
+    def __create_and_verify_text_doc(self) -> int:
         upload_doc_token = api.get_csrf_token(self.app)
         doc_params = {
             "name": "test document",
-            "document": (BytesIO(b"hello world\n"), "hello_world.txt")
+            "document": (BytesIO(b"hello world\n"), "hello_world.txt"),
+            "mimetype": "text/plain"
         }
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
@@ -89,7 +80,7 @@ class PassZeroDocTester(unittest.TestCase):
         assert docs_after[0]["name"] == doc_params["name"]
         # decrypt the document
         doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
-        assert base64.b64decode(doc["contents"]) == b"hello world\n"
+        assert doc == b"hello world\n"
         return docs_after[0]["id"]
 
     def __create_and_verify_binary_doc(self):
@@ -97,6 +88,7 @@ class PassZeroDocTester(unittest.TestCase):
             contents = fp.read()
         doc_params = {
             "name": "4K wallpaper",
+            "mimetype": "image/jpg",
             "document": (BytesIO(contents), "wallpaper.jpg")
         }
         upload_doc_token = api.get_csrf_token(self.app)
@@ -108,7 +100,7 @@ class PassZeroDocTester(unittest.TestCase):
         doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
         assert isinstance(contents, bytes)
         assert len(contents) > 0
-        assert base64.b64decode(doc["contents"]) == contents
+        assert doc == contents
         return docs_after[0]["id"]
 
     def __verify_delete_doc(self, document_id):
@@ -125,10 +117,77 @@ class PassZeroDocTester(unittest.TestCase):
         document_id = self.__create_and_verify_binary_doc()
         self.__verify_delete_doc(document_id)
 
-    def test_no_such_doc(self):
+    def test_get_nonexistant_doc(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
         r = api.get_document(self.app, 1, check_status=False)
         assert r.status_code == 400
+
+    def test_delete_nonexistant_doc(self):
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        token = api.get_csrf_token(self.app)
+        r = api.delete_document(self.app, 1, token, check_status=False)
+        assert r.status_code == 400
+
+    def test_delete_not_your_doc(self):
+        # create document for user #1
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        document_id = self.__create_and_verify_text_doc()
+        api.logout(self.app, check_status=True)
+
+        # try to delete that document as user #2
+        self._create_active_account("user2@fake.com", DEFAULT_PASSWORD)
+        api.login(self.app, "user2@fake.com", DEFAULT_PASSWORD)
+        token = api.get_csrf_token(self.app)
+        r = api.delete_document(self.app, document_id, token, check_status=False)
+        assert r.status_code == 400
+        api.logout(self.app)
+
+        # verify the document is still there
+        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        docs = api.get_documents(self.app, check_status=True)
+        assert len(docs) == 1
+        assert docs[0]["id"] == document_id
+
+    # def test_edit_document(self):
+    #     self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+    #     api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+    #     document_id = self.__create_and_verify_text_doc()
+    #     token = api.get_csrf_token(self.app)
+    #     doc_params = {
+    #         "name": "test document",
+    #         "document": (BytesIO(b"hello world\n"), "hello_world.txt"),
+    #         "mimetype": "text/plain"
+    #     }
+    #     r = api.update_document(
+    #         app=self.app,
+    #         doc_id=document_id,
+    #         doc_params=doc_params,
+    #         csrf_token=token,
+    #         check_status=False
+    #     )
+    #     assert r.status_code == 400
+
+    # def test_edit_nonexistant_doc(self):
+    #     self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+    #     api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+    #     docs_before = api.get_documents(self.app, check_status=True)
+    #     assert docs_before == []
+    #     token = api.get_csrf_token(self.app)
+    #     doc_params = {
+    #         "name": "test document",
+    #         "document": (BytesIO(b"hello world\n"), "hello_world.txt"),
+    #         "mimetype": "text/plain"
+    #     }
+    #     r = api.update_document(
+    #         app=self.app,
+    #         doc_id=1,
+    #         doc_params=doc_params,
+    #         csrf_token=token,
+    #         check_status=False
+    #     )
+    #     assert r.status_code == 400

@@ -2,6 +2,8 @@
         [
             ("/entries", "entries", "Entries"),
             ("/links", "links", "Links"),
+            ("/docs", "docs", "Documents"),
+            ("/docs/new", "new-doc", "New Document"),
             ("/entries/new", "new", "New Entry"),
             ("/profile", "profile", "Profile"),
             ("/advanced", "advanced", "Advanced"),
@@ -14,7 +16,7 @@
         ]
 )-%}
 
-<nav class="navbar navbar-dark bg-primary fixed-top navbar-expand-md">
+<nav class="navbar navbar-dark bg-primary fixed-top navbar-expand-lg">
         <a class="navbar-brand" href="/">PassZero</a>
         <button type="button" class="navbar-toggler" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -51,6 +53,10 @@
                                 <i class="fas fa-user"></i>
                             {%- elif id == "advanced" -%}
                                 <i class="fas fa-wrench"></i>
+                            {%- elif id == "new-doc" -%}
+                                <i class="fas fa-file-upload"></i>
+                            {%- elif id == "docs" -%}
+                                <i class="fas fa-file-archive"></i>
                             {%- endif -%}
                             <span class="nav-text">{{ caption|e }}</span>
                         </a>
