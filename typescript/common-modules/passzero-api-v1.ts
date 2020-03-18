@@ -55,6 +55,13 @@ export default class PassZeroAPIv1 {
         });
     }
 
+    async putFile(url: string, formData: FormData): Promise<Response> {
+        return window.fetch(url, {
+            method: "PUT",
+            body: formData
+        });
+    }
+
     async getCSRFToken() {
         const url = "/api/v1/csrf_token";
         return this.getJSON(url);
@@ -78,6 +85,17 @@ export default class PassZeroAPIv1 {
         formData.set("csrf_token", token);
         formData.set("mimetype", file.type);
         return this.postFile(url, formData);
+    }
+
+    async updateDocument(id: number, fileName: string, formData: FormData): Promise<Response> {
+        const url = `/api/v1/docs/${id}`;
+        const file = formData.get("document") as File;
+        // add CSRF
+        const token = await this.getCSRFToken();
+        formData.set("name", fileName);
+        formData.set("csrf_token", token);
+        formData.set("mimetype", file.type);
+        return this.putFile(url, formData);
     }
 
     async deleteDocument(id: number): Promise<Response> {

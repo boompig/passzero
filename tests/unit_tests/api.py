@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 class BadStatusCodeException(Exception):
-    pass
+    def __init__(self, status_code: int):
+        super()
+        self.status_code = status_code
 
 
 def _is_requests_session(session) -> bool:
@@ -137,31 +139,35 @@ def login(app, email: str, password: str, check_status: bool = True):
         "email": email,
         "password": password
     }
-    r = json_post(app, "/api/v1/login", data)
-    print(r.data)
+    url = "/api/v1/login"
+    r = json_post(app, url, data)
+    _print_if_test(app, r.data)
     if check_status:
         assert r.status_code == 200, "Failed to login with email '%s' and password '%s' (code %d)" % (
             email, password, r.status_code)
     return r
 
 
-def logout(app, check_status=False):
-    r = json_post(app, "/api/v1/logout")
+def logout(app, check_status: bool = False):
+    url = "/api/v1/logout"
+    r = json_post(app, url)
     if check_status:
         assert r.status_code == 200
     return r
 
 
 def get_csrf_token(app):
-    r = json_get(app, "/api/v1/csrf_token")
+    url = "/api/v1/csrf_token"
+    r = json_get(app, url)
     assert r.status_code == 200
     token = json.loads(r.data)
-    print("[client] received csrf_token: %s" % token)
+    _print_if_test(app, "[client] received csrf_token: %s" % token)
     return token
 
 
-def get_entries(app, check_status=True):
-    r = json_get(app, "/api/v1/entries")
+def get_entries(app, check_status: bool = True):
+    url = "/api/v1/entries"
+    r = json_get(app, url)
     if check_status:
         assert r.status_code == 200
         return json.loads(r.data)
@@ -169,9 +175,10 @@ def get_entries(app, check_status=True):
         return r
 
 
-def get_user_preferences(app, check_status=True):
+def get_user_preferences(app, check_status: bool = True):
     assert isinstance(check_status, bool)
-    r = json_get(app, "/api/v1/user/preferences")
+    url = "/api/v1/user/preferences"
+    r = json_get(app, url)
     if check_status:
         assert r.status_code == 200
         return json.loads(r.data)
@@ -179,7 +186,8 @@ def get_user_preferences(app, check_status=True):
         return r
 
 
-def put_user_preferences(app, prefs, csrf_token, check_status=True):
+def put_user_preferences(app, prefs: dict, csrf_token: str,
+                         check_status: bool = True):
     assert isinstance(prefs, dict)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
@@ -191,7 +199,7 @@ def put_user_preferences(app, prefs, csrf_token, check_status=True):
                 headers=json_header,
                 follow_redirects=True)
     if check_status:
-        print(r.data)
+        _print_if_test(app, r.data)
         assert r.status_code == 200
     return r
 
@@ -202,42 +210,43 @@ def create_entry(app, entry: dict, csrf_token: str, check_status: bool = True) -
     """
     data = copy.copy(entry)
     data["csrf_token"] = csrf_token
-    r = json_post(app, "/api/v1/entries", data)
+    url = "/api/v1/entries"
+    r = json_post(app, url, data)
     if check_status:
-        print(r.data)
+        _print_if_test(app, r.data)
         assert r.status_code == 200
         return json.loads(r.data)["entry_id"]
     else:
         return r
 
 
-def delete_entry(app, entry_id, csrf_token, check_status=True):
+def delete_entry(app, entry_id: int, csrf_token: str, check_status: bool = True):
     assert isinstance(entry_id, int)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
-    url = "/api/v1/entries/{}?csrf_token={}".format(
-        entry_id, csrf_token)
+    url = f"/api/v1/entries/{entry_id}?csrf_token={csrf_token}"
     r = app.delete(url,
                    headers=json_header, follow_redirects=True)
-    print(r.data)
+    _print_if_test(app, r.data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-def delete_all_entries(app, csrf_token, check_status=True):
+def delete_all_entries(app, csrf_token: str, check_status: bool = True):
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/entries/nuclear"
     data = {"csrf_token": csrf_token}
     r = json_post(app, url, data)
-    print(r.data)
+    _print_if_test(app, r.data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-def delete_user(app, password, csrf_token, check_status=True):
+def delete_user(app, password: str, csrf_token: str,
+                check_status: bool = True):
     assert isinstance(password, six.text_type)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
@@ -248,17 +257,18 @@ def delete_user(app, password, csrf_token, check_status=True):
                        "password": password
                    }),
                    headers=json_header, follow_redirects=True)
-    print(r.data)
+    _print_if_test(app, r.data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-def edit_entry(app, entry_id, entry, csrf_token, check_status=True):
+def edit_entry(app, entry_id: int, entry: dict, csrf_token: str,
+               check_status: bool = True):
     assert isinstance(entry_id, int)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
-    url = "/api/v1/entries/{}".format(entry_id)
+    url = f"/api/v1/entries/{entry_id}"
     data = entry
     data["csrf_token"] = csrf_token
     r = json_put(app, url, data)
@@ -278,7 +288,7 @@ def signup(app, email: str, password: str, check_status: bool = False):
         "confirm_password": password
     }
     r = json_post(app, url, data)
-    print(r.data)
+    _print_if_test(app, r.data)
     if check_status:
         assert r.status_code == 200
     return r
@@ -291,12 +301,13 @@ def recover_account(app, email: str, csrf_token: str):
         "csrf_token": csrf_token
     }
     r = json_post(app, url, data)
-    print(r.data)
+    _print_if_test(app, r.data)
     assert r.status_code == 200
     return r
 
 
-def recover_account_confirm(app, password, recovery_token, csrf_token, check_status=True):
+def recover_account_confirm(app, password: str, recovery_token: str,
+                            csrf_token: str, check_status: bool = True):
     url = "/api/v1/user/recover/confirm"
     data = {
         "password": password,
@@ -305,7 +316,7 @@ def recover_account_confirm(app, password, recovery_token, csrf_token, check_sta
         "token": recovery_token
     }
     r = json_post(app, url, data)
-    print(r.data)
+    _print_if_test(app, r.data)
     if check_status:
         assert r.status_code == 200
     return r
@@ -314,15 +325,17 @@ def recover_account_confirm(app, password, recovery_token, csrf_token, check_sta
 def activate_account(app, token: six.text_type, check_status: bool = True):
     assert isinstance(token, six.text_type)
     assert isinstance(check_status, bool)
+    url = "/api/v1/user/activate"
     data = {"token": token}
-    r = json_post(app, "/api/v1/user/activate", data)
-    print(r.data)
+    r = json_post(app, url, data)
+    _print_if_test(app, r.data)
     if check_status:
         assert r.status_code == 200
     return r
 
 
-def update_user_password(app, old_password, new_password, csrf_token, check_status=True):
+def update_user_password(app, old_password: str, new_password: str,
+                         csrf_token: str, check_status: bool = True):
     url = "/api/v1/user/password"
     data = {
         "csrf_token": csrf_token,
@@ -335,22 +348,30 @@ def update_user_password(app, old_password, new_password, csrf_token, check_stat
                 headers=json_header,
                 follow_redirects=True)
     if check_status:
-        print(r.data)
+        _print_if_test(app, r.data)
         assert r.status_code == 200
     return r
 
+# documents
 
-def get_documents(app, check_status=True):
-    r = json_get(app, "/api/v1/docs")
+
+def get_documents(app, check_status: bool = True):
+    url = "/api/v1/docs"
+    r = json_get(app, url)
     if check_status:
-        print(r.data)
+        _print_if_test(app, r.data)
         assert r.status_code == 200
         return json.loads(r.data)
     else:
         return r
 
 
-def post_document(app, doc_params: dict, csrf_token: str, check_status: bool = True):
+def post_document(app, doc_params: dict, csrf_token: str,
+                  check_status: bool = True):
+    """
+    if check_status is set, verify the status the return the document_id
+    if check_status is set to False, return the response object
+    """
     url = "/api/v1/docs"
     doc_params["csrf_token"] = csrf_token
     r = app.post(
@@ -360,31 +381,47 @@ def post_document(app, doc_params: dict, csrf_token: str, check_status: bool = T
         follow_redirects=True
     )
     if check_status:
-        print("[post_document] status code = %d" % r.status_code)
-        print(r.data)
+        _print_if_test(app, f"[post_document] status code = {r.status_code}")
+        _print_if_test(app, r.data)
         assert r.status_code == 200
+        return json.loads(r.data)["document_id"]
     return r
 
 
-def get_document(app, doc_id, check_status=True):
-    url = "/api/v1/docs/%d" % doc_id
+def get_document(app, doc_id: int, check_status: bool = True):
+    url = f"/api/v1/docs/{doc_id}"
     r = json_get(app, url)
     if check_status:
-        print(r.data)
+        _print_if_test(app, r.data)
         assert r.status_code == 200
         return r.data
     else:
         return r
 
 
-def delete_document(app, doc_id, csrf_token, check_status=True):
-    url = "/api/v1/docs/{}".format(doc_id)
+def update_document(app, doc_id: int, doc_params: dict, csrf_token: str,
+                    check_status: bool = True):
+    url = f"/api/v1/docs/{doc_id}"
+    doc_params["csrf_token"] = csrf_token
+    r = app.put(
+        url,
+        data=doc_params,
+        headers=file_upload_headers,
+        follow_redirects=True
+    )
+    _print_if_test(app, r.data)
+    return r
+
+
+def delete_document(app, doc_id: int, csrf_token: str,
+                    check_status: bool = True):
+    url = f"/api/v1/docs/{doc_id}"
     r = app.delete(url,
                    data=json.dumps({
                        "csrf_token": csrf_token
                    }),
                    headers=json_header, follow_redirects=True)
-    print(r.data)
+    _print_if_test(app, r.data)
     if check_status:
         assert r.status_code == 200
     return r
@@ -393,17 +430,19 @@ def delete_document(app, doc_id, csrf_token, check_status=True):
 # --- v2 API starts here
 
 def get_entries_v2(app):
-    r = json_get(app, "/api/v2/entries")
+    url = "/api/v2/entries"
+    r = json_get(app, url)
     assert r.status_code == 200
-    print(r.data)
+    _print_if_test(app, r.data)
     return json.loads(r.data)
 
 
-def get_entry_v2(app, entry_id, check_status=True):
-    r = json_get(app, "/api/v2/entries/{}".format(entry_id))
+def get_entry_v2(app, entry_id: int, check_status: bool = True):
+    url = "/api/v2/entries/{}".format(entry_id)
+    r = json_get(app, url)
     if check_status:
         assert r.status_code == 200
-        print(r.data)
+        _print_if_test(app, r.data)
         return json.loads(r.data)
     else:
         return r
@@ -412,7 +451,8 @@ def get_entry_v2(app, entry_id, check_status=True):
 
 
 def get_api_token_with_login(session, check_status: bool = True):
-    r = json_get(session, "/api/v3/token")
+    url = "/api/v3/token"
+    r = json_get(session, url)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     if check_status:
@@ -424,7 +464,8 @@ def get_api_token_with_login(session, check_status: bool = True):
 
 def login_with_token(session, email: str, password: str, check_status: bool = True):
     assert isinstance(email, str)
-    r = json_post(session, "/api/v3/token", data={
+    url = "/api/v3/token"
+    r = json_post(session, url, data={
         "email": email,
         "password": password
     })
@@ -441,7 +482,9 @@ def login_with_token(session, email: str, password: str, check_status: bool = Tr
 
 
 def delete_token(session, token: str, check_status: bool = True):
-    r = json_delete(session, "/api/v3/token", token=token)
+    """Equivalent to logout"""
+    url = "/api/v3/token"
+    r = json_delete(session, url, token=token)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     if check_status:
@@ -450,11 +493,12 @@ def delete_token(session, token: str, check_status: bool = True):
 
 
 def create_entry_with_token(session, entry: dict, password: str, token: str, check_status: bool = True):
+    url = "/api/v3/entries"
     data = {
         "entry": entry,
         "password": password
     }
-    r = json_post(session, "/api/v3/entries", data=data, token=token)
+    r = json_post(session, url, data=data, token=token)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     if check_status:
@@ -465,7 +509,8 @@ def create_entry_with_token(session, entry: dict, password: str, token: str, che
 
 
 def delete_all_entries_with_token(session, token: str, check_status: bool = True):
-    r = json_delete(session, "/api/v3/entries", token=token)
+    url = "/api/v3/entries"
+    r = json_delete(session, url, token=token)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     if check_status:
@@ -477,7 +522,8 @@ def get_encrypted_entries_with_token(session, token: str, check_status: bool = T
     """
     Return entry metadata without decrypting the entries
     """
-    r = json_get(session, "/api/v3/entries", token=token)
+    url = "/api/v3/entries"
+    r = json_get(session, url, token=token)
     # will not be printed unless there is an error
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
@@ -489,7 +535,8 @@ def get_encrypted_entries_with_token(session, token: str, check_status: bool = T
 
 
 def delete_entry_with_token(session, entry_id: int, token: str, check_status: bool = True):
-    r = json_delete(session, "/api/v3/entries/%d" % entry_id, token=token)
+    url = f"/api/v3/entries/{entry_id}"
+    r = json_delete(session, url, token=token)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     if check_status:
@@ -506,9 +553,10 @@ def decrypt_entry_with_token(session,
     assert isinstance(password, str) and password != ""
     assert isinstance(token, str)
     assert isinstance(check_status, bool)
+    url = f"/api/v3/entries/{entry_id}"
     r = json_post(
         session,
-        "/api/v3/entries/{}".format(entry_id),
+        url,
         {"password": password},
         token=token
     )
@@ -529,9 +577,10 @@ def edit_entry_with_token(session,
                           token: str,
                           check_status: bool = True):
     assert isinstance(token, str)
+    url = f"/api/v3/entries/{entry_id}"
     r = json_patch(
         session,
-        f"/api/v3/entries/{entry_id}",
+        url,
         {"entry": new_entry, "password": password},
         token=token
     )
@@ -560,24 +609,22 @@ class ApiV3:
         logger.debug("Using BASE_URL %s", BASE_URL)
 
     def login(self, email: str, password: str) -> None:
+        """Always checks status"""
         assert isinstance(email, str)
         assert isinstance(password, str) and password != ""
         token = login_with_token(self.client, email, password, check_status=True)
         self.api_token = token
         self.password = password
-        """
-        assert isinstance(email, str)
-        assert isinstance(password, str)
-        assert password is not None and password != ""
-        url = "/api/v3/token"
-        data = {
-            "email": email,
-            "password": password
-        }
-        json_response = self.json_post(url, data, check_status=True, use_token=False)
-        print(json_response)
-        self.api_token = json_response["token"]
-        """
+
+    def logout(self) -> None:
+        assert self.api_token is not None
+        delete_token(
+            self.client,
+            self.api_token,
+            check_status=True
+        )
+        self.api_token = None
+        self.password = None
 
     def json_post(self, url: str, data: dict, check_status: bool = True,
                   use_token: bool = True):
@@ -627,11 +674,14 @@ class ApiV3:
         assert self.api_token is not None
         r = json_delete(self.client, url, token=self.api_token)
         _print_if_test(self.client, r.data)
-        if check_status:
-            assert r.status_code == 200
-            return json.loads(r.data)
-        else:
-            return r
+        try:
+            if check_status:
+                assert r.status_code == 200
+                return json.loads(r.data)
+            else:
+                return r
+        except AssertionError:
+            raise BadStatusCodeException(r.status_code)
 
     # entries
 
@@ -684,6 +734,7 @@ class ApiV3:
     # link
 
     def create_link(self, link: dict) -> int:
+        """Always verifies status"""
         assert self.password is not None
         url = "/api/v3/links"
         data = {

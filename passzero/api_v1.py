@@ -30,7 +30,7 @@ class TokenExpiredException(Exception):
 
 @api_v1.route("/api/csrf_token", methods=["GET"])
 @api_v1.route("/api/v1/csrf_token", methods=["GET"])
-def api_get_csrf_token():
+def api_v1_get_csrf_token():
     """Get CSRF token for current user's session.
 
     Arguments
@@ -61,7 +61,7 @@ def __logout():
 
 @api_v1.route("/api/logout", methods=["POST"])
 @api_v1.route("/api/v1/logout", methods=["POST"])
-def api_logout():
+def api_v1_logout():
     """Logout. Destroy current session.
 
     Arguments
@@ -86,7 +86,7 @@ def api_logout():
 @api_v1.route("/api/login", methods=["POST"])
 @api_v1.route("/api/v1/login", methods=["POST"])
 @requires_json_form_validation(LoginForm)
-def api_login(request_data):
+def api_v1_login(request_data):
     """Login. On success, update session cookie.
 
     Arguments
@@ -139,7 +139,7 @@ def api_login(request_data):
 
 @api_v1.route("/api/v1/docs", methods=["GET"])
 @requires_json_auth
-def get_docs_api():
+def api_v1_get_docs():
     """Retrieve all saved documents for the logged-in user
     The document contents will be encrypted.
 
@@ -179,7 +179,7 @@ def get_docs_api():
 
 @api_v1.route("/api/v1/docs/<int:doc_id>", methods=["GET"])
 @requires_json_auth
-def decrypt_doc_api(doc_id):
+def api_v1_decrypt_doc(doc_id):
     """
     Decrypt the specified document and return the *resource*
 
@@ -227,7 +227,7 @@ def decrypt_doc_api(doc_id):
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewDocumentForm)
-def create_doc_api(form_data: NewDocumentForm):
+def api_v1_create_doc(form_data: NewDocumentForm):
     """Upload a new document for the logged-in user
 
     Arguments
@@ -262,6 +262,54 @@ def create_doc_api(form_data: NewDocumentForm):
         document=form_data["document"]
     )
     return write_json(200, {"document_id": encrypted_file.id})
+
+
+@api_v1.route("/api/v1/docs/<int:document_id>", methods=["PUT"])
+@requires_json_auth
+@requires_csrf_check
+@requires_json_form_validation(NewDocumentForm)
+def api_v1_edit_doc(form_data: NewDocumentForm, document_id: int):
+    """Upload a new document for the logged-in user
+
+    Arguments
+    ---------
+    - name: string (required)
+    - document: File (required)
+    - mimetype: string (required)
+
+    Response
+    --------
+    on success::
+
+        { "status": "success" }
+
+    on error::
+
+        { "status": "error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 400: various input validation errors
+    - 401: not authenticated
+    - 403: CSRF check failed
+    """
+    code = 200
+    data = {}  # type: dict
+    try:
+        backend.edit_document(
+            session=db.session,
+            document_id=document_id,
+            master_key=session["password"],
+            form_data=form_data,
+            user_id=session["user_id"]
+        )
+        code, data = json_success("Successfully edited document")
+    except NoResultFound:
+        code, data = json_error(400, "no such document")
+    except backend.UserNotAuthorizedError:
+        code, data = json_error(400, "the given document does not belong to you")
+    return write_json(code, data)
 
 
 @api_v1.route("/api/v1/docs/<int:doc_id>", methods=["DELETE"])
@@ -306,7 +354,7 @@ def api_v1_delete_doc(doc_id: int):
 @api_v1.route("/api/entries", methods=["GET"])
 @api_v1.route("/api/v1/entries", methods=["GET"])
 @requires_json_auth
-def get_entries_api():
+def api_v1_get_entries():
     """Retrieve all decrypted entries for the logged-in user
 
     Arguments
@@ -428,7 +476,7 @@ def api_v1_new_entry(request_data: NewEntryForm):
 
 @api_v1.route("/api/v1/user/signup", methods=["POST"])
 @requires_json_form_validation(SignupForm)
-def signup_api(request_data: SignupForm):
+def api_v1_signup(request_data: SignupForm):
     """First step of user registration.
     Create an inactive user and send an email to the specified email address.
     The account cannot be logged-into until it has been activated via the activation link in the email.
@@ -489,7 +537,7 @@ def signup_api(request_data: SignupForm):
 
 @api_v1.route("/api/v1/user/activate", methods=["POST"])
 @requires_json_form_validation(ActivateAccountForm)
-def confirm_signup_api(request_data: ActivateAccountForm):
+def api_v1_confirm_signup(request_data: ActivateAccountForm):
     """Second and final step of user registration.
     Activate the previously created inactive account.
     This API is meant to be hit when a user clicks a link in their email.
@@ -577,7 +625,7 @@ def api_v1_user_recover(request_data: RecoverPasswordForm):
 
 @api_v1.route("/api/v1/user/recover/confirm", methods=["POST"])
 @requires_json_form_validation(ConfirmRecoverPasswordForm)
-def recover_password_confirm_api(request_data: ConfirmRecoverPasswordForm):
+def api_v1_recover_password_confirm(request_data: ConfirmRecoverPasswordForm):
     """
     Second and final step of account recovery for the specified user.
     This API is meant to be hit when the user clicks the link in a recovery email.
@@ -632,7 +680,7 @@ def recover_password_confirm_api(request_data: ConfirmRecoverPasswordForm):
 @api_v1.route("/api/v1/entries", methods=["DELETE"])
 @requires_json_auth
 @requires_csrf_check
-def nuke_entries_api():
+def api_v1_nuke_entries():
     """Delete <b>all</b> entries for the logged-in user.
 
     Arguments
@@ -661,7 +709,7 @@ def nuke_entries_api():
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(DeleteUserForm)
-def delete_user_api(request_data: DeleteUserForm):
+def api_v1_delete_user(request_data: DeleteUserForm):
     """Delete all information about the currently logged-in user.
 
     Arguments

@@ -15,10 +15,12 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
 from passzero import backend
 from passzero.change_password import change_password
 from passzero.crypto_utils import PasswordHashAlgo
-from passzero.models import DecryptedDocument, Entry, Service, User, AuthToken, Link
+from passzero.models import DecryptedDocument, Entry, Service, User, AuthToken, Link, EncryptedDocument
 from passzero.models import db as _db
 
 DB_FILENAME = "passzero.db"
+DEFAULT_EMAIL = u"fake@fake.com"
+DEFAULT_PASSWORD = u"fake password"
 
 
 @pytest.fixture(scope="session")
@@ -80,6 +82,7 @@ def session(db, request):
         session.query(Service).delete()
         session.query(AuthToken).delete()
         session.query(Link).delete()
+        session.query(EncryptedDocument).delete()
         session.commit()
 
         connection.close()
@@ -372,3 +375,82 @@ def test_get_services_map(session):
     service_map = get_services_map(session)
     assert len(service_map) == 1
     service_map.get("MyService", None) is not None
+
+
+def test_edit_document(session):
+    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+    doc = DecryptedDocument(name="first.txt", mimetype="text/plain", contents=b"hello world")
+    enc_doc = backend.encrypt_document(
+        session,
+        user.id,
+        DEFAULT_PASSWORD,
+        doc.name,
+        doc.mimetype,
+        doc.contents
+    )
+    assert enc_doc.id >= 1
+    dec_doc_2 = DecryptedDocument(
+        name="second.txt",
+        mimetype="text/plain",
+        contents=b"goodbye cruel world"
+    )
+    enc_doc_2 = backend.edit_document(
+        session,
+        document_id=enc_doc.id,
+        master_key=DEFAULT_PASSWORD,
+        form_data=dec_doc_2.__dict__,
+        user_id=user.id
+    )
+    assert enc_doc.id == enc_doc_2.id
+    out = enc_doc_2.decrypt(DEFAULT_PASSWORD)
+    assert out.name == dec_doc_2.name
+    assert out.mimetype == dec_doc_2.mimetype
+    assert out.contents == dec_doc_2.contents
+
+
+def test_edit_nonexistant_document(session):
+    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+    doc = backend.get_document_by_id(session, user.id, 1)
+    assert doc is None
+    try:
+        backend.edit_document(
+            session,
+            1,
+            DEFAULT_PASSWORD,
+            {
+                "name": "test",
+                "contents": b"hello world",
+                "mimetype": "text/plain"
+            },
+            user.id
+        )
+        assert False
+    except NoResultFound:
+        assert True, "great"
+
+
+def test_edit_not_your_document(session):
+    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+    dec_doc = DecryptedDocument(
+        name="test doc",
+        contents=b"hello",
+        mimetype="text/plain"
+    )
+    # deliberately users have the same password
+    enc_doc = insert_document_for_user(session, dec_doc, user.id, DEFAULT_PASSWORD)
+    user2 = create_inactive_user(session, "user2@fake.com", "fake password 2")
+    try:
+        backend.edit_document(
+            session,
+            enc_doc.id,
+            DEFAULT_PASSWORD,
+            {
+                "name": "test",
+                "contents": b"hello world",
+                "mimetype": "text/plain"
+            },
+            user2.id
+        )
+        assert False
+    except backend.UserNotAuthorizedError:
+        assert True, "great"

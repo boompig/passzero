@@ -129,15 +129,3 @@ class DecryptedDocument:
             mimetype=self.mimetype,
             document=ct
         )
-
-    def to_json(self) -> dict:
-        """This is a really bad idea, to return a document this way.
-        For now, return the contents as a base64-encoded string of the contents
-        """
-        assert isinstance(self.name, six.text_type)
-        assert isinstance(self.contents, bytes)
-        return {
-            "name": self.name,
-            "contents": base64_encode(self.contents).decode("utf-8"),
-            "mimetype": self.mimetype
-        }

@@ -79,11 +79,20 @@ class NewDocumentApp extends React.Component<{}, INewDocumentState> {
             console.error("Failed to save document");
             console.error(r);
         }
-        return false;
     }
 
-    editDocument(event) {
-        throw new Error("not implemented");
+    async editDocument(event: React.SyntheticEvent) {
+        event.preventDefault();
+        const formData = new FormData();
+        formData.append("document", this.state.file);
+        const r = await this.pzAPI.updateDocument(this.state.documentId, this.state.fileName, formData);
+        if(r.ok) {
+            console.log("Document updated");
+            window.location.href = "/docs";
+        } else {
+            console.error("Failed to update document");
+            console.error(r);
+        }
     }
 
     saveDocument(event: React.SyntheticEvent) {
@@ -95,35 +104,35 @@ class NewDocumentApp extends React.Component<{}, INewDocumentState> {
     }
 
     render() {
-        if(this.state.isNewDocument) {
+        if (this.state.isNewDocument) {
             let title = "New Document";
-            let buttonText = "Save";
+            let buttonText = "Upload";
             if (!this.state.isNewDocument) {
                 title = "Edit Document";
                 buttonText = "Update";
             }
             return (
                 <div className="container">
-                    <h2 className="title">{ title }</h2>
+                    <h2 className="title">{title}</h2>
                     <form role="form" id="main-form" onSubmit={this.saveDocument}>
                         <input type="text" className="document-filename form-control"
                             required={true} name="filename"
                             placeholder="Name"
-                            value={ this.state.fileName }
-                            onChange={ this.handleNameChange }/>
+                            value={this.state.fileName}
+                            onChange={this.handleNameChange} />
                         <input type="file" className="form-control"
                             required={true} name="file"
-                            onChange={ this.handleFileChange }/>
+                            onChange={this.handleFileChange} />
                         <button type="submit"
                             className="form-control btn btn-success"
-                            >{ buttonText }</button>
+                        >{buttonText}</button>
                     </form>
                 </div>
             );
         } else {
-            return <div className="alert alert-warning">
-                <strong>Warning!</strong> Under construction
-            </div>
+            return (<div className="alert alert-warning">
+                <strong>Under construction!</strong>
+            </div>);
         }
     }
 }

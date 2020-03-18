@@ -145,7 +145,7 @@ def edit_link(link_id: int):
     link = get_link_by_id(db.session, user.id, link_id)
     if link is None:
         flash("Error: no link with ID %d" % link_id, "error")
-        return redirect(url_for("main_routes.view_entries"))
+        return redirect(url_for("main_routes.view_links"))
     dec_link = link.decrypt(session["password"])
     return render_template("links/new-link.jinja2", title="PassZero &middot; Edit Link",
                            link_id=link_id,
@@ -155,14 +155,14 @@ def edit_link(link_id: int):
 
 # --- documents --- #
 @main_routes.route("/docs", methods=["GET"])
-# @auth_or_redirect_login
+@auth_or_redirect_login
 def view_docs():
     return render_template("docs/docs.jinja2")
 
 
 @main_routes.route("/docs/new", methods=["GET"])
 @auth_or_redirect_login
-def create_new_doc():
+def new_doc_view():
     return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
                            document_id=-1)
 
@@ -170,6 +170,12 @@ def create_new_doc():
 @main_routes.route("/docs/<int:document_id>/edit", methods=["GET"])
 @auth_or_redirect_login
 def edit_doc(document_id: int):
+    # get the document
+    user = db.session.query(User).filter_by(id=session["user_id"]).one()
+    doc = get_document_by_id(db.session, user.id, document_id)
+    if doc is None:
+        flash(f"Error: no document with ID {document_id}", "error")
+        return redirect(url_for("main_routes.view_docs"))
     return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
                            document_id=document_id)
 

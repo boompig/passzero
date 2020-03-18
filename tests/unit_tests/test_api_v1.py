@@ -87,6 +87,37 @@ class PassZeroApiTester(unittest.TestCase):
         assert rv.status_code != 200
         assert json.loads(rv.data)["status"] == "error"
 
+    def test_delete_not_your_entry(self):
+        emails = [u"email1@fake.com", u"email2@fake.com"]
+        password = DEFAULT_PASSWORD
+        for email in emails:
+            self._create_active_account(email, password)
+        # create entry with user #1
+        api.login(self.app, emails[0], password, check_status=True)
+        create_token = api.get_csrf_token(self.app)
+        old_entry = {
+            "account": "fake",
+            "username": "entry_username",
+            "password": "entry_pass",
+            "extra": "entry_extra",
+            "has_2fa": False
+        }
+        entry_id = api.create_entry(self.app, old_entry, create_token, check_status=True)
+        api.logout(self.app, check_status=True)
+        # try to delete with user #2
+        api.login(self.app, emails[1], password, check_status=True)
+        entries = api.get_entries(self.app, check_status=True)
+        assert entries == []
+        delete_token = api.get_csrf_token(self.app)
+        r = api.delete_entry(self.app, entry_id, delete_token, check_status=False)
+        assert r.status_code == 400
+        api.logout(self.app, check_status=True)
+        # verify user #1 still has the entry
+        api.login(self.app, emails[0], password, check_status=True)
+        e2 = api.get_entries(self.app, check_status=True)
+        assert len(e2) == 1
+        assert e2[0]["id"] == entry_id
+
     def test_create_entry_no_login(self):
         token = api.get_csrf_token(self.app)
         entry = {
