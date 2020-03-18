@@ -10,7 +10,6 @@ standalone_typescript_src := typescript/standalone/*.ts
 css_targets 	:= $(patsubst static/css/src/%.css, static/css/dist/%.min.css, $(wildcard static/css/src/*.css))
 js_src_targets 	:= $(patsubst typescript/standalone/%.ts, static/js/src/standalone/%.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/src/common/%.js, $(wildcard typescript/common/*.ts))
 js_dist_targets := $(patsubst typescript/standalone/%.ts, static/js/dist/%.min.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/dist/%.min.js, $(wildcard typescript/common/*.ts))
-entries_bundle_src := typescript/entries-bundle/*.tsx typescript/entries-bundle/components/*.tsx
 
 csslint  := node_modules/csslint/dist/cli.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
@@ -67,9 +66,9 @@ lint: $(SRC) $(standalone_typescript_src) $(css_src)
 
 clean:
 	find . -name '*.pyc' -delete
-	rm -f $(js_src_targets)
+	rm -f $(js_src_targets) $(js_dist_targets) $(css_targets)
 	# remove auto-generated minified code
-	rm -f static/js/dist/*.js
-	rm -f static/css/dist/*.css
+	rm -f static/js/dist/*
+	rm -f static/css/dist/*
 	# remove auto-generated typescript code
-	rm -f static/js/src/*.js
+	rm -rf static/js/src/*
