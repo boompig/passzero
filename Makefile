@@ -53,20 +53,20 @@ test: python-test
 
 python-test: $(SRC) $(UNIT_TEST_SRC) lint
 	# run until only first failure to not waste time
-	PYTHONPATH=$(CWD) pytest -x $(UNIT_TEST_SRC)
+	PYTHONPATH=$(CWD) pytest -x tests/unit_tests
 
 test-cov: $(SRC) $(UNIT_TEST_SRC) lint
-	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html $(UNIT_TEST_SRC)
+	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html tests/unit_tests
 
 live-test-local: $(SRC) $(E2E_TEST_SRC) lint
-	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5050' pytest $(E2E_TEST_SRC)
+	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5050' pytest tests/end_to_end_tests
 
 lint: $(SRC) $(standalone_typescript_src) $(css_src)
 	$(csslint) --quiet $(css_src)
 	yarn lint
-	flake8 $(SRC) $(UNIT_TEST_SRC) $(E2E_TEST_SRC)
+	flake8 $(SRC) tests/unit_tests tests/end_to_end_tests
 	mypy --ignore-missing-imports $(SRC)
-	mypy --ignore-missing-imports $(UNIT_TEST_SRC)
+	mypy --ignore-missing-imports tests/unit_tests tests/end_to_end_tests
 
 clean:
 	find . -name '*.pyc' -delete

@@ -1,13 +1,16 @@
 import copy
 import json
 import logging
+import os
+from typing import Dict, List, Optional, Union
 
+import flask
+import requests
 import six
-from typing import Dict, List, Optional
 
 json_header = {"Content-Type": "application/json"}
 file_upload_headers = {"Content-Type": "multipart/form-data"}
-BASE_URL = "http://localhost:5050"
+BASE_URL = os.environ.get("LIVE_TEST_HOST", "https://localhost:5050")
 
 
 logger = logging.getLogger(__name__)
@@ -36,12 +39,31 @@ def _get_response_data(session, response) -> str:
         return response.data
 
 
+def _get_response_json(response: Union[requests.Response, flask.Response]) -> dict:
+    """
+    FIXME: massive hack to allow use of this file in end-to-end tests
+    """
+    if isinstance(response, requests.Response):
+        return response.json()
+    else:
+        assert isinstance(response, flask.Response)
+        return response.get_json()
+
+
 def _print_if_test(session, data) -> None:
     """
     FIXME: massive hack to allow use of this file in end-to-end tests
     """
     if not _is_requests_session(session):
         print(data)
+
+
+def _print_response_text_if_test(response: Union[requests.Response, flask.Response]) -> None:
+    """
+    FIXME: massive hack to allow use of this file in end-to-end tests
+    """
+    if isinstance(response, flask.Response):
+        print(response.data)
 
 
 def json_header_with_token(token: str) -> Dict[str, str]:
@@ -61,6 +83,7 @@ def json_get(session, relative_url: str, token: Optional[str] = None):
     url = relative_url
     if _is_requests_session(session):
         url = BASE_URL + relative_url
+        kwargs["verify"] = False
     else:
         kwargs["follow_redirects"] = True
     return session.get(
@@ -80,6 +103,7 @@ def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] 
     url = relative_url
     if _is_requests_session(session):
         url = BASE_URL + relative_url
+        kwargs["verify"] = False
     else:
         kwargs["follow_redirects"] = True
     return session.post(
@@ -95,11 +119,19 @@ def json_put(session, relative_url: str, data: dict = {}, token: Optional[str] =
         headers = json_header_with_token(token)
     else:
         headers = json_header
+    # FIXME: massive hack around unit test vs real test
+    kwargs = {}
+    url = relative_url
+    if _is_requests_session(session):
+        url = BASE_URL + relative_url
+        kwargs["verify"] = False
+    else:
+        kwargs["follow_redirects"] = True
     return session.put(
-        relative_url,
+        url,
         data=json.dumps(data),
         headers=headers,
-        follow_redirects=True
+        **kwargs
     )
 
 
@@ -108,24 +140,43 @@ def json_patch(session, relative_url: str, data: dict = {}, token: Optional[str]
         headers = json_header_with_token(token)
     else:
         headers = json_header
+    # FIXME: massive hack around unit test vs real test
+    kwargs = {}
+    url = relative_url
+    if _is_requests_session(session):
+        url = BASE_URL + relative_url
+        kwargs["verify"] = False
+    else:
+        kwargs["follow_redirects"] = True
     return session.patch(
-        relative_url,
+        url,
         data=json.dumps(data),
         headers=headers,
-        follow_redirects=True
+        **kwargs
     )
 
 
 def json_delete(session, relative_url: str, token: Optional[str] = None):
+    """
+    :param token: bearer token
+    TODO for now data should reside in the URL
+    """
     if token:
         headers = json_header_with_token(token)
     else:
         headers = json_header
-    # expect the data to be formatted into the URL for now
+    # FIXME: massive hack around unit test vs real test
+    kwargs = {}
+    url = relative_url
+    if _is_requests_session(session):
+        url = BASE_URL + relative_url
+        kwargs["verify"] = False
+    else:
+        kwargs["follow_redirects"] = True
     return session.delete(
-        relative_url,
+        url,
         headers=headers,
-        follow_redirects=True
+        **kwargs
     )
 
 
@@ -141,7 +192,7 @@ def login(app, email: str, password: str, check_status: bool = True):
     }
     url = "/api/v1/login"
     r = json_post(app, url, data)
-    _print_if_test(app, r.data)
+    _print_if_test(app, _get_response_data(app, r))
     if check_status:
         assert r.status_code == 200, "Failed to login with email '%s' and password '%s' (code %d)" % (
             email, password, r.status_code)
@@ -157,10 +208,11 @@ def logout(app, check_status: bool = False):
 
 
 def get_csrf_token(app):
+    """Always verifies status"""
     url = "/api/v1/csrf_token"
     r = json_get(app, url)
     assert r.status_code == 200
-    token = json.loads(r.data)
+    token = _get_response_json(r)
     _print_if_test(app, "[client] received csrf_token: %s" % token)
     return token
 
@@ -170,7 +222,7 @@ def get_entries(app, check_status: bool = True):
     r = json_get(app, url)
     if check_status:
         assert r.status_code == 200
-        return json.loads(r.data)
+        return _get_response_json(r)
     else:
         return r
 
@@ -181,7 +233,7 @@ def get_user_preferences(app, check_status: bool = True):
     r = json_get(app, url)
     if check_status:
         assert r.status_code == 200
-        return json.loads(r.data)
+        return _get_response_json(r)
     else:
         return r
 
@@ -194,12 +246,19 @@ def put_user_preferences(app, prefs: dict, csrf_token: str,
     url = "/api/v1/user/preferences"
     data = copy.copy(prefs)
     data["csrf_token"] = csrf_token
-    r = app.put(url,
-                data=json.dumps(data),
-                headers=json_header,
-                follow_redirects=True)
+    if _is_requests_session(app):
+        url = BASE_URL + url
+        r = app.put(url,
+                    data=json.dumps(data),
+                    headers=json_header,
+                    verify=False)
+    else:
+        r = app.put(url,
+                    data=json.dumps(data),
+                    headers=json_header,
+                    follow_redirects=True)
     if check_status:
-        _print_if_test(app, r.data)
+        _print_if_test(app, _get_response_data(app, r))
         assert r.status_code == 200
     return r
 
@@ -213,9 +272,9 @@ def create_entry(app, entry: dict, csrf_token: str, check_status: bool = True) -
     url = "/api/v1/entries"
     r = json_post(app, url, data)
     if check_status:
-        _print_if_test(app, r.data)
+        _print_if_test(app, _get_response_data(app, r))
         assert r.status_code == 200
-        return json.loads(r.data)["entry_id"]
+        return _get_response_json(r)["entry_id"]
     else:
         return r
 
@@ -225,9 +284,8 @@ def delete_entry(app, entry_id: int, csrf_token: str, check_status: bool = True)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = f"/api/v1/entries/{entry_id}?csrf_token={csrf_token}"
-    r = app.delete(url,
-                   headers=json_header, follow_redirects=True)
-    _print_if_test(app, r.data)
+    r = json_delete(app, url)
+    _print_if_test(app, _get_response_data(app, r))
     if check_status:
         assert r.status_code == 200
     return r
@@ -239,7 +297,7 @@ def delete_all_entries(app, csrf_token: str, check_status: bool = True):
     url = "/api/v1/entries/nuclear"
     data = {"csrf_token": csrf_token}
     r = json_post(app, url, data)
-    _print_if_test(app, r.data)
+    _print_if_test(app, _get_response_data(app, r))
     if check_status:
         assert r.status_code == 200
     return r
@@ -257,7 +315,7 @@ def delete_user(app, password: str, csrf_token: str,
                        "password": password
                    }),
                    headers=json_header, follow_redirects=True)
-    _print_if_test(app, r.data)
+    _print_if_test(app, _get_response_data(app, r))
     if check_status:
         assert r.status_code == 200
     return r
@@ -288,7 +346,7 @@ def signup(app, email: str, password: str, check_status: bool = False):
         "confirm_password": password
     }
     r = json_post(app, url, data)
-    _print_if_test(app, r.data)
+    _print_if_test(app, _get_response_data(app, r))
     if check_status:
         assert r.status_code == 200
     return r
@@ -301,7 +359,7 @@ def recover_account(app, email: str, csrf_token: str):
         "csrf_token": csrf_token
     }
     r = json_post(app, url, data)
-    _print_if_test(app, r.data)
+    _print_if_test(app, _get_response_data(app, r))
     assert r.status_code == 200
     return r
 
@@ -316,7 +374,7 @@ def recover_account_confirm(app, password: str, recovery_token: str,
         "token": recovery_token
     }
     r = json_post(app, url, data)
-    _print_if_test(app, r.data)
+    _print_if_test(app, _get_response_data(app, r))
     if check_status:
         assert r.status_code == 200
     return r
@@ -328,7 +386,7 @@ def activate_account(app, token: six.text_type, check_status: bool = True):
     url = "/api/v1/user/activate"
     data = {"token": token}
     r = json_post(app, url, data)
-    _print_if_test(app, r.data)
+    _print_if_test(app, _get_response_data(app, r))
     if check_status:
         assert r.status_code == 200
     return r
@@ -348,7 +406,7 @@ def update_user_password(app, old_password: str, new_password: str,
                 headers=json_header,
                 follow_redirects=True)
     if check_status:
-        _print_if_test(app, r.data)
+        _print_if_test(app, _get_response_data(app, r))
         assert r.status_code == 200
     return r
 
@@ -359,9 +417,9 @@ def get_documents(app, check_status: bool = True):
     url = "/api/v1/docs"
     r = json_get(app, url)
     if check_status:
-        _print_if_test(app, r.data)
+        _print_if_test(app, _get_response_data(app, r))
         assert r.status_code == 200
-        return json.loads(r.data)
+        return _get_response_json(r)
     else:
         return r
 
@@ -373,30 +431,44 @@ def post_document(app, doc_params: dict, csrf_token: str,
     if check_status is set to False, return the response object
     """
     url = "/api/v1/docs"
-    doc_params["csrf_token"] = csrf_token
-    r = app.post(
-        url,
-        data=doc_params,
-        headers=file_upload_headers,
-        follow_redirects=True
-    )
+    if _is_requests_session(app):
+        url = BASE_URL + url
+        data = {
+            "csrf_token": csrf_token,
+            "name": doc_params.pop("name"),
+            "mimetype": doc_params.pop("mimetype")
+        }
+        r = app.post(
+            url,
+            data=data,
+            files=doc_params,
+            verify=False
+        )
+    else:
+        doc_params["csrf_token"] = csrf_token
+        r = app.post(
+            url,
+            data=doc_params,
+            headers=file_upload_headers,
+            follow_redirects=True
+        )
     if check_status:
         _print_if_test(app, f"[post_document] status code = {r.status_code}")
-        _print_if_test(app, r.data)
+        _print_if_test(app, _get_response_data(app, r))
         assert r.status_code == 200
-        return json.loads(r.data)["document_id"]
+        return _get_response_json(r)["document_id"]
     return r
 
 
 def get_document(app, doc_id: int, check_status: bool = True):
+    """Document will be served as a file from memory
+    Response is the response object"""
     url = f"/api/v1/docs/{doc_id}"
     r = json_get(app, url)
     if check_status:
-        _print_if_test(app, r.data)
+        _print_if_test(app, _get_response_data(app, r))
         assert r.status_code == 200
-        return r.data
-    else:
-        return r
+    return r
 
 
 def update_document(app, doc_id: int, doc_params: dict, csrf_token: str,
@@ -409,19 +481,15 @@ def update_document(app, doc_id: int, doc_params: dict, csrf_token: str,
         headers=file_upload_headers,
         follow_redirects=True
     )
-    _print_if_test(app, r.data)
+    _print_if_test(app, _get_response_data(app, r))
     return r
 
 
 def delete_document(app, doc_id: int, csrf_token: str,
                     check_status: bool = True):
-    url = f"/api/v1/docs/{doc_id}"
-    r = app.delete(url,
-                   data=json.dumps({
-                       "csrf_token": csrf_token
-                   }),
-                   headers=json_header, follow_redirects=True)
-    _print_if_test(app, r.data)
+    url = f"/api/v1/docs/{doc_id}?csrf_token={csrf_token}"
+    r = json_delete(app, url)
+    _print_if_test(app, _get_response_data(app, r))
     if check_status:
         assert r.status_code == 200
     return r
@@ -433,8 +501,8 @@ def get_entries_v2(app):
     url = "/api/v2/entries"
     r = json_get(app, url)
     assert r.status_code == 200
-    _print_if_test(app, r.data)
-    return json.loads(r.data)
+    _print_if_test(app, _get_response_data(app, r))
+    return _get_response_json(r)
 
 
 def get_entry_v2(app, entry_id: int, check_status: bool = True):
@@ -442,8 +510,8 @@ def get_entry_v2(app, entry_id: int, check_status: bool = True):
     r = json_get(app, url)
     if check_status:
         assert r.status_code == 200
-        _print_if_test(app, r.data)
-        return json.loads(r.data)
+        _print_if_test(app, _get_response_data(app, r))
+        return _get_response_json(r)
     else:
         return r
 
@@ -457,7 +525,7 @@ def get_api_token_with_login(session, check_status: bool = True):
     _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return json.loads(response_data)["token"]
+        return _get_response_json(r)["token"]
     else:
         return r
 
@@ -474,7 +542,7 @@ def login_with_token(session, email: str, password: str, check_status: bool = Tr
     try:
         if check_status:
             assert r.status_code == 200
-            return json.loads(response_data)["token"]
+            return _get_response_json(r)["token"]
         else:
             return r
     except AssertionError:
@@ -503,7 +571,7 @@ def create_entry_with_token(session, entry: dict, password: str, token: str, che
     _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return json.loads(response_data)["entry_id"]
+        return _get_response_json(r)["entry_id"]
     else:
         return r
 
@@ -529,7 +597,7 @@ def get_encrypted_entries_with_token(session, token: str, check_status: bool = T
     _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return json.loads(response_data)
+        return _get_response_json(r)
     else:
         return r
 
@@ -588,7 +656,7 @@ def edit_entry_with_token(session,
     _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return json.loads(r.data)
+        return _get_response_json(r)
     else:
         return r
 
@@ -653,31 +721,31 @@ class ApiV3:
             r = json_get(self.client, url, token=self.api_token)
         else:
             r = json_get(self.client, url)
-        _print_if_test(self.client, r.data)
+        _print_if_test(self.client, _get_response_data(self.client, r))
         if check_status:
             assert r.status_code == 200
-            return json.loads(r.data)
+            return _get_response_json(r)
         else:
             return r
 
     def json_patch(self, url: str, data: dict, check_status: bool = True):
         assert self.api_token is not None
         r = json_patch(self.client, url, data=data, token=self.api_token)
-        _print_if_test(self.client, r.data)
+        _print_if_test(self.client, _get_response_data(self.client, r))
         if check_status:
             assert r.status_code == 200
-            return json.loads(r.data)
+            return _get_response_json(r)
         else:
             return r
 
     def json_delete(self, url: str, check_status: bool = True):
         assert self.api_token is not None
         r = json_delete(self.client, url, token=self.api_token)
-        _print_if_test(self.client, r.data)
+        _print_if_test(self.client, _get_response_data(self.client, r))
         try:
             if check_status:
                 assert r.status_code == 200
-                return json.loads(r.data)
+                return _get_response_json(r)
             else:
                 return r
         except AssertionError:

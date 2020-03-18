@@ -12,7 +12,7 @@ from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
 from passzero.models import db
 
-from . import api
+from ..common import api
 
 app = Flask(__name__)
 app.secret_key = 'foo'

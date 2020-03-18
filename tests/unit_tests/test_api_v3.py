@@ -9,8 +9,8 @@ from passzero.app_factory import create_app
 from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service
 from passzero.models import db as _db
 
-from . import api
-from .api import BadStatusCodeException
+from ..common import api
+from ..common.api import BadStatusCodeException
 import pytest
 
 

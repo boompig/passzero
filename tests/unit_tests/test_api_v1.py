@@ -11,7 +11,7 @@ from six import BytesIO
 from passzero.app_factory import create_app
 from passzero.models import db
 
-from . import api
+from ..common import api
 
 DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"

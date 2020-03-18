@@ -15,7 +15,7 @@ import pytest
 from passzero.app_factory import create_app
 from passzero.models import db
 
-from . import api
+from ..common import api
 
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"

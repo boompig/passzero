@@ -10,7 +10,7 @@ from six import BytesIO
 from passzero.app_factory import create_app
 from passzero.models import db
 
-from . import api
+from ..common import api
 
 DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"
@@ -79,7 +79,8 @@ class PassZeroDocTester(unittest.TestCase):
         assert type(docs_after[0]["id"]) == int
         assert docs_after[0]["name"] == doc_params["name"]
         # decrypt the document
-        doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
+        r = api.get_document(self.app, docs_after[0]["id"], check_status=True)
+        doc = r.data
         assert doc == b"hello world\n"
         return docs_after[0]["id"]
 
@@ -97,7 +98,8 @@ class PassZeroDocTester(unittest.TestCase):
         assert len(docs_after) == 1
         assert isinstance(docs_after[0]["id"], int)
         assert docs_after[0]["name"] == doc_params["name"]
-        doc = api.get_document(self.app, docs_after[0]["id"], check_status=True)
+        r = api.get_document(self.app, docs_after[0]["id"], check_status=True)
+        doc = r.data
         assert isinstance(contents, bytes)
         assert len(contents) > 0
         assert doc == contents
