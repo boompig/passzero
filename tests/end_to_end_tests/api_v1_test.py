@@ -391,7 +391,10 @@ class PassZeroApiV1Tester(unittest.TestCase):
             docs_before = api.get_documents(s).json()
             assert docs_before == []
             doc_params = {"document": BytesIO(b"hello world\n")}
-            r = api.post_document(s, u"test document", doc_params,
+            r = api.post_document(s,
+                                  u"test document",
+                                  "text/plain",
+                                  doc_params,
                                   upload_doc_token)
             print(r.status_code)
             print(r.text)
@@ -417,7 +420,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
             docs_before = api.get_documents(s).json()
             assert docs_before == []
             doc_params = {"document": BytesIO(b"hello world\n")}
-            r = api.post_document(s, u"test document",
+            r = api.post_document(s,
+                                  u"test document",
+                                  "text/plain",
                                   doc_params, upload_doc_token)
             assert r.status_code == 200
             docs_after = api.get_documents(s).json()
@@ -432,7 +437,9 @@ class PassZeroApiV1Tester(unittest.TestCase):
             assert docs_before == []
             upload_doc_token = api.get_csrf_token(s).json()
             doc_params = {"document": BytesIO(b"hello world\n")}
-            r = api.post_document(s, u"test document",
+            r = api.post_document(s,
+                                  u"test document",
+                                  "text/plain",
                                   doc_params,
                                   upload_doc_token)
             assert r.status_code == 200

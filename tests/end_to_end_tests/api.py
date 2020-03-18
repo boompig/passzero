@@ -150,13 +150,18 @@ def get_documents(session) -> Response:
     return json_get(session, "/api/v1/docs")
 
 
-def post_document(session, name: str, doc_params, csrf_token: str) -> Response:
+def post_document(session, name: str, mimetype: str, doc_params: dict,
+                  csrf_token: str) -> Response:
     assert isinstance(name, six.text_type)
+    assert isinstance(mimetype, six.text_type)
     assert isinstance(doc_params, dict)
     assert isinstance(csrf_token, six.text_type)
     url = BASE_URL + "/api/v1/docs"
     r = session.post(url,
-                     data={"name": name, "csrf_token": csrf_token},
+                     data={
+                         "name": name,
+                         "csrf_token": csrf_token,
+                         "mimetype": mimetype},
                      files=doc_params,
                      verify=False
                      )
