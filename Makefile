@@ -26,9 +26,6 @@ build-name: scripts/add_build_name.py passzero/config.py
 
 minify: minify-js minify-css
 
-static/js/dist/entries.bundle.js: $(entries_bundle_src)
-	yarn run webpack
-
 ts-compile: $(standalone_typescript_src) typescript/standalone/tsconfig.json
 	mkdir -p static/js/src
 	# use the standalone tsconfig.json file for this
