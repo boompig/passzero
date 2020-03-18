@@ -31,7 +31,7 @@ ts-compile: $(standalone_typescript_src) typescript/standalone/tsconfig.json
 	# use the standalone tsconfig.json file for this
 	yarn run tsc --project typescript/standalone/
 
-minify-js: ts-compile $(js_dist_targets) static/js/dist/entries.bundle.js
+minify-js: ts-compile $(js_dist_targets)
 
 static/js/dist/%.min.js: static/js/src/**/%.js
 	mkdir -p static/js/dist
