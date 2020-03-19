@@ -1,3 +1,4 @@
+import * as moment from "moment";
 import {Component} from "react";
 import * as React from "react";
 import * as ReactTooltip from "react-tooltip";
@@ -132,9 +133,24 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
         } else {
             accountElem = <div className="entry-title account">{this.props.entry.account}</div>;
         }
+        let lastModifiedElem = null;
+        if (this.props.entry.last_modified) {
+            const lastModified = moment(this.props.entry.last_modified * 1000);
+            const s = lastModified.fromNow();
+            let cls = "badge-success";
+            if (lastModified <= moment().subtract(5, "years")) {
+                cls = "badge-danger";
+            } else if (lastModified <= moment().subtract(1, "years")) {
+                cls = "badge-warning";
+            }
+            lastModifiedElem = <div className={"badge last-modified " + cls}>
+                Last modified {s}
+            </div>;
+        }
 
         return (
             <div className="entry" id={ `entry-${this.props.entry.id}` }>
+                {lastModifiedElem}
                 {accountElem}
                 <div className="username">{ this.props.entry.username }</div>
                 { password }
