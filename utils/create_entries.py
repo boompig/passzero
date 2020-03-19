@@ -18,8 +18,8 @@ def get_db_session():
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument("--email", required=True)
-    parser.add_argument("--password", required=True)
+    parser.add_argument("-u", "--email", required=True)
+    parser.add_argument("-p", "--password", required=True)
     parser.add_argument("-v", "--verbose", action="store_true")
     parser.add_argument("-n", "--num-entries", type=int, default=120)
     return parser.parse_args()
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     if not user.authenticate(args.password):
         logging.critical("Incorrect password for user %s", args.email)
         sys.exit(1)
-    # evenly split between the different versions: 2, 3, 4
+    # evenly split between the different versions
     versions = [4, 5]
     created_so_far = 0
     for j, version in enumerate(versions):

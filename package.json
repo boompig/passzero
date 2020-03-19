@@ -15,11 +15,10 @@
     "lint:new-link-bundle": "tslint 'typescript/new-link-bundle/**/*.ts?(x)'",
     "lint:entries-bundle": "tslint 'typescript/entries-bundle/**/*.ts?(x)'",
     "lint:common-modules": "tslint typescript/common-modules/*.ts",
-    "postinstall": "make clean && make ts-compile && make minify && yarn build:prod",
     "build": "yarn webpack -d",
     "build:watch": "yarn webpack -d --watch",
     "build:prod": "yarn webpack -p",
-    "heroku-postbuild": "yarn build:prod"
+    "heroku-postbuild": "make clean && make ts-compile && make minify && yarn build:prod"
   },
   "dependencies": {
     "@types/jquery": "^3.3.29",
@@ -33,6 +32,7 @@
     "jquery": "3.4.1",
     "js-cookie": "2.1.4",
     "lodash": "^4.17.15",
+    "moment": "^2.24.0",
     "react": "^16.7.0",
     "react-dom": "^16.7.0",
     "react-tooltip": "^3.9.1",
