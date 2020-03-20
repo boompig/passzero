@@ -10,6 +10,7 @@ from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service
 from passzero.models import db as _db
 
 from ..common import api
+from .utils import get_test_decrypted_entry
 from ..common.api import BadStatusCodeException
 import pytest
 
@@ -172,17 +173,11 @@ def test_delete_entry_no_login(app):
 
 
 def test_create_entry_no_login(app):
-    entry = {
-        "account": "foo",
-        "username": "bar",
-        "password": "baz",
-        "extra": "foobar",
-        "has_2fa": False
-    }
+    dec_entry = get_test_decrypted_entry()
     with app.test_client() as client:
         rv = api.create_entry_with_token(
             client,
-            entry,
+            dec_entry,
             password="foo",
             token="foo",
             check_status=False
@@ -199,15 +194,9 @@ def test_delete_all_entries(app):
         token = api.login_with_token(client,
                                      DEFAULT_EMAIL, password, check_status=True)
         for i in range(20):
-            entry = {
-                "account": "foo-%d" % i,
-                "username": "bar-%d" % i,
-                "password": "baz-%d" % i,
-                "extra": "foobar-%d" % i,
-                "has_2fa": (i % 2 == 0)
-            }
+            dec_entry = get_test_decrypted_entry()
             api.create_entry_with_token(client,
-                                        entry, password, token, check_status=True)
+                                        dec_entry, password, token, check_status=True)
         entries = api.get_encrypted_entries_with_token(
             client,
             token,
@@ -254,14 +243,8 @@ def test_create_entry(app):
         create_active_account(client, email, password)
         token = api.login_with_token(client, email, password,
                                      check_status=True)
-        entry = {
-            "account": "fake",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-            "has_2fa": True
-        }
-        api.create_entry_with_token(client, entry, password, token,
+        dec_entry = get_test_decrypted_entry()
+        api.create_entry_with_token(client, dec_entry, password, token,
                                     check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token,
                                                        check_status=True)
@@ -293,13 +276,8 @@ def test_create_entry_bad_token(app):
     with app.test_client() as client:
         create_active_account(client, email, password)
         real_token = api.login_with_token(client, email, password)
-        entry = {
-            "account": "fake",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-        }
-        r = api.create_entry_with_token(client, entry,
+        dec_entry = get_test_decrypted_entry()
+        r = api.create_entry_with_token(client, dec_entry,
                                         password=DEFAULT_PASSWORD,
                                         token="foo",
                                         check_status=False)
@@ -316,16 +294,10 @@ def test_create_entry_bad_password(app):
                               email, password)
         token = api.login_with_token(client,
                                      email, password, check_status=True)
-        entry = {
-            "account": "my entry",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-            "has_2fa": False
-        }
+        dec_entry = get_test_decrypted_entry()
         r = api.create_entry_with_token(
             client,
-            entry=entry,
+            entry=dec_entry,
             password="bad pass",
             token=token,
             check_status=False
@@ -347,13 +319,7 @@ def test_create_and_delete_entry(app):
         entries = api.get_encrypted_entries_with_token(client, token,
                                                        check_status=True)
         assert len(entries) == 0
-        entry = {
-            "account": "fake",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-            "has_2fa": False
-        }
+        entry = get_test_decrypted_entry()
         print("creating entry")
         entry_id = api.create_entry_with_token(client, entry, password, token,
                                                check_status=True)
@@ -551,13 +517,7 @@ def test_decrypt_entry_bad_password(app):
                               email, password)
         token = api.login_with_token(client,
                                      email, password, check_status=True)
-        entry = {
-            "account": "my entry",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-            "has_2fa": False
-        }
+        entry = get_test_decrypted_entry()
         entry_id = api.create_entry_with_token(
             client,
             entry=entry,
@@ -583,13 +543,7 @@ def test_decrypt_entry_not_your_entry(app):
         # create an entry for user[0]
         t1 = api.login_with_token(client,
                                   emails[0], passwords[0], check_status=True)
-        entry = {
-            "account": "fake",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-            "has_2fa": False
-        }
+        entry = get_test_decrypted_entry()
         entry_id = api.create_entry_with_token(client,
                                                entry, passwords[0], t1, check_status=True)
         # make sure user[1] has no entries
@@ -615,13 +569,7 @@ def test_delete_entry_not_your_entry(app):
         # create an entry for user[0]
         t1 = api.login_with_token(client,
                                   emails[0], passwords[0], check_status=True)
-        entry = {
-            "account": "fake",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-            "has_2fa": False
-        }
+        entry = get_test_decrypted_entry()
         entry_id = api.create_entry_with_token(client,
                                                entry, passwords[0], t1, check_status=True)
         out_entry_1 = api.decrypt_entry_with_token(client,
@@ -643,13 +591,7 @@ def test_delete_entry_not_your_entry(app):
 
 def test_get_entries(app):
     with app.test_client() as client:
-        entry = {
-            "account": "fake",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-            "has_2fa": True,
-        }
+        entry = get_test_decrypted_entry()
         create_active_account(client,
                               DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_token(client,
@@ -718,6 +660,20 @@ def test_get_entries_not_your_entry(app):
         )
         print(r.data)
         assert r.status_code != 200
+
+
+def test_update_entry_versions(app):
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        pzApi = api.ApiV3(client)
+        pzApi.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        dec_entry = get_test_decrypted_entry()
+        entry_id = pzApi.create_entry(dec_entry)
+        num_updated = pzApi.update_entry_versions()
+        assert num_updated == 0
+        entries = pzApi.get_encrypted_entries()
+        assert len(entries) == 1
+        assert entries[0]["id"] == entry_id
 
 
 def _assert_links_equal(l1: dict, l2: dict) -> None:

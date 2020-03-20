@@ -6,6 +6,9 @@
 // import * as $ from "jquery";
 
 
+/**
+ * API v1 and v2
+ */
 const pzAPI = {
     base_url: window.location.protocol + "//" + window.location.host,
 
@@ -242,5 +245,78 @@ const pzAPI = {
             });
     },
 };
+
+interface IApiKey {
+    token: string;
+}
+
+class PasszeroApiv3 {
+    async getJsonWithBearer(url: string, apiToken?: string) {
+        const options = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        } as RequestInit;
+        if (apiToken) {
+            (options.headers as any).Authorization = `Bearer ${apiToken}`;
+        }
+        const response = await window.fetch(url, options);
+        if (response.ok) {
+            return response.json();
+        } else {
+            const text = await response.text();
+            throw new Error(text);
+        }
+    }
+
+
+    /**
+     * If rawResponse is not defined then default to false
+     */
+    async patchJsonWithBearer(url: string, apiToken: string, data?: any, rawResponse?: boolean) {
+        if (!data) {
+            data = {};
+        }
+        if (!rawResponse) {
+            rawResponse = false;
+        }
+        const options = {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${apiToken}`
+            },
+            body: JSON.stringify(data),
+        } as RequestInit;
+        const response = await window.fetch(url, options);
+        if (rawResponse) {
+            return response;
+        } else {
+            return response.json();
+        }
+    }
+
+    async getToken(): Promise<string> {
+        const url = "/api/v3/token";
+        return (await this.getJsonWithBearer(url)).token;
+    }
+
+    /**
+     * Return the # updated
+     */
+    async updateEntryVersions(masterPassword: string): Promise<number> {
+        if (!masterPassword) {
+            throw new Error("masterPassword is a required argument");
+        }
+        const url = "/api/v3/entries";
+        const token = await this.getToken();
+        const responseJson = await this.patchJsonWithBearer(url, token, {
+            "password": masterPassword
+        });
+        return responseJson.num_updated;
+    }
+
+}
 
 // export { pzAPI };

@@ -7,6 +7,7 @@ from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
 from ..models import Entry, User, db
 from .jwt_auth import authorizations
+from . import app_error_codes
 
 
 def jsonify_entries_pool(entry: Entry) -> dict:
@@ -141,7 +142,7 @@ class ApiEntryList(Resource):
 
         on error::
 
-            { "status": "error", "msg": string }
+            { "status": "error", "msg": string, "code": int }
 
         Status codes
         ------------
@@ -151,5 +152,56 @@ class ApiEntryList(Resource):
         user_id = get_jwt_identity()["user_id"]
         enc_entries = backend.get_entries(db.session, user_id)
         if any([entry.version < 4 for entry in enc_entries]):
-            return json_error_v2("This method does not work if there are entries below version 4", 500)
+            return json_error_v2("This method does not work if there are entries below version 4",
+                                 http_status_code=500,
+                                 app_error_code=app_error_codes.ENTRIES_TOO_OLD)
         return jsonify_entries(enc_entries)
+
+    @ns.doc(security="apikey")
+    @jwt_required
+    def patch(self):
+        """
+        Update the versions of all the entries to the latest version.
+        This could take a long time.
+
+        Authentication
+        --------------
+        JWT
+
+        Arguments
+        ---------
+        - password: string (required)
+
+        Response
+        --------
+        on success::
+
+            { "status": "success", "num_updated": int }
+
+        on error::
+
+            { "status": "error", "msg": string }
+
+
+        Status codes
+        ------------
+        - 200: success
+        - 400: various input validation errors
+        - 401: not authenticated / password is not correct
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("password", type=str, required=True)
+        args = parser.parse_args()
+        user_id = get_jwt_identity()["user_id"]
+        user = db.session.query(User).filter_by(id=user_id).one()
+        if user.authenticate(args.password):
+            num_updated = backend.update_entry_versions_for_user(
+                db_session=db.session,
+                user_id=user_id,
+                master_key=args.password
+            )
+            return{
+                "num_updated": num_updated
+            }
+        else:
+            return json_error_v2("Password is not correct", 401)

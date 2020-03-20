@@ -67,22 +67,22 @@ class Entry(db.Model):
             "is_encrypted": True
         }
 
-    def decrypt(self, key: str) -> dict:
+    def decrypt(self, master_key: str) -> dict:
         """Decrypt with padding
         :type key:              unicode string
         """
-        assert isinstance(key, six.text_type)
+        assert isinstance(master_key, six.text_type)
         assert isinstance(self.username, six.text_type)
-        dec_password = decrypt_password_legacy(key + self.padding, self.password)
+        dec_password = decrypt_password_legacy(master_key + self.padding, self.password)
         if self.extra:
             try:
-                dec_extra = decrypt_field_v1(key, self.padding, self.extra)
+                dec_extra = decrypt_field_v1(master_key, self.padding, self.extra)
             except TypeError:
                 dec_extra = self.extra
         else:
             dec_extra = ""
         try:
-            dec_username = decrypt_field_v1(key, self.padding, self.username)
+            dec_username = decrypt_field_v1(master_key, self.padding, self.username)
         except TypeError:
             dec_username = self.username
         return {
@@ -90,7 +90,8 @@ class Entry(db.Model):
             "account": self.account,
             "username": dec_username,
             "password": dec_password,
-            "extra": dec_extra
+            "extra": dec_extra,
+            "has_2fa": self.has_2fa
         }
 
     def encrypt(self, master_key: str, dec_entry: dict):
@@ -113,20 +114,33 @@ class Entry(db.Model):
         self.extra = encrypt_field_v1(master_key, self.padding,
                                       dec_entry[u"extra"])
         assert isinstance(self.extra, six.text_type)
+        self.has_2fa = dec_entry["has_2fa"]
+        assert isinstance(self.has_2fa, bool)
         self.version = 1
 
 
 class Entry_v2(Entry):
+    """This is an old version of the entry
+    DO NOT USE THIS VERSION. It exists for backwards compatibility only.
+
+    The following fields are encrypted:
+    - username
+    - password
+    - extra
+
+    The following fields are *not* encrypted:
+    - account
+    """
 
     __mapper_args__ = {
         "polymorphic_identity": 2
     }
 
-    def decrypt(self, key: str) -> dict:
-        assert isinstance(key, six.text_type)
+    def decrypt(self, master_key: str) -> dict:
+        assert isinstance(master_key, six.text_type)
         key_salt = hex_to_byte_legacy(self.key_salt)
         iv = hex_to_byte_legacy(self.iv)
-        extended_key = extend_key(key, key_salt)
+        extended_key = extend_key(master_key, key_salt)
         dec_password = decrypt_field_v2(extended_key, self.password, iv)
         if self.extra:
             try:
@@ -144,7 +158,8 @@ class Entry_v2(Entry):
             "account": self.account,
             "username": dec_username,
             "password": dec_password,
-            "extra": dec_extra
+            "extra": dec_extra,
+            "has_2fa": self.has_2fa
         }
 
     def encrypt(self, master_key: str, dec_entry: dict):
@@ -161,6 +176,7 @@ class Entry_v2(Entry):
         iv = get_iv()
         extended_key = extend_key(master_key, key_salt)
         self.account = dec_entry["account"]
+        self.has_2fa = dec_entry["has_2fa"]
         # these should all be unicode
         self.username = encrypt_field_v2(extended_key, dec_entry["username"], iv)
         self.password = encrypt_field_v2(extended_key, dec_entry["password"], iv)
@@ -169,6 +185,7 @@ class Entry_v2(Entry):
         assert isinstance(self.username, six.text_type)
         assert isinstance(self.password, six.text_type)
         assert isinstance(self.extra, six.text_type)
+        assert isinstance(self.has_2fa, bool)
         self.key_salt = byte_to_hex_legacy(key_salt)
         self.iv = byte_to_hex_legacy(iv)
         self.version = 2
@@ -210,24 +227,24 @@ class Entry_v3(Entry):
         for field, enc_message in zip(fields, enc_messages):
             enc_entry[field] = base64_encode(enc_message)
         # entry contents
-        self.account = enc_entry["account"]
-        self.username = enc_entry["username"]
-        self.password = enc_entry["password"]
-        self.extra = enc_entry["extra"]
+        self.account = enc_entry["account"].decode("utf-8")
+        self.username = enc_entry["username"].decode("utf-8")
+        self.password = enc_entry["password"].decode("utf-8")
+        self.extra = enc_entry["extra"].decode("utf-8")
         # unencrypted contents (forward compatibility)
         self.has_2fa = dec_entry.get("has_2fa", False)
         # metadata - which encryption scheme to use to decrypt
         self.version = 3
         self.pinned = False
-        self.iv = base64_encode(iv)
-        self.key_salt = base64_encode(kdf_salt)
+        self.iv = base64_encode(iv).decode("utf-8")
+        self.key_salt = base64_encode(kdf_salt).decode("utf-8")
         # old information
         self.padding = None
 
-    def decrypt(self, key: str) -> dict:
-        assert isinstance(key, six.text_type)
+    def decrypt(self, master_key: str) -> dict:
+        assert isinstance(master_key, six.text_type)
         kdf_salt = binascii.a2b_base64(self.key_salt)
-        extended_key = extend_key(key, kdf_salt)
+        extended_key = extend_key(master_key, kdf_salt)
         iv = binascii.a2b_base64(self.iv)
         messages = [
             binascii.a2b_base64(self.account),
@@ -274,7 +291,7 @@ class Entry_v4(Entry):
         "polymorphic_identity": 4
     }
 
-    def decrypt(self, key: str) -> dict:
+    def decrypt(self, master_key: str) -> dict:
         """
         Version 4 encrypts, sequentially, the following data:
         - username
@@ -282,10 +299,10 @@ class Entry_v4(Entry):
         - extra field
         Notably, 'account' field is *not* encrypted
         """
-        assert isinstance(key, six.text_type)
+        assert isinstance(master_key, six.text_type)
         kdf_salt = binascii.a2b_base64(self.key_salt)
         assert isinstance(kdf_salt, bytes)
-        extended_key = extend_key(key, kdf_salt)
+        extended_key = extend_key(master_key, kdf_salt)
         assert isinstance(extended_key, bytes)
         iv = binascii.a2b_base64(self.iv)
         assert isinstance(iv, bytes)
@@ -399,14 +416,14 @@ class Entry_v5(Entry):
             memlimit=nacl.pwhash.MEMLIMIT_INTERACTIVE,
         )
 
-    def decrypt(self, key: str) -> dict:
+    def decrypt(self, master_key: str) -> dict:
         """
         Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
         """
-        assert isinstance(key, six.text_type)
+        assert isinstance(master_key, six.text_type)
         assert isinstance(self.key_salt, six.text_type)
         kdf_salt = binascii.a2b_base64(self.key_salt.encode("utf-8"))
-        entry_key = self.__get_entry_key(key, kdf_salt)
+        entry_key = self.__get_entry_key(master_key, kdf_salt)
         box = nacl.secret.SecretBox(entry_key)
         assert isinstance(self.contents, bytes)
         dec_contents = box.decrypt(self.contents)

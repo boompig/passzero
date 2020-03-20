@@ -24,6 +24,9 @@
         <li role="presentation" class="nav-item">
             <a href="#nuke" class="nav-link" aria-controls="nuke" role="tab" data-toggle="tab" aria-selected="false">Nuke</a>
         </li>
+        <li role="presentation" class="nav-item">
+            <a href="#update-entry-versions" class="nav-link" aria-controls="nuke" role="tab" data-toggle="tab" aria-selected="false">Update Entry Versions</a>
+        </li>
     </ul>
     <div class="tab-content">
         <div id="password-strength" class="tab-pane" role="tabpanel">
@@ -46,11 +49,25 @@
         </div>
         <div id="nuke" class="tab-pane" role="tabpanel">
             <div class="alert alert-warning"><strong>Warning</strong> This action deletes all your entries and cannot be undone</div>
-            <div class="alert alert-success" id="nuke-success-msg"></div>
+
+            {# filled in via javascript #}
+            <div class="alert alert-success success-msg" id="nuke-success-msg" style="display: none;"></div>
+
             <form role="form" action="/api/v1/entries/nuclear" method="POST"
                 id="nuke-entries-form">
                 <input type="hidden" name="csrf_token" value={{ csrf_token() }}>
                 <button type="submit" class="btn btn-danger">Nuke Entries</button>
+            </form>
+        </div>
+        <div id="update-entry-versions" class="tab-pane" role="tabpanel">
+            <p>Update all your entries to the newest version to increase security and gain access to new features.</p>
+
+            {# filled in via javascript #}
+            <div class="alert alert-success success-msg" style="display: none;"></div>
+
+            <form role="form">
+                <input type="hidden" name="master_password" class="master-password" value={{ session['password'] }}>
+                <button type="submit" class="btn btn-success">Update</button>
             </form>
         </div>
     </div>

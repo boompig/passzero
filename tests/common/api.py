@@ -799,6 +799,16 @@ class ApiV3:
             check_status=True
         )
 
+    def update_entry_versions(self) -> int:
+        """Always check status"""
+        url = "/api/v3/entries"
+        assert self.password is not None
+        assert self.api_token is not None
+        response_json = self.json_patch(url, {
+            "password": self.password
+        }, check_status=True)
+        return response_json["num_updated"]
+
     # link
 
     def create_link(self, link: dict) -> int:

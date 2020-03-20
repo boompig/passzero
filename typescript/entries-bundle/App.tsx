@@ -25,6 +25,7 @@ interface IAppState {
     masterPassword: string;
     servicesLoaded: boolean;
     services: IService[];
+    loadingErrorMsg: string | null;
 }
 
 class App extends Component<IAppProps, IAppState> {
@@ -48,6 +49,9 @@ class App extends Component<IAppProps, IAppState> {
             masterPassword: "",
             services: [],
             servicesLoaded: false,
+
+            // error msg if entries fail to load
+            loadingErrorMsg: null
         };
 
         this.findEntryIndex = this.findEntryIndex.bind(this);
@@ -88,9 +92,12 @@ class App extends Component<IAppProps, IAppState> {
                     entries: entries,
                     entriesLoaded: true,
                 }, this.addServicesToEntries);
-            }).catch((err) => {
+            }).catch((err: Error) => {
                 console.error("Failed to load entries from server");
                 console.error(err);
+                this.setState({
+                    loadingErrorMsg: err.message
+                });
             });
     }
 
@@ -232,25 +239,31 @@ class App extends Component<IAppProps, IAppState> {
             entries.push(entry);
         }
 
-        return (
-            <div id="inner-root">
-                {/* this is just a placeholder for now */}
-                <nav></nav>
-                <main className="container">
-                    <div className="inner-container">
-                        <NumEntries
-                            entriesLoaded={this.state.entriesLoaded}
-                            numEntries={this.state.entries.length} />
-                        {(this.state.entriesLoaded && this.state.entries.length > 0) ?
-                            <SearchForm onSearch={this.handleSearch} /> :
-                            null}
-                        <div id="entry-container">
-                            {entries}
+        if (this.state.loadingErrorMsg) {
+            return (<div className="alert alert-danger">
+                <strong>Error!</strong>&nbsp;{ this.state.loadingErrorMsg }
+            </div>);
+        } else {
+            return (
+                <div id="inner-root">
+                    {/* this is just a placeholder for now */}
+                    <nav></nav>
+                    <main className="container">
+                        <div className="inner-container">
+                            <NumEntries
+                                entriesLoaded={this.state.entriesLoaded}
+                                numEntries={this.state.entries.length} />
+                            {(this.state.entriesLoaded && this.state.entries.length > 0) ?
+                                <SearchForm onSearch={this.handleSearch} /> :
+                                null}
+                            <div id="entry-container">
+                                {entries}
+                            </div>
                         </div>
-                    </div>
-                </main>
-            </div>
-        );
+                    </main>
+                </div>
+            );
+        }
     }
 }
 

@@ -7,8 +7,7 @@ import six
 from sqlalchemy.orm.exc import NoResultFound
 
 from passzero.backend import encrypt_entry, insert_new_entry
-from passzero.crypto_utils import (constant_time_compare_passwords,
-                                   get_hashed_password)
+from passzero.crypto_utils import get_hashed_password
 from passzero.models import Entry, User
 
 
@@ -55,8 +54,11 @@ def verify_pinned_entry(session, pinned_entry: Entry, old_password: str) -> None
 def reencrypt_entry(session, old_entry: Entry, user_id: int, old_password: str, new_password: str) -> None:
     dec_entry = old_entry.decrypt(old_password)
     new_entry = encrypt_entry(new_password, dec_entry)
-    insert_new_entry(session, new_entry, user_id)
+    # reuse ID from deleted entry
+    new_entry.id = old_entry.id
+    # order matters here. delete before insert.
     session.delete(old_entry)
+    insert_new_entry(session, new_entry, user_id)
 
 
 def reencrypt_entries(session, user_id: int, old_password: str, new_password: str) -> int:
@@ -94,12 +96,7 @@ def change_password(session, user_id: int, old_password: str, new_password: str)
     assert isinstance(new_password, six.text_type)
     # do proper authentication
     user = find_user(session, user_id)
-    assert isinstance(user, User)
-    if not constant_time_compare_passwords(
-            password_hash=user.password,
-            password=old_password,
-            salt=user.salt.encode("utf-8"),
-            hash_algo=user.password_hash_algo):
+    if not user.authenticate(old_password):
         logging.debug("[change_password] Hashed password is not the same as user password")
         session.rollback()
         return False

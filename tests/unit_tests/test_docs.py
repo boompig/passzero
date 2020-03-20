@@ -127,6 +127,20 @@ class PassZeroDocTester(unittest.TestCase):
         r = api.get_document(self.app, 1, check_status=False)
         assert r.status_code == 400
 
+    def test_get_not_your_doc(self):
+        # create document for user #1
+        self._create_active_account("user1@fake.com", DEFAULT_PASSWORD)
+        api.login(self.app, "user1@fake.com", DEFAULT_PASSWORD, check_status=True)
+        document_id = self.__create_and_verify_text_doc()
+        r = api.get_document(self.app, document_id, check_status=False)
+        assert r.status_code == 200
+        api.logout(self.app, check_status=True)
+
+        self._create_active_account("user2@fake.com", DEFAULT_PASSWORD)
+        api.login(self.app, "user2@fake.com", DEFAULT_PASSWORD, check_status=True)
+        r = api.get_document(self.app, document_id, check_status=False)
+        assert r.status_code == 400
+
     def test_delete_nonexistant_doc(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)

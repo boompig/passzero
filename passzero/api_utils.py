@@ -1,9 +1,9 @@
 import json
 import logging
 from functools import wraps
+from typing import Any, Dict, Optional, Tuple
 
 from flask import Response, abort, request, session
-from typing import Tuple, Dict
 
 from .config import CSRF_TOKEN_LENGTH
 from .crypto_utils import random_hex
@@ -108,11 +108,15 @@ def json_error(code: int, msg: str) -> Tuple[int, dict]:
     })
 
 
-def json_error_v2(msg: str, code: int) -> Tuple[Dict[str, str], int]:
-    return ({
+def json_error_v2(msg: str, http_status_code: int,
+                  app_error_code: Optional[int] = None) -> Tuple[Dict[str, Any], int]:
+    d = {
         "status": "error",
         "msg": msg
-    }, code)
+    }  # type: Dict[str, Any]
+    if app_error_code:
+        d["code"] = app_error_code
+    return (d, http_status_code)
 
 
 def json_success(msg: str) -> Tuple[int, dict]:
