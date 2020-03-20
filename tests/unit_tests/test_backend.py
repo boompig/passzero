@@ -1,22 +1,25 @@
 import logging
 import os
+from unittest.mock import MagicMock
 
 import pytest
-from unittest.mock import MagicMock
 from sqlalchemy.orm.exc import NoResultFound
 
+from passzero import backend
 from passzero.app_factory import create_app
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries,
                               get_account_with_email, get_entries,
                               get_services_map, insert_document_for_user,
-                              insert_entry_for_user, password_strength_scores,
-                              insert_link_for_user)
-from passzero import backend
+                              insert_entry_for_user, insert_link_for_user,
+                              password_strength_scores)
 from passzero.change_password import change_password
 from passzero.crypto_utils import PasswordHashAlgo
-from passzero.models import DecryptedDocument, Entry, Service, User, AuthToken, Link, EncryptedDocument
+from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
+                             Entry, Link, Service, User)
 from passzero.models import db as _db
+
+from .utils import get_test_decrypted_entry, assert_decrypted_entries_equal
 
 DB_FILENAME = "passzero.db"
 DEFAULT_EMAIL = u"fake@fake.com"
@@ -153,13 +156,7 @@ def test_delete_account(session):
 
 
 def test_insert_entry_for_user(session):
-    dec_entry_in = {
-        "account": "a",
-        "username": "u",
-        "password": "p",
-        "extra": "e",
-        "has_2fa": True
-    }
+    dec_entry_in = get_test_decrypted_entry()
     user_key = u"master key"
     insert_entry_for_user(session, dec_entry_in, 1, user_key)
     # make sure the entry is inserted
@@ -167,8 +164,7 @@ def test_insert_entry_for_user(session):
     assert len(enc_entries) == 1
     dec_entries = decrypt_entries(enc_entries, user_key)
     assert len(dec_entries) == 1
-    for field in dec_entry_in:
-        assert dec_entry_in[field] == dec_entries[0][field]
+    assert_decrypted_entries_equal(dec_entry_in, dec_entries[0])
 
 
 def test_delete_all_entries(session):
@@ -196,20 +192,12 @@ def __encrypt_decrypt_entry(version: int):
     """
     Encrypt and decrypt an entry at specified version. Make sure the output matches the input"""
     # create multiple entries for this user
-    dec_entry = {
-        "account": u"test account",
-        "username": u"test username",
-        "password": u"test password",
-        "extra": u"test extra",
-        "has_2fa": True,
-    }
+    dec_entry = get_test_decrypted_entry()
     user_key = u"test master key"
     entry = backend.encrypt_entry(user_key, dec_entry, version=version)
     assert isinstance(entry, Entry)
-    dec_entry_again = entry.decrypt(user_key)
-    fields = ["account", "username", "password", "extra", "has_2fa"]
-    for field in fields:
-        assert dec_entry_again[field] == dec_entry[field]
+    dec_entry_out = entry.decrypt(user_key)
+    assert_decrypted_entries_equal(dec_entry_out, dec_entry)
 
 
 def test_encrypt_decrypt_entry_v5():
@@ -282,9 +270,7 @@ def __edit_entry(session, version):
     assert edited_entry.user_id == user.id
     # make sure entry is actually edited
     dec_entry_out = edited_entry.decrypt(user_key)
-    entry_fields = ["account", "username", "password", "extra", "has_2fa"]
-    for field in entry_fields:
-        assert dec_entry[field] == dec_entry_out[field]
+    assert_decrypted_entries_equal(dec_entry, dec_entry_out)
 
 
 # NOTE: v2 and v1 not tested for now
@@ -301,6 +287,70 @@ def test_edit_entry_v5(session):
     __edit_entry(session, version=5)
 
 
+def test_update_entry_versions_for_user(session):
+    user = create_inactive_user(session, DEFAULT_PASSWORD, DEFAULT_PASSWORD)
+    # should start with no entries
+    entries = backend.get_entries(session, user.id)
+    assert entries == []
+    # create an entry of each version
+    num_entries_per_version = 5
+    input_dec_entries = {}
+    for version in [1, 2, 3, 4, 5]:
+        for i in range(num_entries_per_version):
+            j = version * num_entries_per_version + i
+            dec_entry = get_test_decrypted_entry(j)
+            # remove extra field on some entries
+            if j % 2:
+                dec_entry.pop("extra")
+            e = backend.insert_entry_for_user(
+                db_session=session,
+                dec_entry=dec_entry,
+                user_id=user.id,
+                user_key=DEFAULT_PASSWORD,
+                version=version,
+                prevent_deprecated_versions=False
+            )
+            # ID should not change
+            input_dec_entries[e.id] = dec_entry
+    # run the update
+    num_updated = backend.update_entry_versions_for_user(session, user.id, DEFAULT_PASSWORD)
+    # version 5 entries should not be updated
+    assert num_updated == num_entries_per_version * 4
+    entries = backend.get_entries(session, user.id)
+    assert len(entries) == num_entries_per_version * 5
+    for entry in entries:
+        assert entry.version == 5
+        actual = entry.decrypt(DEFAULT_PASSWORD)
+        # assumes that IDs are sequential in terms of insert order
+        assert_decrypted_entries_equal(input_dec_entries[entry.id], actual)
+
+
+def test_update_entry_versions_for_user_only_latest(session):
+    user = create_inactive_user(session, DEFAULT_PASSWORD, DEFAULT_PASSWORD)
+    # should start with no entries
+    entries = backend.get_entries(session, user.id)
+    assert entries == []
+    dec_entry = get_test_decrypted_entry(0)
+    backend.insert_entry_for_user(session, dec_entry, user.id, DEFAULT_PASSWORD)
+    entries = backend.get_entries(session, user.id)
+    assert len(entries) == 1
+    num_updated = backend.update_entry_versions_for_user(session, user.id, DEFAULT_PASSWORD)
+    assert num_updated == 0
+    entries = backend.get_entries(session, user.id)
+    assert len(entries) == 1
+
+
+def test_update_entry_versions_for_user_no_entries(session):
+    user = create_inactive_user(session, DEFAULT_PASSWORD, DEFAULT_PASSWORD)
+    # should start with no entries
+    entries = backend.get_entries(session, user.id)
+    assert entries == []
+    num_updated = backend.update_entry_versions_for_user(session, user.id, DEFAULT_PASSWORD)
+    assert num_updated == 0
+    entries = backend.get_entries(session, user.id)
+    assert entries == []
+
+
 def test_get_account_with_email():
     session = MagicMock()
     email = u"fake_email"
@@ -315,25 +365,17 @@ def test_get_account_with_email():
     assert True
 
 
-def create_fake_entry(i):
-    return {
-        "account": "a-%d" % i,
-        "username": "u",
-        "password": "p",
-        "extra": "e",
-        "has_2fa": False
-    }
-
-
 def test_change_password(session):
     old_pwd = u"hello"
     new_pwd = u"world"
     user = create_inactive_user(session, u"fake@fake.com", old_pwd)
     logging.info("Creating fake users")
+    dec_entries_in = {}
     for i in range(10):
-        dec_entry_in = create_fake_entry(i)
-        insert_entry_for_user(session, dec_entry_in,
-                              user.id, old_pwd)
+        dec_entry_in = get_test_decrypted_entry(i)
+        entry_id = insert_entry_for_user(session, dec_entry_in,
+                                         user.id, old_pwd).id
+        dec_entries_in[entry_id] = dec_entry_in
     enc_entries = get_entries(session, user.id)
     logging.info("Decrypting newly created entries")
     dec_entries = decrypt_entries(enc_entries, old_pwd)
@@ -343,15 +385,13 @@ def test_change_password(session):
     logging.info("Password has changed")
     enc_entries = get_entries(session, user.id)
     dec_entries = decrypt_entries(enc_entries, new_pwd)
-    dec_entries.sort(key=lambda entry: entry["username"])
-    for i in range(len(dec_entries)):
-        for field in ["username", "password", "extra"]:
-            assert dec_entry_in[field] == dec_entries[i][field]
+    for dec_entry_out in dec_entries:
+        assert_decrypted_entries_equal(dec_entries_in[dec_entry_out["id"]], dec_entry_out)
 
 
 def test_password_strength_scores():
     email = "fake@foo.io"
-    dec_entries = [create_fake_entry(i) for i in range(10)]
+    dec_entries = [get_test_decrypted_entry(i) for i in range(10)]
     for i, entry in enumerate(dec_entries):
         entry["id"] = i
     dec_entries.append({

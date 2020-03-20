@@ -10,8 +10,8 @@ from passzero.config import DEFAULT_ENTRY_VERSION, SALT_SIZE
 from passzero.crypto_utils import (PasswordHashAlgo, get_hashed_password,
                                    get_salt)
 from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
-                             EncryptedDocument, Entry, Entry_v3, Entry_v4,
-                             Entry_v5, Link, Service, User)
+                             EncryptedDocument, Entry, Entry_v2, Entry_v3,
+                             Entry_v4, Entry_v5, Link, Service, User)
 from sqlalchemy.orm.exc import NoResultFound
 
 from .utils import base64_encode
@@ -173,11 +173,13 @@ def create_inactive_user(db_session: Session, email: str, password: str,
 
 def insert_entry_for_user(db_session: Session, dec_entry: dict,
                           user_id: int, user_key: str,
-                          version: int = DEFAULT_ENTRY_VERSION) -> Entry:
+                          version: int = DEFAULT_ENTRY_VERSION,
+                          prevent_deprecated_versions: bool = True) -> Entry:
     assert isinstance(user_id, int)
     assert isinstance(user_key, six.text_type)
     assert isinstance(version, int)
-    entry = encrypt_entry(user_key, dec_entry, version=version)
+    entry = encrypt_entry(user_key, dec_entry, version=version,
+                          prevent_deprecated_versions=prevent_deprecated_versions)
     insert_new_entry(db_session, entry, user_id)
     db_session.commit()
     return entry
@@ -213,7 +215,8 @@ def insert_new_entry(session: Session, entry: Entry, user_id: int) -> None:
 
 
 def encrypt_entry(user_key: str, dec_entry: dict,
-                  version: int = DEFAULT_ENTRY_VERSION) -> Entry:
+                  version: int = DEFAULT_ENTRY_VERSION,
+                  prevent_deprecated_versions: bool = True) -> Entry:
     """
     A different KDF key is used for each entry.
     This is equivalent to salting the entry.
@@ -225,6 +228,10 @@ def encrypt_entry(user_key: str, dec_entry: dict,
     assert isinstance(user_key, six.text_type)
     assert isinstance(dec_entry, dict)
     assert isinstance(version, int)
+    if version < 3 and prevent_deprecated_versions:
+        raise Exception(f"We do not support encrypting very old entries (version specified = {version})")
+    if "extra" not in dec_entry:
+        dec_entry["extra"] = ""
     entry = None
     if version == 5:
         entry = Entry_v5()
@@ -232,10 +239,40 @@ def encrypt_entry(user_key: str, dec_entry: dict,
         entry = Entry_v4()
     elif version == 3:
         entry = Entry_v3()
+    elif version == 2:
+        entry = Entry_v2()
+    elif version == 1:
+        entry = Entry()
     else:
-        raise Exception("We do not support encrypting very old entries (version specified = {})".format(version))
+        raise Exception(f"Invalid entry version: {version}")
+    assert entry is not None
     entry.encrypt(user_key, dec_entry)
     return entry
+
+
+def update_entry_versions_for_user(db_session: Session, user_id: int, master_key: str) -> int:
+    """"
+    Update the versions of entries to the latest version
+    Return the number of entries updated
+    """
+    n = 0
+    latest_version = 5
+    entries = db_session.query(Entry).filter_by(user_id=user_id, pinned=False).all()
+    for entry in entries:
+        # don't change latest entry version
+        if entry.version == latest_version:
+            continue
+        dec_entry = entry.decrypt(master_key)  # type: dict
+        e2 = Entry_v5()
+        e2.encrypt(master_key, dec_entry)
+        e2.user_id = user_id
+        # reuse ID from deleted entry
+        e2.id = entry.id
+        db_session.delete(entry)
+        db_session.add(e2)
+        n += 1
+    db_session.commit()
+    return n
 
 
 def edit_link(session: Session, link_id: int, user_key: str, edited_link: dict, user_id: int) -> Link:
