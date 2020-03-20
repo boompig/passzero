@@ -19,10 +19,26 @@ function nukeEntries(e: Event) {
     return false;
 }
 
+function updateEntryVersions(e: Event) {
+    "use strict";
+    e.preventDefault();
+    const api = new PasszeroApiv3();
+    const masterPassword = $("#update-entry-versions form .master-password").val() as string;
+    api.updateEntryVersions(masterPassword)
+        .then((numUpdated) => {
+            $("#update-entry-versions .success-msg").text(`Updated ${numUpdated} entries`).show();
+        });
+}
+
 $(() => {
-    const elem = document.querySelector("#nuke-entries-form");
+    let elem = document.querySelector("#nuke-entries-form");
     if (elem) {
         elem.addEventListener("submit", nukeEntries);
+    }
+
+    elem = document.querySelector("#update-entry-versions form");
+    if (elem) {
+        elem.addEventListener("submit", updateEntryVersions);
     }
 });
 

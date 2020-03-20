@@ -227,17 +227,17 @@ class Entry_v3(Entry):
         for field, enc_message in zip(fields, enc_messages):
             enc_entry[field] = base64_encode(enc_message)
         # entry contents
-        self.account = enc_entry["account"]
-        self.username = enc_entry["username"]
-        self.password = enc_entry["password"]
-        self.extra = enc_entry["extra"]
+        self.account = enc_entry["account"].decode("utf-8")
+        self.username = enc_entry["username"].decode("utf-8")
+        self.password = enc_entry["password"].decode("utf-8")
+        self.extra = enc_entry["extra"].decode("utf-8")
         # unencrypted contents (forward compatibility)
         self.has_2fa = dec_entry.get("has_2fa", False)
         # metadata - which encryption scheme to use to decrypt
         self.version = 3
         self.pinned = False
-        self.iv = base64_encode(iv)
-        self.key_salt = base64_encode(kdf_salt)
+        self.iv = base64_encode(iv).decode("utf-8")
+        self.key_salt = base64_encode(kdf_salt).decode("utf-8")
         # old information
         self.padding = None
 

@@ -1,4 +1,4 @@
-import { UnauthorizedError } from './errors';
+import { UnauthorizedError, ServerError } from './errors';
 
 interface IApiKey {
     token: string;
@@ -30,8 +30,13 @@ export default class PasszeroApiV3 {
             (options.headers as any).Authorization = `Bearer ${apiToken}`;
         }
         const response = await window.fetch(url, options);
+        console.log(response.headers.get("Content-Type"));
+        console.log(response.status);
         if (response.ok) {
             return response.json();
+        } else if(response.status == 500 && response.headers.get("Content-Type") === "application/json") {
+            const j = await response.json();
+            throw new ServerError(j.msg, response, j.app_error_code);
         } else {
             const text = await response.text();
             throw new UnauthorizedError(text);

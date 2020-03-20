@@ -7,6 +7,7 @@ from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
 from ..models import Entry, User, db
 from .jwt_auth import authorizations
+from . import app_error_codes
 
 
 def jsonify_entries_pool(entry: Entry) -> dict:
@@ -141,7 +142,7 @@ class ApiEntryList(Resource):
 
         on error::
 
-            { "status": "error", "msg": string }
+            { "status": "error", "msg": string, "code": int }
 
         Status codes
         ------------
@@ -151,7 +152,9 @@ class ApiEntryList(Resource):
         user_id = get_jwt_identity()["user_id"]
         enc_entries = backend.get_entries(db.session, user_id)
         if any([entry.version < 4 for entry in enc_entries]):
-            return json_error_v2("This method does not work if there are entries below version 4", 500)
+            return json_error_v2("This method does not work if there are entries below version 4",
+                                 http_status_code=500,
+                                 app_error_code=app_error_codes.ENTRIES_TOO_OLD)
         return jsonify_entries(enc_entries)
 
     @ns.doc(security="apikey")

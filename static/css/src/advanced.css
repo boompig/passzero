@@ -34,7 +34,7 @@ form .form-error {
 }
 
 #advanced-tabpanel {
-    max-width: 600px;
+    max-width: 750px;
     margin: 0 auto;
 }
 
@@ -46,7 +46,7 @@ form .form-error {
 /* change-passsword */
 
 /* user-prefs */
-#user-prefs-container, #change-password-container {
+#user-prefs-container, #change-password-container, #update-entry-versions {
     margin-top: 1em;
 }
 
