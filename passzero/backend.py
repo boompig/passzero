@@ -17,6 +17,9 @@ from sqlalchemy.orm.exc import NoResultFound
 from .utils import base64_encode
 
 
+UPDATE_LIMIT = 60
+
+
 class UserNotAuthorizedError(Exception):
     pass
 
@@ -250,13 +253,16 @@ def encrypt_entry(user_key: str, dec_entry: dict,
     return entry
 
 
-def update_entry_versions_for_user(db_session: Session, user_id: int, master_key: str) -> int:
+def update_entry_versions_for_user(db_session: Session, user_id: int, master_key: str,
+                                   limit: Optional[int] = UPDATE_LIMIT) -> int:
     """"
     Update the versions of entries to the latest version
     Return the number of entries updated
     """
     n = 0
     latest_version = 5
+    if limit is None or limit > UPDATE_LIMIT:
+        limit = UPDATE_LIMIT
     entries = db_session.query(Entry).filter_by(user_id=user_id, pinned=False).all()
     for entry in entries:
         # don't change latest entry version
@@ -271,6 +277,8 @@ def update_entry_versions_for_user(db_session: Session, user_id: int, master_key
         db_session.delete(entry)
         db_session.add(e2)
         n += 1
+        if n == limit:
+            break
     db_session.commit()
     return n
 

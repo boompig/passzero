@@ -171,6 +171,7 @@ class ApiEntryList(Resource):
         Arguments
         ---------
         - password: string (required)
+        - limit: number (optional)
 
         Response
         --------
@@ -191,6 +192,7 @@ class ApiEntryList(Resource):
         """
         parser = reqparse.RequestParser()
         parser.add_argument("password", type=str, required=True)
+        parser.add_argument("limit", type=int, required=False)
         args = parser.parse_args()
         user_id = get_jwt_identity()["user_id"]
         user = db.session.query(User).filter_by(id=user_id).one()
@@ -198,7 +200,8 @@ class ApiEntryList(Resource):
             num_updated = backend.update_entry_versions_for_user(
                 db_session=db.session,
                 user_id=user_id,
-                master_key=args.password
+                master_key=args.password,
+                limit=(args.limit if args.limit else None)
             )
             return{
                 "num_updated": num_updated
