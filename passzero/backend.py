@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple
 
 import six
-from sqlalchemy import func
+from sqlalchemy import func, and_
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import asc
 
@@ -263,11 +263,12 @@ def update_entry_versions_for_user(db_session: Session, user_id: int, master_key
     latest_version = 5
     if limit is None or limit > UPDATE_LIMIT:
         limit = UPDATE_LIMIT
-    entries = db_session.query(Entry).filter_by(user_id=user_id, pinned=False).all()
+    entries = db_session.query(Entry).filter(and_(
+        Entry.user_id == user_id,
+        Entry.pinned == False,  # noqa
+        Entry.version < latest_version
+    )).all()
     for entry in entries:
-        # don't change latest entry version
-        if entry.version == latest_version:
-            continue
         dec_entry = entry.decrypt(master_key)  # type: dict
         e2 = Entry_v5()
         e2.encrypt(master_key, dec_entry)
