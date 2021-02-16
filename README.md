@@ -28,7 +28,7 @@ PassZero is implemented as a simple web app with results held in a database, the
         - `postgres://<username>:<password>@<host>:<port>/<database>`
     - `SENDGRID_API_KEY`
     - alternatively create file `passzero/my_env.py` with method `setup_env` which sets above environment variables
-* `foreman start local`
+* `heroku local`
 
 ## Development
 
@@ -56,6 +56,8 @@ def setup_env():
 ```
 
 There is limited support for running the server without an internet connection. Some parts of the site may not work, but if you set OFFLINE=1 as an environment variable then portions of the site take that into account and try to work anyway.
+
+If you want to run without HTTPS you can set the environment variable `NO_SSL=1`
 
 ### Building React Components
 
