@@ -4,11 +4,11 @@ from typing import Optional, Dict, Any
 def get_test_decrypted_entry(i: Optional[int] = None) -> Dict[str, Any]:
     if i is None:
         return {
-            "account": f"test account",
-            "username": f"test username",
-            "password": f"test password",
+            "account": "test account",
+            "username": "test username",
+            "password": "test password",
             "has_2fa": False,
-            "extra": f"test extra"
+            "extra": "test extra"
         }
     else:
         return {

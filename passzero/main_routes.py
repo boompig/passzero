@@ -153,6 +153,7 @@ def edit_link(link_id: int):
                            link=dec_link.link)
 # --- links --- #
 
+
 # --- documents --- #
 @main_routes.route("/docs", methods=["GET"])
 @auth_or_redirect_login
