@@ -1,11 +1,11 @@
 sudo: false
-dist: xenial
+dist: focal
 language: python
 python:
-    - "3.7"
+    - "3.8"
 matrix:
     include:
-        - python: "3.7.3"
+        - python: "3.8.7"
           dist: xenial
           sudo: true
 install:
