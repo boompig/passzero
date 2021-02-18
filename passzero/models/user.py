@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import six
-
 from passzero.crypto_utils import (PasswordHashAlgo,
                                    constant_time_compare_passwords,
                                    get_hashed_password)
@@ -33,10 +31,10 @@ class User(db.Model):
         :type form_password:    unicode
         :return:                True on success, False on failure.
         :rtype:                 bool"""
-        assert isinstance(form_password, six.text_type)
+        assert isinstance(form_password, str)
         # salt stored as unicode but should really be bytes
-        assert isinstance(self.salt, six.text_type)
-        assert isinstance(self.password, six.text_type)
+        assert isinstance(self.salt, str)
+        assert isinstance(self.password, str)
         return constant_time_compare_passwords(
             password_hash=self.password,
             password=form_password,
@@ -47,9 +45,9 @@ class User(db.Model):
     def change_password(self, new_password: str) -> None:
         """Note: this method ONLY changes the password, and does not decrypt/encrypt the entries
         This method should *only* be used when recovering a password"""
-        assert isinstance(new_password, six.text_type)
+        assert isinstance(new_password, str)
         # salt stored as unicode but should really be bytes
-        assert isinstance(self.salt, six.text_type)
+        assert isinstance(self.salt, str)
         # also update the password hashing algo
         hashed_password = get_hashed_password(
             password=new_password,
@@ -59,7 +57,7 @@ class User(db.Model):
         # this field is unicode
         self.password = hashed_password.decode("utf-8")
         self.password_hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
-        assert isinstance(self.password, six.text_type)
+        assert isinstance(self.password, str)
 
     def __repr__(self) -> str:
         return "<User(email={}, password={}, salt={}, active={}, password_hash_algo={})>".format(

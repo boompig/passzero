@@ -1,6 +1,5 @@
 from typing import Any, Dict, List, Optional, Tuple
 
-import six
 from sqlalchemy import func, and_
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import asc
@@ -74,7 +73,7 @@ def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:
     :param entries:         List[Entry]
     :param key:             Unicode string
     :rtype:                 List[dict]"""
-    assert isinstance(key, six.text_type)
+    assert isinstance(key, str)
     # return _decrypt_entries_multiprocess(entries, key)
     return _decrypt_entries_single_thread(entries, key)
 
@@ -110,7 +109,7 @@ def get_link_by_id(db_session: Session, user_id: int, link_id: int) -> Optional[
 
 
 def get_account_with_email(db_session: Session, email: str) -> User:
-    assert isinstance(email, six.text_type)
+    assert isinstance(email, str)
     return db_session.query(User).filter_by(email=email).one()
 
 
@@ -152,8 +151,8 @@ def create_inactive_user(db_session: Session, email: str, password: str,
     :param password_hash_algo:  This parameter exists for testing
         In all cases outside of testing, this should be set to User.DEFAULT_PASSWORD_HASH_ALGO
     """
-    assert isinstance(email, six.text_type), "Type of email is %s" % type(email)
-    assert isinstance(password, six.text_type), "Type of password is %s" % type(password)
+    assert isinstance(email, str), "Type of email is %s" % type(email)
+    assert isinstance(password, str), "Type of password is %s" % type(password)
     salt = get_salt(SALT_SIZE)
     assert isinstance(salt, bytes), "Type of salt is %s" % type(salt)
     password_hash = get_hashed_password(password, salt, password_hash_algo)
@@ -164,7 +163,7 @@ def create_inactive_user(db_session: Session, email: str, password: str,
     # will be unicode when it comes out of DB anyway
     user.password = password_hash.decode("utf-8")
     user.password_hash_algo = password_hash_algo
-    assert isinstance(user.password, six.text_type)
+    assert isinstance(user.password, str)
     # even though it would make a lot of sense to store the salt as a binary string, in reality it is stored in unicode
     user.salt = salt.decode("utf-8")
     user.active = False
@@ -179,7 +178,7 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
                           version: int = DEFAULT_ENTRY_VERSION,
                           prevent_deprecated_versions: bool = True) -> Entry:
     assert isinstance(user_id, int)
-    assert isinstance(user_key, six.text_type)
+    assert isinstance(user_key, str)
     assert isinstance(version, int)
     entry = encrypt_entry(user_key, dec_entry, version=version,
                           prevent_deprecated_versions=prevent_deprecated_versions)
@@ -191,7 +190,7 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
 def insert_link_for_user(db_session: Session, dec_link: dict,
                          user_id: int, user_key: str) -> Link:
     assert isinstance(user_id, int)
-    assert isinstance(user_key, six.text_type)
+    assert isinstance(user_key, str)
     link = encrypt_link(user_key, dec_link)
     insert_new_link(db_session, link, user_id)
     db_session.commit()
@@ -199,7 +198,7 @@ def insert_link_for_user(db_session: Session, dec_link: dict,
 
 
 def encrypt_link(user_key: str, dec_link: dict) -> Link:
-    assert isinstance(user_key, six.text_type)
+    assert isinstance(user_key, str)
     assert isinstance(dec_link, dict)
     link = Link()
     link.encrypt(user_key, dec_link)
@@ -228,7 +227,7 @@ def encrypt_entry(user_key: str, dec_entry: dict,
     :param user_key:    A string representing the user's key
     :return:            Entry object
     """
-    assert isinstance(user_key, six.text_type)
+    assert isinstance(user_key, str)
     assert isinstance(dec_entry, dict)
     assert isinstance(version, int)
     if version < 3 and prevent_deprecated_versions:
@@ -390,9 +389,9 @@ def encrypt_document(session: Session, user_id: int, master_key: str,
     :rtype:             EncryptedDocument
     """
     assert isinstance(user_id, int)
-    assert isinstance(master_key, six.text_type)
-    assert isinstance(document_name, six.text_type)
-    assert isinstance(mimetype, six.text_type) and mimetype is not None
+    assert isinstance(master_key, str)
+    assert isinstance(document_name, str)
+    assert isinstance(mimetype, str) and mimetype is not None
     doc = DecryptedDocument(document_name, mimetype, document)
     assert doc.mimetype is not None
     return insert_document_for_user(session, doc, user_id, master_key)
@@ -409,12 +408,12 @@ def insert_document_for_user(session: Session, decrypted_document: DecryptedDocu
     """
     assert isinstance(decrypted_document, DecryptedDocument)
     assert isinstance(user_id, int)
-    assert isinstance(master_key, six.text_type)
+    assert isinstance(master_key, str)
     extended_key, extension_params = DecryptedDocument.extend_key(master_key)
     assert isinstance(extended_key, bytes)
     enc_doc = decrypted_document.encrypt(extended_key)
     enc_doc.key_salt = base64_encode(extension_params["kdf_salt"]).decode("utf-8")
-    assert isinstance(enc_doc.key_salt, six.text_type)
+    assert isinstance(enc_doc.key_salt, str)
     enc_doc.user_id = user_id
     assert isinstance(enc_doc.user_id, int)
     session.add(enc_doc)
@@ -436,7 +435,7 @@ def edit_document(session: Session, document_id: int, master_key: str,
     :rtype:                 EncryptedDocument
     """
     assert isinstance(document_id, int)
-    assert isinstance(master_key, six.text_type)
+    assert isinstance(master_key, str)
     assert isinstance(form_data, dict)
     assert isinstance(user_id, int)
     doc = session.query(EncryptedDocument).filter_by(id=document_id).one()  # type: EncryptedDocument

@@ -3,7 +3,6 @@ from __future__ import print_function
 import logging
 from typing import Sequence
 
-import six
 from sqlalchemy.orm.exc import NoResultFound
 
 from passzero.backend import encrypt_entry, insert_new_entry
@@ -24,7 +23,7 @@ def find_pinned_entry(session, user_id: int) -> Entry:
 
 def create_pinned_entry(session, user_id: int, master_password: str) -> None:
     assert isinstance(user_id, int)
-    assert isinstance(master_password, six.text_type)
+    assert isinstance(master_password, str)
     dec_entry = {
         "account": "sanity",
         "username": "sanity",
@@ -43,7 +42,7 @@ def find_user(session, user_id: int) -> User:
 
 def verify_pinned_entry(session, pinned_entry: Entry, old_password: str) -> None:
     assert isinstance(pinned_entry, Entry)
-    assert isinstance(old_password, six.text_type)
+    assert isinstance(old_password, str)
     dec_entry = pinned_entry.decrypt(old_password)
     assert dec_entry["account"] == "sanity"
     assert dec_entry["username"] == "sanity"
@@ -70,7 +69,7 @@ def reencrypt_entries(session, user_id: int, old_password: str, new_password: st
 
 
 def change_password_in_user_table(session, user_id: int, new_password: str) -> None:
-    assert isinstance(new_password, six.text_type)
+    assert isinstance(new_password, str)
     user = find_user(session, user_id)
     # the user's salt is represented in the database as unicode but is worked on as bytestring
     # also update the password hashing algo
@@ -80,7 +79,7 @@ def change_password_in_user_table(session, user_id: int, new_password: str) -> N
         hash_algo=User.DEFAULT_PASSWORD_HASH_ALGO
     ).decode("utf-8"))
     user.hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
-    assert isinstance(user.password, six.text_type)
+    assert isinstance(user.password, str)
 
 
 def change_password(session, user_id: int, old_password: str, new_password: str) -> bool:
@@ -92,8 +91,8 @@ def change_password(session, user_id: int, old_password: str, new_password: str)
     :rtype:                     True iff old_password is correct
     """
     assert isinstance(user_id, int)
-    assert isinstance(old_password, six.text_type)
-    assert isinstance(new_password, six.text_type)
+    assert isinstance(old_password, str)
+    assert isinstance(new_password, str)
     # do proper authentication
     user = find_user(session, user_id)
     if not user.authenticate(old_password):

@@ -42,7 +42,7 @@ def pad_to_length(key: str, length: int) -> str:
     :type length:       int
     :rtype:             unicode string
     """
-    assert isinstance(key, six.text_type)
+    assert isinstance(key, str)
     alphabet = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
     padding = []  # type: List[str]
     while len(key) + len(padding) < length:
@@ -56,7 +56,7 @@ def pad_key_legacy(key: str) -> str:
     :type key:      unicode string
     :rtype:         unicode string
     """
-    assert isinstance(key, six.text_type)
+    assert isinstance(key, str)
     if len(key) < 16:
         return pad_to_length(key, 16)
     elif len(key) < 24:
@@ -87,9 +87,9 @@ def encrypt_field_v1(key: str, salt: str, field: str) -> str:
     :type field:            unicode string
     :rtype:                 unicode string
     """
-    assert isinstance(key, six.text_type)
-    assert isinstance(salt, six.text_type)
-    assert isinstance(field, six.text_type)
+    assert isinstance(key, str)
+    assert isinstance(salt, str)
+    assert isinstance(field, str)
     salted_key = (key + salt).encode("utf-8")
     actual_key = hashlib.sha256(salted_key).digest()
     iv = Random.new().read(AES.block_size)
@@ -111,12 +111,12 @@ def encrypt_field_v2(extended_key: bytes, message: str, iv: bytes) -> str:
     :rtype:                     unicode
     """
     assert isinstance(extended_key, bytes)
-    assert isinstance(message, six.text_type)
+    assert isinstance(message, str)
     assert isinstance(iv, bytes)
     cipher = AES.new(extended_key, AES.MODE_CFB, iv)
     enc_msg = cipher.encrypt(message.encode("utf-8"))
     hex_ciphertext = byte_to_hex_legacy(enc_msg)
-    assert isinstance(hex_ciphertext, six.text_type)
+    assert isinstance(hex_ciphertext, str)
     return hex_ciphertext
 
 
@@ -172,7 +172,7 @@ def extend_key(key: str, salt: bytes, key_length: int = 16) -> bytes:
     :type salt:         bytes
     :rtype:             bytes
     """
-    assert isinstance(key, six.text_type)
+    assert isinstance(key, str)
     assert isinstance(salt, bytes)
     assert isinstance(key_length, int)
     return KDF.PBKDF2(key, salt, count=1000, dkLen=key_length)
@@ -192,7 +192,7 @@ def decrypt_field_v2(extended_key: bytes, hex_ciphertext: str, iv: bytes) -> str
     :rtype:                     unicode string
     """
     assert isinstance(extended_key, bytes)
-    assert isinstance(hex_ciphertext, six.text_type)
+    assert isinstance(hex_ciphertext, str)
     assert isinstance(iv, bytes)
     ciphertext = hex_to_byte_legacy(hex_ciphertext)
     assert isinstance(ciphertext, bytes)
@@ -210,9 +210,9 @@ def decrypt_field_v1(key: str, salt: str, hex_ciphertext: str) -> str:
     :type hex_ciphertext    unicode string
     :rtype:                 unicode string
     """
-    assert isinstance(key, six.text_type)
-    assert isinstance(salt, six.text_type)
-    assert isinstance(hex_ciphertext, six.text_type)
+    assert isinstance(key, str)
+    assert isinstance(salt, str)
+    assert isinstance(hex_ciphertext, str)
     full_ciphertext = hex_to_byte_legacy(hex_ciphertext)
     iv = full_ciphertext[-1 * AES.block_size:]
     if len(iv) < AES.block_size:
@@ -231,8 +231,8 @@ def decrypt_password_legacy(padded_key: str, hex_ciphertext: str) -> str:
     :type hex_ciphertext:       unicode string
     :rtype:                     unicode string
     """
-    assert isinstance(padded_key, six.text_type)
-    assert isinstance(hex_ciphertext, six.text_type)
+    assert isinstance(padded_key, str)
+    assert isinstance(hex_ciphertext, str)
     ciphertext = hex_to_byte_legacy(hex_ciphertext)
     assert isinstance(ciphertext, bytes)
     iv = ciphertext[:AES.block_size]
@@ -242,7 +242,7 @@ def decrypt_password_legacy(padded_key: str, hex_ciphertext: str) -> str:
     return dec_password
 
 
-def get_salt(size: int) -> six.binary_type:
+def get_salt(size: int) -> bytes:
     """Create and return random salt of given size
     :rtype:                 8-bit string of size `size`
     """
@@ -267,7 +267,7 @@ def get_hashed_password(password: str, salt: bytes, hash_algo: PasswordHashAlgo)
     :type hash_algo:           PasswordHashAlgo (enum)
     :rtype:                    bytes
     """
-    assert isinstance(password, six.text_type)
+    assert isinstance(password, str)
     assert isinstance(salt, bytes)
     assert isinstance(hash_algo, PasswordHashAlgo)
     if hash_algo == PasswordHashAlgo.SHA512:
@@ -286,7 +286,7 @@ def __get_hashed_password_argon2(password: str, salt: bytes) -> bytes:
     :type salt:                bytes
     :rtype:                    bytes
     """
-    assert isinstance(password, six.text_type)
+    assert isinstance(password, str)
     assert isinstance(salt, bytes)
     b_password = (password).encode("utf-8")
     out_password = nacl.pwhash.argon2id.str(b_password)
@@ -301,7 +301,7 @@ def __get_hashed_password_sha512(password: str, salt: bytes) -> bytes:
     :type salt:                bytes
     :rtype:                    bytes
     """
-    assert isinstance(password, six.text_type)
+    assert isinstance(password, str)
     assert isinstance(salt, bytes)
     # this is stupid because a password should be able to contain unicode fields
     b_password = (password).encode("utf-8")
@@ -314,8 +314,8 @@ def constant_time_compare_passwords(password_hash: str, password: str, salt: byt
     Compare the user's password to the given password and return whether they are equal in constant time
     :param password_hash:               The hash of the password stored in the database
     """
-    assert isinstance(password_hash, six.text_type)
-    assert isinstance(password, six.text_type)
+    assert isinstance(password_hash, str)
+    assert isinstance(password, str)
     assert isinstance(salt, bytes)
     assert isinstance(hash_algo, PasswordHashAlgo)
     if hash_algo == PasswordHashAlgo.Argon2:

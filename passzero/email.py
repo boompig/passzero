@@ -5,16 +5,15 @@ import os
 import sys
 
 import sendgrid
-import six
 from flask import request
 from sendgrid.helpers.mail import Mail
 
 
 def send_email_sendgrid(to_email: str, subject: str, msg: str) -> bool:
     """Directly taken from sendgrid site code sample"""
-    assert isinstance(to_email, six.text_type)
-    assert isinstance(subject, six.text_type)
-    assert isinstance(msg, six.text_type)
+    assert isinstance(to_email, str)
+    assert isinstance(subject, str)
+    assert isinstance(msg, str)
     try:
         assert os.environ.get("SENDGRID_API_KEY", None)
     except AssertionError:

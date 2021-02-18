@@ -6,14 +6,13 @@ import msgpack
 import nacl.pwhash
 import nacl.secret
 import nacl.utils
-import six
 
 from .shared import db
 
 
 def _get_key(master_key: str, kdf_salt: bytes):
     """Deliberately similar to `Entry_v5.__get_entry_key`"""
-    assert isinstance(master_key, six.text_type)
+    assert isinstance(master_key, str)
     assert isinstance(kdf_salt, bytes)
     return nacl.pwhash.argon2id.kdf(
         size=nacl.secret.SecretBox.KEY_SIZE,
@@ -78,7 +77,7 @@ class Link(db.Model):
         Deliberately similar to `Entry_v5.decrypt`
         Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
         """
-        assert isinstance(master_key, six.text_type)
+        assert isinstance(master_key, str)
         key = _get_key(master_key, self.kdf_salt)
         assert isinstance(key, bytes)
         box = nacl.secret.SecretBox(key)
@@ -104,7 +103,7 @@ class Link(db.Model):
             - version (optional): int -> ignored
         """
         # NOTE: user_id not set here
-        assert isinstance(master_key, six.text_type)
+        assert isinstance(master_key, str)
         assert isinstance(dec_link, dict)
         dec_contents_d = {
             "service_name": dec_link["service_name"],

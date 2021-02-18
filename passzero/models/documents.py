@@ -4,7 +4,6 @@ from typing import Tuple
 import nacl.pwhash
 import nacl.secret
 import nacl.utils
-import six
 
 from passzero.crypto_utils import extend_key, get_kdf_salt
 
@@ -29,9 +28,9 @@ class EncryptedDocument(db.Model):
     def extend_key(self, master_key: str) -> bytes:
         """Helper method.
         Call extend_key with the right parameters"""
-        assert isinstance(master_key, six.text_type)
+        assert isinstance(master_key, str)
         # sadly, base64-encoded
-        assert isinstance(self.key_salt, six.text_type)
+        assert isinstance(self.key_salt, str)
         return extend_key(
             master_key,
             binascii.a2b_base64(self.key_salt),
@@ -52,10 +51,10 @@ class EncryptedDocument(db.Model):
         }
 
     def decrypt(self, master_key: str) -> "DecryptedDocument":
-        assert isinstance(master_key, six.text_type)
+        assert isinstance(master_key, str)
         extended_key = self.extend_key(master_key)
         box = nacl.secret.SecretBox(extended_key)
-        assert isinstance(self.name, six.text_type)
+        assert isinstance(self.name, str)
         assert isinstance(self.document, bytes)
         pt = box.decrypt(self.document)
         assert isinstance(pt, bytes)
@@ -73,13 +72,13 @@ class DecryptedDocument:
         :param name: String, the user's name for the file. Not a filename.
         :param document: object for the file
         """
-        assert isinstance(name, six.text_type)
+        assert isinstance(name, str)
         self.name = name
         self.mimetype = mimetype
         if isinstance(contents, bytes):
             # data is already binary data
             self.contents = contents
-        elif isinstance(contents, six.text_type):
+        elif isinstance(contents, str):
             # convert data from unicode to binary
             self.contents = contents.encode("utf-8")
         else:
@@ -101,7 +100,7 @@ class DecryptedDocument:
         params:
             kdf_salt -> bytes
         """
-        assert isinstance(master_key, six.text_type)
+        assert isinstance(master_key, str)
         key_salt = get_kdf_salt()
         assert isinstance(key_salt, bytes)
         # need a 32-byte key (256 bits)
@@ -117,7 +116,7 @@ class DecryptedDocument:
         assert isinstance(extended_key, bytes)
         # AES_128_CBC_HMAC_SHA_256
         assert len(extended_key) == 32, f"key must be 32 bytes long, actually {len(extended_key)} bytes"
-        assert isinstance(self.name, six.text_type), "Name must be a unicode string"
+        assert isinstance(self.name, str), "Name must be a unicode string"
         assert isinstance(self.contents, bytes), "Contents must be bytes"
         box = nacl.secret.SecretBox(extended_key)
         # nonce generated randomly here
