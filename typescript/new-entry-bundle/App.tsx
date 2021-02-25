@@ -1,6 +1,6 @@
 import { PureComponent } from "react";
 import * as React from "react";
-import * as ReactTooltip from "react-tooltip";
+import ReactTooltip from "react-tooltip";
 import { Settings } from "./components/settings";
 import PasszeroApiV3 from "../common-modules/passzero-api-v3";
 import { random } from "lodash";

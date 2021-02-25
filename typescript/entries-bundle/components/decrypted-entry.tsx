@@ -1,7 +1,7 @@
 import * as moment from "moment";
 import {Component} from "react";
 import * as React from "react";
-import * as ReactTooltip from "react-tooltip";
+import ReactTooltip from "react-tooltip";
 import {IDecryptedEntry} from "./entries";
 
 interface IDecryptedEntryProps {

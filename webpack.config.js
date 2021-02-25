@@ -1,5 +1,10 @@
 const path = require('path');
+const webpack = require('webpack');
 const mode = (process.env.NODE_ENV === 'dev' ? 'development' : 'production');
+
+// NOTE: uncomment to look at bundle sizes
+// const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
 
 module.exports = {
     mode: mode,
@@ -55,5 +60,17 @@ module.exports = {
             // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
             { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
         ]
-    }
+    },
+
+    plugins: [
+        /**
+         * shrink the locales that are included with moment to just english and german
+         * see:
+         * https://www.contentful.com/blog/2017/10/27/put-your-webpack-bundle-on-a-diet-part-3/
+         */
+        new webpack.IgnorePlugin(/^\.\/locale\/(en|de)\.js$/, /moment$/),
+
+        // NOTE: uncomment to look at bundle sizes
+        // new BundleAnalyzerPlugin(),
+    ]
 };
