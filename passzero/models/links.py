@@ -2,6 +2,8 @@
 This class provides the model for all links
 """
 
+from datetime import datetime
+
 import msgpack
 import nacl.pwhash
 import nacl.secret
@@ -59,6 +61,10 @@ class Link(db.Model):
     # metadata fields are not encrypted
     version = db.Column(db.Integer, nullable=False)
     kdf_salt = db.Column(db.LargeBinary, nullable=False)
+    # set when the link is created, then not modified on edits
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    # changed each time the link is edited
+    modified_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     __mapper_args__ = {
         "polymorphic_identity": 1,
@@ -120,3 +126,4 @@ class Link(db.Model):
         self.kdf_salt = kdf_salt
         self.version = 1
         # NOTE: do not use ID from dec_link
+        # NOTE: do not use created_at from dec_link

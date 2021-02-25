@@ -1,6 +1,8 @@
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from sqlalchemy import func, and_
+from sqlalchemy import and_, func
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import asc
 
@@ -11,10 +13,8 @@ from passzero.crypto_utils import (PasswordHashAlgo, get_hashed_password,
 from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
                              EncryptedDocument, Entry, Entry_v2, Entry_v3,
                              Entry_v4, Entry_v5, Link, Service, User)
-from sqlalchemy.orm.exc import NoResultFound
 
 from .utils import base64_encode
-
 
 UPDATE_LIMIT = 60
 
@@ -307,6 +307,8 @@ def edit_link(session: Session, link_id: int, user_key: str, edited_link: dict, 
     link.contents = l2.contents
     # update metadata
     link.kdf_salt = l2.kdf_salt
+    # keep created_at but change modified_at
+    link.modified_at = datetime.utcnow()
     # and save `links`; discard l2
     session.commit()
     return link
