@@ -2,10 +2,10 @@ sudo: false
 dist: focal
 language: python
 python:
-    - "3.8"
+    - "3.9"
 matrix:
     include:
-        - python: "3.8.7"
+        - python: "3.9.2"
           dist: focal
           sudo: true
 install:
