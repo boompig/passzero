@@ -192,11 +192,11 @@ class App extends Component<IProps, IState> {
             const link = this.state.links[i];
             let linkElem = null;
             if (link.is_encrypted) {
-                linkElem = <EncryptedLink link={ (link as IEncryptedLink) } index={ i }
+                linkElem = <EncryptedLink link={ (link as IEncryptedLink) } key={ `enc-link-${link.id}` } index={ i }
                     onDecrypt={ this.handleDecrypt }
                     onDelete={ this.handleDelete }/>;
             } else {
-                linkElem = <DecryptedLink link={ (link as IDecryptedLink) } index={ i }
+                linkElem = <DecryptedLink link={ (link as IDecryptedLink) } key={ `dec-link-${link.id}` } index={ i }
                     onDelete={ this.handleDelete }/>;
             }
             linkElems.push(linkElem);
