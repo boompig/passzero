@@ -30,7 +30,7 @@ idna==2.9
 iniconfig==1.1.1
 isort==5.7.0
 itsdangerous==1.1.0
-Jinja2==2.11.1
+Jinja2==2.11.3
 jsonschema==3.2.0
 lazy-object-proxy==1.4.3
 MarkupSafe==1.1.1
