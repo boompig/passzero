@@ -19,7 +19,7 @@ entrypoints==0.3
 flake8==3.8.4
 Flask==1.1.2
 Flask-Compress==1.4.0
-Flask-Cors==3.0.8
+Flask-Cors==3.0.9
 Flask-JWT-Extended==3.24.1
 flask-restx==0.1.1
 Flask-SQLAlchemy==2.4.1
