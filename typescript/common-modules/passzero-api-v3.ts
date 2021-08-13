@@ -207,6 +207,16 @@ export default class PasszeroApiV3 {
         return this.postJsonWithBearer(url, apiToken, data);
     }
 
+    async decryptLinks(linkIds: number[], masterPassword: string) {
+        const apiToken = await this.fillToken();
+        const url = `/api/v3/links/decrypt`;
+        const data = {
+            "password": masterPassword,
+            "link_ids": linkIds,
+        };
+        return this.postJsonWithBearer(url, apiToken, data);
+    }
+
     async deleteLink(linkId: number) {
         const apiToken = await this.fillToken();
         const url = `/api/v3/links/${linkId}`;

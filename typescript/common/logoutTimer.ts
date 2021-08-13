@@ -28,7 +28,7 @@ class LogoutTimer {
         }
 
         if (this.restart) {
-            console.log("restarting");
+            console.log("[LogoutTimer] restarting");
             this.val = this.maxVal;
             this.restart = false;
         } else {

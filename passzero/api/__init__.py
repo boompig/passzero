@@ -1,3 +1,8 @@
+"""
+See flask-restx API scaling using namespaces
+https://flask-restx.readthedocs.io/en/latest/scaling.html
+"""
+
 from flask_restx import Api
 from passzero.api.api_token import ns as ApiTokenNamespace
 from passzero.api.entry import ns as ApiEntryNamespace
