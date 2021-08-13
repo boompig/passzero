@@ -8,6 +8,7 @@ import six
 from passzero.app_factory import create_app
 from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service
 from passzero.models import db as _db
+from passzero.api.link_list import MAX_NUM_DECRYPT
 
 from ..common import api
 from .utils import get_test_decrypted_entry
@@ -812,6 +813,99 @@ def test_edit_link(app):
         # get the link back
         edited_link_out = api_v3.decrypt_link(link_id)
         _assert_links_equal(edited_link, edited_link_out)
+
+
+def test_decrypt_links_no_links(app):
+    """decrypt_links should fail gracefully when no IDs are provided"""
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        r = api_v3.decrypt_links([], check_status=False)
+        assert r.status_code == 400
+
+
+def test_decrypt_links_some_not_yours(app):
+    """decrypt_links should gracefully handle when some links are not yours"""
+    with app.test_client() as client:
+        api_v3 = api.ApiV3(client)
+
+        # create 1 link with another account
+        create_active_account(client, "foo1@example.com", "foo1")
+        api_v3.login("foo1@example.com", "foo1")
+        other_link_id = api_v3.create_link({
+            "service_name": "hello - foo1",
+            "link": "world - foo1",
+        })
+        api_v3.logout()
+
+        # create link with my own account
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        dec_link_in_mine = {
+            "service_name": "hello - mine",
+            "link": "world - mine",
+        }
+        my_link_id = api_v3.create_link(dec_link_in_mine)
+        # try to decrypt with my own account
+        dec_links_out = api_v3.decrypt_links([other_link_id, my_link_id], check_status=True)
+        assert len(dec_links_out) == 1
+        _assert_links_equal(dec_links_out[0], dec_link_in_mine)
+
+
+def test_decrypt_links_too_many(app):
+    dec_links_in = [{
+        "service_name": f"hello - {i}",
+        "link": f"world - {i}"
+    } for i in range(MAX_NUM_DECRYPT + 1)]
+
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        my_link_ids = []
+        for dec_link in dec_links_in:
+            my_link_ids.append(api_v3.create_link(dec_link))
+
+        r = api_v3.decrypt_links(my_link_ids, check_status=False)
+        assert r.status_code == 400
+
+
+def test_decrypt_links_bad_password(app):
+    """Try to decrypt links without the proper password"""
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        dec_link_in = {
+            "service_name": "hello",
+            "link": "world",
+        }
+        my_link_id = api_v3.create_link(dec_link_in)
+        r = api_v3.decrypt_links([my_link_id], password="bad password", check_status=False)
+        assert r.status_code == 401
+
+
+def test_decrypt_links_max(app):
+    dec_links_in = [{
+        "service_name": f"hello - {i}",
+        "link": f"world - {i}"
+    } for i in range(MAX_NUM_DECRYPT)]
+
+    with app.test_client() as client:
+        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3 = api.ApiV3(client)
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        my_link_ids = []
+        for dec_link in dec_links_in:
+            my_link_ids.append(api_v3.create_link(dec_link))
+
+        dec_links_out = api_v3.decrypt_links(my_link_ids, check_status=True)
+        assert len(dec_links_out) == len(dec_links_in)
+        # arrange the output in order of id
+        dec_links_out.sort(key=lambda dec_link: dec_link["id"])
+        for (dec_link_in, dec_link_out) in zip(dec_links_in, dec_links_out):
+            _assert_links_equal(dec_link_in, dec_link_out)
 
 
 def test_get_services(app):

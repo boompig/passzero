@@ -812,7 +812,8 @@ class ApiV3:
     # link
 
     def create_link(self, link: dict) -> int:
-        """Always verifies status"""
+        """Always verifies status
+        :returns: The link ID"""
         assert self.password is not None
         url = "/api/v3/links"
         data = {
@@ -862,6 +863,25 @@ class ApiV3:
             url=url,
             data=data,
             check_status=True
+        )
+
+    def decrypt_links(self, link_ids: List[int], password: Optional[str] = None, check_status: bool = True) -> list:
+        """
+        :param password: password is optional. if not provided, will use `self.password` (useful for testing)
+        :param check_status: defaults to check_status=True unless stated otherwise
+        """
+        assert self.password is not None
+        if password is None:
+            password = self.password
+        url = "/api/v3/links/decrypt"
+        data = {
+            "password": password,
+            "link_ids": link_ids
+        }
+        return self.json_post(
+            url=url,
+            data=data,
+            check_status=check_status
         )
 
     # services
