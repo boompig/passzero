@@ -79,7 +79,8 @@ def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:
 
 
 def get_entries(db_session: Session, user_id: int) -> List[Entry]:
-    """Return a list of entries without decrypting them"""
+    """Return a list of entries without decrypting them.
+    Ordered by account name."""
     assert isinstance(user_id, int)
     return db_session.query(Entry)\
         .filter_by(user_id=user_id, pinned=False)\
@@ -88,10 +89,12 @@ def get_entries(db_session: Session, user_id: int) -> List[Entry]:
 
 
 def get_links(db_session: Session, user_id: int) -> List[Link]:
-    """Return a list of links without decrypting them"""
+    """Return a list of links without decrypting them.
+    Ordered by ID."""
     assert isinstance(user_id, int)
     return db_session.query(Link)\
         .filter_by(user_id=user_id)\
+        .order_by(Link.id.asc())\
         .all()
 
 

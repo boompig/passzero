@@ -1,5 +1,6 @@
 import { Component } from "react";
 import * as React from "react";
+import * as _ from "lodash";
 import PasszeroApiV3 from "../common-modules/passzero-api-v3";
 import DecryptedLink from "./components/decrypted-link";
 import EncryptedLink from "./components/encrypted-link";
@@ -20,6 +21,11 @@ interface IState {
     // true iff currently decrypting something
     isDecrypting: boolean;
 }
+
+/**
+ * Batch size used to decrypt links
+ */
+const DECRYPTION_BATCH_SIZE = 10;
 
 class App extends Component<IProps, IState> {
     logoutTimer: LogoutTimer;
@@ -45,6 +51,7 @@ class App extends Component<IProps, IState> {
         this.renderEmpty = this.renderEmpty.bind(this);
         this.renderLinks = this.renderLinks.bind(this);
         this.handleDecryptAll = this.handleDecryptAll.bind(this);
+        this.decryptList = this.decryptList.bind(this);
     }
 
     componentDidMount() {
@@ -55,12 +62,12 @@ class App extends Component<IProps, IState> {
             masterPassword: masterPassword,
         });
 
-        console.log("Fetching links...");
+        console.debug("Fetching links...");
         // fetch all the encrypted links
         this.pzApi.getEncryptedLinks()
             .then((response) => {
-                console.log("links:");
-                console.log(response);
+                console.debug("links:");
+                console.debug(response);
 
                 // alter each link to set encrypted = true
                 for (const link of response) {
@@ -78,7 +85,7 @@ class App extends Component<IProps, IState> {
                 if (err.name === "UnauthorizedError") {
                     window.location.href = "/login";
                 } else {
-                    console.log("different type of error: " + err.name);
+                    console.debug("different type of error: " + err.name);
                 }
             });
     }
@@ -97,10 +104,10 @@ class App extends Component<IProps, IState> {
 
     handleDelete(linkIndex: number): void {
         const link = this.state.links[linkIndex];
-        console.log(`Deleting link with ID ${link.id}...`);
+        console.debug(`Deleting link with ID ${link.id}...`);
         this.pzApi.deleteLink(link.id)
             .then((response) => {
-                console.log("Got decrypted link from server");
+                console.debug("Got decrypted link from server");
                 const newLinks = this.state.links;
                 newLinks.splice(linkIndex, 1);
                 // force state reload
@@ -110,7 +117,95 @@ class App extends Component<IProps, IState> {
             });
     }
 
+    /**
+     * Decrypt all links with the given IDs
+     */
+    async decryptList(linkIds: number[]): Promise<IDecryptedLink[]> {
+        const startTime = (new Date()).valueOf();
+
+        const decLinks = await this.pzApi.decryptLinks(
+            linkIds,
+            this.state.masterPassword
+        ) as IDecryptedLink[];
+
+        // massage data format
+        decLinks.forEach(link => {
+            link.is_encrypted = false;
+        });
+
+        const endTime = (new Date()).valueOf();
+        console.debug(`All ${linkIds.length} decrypted. Took ${endTime - startTime} ms`);
+
+        return decLinks;
+    }
+
+    /**
+     * This is the newer and recommended implementation for decrypting all the links
+     * This method decrypts the links in batches of DECRYPTION_BATCH_SIZE using the batch-decryption API for links
+     * The view (state) is updated every time a batch is returned from the server
+     * The down-side of this method is it can keep the server occupied for a significant amount of time as a batch takes a while to decrypt
+     */
     handleDecryptAll(): void {
+        // reset the logout timer when button is pressed
+        this.logoutTimer.resetLogoutTimer();
+
+        this.setState({
+            // don't allow the user to press the decrypt button while we're decrypting
+            isDecrypting: true,
+        }, async () => {
+            // this is just used for metrics collection
+            const startTime = (new Date()).valueOf();
+            const encLinkIds = this.state.links
+                .filter(link => link.is_encrypted)
+                .map(link => link.id);
+
+            // map from link ID to its index
+            const indexMap = {}
+            for (let i = 0; i < this.state.links.length; i++) {
+                indexMap[this.state.links[i].id] = i;
+            }
+
+            // split the IDs into chunks of DECRYPTION_BATCH_SIZE
+            const chunks = _.chunk(encLinkIds, DECRYPTION_BATCH_SIZE);
+            // keep track of how many have been decrypted
+            let numDecrypted = 0;
+
+            chunks.map(async (chunk: number[]) => {
+                // decrypt this chunk
+                const decLinks = await this.decryptList(chunk);
+                // make a copy - don't modify original
+                const newLinks = [...this.state.links];
+                // replace each element at the correct index
+                decLinks.forEach((decLink: IDecryptedLink) => {
+                    const i = indexMap[decLink.id];
+                    newLinks[i] = decLink;
+                });
+
+                numDecrypted += decLinks.length;
+                const isDecrypting = numDecrypted < encLinkIds.length;
+
+                const endTime = (new Date()).valueOf();
+                console.debug(`Completed decryption of ${numDecrypted}/${encLinkIds.length} links. Took ${endTime - startTime} ms from start.`);
+
+                // update the links with
+                this.setState({
+                    links: newLinks,
+                    isDecrypting: isDecrypting,
+                });
+            });
+        });
+    }
+
+    /**
+     * Decrypt all links by hitting the decryption API for each link one at a time.
+     * This method will only show the links (update the state) when *all* links have been decrypted
+     * This is also pretty hard for the server to handle as it creates many parallel requests,
+     * especially if the server is pre-HTTP-2
+     */
+    handleDecryptAllOld(): void {
+        // reset the logout timer when button is pressed
+        this.logoutTimer.resetLogoutTimer();
+
         // step 1 - disable the button
         if (this.state.isDecrypting) {
             // do nothing while there is a decryption operation already in progress
@@ -120,6 +215,7 @@ class App extends Component<IProps, IState> {
         this.setState({
             isDecrypting: true,
         }, async () => {
+            const start = new Date();
             const newLinks = {};
             const promises = [];
 
@@ -130,8 +226,8 @@ class App extends Component<IProps, IState> {
                     promises.push(
                         this.pzApi.decryptLink(link.id, this.state.masterPassword)
                             .then((response) => {
-                                console.log(`Got decrypted link from server: ${response.service_name}`);
-                                // console.log(response);
+                                console.debug(`Got decrypted link from server: ${response.service_name}`);
+                                // console.debug(response);
                                 const decLink = response as IDecryptedLink;
                                 decLink.is_encrypted = false;
                                 newLinks[i] = decLink;
@@ -141,12 +237,15 @@ class App extends Component<IProps, IState> {
             }
             // wait for all asynchronous decryption requests to come back
             await Promise.all(promises);
-            console.log("all links decrypted");
+            console.debug(`all ${promises.length} links decrypted`);
 
             const newArr = this.state.links;
             for (const linkIndex in newLinks) {
                 newArr.splice(Number.parseInt(linkIndex, 10), 1, newLinks[linkIndex]);
             }
+
+            const end = new Date();
+            console.debug(`Operation took ${end.valueOf() - start.valueOf()} ms`);
 
             this.setState({
                 links: newArr,
@@ -164,11 +263,11 @@ class App extends Component<IProps, IState> {
             isDecrypting: true
         }, () => {
             const link = this.state.links[linkIndex];
-            console.log(`Decrypting link with ID ${link.id}...`);
+            console.debug(`Decrypting link with ID ${link.id}...`);
             this.pzApi.decryptLink(link.id, this.state.masterPassword)
                 .then((response) => {
-                    console.log("Got decrypted link from server");
-                    // console.log(response);
+                    console.debug("Got decrypted link from server");
+                    // console.debug(response);
                     const decLink = response;
                     decLink.is_encrypted = false;
                     // replace encrypted link with new link

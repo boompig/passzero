@@ -1,37 +1,41 @@
 .link {
-	border: 1px solid black;
-	border-radius: 1rem;
-	padding: .5rem 1rem;
-	margin-bottom: 1rem;
+    border: 1px solid black;
+    border-radius: 1rem;
+    padding: .5rem 1rem;
+    margin-bottom: 1rem;
 }
 
 .link .link-id {
-	font-weight: bold;
-	font-size: 1.1rem;
-	margin-bottom: .25rem;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: .25rem;
 }
 
 .link-service-name {
-	display: block;
-	font-weight: bold;
-	font-size: 1.1rem;
-	margin-bottom: .25rem;
+    display: block;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: .25rem;
 }
 
 .link .fas {
-	margin-left: .25rem;
+    margin-left: .25rem;
 }
 
 .button-panel button:not(:last-of-type) {
-	margin-right: .5rem;
+    margin-right: .5rem;
 }
 
 .links-control-panel {
-	display: block;
-	margin: 1rem auto;
-	text-align: center;
+    display: block;
+    margin: 1rem auto;
+    text-align: center;
 }
 
 .links-control-panel .control-panel-btn:not(:first-child) {
-	margin-left: 1rem;
+    margin-left: 1rem;
+}
+
+.link-container {
+    padding-bottom: .5rem;
 }
