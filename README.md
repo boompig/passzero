@@ -79,6 +79,7 @@ make minify-css
 ## Deploying
 
 * run `make` to generate new build ID so caches are invalidated for old CSS and JS resources
+    - can also just run `make build-name`
 * deploy to server
 
 ## License
