@@ -5,6 +5,7 @@ import PasszeroApiV3 from "../common-modules/passzero-api-v3";
 import DecryptedLink from "./components/decrypted-link";
 import EncryptedLink from "./components/encrypted-link";
 import {IDecryptedLink, IEncryptedLink, ILink} from "./components/links";
+import SearchForm from "../entries-bundle/components/search-form";
 
 // instead of importing, include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -14,12 +15,16 @@ interface IProps {}
 
 interface IState {
     links: ILink[];
+    // local search on decrypted entries
+    searchString: string;
     // true iff the encrypted links have been loaded from the server
     linksLoaded: boolean;
     // filled on componentDidMount
     masterPassword: (string | null);
     // true iff currently decrypting something
     isDecrypting: boolean;
+    // true iff all links have been decrypted
+    isAllDecrypted: boolean;
 }
 
 /**
@@ -36,9 +41,11 @@ class App extends Component<IProps, IState> {
 
         this.state = {
             links: [],
+            searchString: "",
             linksLoaded: false,
             masterPassword: null,
             isDecrypting: false,
+            isAllDecrypted: false,
         };
 
         this.logoutTimer = new LogoutTimer();
@@ -51,6 +58,7 @@ class App extends Component<IProps, IState> {
         this.renderEmpty = this.renderEmpty.bind(this);
         this.renderLinks = this.renderLinks.bind(this);
         this.handleDecryptAll = this.handleDecryptAll.bind(this);
+        this.handleSearch = this.handleSearch.bind(this);
         this.decryptList = this.decryptList.bind(this);
     }
 
@@ -100,6 +108,12 @@ class App extends Component<IProps, IState> {
                 You don't have any saved links yet. Create some <a href="/links/new">here</a>.
             </div>
         );
+    }
+
+    handleSearch(searchString: string): void {
+        this.setState({
+            searchString: searchString,
+        });
     }
 
     handleDelete(linkIndex: number): void {
@@ -192,6 +206,12 @@ class App extends Component<IProps, IState> {
                     links: newLinks,
                     isDecrypting: isDecrypting,
                 });
+
+                if (numDecrypted === this.state.links.length) {
+                    this.setState({
+                        isAllDecrypted: true,
+                    });
+                }
             });
         });
     }
@@ -287,6 +307,7 @@ class App extends Component<IProps, IState> {
      */
     renderLinks() {
         const linkElems = [];
+        const ss = this.state.searchString.toLowerCase();
         for (let i = 0; i < this.state.links.length; i++) {
             const link = this.state.links[i];
             let linkElem = null;
@@ -295,6 +316,20 @@ class App extends Component<IProps, IState> {
                     onDecrypt={ this.handleDecrypt }
                     onDelete={ this.handleDelete }/>;
             } else {
+                let isFiltered = false;
+                if (this.state.isAllDecrypted && this.state.searchString !== "") {
+                    const name = (link as IDecryptedLink).service_name.toLowerCase();
+                    const href = (link as IDecryptedLink).link.toLowerCase();
+                    if (!name.includes(ss) && !href.includes(ss)) {
+                        isFiltered = true;
+                    }
+                }
+                if (isFiltered) {
+                    // console.debug(`Link with service name ${(link as IDecryptedLink).service_name} is filtered`);
+                    continue;
+                }
+
+
                 linkElem = <DecryptedLink link={ (link as IDecryptedLink) } key={ `dec-link-${link.id}` } index={ i }
                     onDelete={ this.handleDelete }/>;
             }
@@ -314,6 +349,9 @@ class App extends Component<IProps, IState> {
                         Decrypt All
                     </button>
                 </div>
+                {(this.state.linksLoaded && this.state.links.length > 0 && this.state.isAllDecrypted) ?
+                    <SearchForm onSearch={this.handleSearch} /> :
+                    null}
                 <div className="link-container">
                     { linkElems }
                 </div>

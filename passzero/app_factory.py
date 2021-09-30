@@ -53,6 +53,9 @@ def create_app(name: str, settings_override: dict = {}):
     app.config["OFFLINE"] = os.environ.get("OFFLINE", "0") == "1"
     if app.config["OFFLINE"]:
         print("Working offline")
+    if "PORT" in os.environ:
+        # overwrite default port with environment variable
+        app.config["PORT"] = os.environ["PORT"]
     # app.config["DISABLE_LOGOUT_TIMER"] = os.environ.get("DISABLE_LOGOUT_TIMER", "0") == "1"
     # if app.config["DISABLE_LOGOUT_TIMER"]:
     #     print("logout timer disabled")

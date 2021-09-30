@@ -22,15 +22,24 @@ export default class SearchForm extends Component<ISearchFormProps, ISearchFormS
         };
 
         this.handleChange = this.handleChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
     }
 
     handleChange(event: React.SyntheticEvent): void {
         this.props.onSearch((event.target as HTMLInputElement).value);
     }
 
+    /**
+     * Prevent the search form from being submitted - we're only interested in capturing the change event
+     */
+    handleSubmit(e) {
+        e.preventDefault();
+        return false;
+    }
+
     render() {
         return (
-            <form id="search-form">
+            <form id="search-form" onSubmit={this.handleSubmit}>
                 <div className="input-group">
                     <input type="text" name="search" id="search"
                         className="form-control"
