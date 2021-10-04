@@ -10,12 +10,12 @@ module.exports = {
     mode: mode,
     entry: {
         'entries': './typescript/entries-bundle/index.tsx',
-		'new-entry': './typescript/new-entry-bundle/index.tsx',
+        'new-entry': './typescript/new-entry-bundle/index.tsx',
         'links': './typescript/links-bundle/index.tsx',
-		'new-link': './typescript/new-link-bundle/index.tsx',
-		'docs': './typescript/docs-bundle/index.tsx',
-		'new-doc': './typescript/new-doc-bundle/index.tsx',
-		'view-doc': './typescript/view-doc-bundle/index.tsx',
+        'new-link': './typescript/new-link-bundle/index.tsx',
+        'docs': './typescript/docs-bundle/index.tsx',
+        'new-doc': './typescript/new-doc-bundle/index.tsx',
+        'view-doc': './typescript/view-doc-bundle/index.tsx',
     },
     output: {
         filename: '[name].bundle.js',
@@ -68,7 +68,13 @@ module.exports = {
          * see:
          * https://www.contentful.com/blog/2017/10/27/put-your-webpack-bundle-on-a-diet-part-3/
          */
-        new webpack.IgnorePlugin(/^\.\/locale\/(en|de)\.js$/, /moment$/),
+        // new webpack.IgnorePlugin(/^\.\/locale\/(en|de)\.js$/, /moment$/),
+
+        /*
+         * This is the newer way to accomplish the same goal:
+         * https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
+         */
+        new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en|de/),
 
         // NOTE: uncomment to look at bundle sizes
         // new BundleAnalyzerPlugin(),
