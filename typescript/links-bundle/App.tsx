@@ -1,6 +1,6 @@
 import { Component } from "react";
 import * as React from "react";
-import * as _ from "lodash";
+import { chunk } from "lodash";
 import PasszeroApiV3 from "../common-modules/passzero-api-v3";
 import DecryptedLink from "./components/decrypted-link";
 import EncryptedLink from "./components/encrypted-link";
@@ -180,13 +180,13 @@ class App extends Component<IProps, IState> {
             }
 
             // split the IDs into chunks of DECRYPTION_BATCH_SIZE
-            const chunks = _.chunk(encLinkIds, DECRYPTION_BATCH_SIZE);
+            const chunks = chunk(encLinkIds, DECRYPTION_BATCH_SIZE);
             // keep track of how many have been decrypted
             let numDecrypted = 0;
 
-            chunks.map(async (chunk: number[]) => {
+            chunks.map(async (idsChunk: number[]) => {
                 // decrypt this chunk
-                const decLinks = await this.decryptList(chunk);
+                const decLinks = await this.decryptList(idsChunk);
                 // make a copy - don't modify original
                 const newLinks = [...this.state.links];
                 // replace each element at the correct index
