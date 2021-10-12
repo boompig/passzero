@@ -35,7 +35,8 @@ module.exports = {
             // All files with a '.ts' or '.tsx' extension will be handled by 'awesome-typescript-loader'.
             {
                 test: /\.tsx?$/,
-                loader: 'awesome-typescript-loader',
+                // loader: 'awesome-typescript-loader',
+                loader: 'ts-loader',
                 include: [
                     path.resolve(__dirname, 'typescript/entries-bundle'),
                     path.resolve(__dirname, 'typescript/new-entry-bundle'),
