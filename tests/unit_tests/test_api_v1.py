@@ -44,6 +44,10 @@ class PassZeroApiTester(unittest.TestCase):
     def tearDown(self):
         db.drop_all()
 
+    def test_status(self):
+        data = api.get_status(self.app, check_status=True)
+        assert data["status"] == "ok"
+
     def test_delete_all_entries(self):
         self._create_active_account(DEFAULT_EMAIL, u"pass")
         api.login(self.app, DEFAULT_EMAIL, u"pass", check_status=True)

@@ -28,15 +28,24 @@ interface ILoginFormData {
 
 
 const Login = {
+    /**
+     * A timer to show a message saying that we're logging in
+     * Useful on slow connections
+     */
+    loginTimer: null,
+
+    isRequestComplete: true,
 
     createAccount: (e: Event) => {
         e.preventDefault();
-        console.log(e.target);
+        console.debug(e.target);
         const data = Utils.getFormData(e.target as HTMLElement) as IRegisterFormData;
         pzAPI.signup(data.email, data.password, data.confirm_password)
         .done((response) => {
-            console.log(response);
+            console.debug(response);
             window.location.href = "/done_signup/" + data.email;
+
+            // clear error message
             $("#error-msg-container").hide();
         }).catch((obj, textStatus, textCode) => {
             if (textCode === "CONFLICT") {
@@ -52,8 +61,10 @@ const Login = {
             } else if (textCode === "BAD REQUEST") {
                 const response = JSON.parse(obj.responseText);
                 console.log(response);
+                // set global error message
                 $("#error-msg").text(response.msg);
 
+                // clear form-level error messages
                 $(".form-error").text("");
 
                 for (const k of response) {
@@ -71,15 +82,38 @@ const Login = {
         return false;
     },
 
+    updateProgressAlert: () => {
+        if (Login.isRequestComplete && Login.loginTimer) {
+            $("#progress-alert").hide();
+            // request is done
+            window.clearInterval(Login.loginTimer);
+            Login.loginTimer = null;
+        } else if (!Login.isRequestComplete && Login.loginTimer) {
+            $("#progress-alert").show();
+        }
+    },
+
     login: (e: Event) => {
         "use strict";
         e.preventDefault();
         console.log(e.target);
         const data = Utils.getFormData(e.target as HTMLElement) as ILoginFormData;
+
+        // clear previous error messages
+        $("#error-msg").text("");
+        $("#error-msg-container").hide();
+
+        // start the timer to show a progress message
+        Login.isRequestComplete = false;
+        Login.loginTimer = window.setInterval(Login.updateProgressAlert, 380);
+
         pzAPI.login(data.email, data.password)
         .done((response) => {
+            Login.isRequestComplete = true;
+            $("#progress-alert").hide();
+
             //console.log(data);
-            console.log(response);
+            console.debug(response);
             $("#error-msg-container").hide();
             if (data.remember) {
                 // create a cookie on successful login
@@ -93,7 +127,10 @@ const Login = {
             }
             window.location.href = "/done_login";
         }).catch((obj, textStatus, textCode) => {
-            let errorMsg;
+            Login.isRequestComplete = true;
+            $("#progress-alert").hide();
+
+            let errorMsg = null;
             console.log(obj);
             if (textCode === "UNAUTHORIZED" || textCode === "BAD REQUEST") {
                 const response = JSON.parse(obj.responseText);
@@ -126,6 +163,11 @@ const Login = {
             form = document.querySelector("#login-new-form");
             form.addEventListener("submit", Login.createAccount);
         }
+
+        // make a network request to wake up the server if it was previously asleep
+        pzAPI.getStatus().then(() => {
+            console.debug("Got response back from status API");
+        });
     }
 };
 

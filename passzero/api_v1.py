@@ -28,6 +28,12 @@ class TokenExpiredException(Exception):
     pass
 
 
+@api_v1.route("/api/status", methods=["GET"])
+@api_v1.route("/api/v1/status", methods=["GET"])
+def get_api_status():
+    return write_json(200, {"status": "ok"})
+
+
 @api_v1.route("/api/csrf_token", methods=["GET"])
 @api_v1.route("/api/v1/csrf_token", methods=["GET"])
 def api_v1_get_csrf_token():

@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
     margin: 0;
     padding: 0;
     font-family: Helvetica, sans-serif;
@@ -7,7 +8,7 @@ html, body {
 }
 
 #hero {
-    background: linear-gradient(to bottom, #1e5799 0%,#2989d8 15%,#207cca 97%,#7db9e8 100%);
+    background: linear-gradient(to bottom, #1e5799 0%, #2989d8 15%, #207cca 97%, #7db9e8 100%);
     margin: 0;
     padding: 0;
     border: 0;
@@ -41,6 +42,15 @@ html, body {
 }
 
 #error-msg-container {
+    display: none;
+}
+
+
+/**
+ * Hidden by default
+ */
+
+#progress-alert {
     display: none;
 }
 
@@ -93,20 +103,18 @@ form input.form-control {
     border: 1px #777 solid;
 }
 
-label input[type=checkbox], label span {
+label input[type=checkbox],
+label span {
     display: inline;
 }
 
 form button {
     font-size: 1.1em;
-
     border: 1px solid #444;
     border-radius: 5px;
-
     padding-top: 0.5em;
     padding-bottom: 0.5em;
     background-color: #34B526;
-
     width: 100%;
     color: #fff;
     text-align: center;

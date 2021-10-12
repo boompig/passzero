@@ -72,6 +72,11 @@ const pzAPI = {
         return newObj;
     },
 
+    getStatus: (): any => {
+        const url = pzAPI.base_url + "/api/v1/status";
+        return pzAPI.getJSON(url);
+    },
+
     login: (email: string, password: string) => {
         const url = pzAPI.base_url + "/api/v1/login";
         const data = {
