@@ -12,6 +12,15 @@ interface IEntry {
 	has_2fa: boolean;
 }
 
+export interface IUser {
+    id: number;
+    email: string;
+    // ISO-encoded
+    last_login: string;
+    username: string | null;
+    preferences: any;
+}
+
 export default class PasszeroApiV3 {
     private apiKey: (IApiKey | null);
 
@@ -30,8 +39,8 @@ export default class PasszeroApiV3 {
             (options.headers as any).Authorization = `Bearer ${apiToken}`;
         }
         const response = await window.fetch(url, options);
-        console.log(response.headers.get("Content-Type"));
-        console.log(response.status);
+        console.debug(response.headers.get("Content-Type"));
+        console.debug(response.status);
         if (response.ok) {
             return response.json();
         } else if(response.status == 500 && response.headers.get("Content-Type") === "application/json") {
@@ -221,5 +230,19 @@ export default class PasszeroApiV3 {
         const apiToken = await this.fillToken();
         const url = `/api/v3/links/${linkId}`;
         return this.deleteWithBearer(url, apiToken);
+    }
+
+    async getCurrentUser(): Promise<IUser> {
+        const apiToken = await this.fillToken();
+        const url = '/api/v3/user/me';
+        const user = await this.getJsonWithBearer(url, apiToken);
+        // user.last_login = new Date(user.last_login)
+        return user as IUser;
+    }
+
+    async updateCurrentUser(newFields: any) {
+        const apiToken = await this.fillToken();
+        const url = '/api/v3/user/me';
+        return this.patchJsonWithBearer(url, apiToken, newFields);
     }
 }

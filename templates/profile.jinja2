@@ -7,6 +7,9 @@
 
 {% block js %}
     <script src="{{ url_for("static", filename="js/dist/profile.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    {# custom JS - webpack bundle #}
+    <script src="{{ url_for("static", filename="js/dist/user-profile.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block body %}
@@ -32,6 +35,8 @@
     </ul>
     <div class="tab-content" id="profile-tab-content">
         <div id="user-prefs" class="tab-pane active" role="tabpanel">
+            <div id="user-profile-react-root">
+            </div>
             <div id="user-prefs-container">
                 <h3 class="title">Random password generation preferences</h3>
                 <form role="form" id="user-prefs-form">

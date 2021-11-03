@@ -9,3 +9,11 @@
 #change-password .progress-alert {
     display: none;
 }
+
+#readonly-user-details {
+    margin-top: 1rem;
+}
+
+.table-info-cell {
+    font-weight: bold;
+}
