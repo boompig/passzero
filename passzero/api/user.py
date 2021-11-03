@@ -1,5 +1,3 @@
-import logging
-
 from flask_restx import Namespace, Resource, reqparse, ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import IntegrityError
@@ -9,7 +7,6 @@ from ..models import User, db
 from .jwt_auth import authorizations
 
 
-logger = logging.getLogger(__name__)
 ns = Namespace("User", authorizations=authorizations)
 
 
@@ -108,8 +105,6 @@ class CurrentUser(Resource):
             except IntegrityError:
                 # roll back the transaction
                 db.session.rollback()
-                logger.error("Failed to update username of User<email=%s> to %s -> it's a duplicate",
-                             user.email, args.username)
                 return json_error_v2("There is already an account with this username. Usernames must be unique.", 400)
 
         return json_success_v2("Successfully updated user")
