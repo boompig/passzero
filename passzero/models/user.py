@@ -19,11 +19,28 @@ class User(db.Model):
 
     DEFAULT_PASSWORD_HASH_ALGO = PasswordHashAlgo.Argon2
 
+    # this may be null
+    # must be unique if specified
+    # this is used as an alternative to email when logging in
+    username = db.Column(db.String, unique=True)
+
     # password generation preferences
     # number of characters in password
     default_random_password_length = db.Column(db.Integer, nullable=False, default=12)
     # number of words in passphrase
     default_random_passphrase_length = db.Column(db.Integer, nullable=False, default=4)
+
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "email": self.email,
+            "last_login": self.last_login.isoformat(),
+            "username": self.username,
+            "preferences": {
+                "default_random_password_length": self.default_random_password_length,
+                "default_random_passphrase_length": self.default_random_passphrase_length,
+            }
+        }
 
     def authenticate(self, form_password: str) -> bool:
         """

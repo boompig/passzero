@@ -9,6 +9,7 @@ from passzero.app_factory import create_app
 from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service
 from passzero.models import db as _db
 from passzero.api.link_list import MAX_NUM_DECRYPT
+from passzero.backend import create_inactive_user, activate_account
 
 from ..common import api
 from .utils import get_test_decrypted_entry
@@ -89,6 +90,22 @@ def create_active_account(client, email: str, password: str, m1):
     # activate
     r = api.activate_account(client, token)
     assert r.status_code == 200
+
+
+@pytest.fixture(scope="function")
+def active_user(db):
+    """Create a default active user with email=`DEFAULT_EMAIL` and password=`DEFAULT_PASSWORD`"""
+    user = create_inactive_user(
+        db_session=db.session,
+        email=DEFAULT_EMAIL,
+        password=DEFAULT_PASSWORD,
+    )
+    activate_account(db.session, user)
+    yield user
+
+    # then delete that user
+    db.session.delete(user)
+    db.session.commit()
 
 
 def test_login_then_get_token(app):
@@ -919,3 +936,77 @@ def test_get_services(app):
         assert len(services) > 0
         assert services[0]["name"] == "foo"
         assert services[0]["link"] == "bar"
+
+
+def test_get_current_user(app, active_user: User):
+    # create user using test fixture
+    assert active_user.username is None
+    with app.test_client() as client:
+        api_v3 = api.ApiV3(client)
+        # first try to get info about the current user without logging in
+        r = client.get("/api/v3/user/me")
+        assert r.status_code == 401
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        user_out = api_v3.get_current_user()
+        assert user_out["email"] == DEFAULT_EMAIL
+        assert "password" not in user_out
+        # must have the username attribute but it's not set
+        assert user_out["username"] is None
+
+
+def test_update_current_user_username(app, active_user: User):
+    # create primary user using test fixture
+    assert active_user.username is None
+
+    with app.test_client() as client:
+        # create a secondary user in the usual way
+        create_active_account(client, "test@example.com", "second user")
+
+        api_v3 = api.ApiV3(client)
+
+        # first try to patch the current user without logging in
+        r = client.patch("/api/v3/user/me")
+        assert r.status_code == 401
+
+        # login as the default user and patch it with a new username
+        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+
+        r = client.patch("/api/v3/user/me", json={
+            "username": "user1"
+        }, headers={
+            "Authorization": f"Bearer {api_v3.api_token}"
+        })
+        assert r.status_code == 200
+
+        # make sure the username has changed
+        user1_out = api_v3.get_current_user()
+        assert user1_out["username"] == "user1"
+
+        # logout as user1 and login as user2
+        api_v3.logout()
+        api_v3.login("test@example.com", "second user")
+        user2_out = api_v3.get_current_user()
+        assert user2_out["username"] is None
+
+        # patch user2 with the same username as user1
+        r = client.patch("/api/v3/user/me", json={
+            "username": "user1"
+        }, headers={
+            "Authorization": f"Bearer {api_v3.api_token}"
+        })
+        # this should fail
+        assert r.status_code == 400
+        # username should still be null
+        user2_out = api_v3.get_current_user()
+        assert user2_out["username"] is None
+
+        # patch user2 with a different username
+        r = client.patch("/api/v3/user/me", json={
+            "username": "user2"
+        }, headers={
+            "Authorization": f"Bearer {api_v3.api_token}"
+        })
+        # this should succeed
+        assert r.status_code == 200
+        user2_out = api_v3.get_current_user()
+        assert user2_out["username"] == "user2"

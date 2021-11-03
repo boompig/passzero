@@ -741,6 +741,7 @@ class ApiV3:
             return r
 
     def json_patch(self, url: str, data: dict, check_status: bool = True):
+        """Always send the API token in the Authorization field"""
         assert self.api_token is not None
         r = json_patch(self.client, url, data=data, token=self.api_token)
         _print_if_test(self.client, _get_response_data(self.client, r))
@@ -901,3 +902,13 @@ class ApiV3:
     def get_services(self) -> List[dict]:
         url = "/api/v3/services"
         return self.json_get(url=url, check_status=True, use_token=False)["services"]
+
+    # user
+
+    def get_current_user(self) -> dict:
+        url = "/api/v3/user/me"
+        return self.json_get(url=url, check_status=True, use_token=True)
+
+    def patch_current_user(self, data: dict) -> dict:
+        url = "/api/v3/user/me"
+        return self.json_patch(url=url, data=data, check_status=True)
