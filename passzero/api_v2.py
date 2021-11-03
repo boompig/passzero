@@ -1,12 +1,16 @@
+from datetime import datetime
 from multiprocessing import Pool
-
-from flask import Blueprint, session
-from sqlalchemy.orm.exc import NoResultFound
 from typing import List
 
+from flask import Blueprint, session, escape
+from sqlalchemy.orm.exc import NoResultFound
+
 from . import backend
-from .api_utils import json_error, requires_json_auth, write_json
-from .models import Entry, db
+from .api_utils import (json_error, json_success, requires_json_auth,
+                        requires_json_form_validation, write_json)
+from .api_v1 import UserNotActiveException
+from .forms import LoginFormV2
+from .models import Entry, User, db
 
 api_v2 = Blueprint("api_v2", __name__)
 
@@ -96,4 +100,64 @@ def api_get_entry(entry_id: int):
         data = entry.decrypt(session["password"])
     except NoResultFound:
         code, data = json_error(400, "no such entry or the entry does not belong to you")
+    return write_json(code, data)
+
+
+@api_v2.route("/api/v2/login", methods=["POST"])
+@requires_json_form_validation(LoginFormV2)
+def api_v1_login(request_data):
+    """Login. On success, update session cookie.
+
+    Arguments
+    ---------
+    - username_or_email: string (required)
+    - password: string (required)
+
+    Response
+    --------
+    Success or error message::
+
+        { "status": "success"|"error", "msg": string }
+
+    Status codes
+    ------------
+    - 200: success
+    - 400: failed to validate arguments
+    - 401: bad username-password combo or account doesn't exist or account isn't activated
+    """
+    try:
+        # is the request data a username or email?
+        # simple check here - @-sign means it's an email
+        # since @-signs are not allowed in usernames
+        is_email = "@" in request_data["username_or_email"]
+        auth_field = ("email" if is_email else "username")
+        if is_email:
+            user = backend.get_account_with_email(db.session, request_data["username_or_email"])
+        else:
+            user = db.session.query(User).filter_by(username=request_data["username_or_email"]).one()
+
+        if not user.active:
+            raise UserNotActiveException
+        if user.authenticate(request_data["password"]):
+            session["email"] = user.email
+            session["password"] = request_data["password"]
+            session["user_id"] = user.id
+            # write into last_login
+            user.last_login = datetime.utcnow()
+            db.session.add(user)
+            db.session.commit()
+            # craft message to return to user
+            msg = "successfully logged in as {email}".format(
+                email=escape(session["email"])
+            )
+            code, data = json_success(msg)
+        else:
+            code, data = json_error(401, f"Either the {auth_field} or password is incorrect")
+    except NoResultFound:
+        code, data = json_error(401, f"There is no account with that {auth_field}")
+    except UserNotActiveException:
+        code, data = json_error(
+            401,
+            "The account has not been activated. Check your email!"
+        )
     return write_json(code, data)

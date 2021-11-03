@@ -1,16 +1,13 @@
-from __future__ import print_function
-
 import json
 import logging
 import unittest
-
 from unittest import mock
+
 import six
 from flask import Flask
-
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
-from passzero.models import db
+from passzero.models import User, db
 
 from ..common import api
 
@@ -41,6 +38,17 @@ class PassZeroApiTester(unittest.TestCase):
         db.create_all()
 
     @mock.patch("passzero.email.send_email")
+    def _create_inactive_account(self, email, password, m1):
+        assert isinstance(email, six.text_type)
+        assert isinstance(password, six.text_type)
+        # signup, etc etc
+        # TODO for some reason can't mock out send_confirmation_email so mocking this instead
+        m1.return_value = True
+        r = api.signup(self.app, email, password)
+        assert r.status_code == 200
+        m1.assert_called_once()
+
+    @mock.patch("passzero.email.send_email")
     def _create_active_account(self, email, password, m1):
         assert isinstance(email, six.text_type)
         assert isinstance(password, six.text_type)
@@ -67,7 +75,7 @@ class PassZeroApiTester(unittest.TestCase):
         }
         self._create_active_account(DEFAULT_EMAIL,
                                     DEFAULT_PASSWORD)
-        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api.login_v2(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         csrf_token = api.get_csrf_token(self.app)
         entry_id = api.create_entry(self.app,
                                     entry, csrf_token)
@@ -93,14 +101,50 @@ class PassZeroApiTester(unittest.TestCase):
         }
         self._create_active_account(emails[0], password)
         self._create_active_account(emails[1], password)
-        api.login(self.app, emails[0], password)
+        api.login_v2(self.app, emails[0], password)
         csrf_token = api.get_csrf_token(self.app)
         entry_id = api.create_entry(self.app, entry, csrf_token)
         entries = api.get_entries_v2(self.app)
         assert len(entries) == 1
         api.logout(self.app)
-        api.login(self.app, emails[1], password)
+        api.login_v2(self.app, emails[1], password)
         r = api.get_entry_v2(self.app, entry_id, check_status=False)
         print(r.data)
         assert r.status_code != 200
         assert json.loads(r.data)["status"] == "error"
+
+    def test_login_v2_with_email(self):
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        r = api.login_v2(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        # only printed on error
+        print(r.data)
+        assert r.status_code == 200
+
+    def test_login_v2_no_such_email(self):
+        r = api.login_v2(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=False)
+        # no such email
+        assert r.status_code == 401
+
+    def test_login_v2_inactive_user(self):
+        self._create_inactive_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        r = api.login_v2(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=False)
+        # inactive account
+        assert r.status_code == 401
+
+    def test_login_v2_incorrect_password(self):
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        r = api.login_v2(self.app, DEFAULT_EMAIL, "wrong password", check_status=False)
+        # incorrect password
+        assert r.status_code == 401
+
+    def test_login_v2_with_username(self):
+        self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        # get the current user to set the username
+        user = db.session.query(User).filter_by(email=DEFAULT_EMAIL).one()
+        user.username = "user1"
+        db.session.commit()
+
+        r = api.login_v2(self.app, "user1", DEFAULT_PASSWORD, check_status=True)
+        # only printed on error
+        print(r.data)
+        assert r.status_code == 200

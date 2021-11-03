@@ -111,8 +111,8 @@ def active_user(db):
 def test_login_then_get_token(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        api.login(client,
-                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v2(client,
+                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         assert isinstance(token, six.text_type)
 
@@ -121,8 +121,8 @@ def test_login_then_get_token_twice(app):
     """If you get the token twice, make sure it's the same token"""
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        api.login(client,
-                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v2(client,
+                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         t2 = api.get_api_token_with_login(client, check_status=True)
         assert token == t2
@@ -986,6 +986,11 @@ def test_update_current_user_username(app, active_user: User):
         # 3) reserved keyword
         r = api_v3.patch_current_user({
             "username": "admin",
+        }, check_status=False)
+        assert r.status_code == 400
+        # 4) reserved character/email
+        r = api_v3.patch_current_user({
+            "username": "test@example.com",
         }, check_status=False)
         assert r.status_code == 400
 

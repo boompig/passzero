@@ -21,15 +21,15 @@
         </div>
 
         <span class="form-error" id="form-error-email"></span>
-        <input type="email" class="form-control" name="email" tabindex="1"
-                placeholder="email" required="true">
+        <input type="text" class="form-control" name="username_or_email" tabindex="1"
+                placeholder="username or email" required="true" autocomplete="username">
 
         <span class="form-error" id="form-error-password"></span>
         <input type="password" class="form-control" name="password" tabindex="2"
                 placeholder="password" required="true">
         <label for="remember">
             <input type="checkbox" name="remember" tabindex="3">
-            <span>Remember email</span>
+            <span>Remember me</span>
         </label>
 
         <a id="forgot-password" href="{{ url_for("main_routes.recover_password") }}">Forgot Password</a>

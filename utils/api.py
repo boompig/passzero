@@ -1,22 +1,23 @@
 import json
 from typing import Dict
 import copy
-json_header = { "Content-Type": "application/json" }
 import requests
 
 requests.packages.urllib3.disable_warnings()
 
-### v1 API starts here
+# v1 API starts here
 BASE_URL = ""
+json_header = {"Content-Type": "application/json"}
+
 
 def login(app, email, password, check_status=True):
-    data={
+    data = {
         "email": email,
         "password": password
     }
     r = app.post(BASE_URL + "/api/v1/login",
-        data=json.dumps(data),
-        headers=json_header, allow_redirects=True)
+                 data=json.dumps(data),
+                 headers=json_header, allow_redirects=True)
     if check_status:
         assert r.status_code == 200
     return r
@@ -24,12 +25,12 @@ def login(app, email, password, check_status=True):
 
 def logout(app):
     return app.post(BASE_URL + "/api/v1/logout",
-        headers=json_header, allow_redirects=True)
+                    headers=json_header, allow_redirects=True)
 
 
 def get_csrf_token(app):
     r = app.get(BASE_URL + "/api/v1/csrf_token",
-        headers=json_header, allow_redirects=True)
+                headers=json_header, allow_redirects=True)
     assert r.status_code == 200
     token = json.loads(r.text)
     # print("[client] received csrf_token: %s" % token)
@@ -38,7 +39,7 @@ def get_csrf_token(app):
 
 def get_entries(app, check_status=True):
     r = app.get(BASE_URL + "/api/v1/entries",
-        headers=json_header, allow_redirects=True)
+                headers=json_header, allow_redirects=True)
     if check_status:
         assert r.status_code == 200
         return json.loads(r.text)
@@ -53,8 +54,8 @@ def create_entry(app, entry, token, check_status=True):
     data = entry
     data["csrf_token"] = token
     r = app.post(BASE_URL + "/api/v1/entries/new",
-        data=json.dumps(data),
-        headers=json_header, allow_redirects=True)
+                 data=json.dumps(data),
+                 headers=json_header, allow_redirects=True)
     if check_status:
         # print(r.text)
         assert r.status_code == 200
@@ -67,7 +68,7 @@ def delete_entry(app, entry_id, token):
     url = BASE_URL + "/api/v1/entries/{}?csrf_token={}".format(
         entry_id, token)
     r = app.delete(url,
-        headers=json_header, allow_redirects=True)
+                   headers=json_header, allow_redirects=True)
     # print(r.text)
     assert r.status_code == 200
     return r
@@ -78,8 +79,8 @@ def edit_entry(app, entry_id, entry, token):
     data = entry
     data["csrf_token"] = token
     return app.post(BASE_URL + url,
-        data=json.dumps(data),
-        headers=json_header, allow_redirects=True)
+                    data=json.dumps(data),
+                    headers=json_header, allow_redirects=True)
 
 
 def signup(app, email, password):
@@ -90,8 +91,8 @@ def signup(app, email, password):
         "confirm_password": password
     }
     return app.post(BASE_URL + url,
-        data=json.dumps(data),
-        headers=json_header, allow_redirects=True)
+                    data=json.dumps(data),
+                    headers=json_header, allow_redirects=True)
 
 
 def recover_account(app, email, csrf_token):
@@ -101,8 +102,8 @@ def recover_account(app, email, csrf_token):
         "csrf_token": csrf_token
     }
     r = app.post(BASE_URL + url,
-        data=json.dumps(data),
-        headers=json_header, allow_redirects=True)
+                 data=json.dumps(data),
+                 headers=json_header, allow_redirects=True)
     print(r.text)
     assert r.status_code == 200
     return r
@@ -117,8 +118,8 @@ def recover_account_confirm(app, password, recovery_token, csrf_token):
         "token": recovery_token
     }
     r = app.post(BASE_URL + url,
-        data=json.dumps(data),
-        headers=json_header, allow_redirects=True)
+                 data=json.dumps(data),
+                 headers=json_header, allow_redirects=True)
     print(r.text)
     assert r.status_code == 200
     return r
@@ -126,8 +127,8 @@ def recover_account_confirm(app, password, recovery_token, csrf_token):
 
 def activate_account(app, token):
     return app.post(BASE_URL + "/api/v1/user/activate",
-        data=json.dumps({"token": token}),
-        headers=json_header, allow_redirects=True)
+                    data=json.dumps({"token": token}),
+                    headers=json_header, allow_redirects=True)
 
 
 def update_user_password(app, old_password, new_password, csrf_token, check_status=True):
@@ -139,16 +140,17 @@ def update_user_password(app, old_password, new_password, csrf_token, check_stat
         "confirm_new_password": new_password
     }
     r = app.put(url,
-        data=json.dumps(data),
-        headers=json_header,
-        allow_redirects=True)
+                data=json.dumps(data),
+                headers=json_header,
+                allow_redirects=True)
     if check_status:
         print(r.text)
         assert r.status_code == 200
     return r
 
 
-#### v2 API starts here
+# v2 API starts here
+
 
 def get_json(app, url):
     return app.get(
@@ -208,6 +210,7 @@ def get_entry_v2(app, entry_id, check_status=True):
 
 # token stuff
 
+
 def login_with_token(app, email: str, password: str, check_status: bool = True):
     r = json_post(app, "/api/v3/token", data={
         "email": email,
@@ -227,4 +230,3 @@ def get_encrypted_entries_with_token(app, token: str, check_status: bool = True)
         return r.json()
     else:
         return r
-

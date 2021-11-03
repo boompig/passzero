@@ -18,8 +18,8 @@ def username(min_len: int, max_len: int):
     def validate(s: str):
         if not isinstance(s, str):
             raise ValidationError("Parameter must be a string")
-        elif "." in s:
-            raise ValidationError("Parameter may not contain the character '.'")
+        elif "." in s or "@" in s:
+            raise ValidationError("Parameter may not contain the characters '.' or '@'")
         elif s in ["admin", "root"]:
             raise ValidationError(f"{s} is a reserved username")
         if len(s) < min_len:

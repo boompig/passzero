@@ -21,7 +21,7 @@ interface IRegisterFormData {
 }
 
 interface ILoginFormData {
-    email: string;
+    username_or_email: string;
     password: string;
     remember: boolean;
 }
@@ -107,7 +107,7 @@ const Login = {
         Login.isRequestComplete = false;
         Login.loginTimer = window.setInterval(Login.updateProgressAlert, 380);
 
-        pzAPI.login(data.email, data.password)
+        pzAPI.login(data.username_or_email, data.password)
         .done((response) => {
             Login.isRequestComplete = true;
             $("#progress-alert").hide();
@@ -117,13 +117,13 @@ const Login = {
             $("#error-msg-container").hide();
             if (data.remember) {
                 // create a cookie on successful login
-                Cookies.set("email", data.email, {
+                Cookies.set("username_or_email", data.username_or_email, {
                     secure: true,
                     expires: 7
                 });
             } else {
                 // erase the cookie
-                Cookies.remove("email");
+                Cookies.remove("username_or_email");
             }
             window.location.href = "/done_login";
         }).catch((obj, textStatus, textCode) => {
@@ -150,10 +150,10 @@ const Login = {
     },
 
     onLoad: () => {
-        const email: string = Cookies.get("email");
-        if (email) {
+        const usernameOrEmail: string = Cookies.get("username_or_email");
+        if (usernameOrEmail) {
             $("[name='remember']").prop("checked", true);
-            $("[name='email']").val(email);
+            $("[name='username_or_email']").val(usernameOrEmail);
         }
 
         let form = document.querySelector("#login-existing-form");

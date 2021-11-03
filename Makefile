@@ -52,7 +52,8 @@ python-test: $(SRC) $(UNIT_TEST_SRC) lint
 	PYTHONPATH=$(CWD) pytest -x tests/unit_tests
 
 test-cov: $(SRC) $(UNIT_TEST_SRC) lint
-	PYTHONPATH=$(CWD) pytest --cov=passzero --cov-report=html tests/unit_tests
+	# run until only first failure to not waste time
+	PYTHONPATH=$(CWD) pytest -x --cov=passzero --cov-report=html tests/unit_tests
 
 live-test-local: $(SRC) $(E2E_TEST_SRC) lint
 	# use heroku local to make extra certain everything works

@@ -77,10 +77,14 @@ const pzAPI = {
         return pzAPI.getJSON(url);
     },
 
-    login: (email: string, password: string) => {
-        const url = pzAPI.base_url + "/api/v1/login";
+    /**
+     * @param usernameOrEmail Accepts either the username or the email
+     * @returns {Response}
+     */
+    login: (usernameOrEmail: string, password: string) => {
+        const url = pzAPI.base_url + "/api/v2/login";
         const data = {
-            email: email,
+            username_or_email: usernameOrEmail,
             password: password
         };
         return pzAPI.postJSON(url, data);

@@ -136,6 +136,9 @@ def json_put(session, relative_url: str, data: dict = {}, token: Optional[str] =
 
 
 def json_patch(session, relative_url: str, data: dict = {}, token: Optional[str] = None):
+    """
+    :param token: The JWT Bearer token - leave out if you're not using it
+    """
     if token:
         headers = json_header_with_token(token)
     else:
@@ -144,9 +147,11 @@ def json_patch(session, relative_url: str, data: dict = {}, token: Optional[str]
     kwargs = {}
     url = relative_url
     if _is_requests_session(session):
+        # real tests (end to end) go here
         url = BASE_URL + relative_url
         kwargs["verify"] = False
     else:
+        # unit tests go here
         kwargs["follow_redirects"] = True
     return session.patch(
         url,
@@ -485,15 +490,25 @@ def get_document(app, doc_id: int, check_status: bool = True):
 
 def update_document(app, doc_id: int, doc_params: dict, csrf_token: str,
                     check_status: bool = True):
+    """Edit the document and return the raw response"""
     url = f"/api/v1/docs/{doc_id}"
     doc_params["csrf_token"] = csrf_token
-    r = app.put(
+    # this is a hack around the fact that app may come from 2 different places
+    kwargs = {}
+    if _is_requests_session(app):
+        url = BASE_URL + url
+        kwargs["verify"] = False
+    else:
+        kwargs["follow_redirects"] = True
+    r = app.patch(
         url,
         data=doc_params,
         headers=file_upload_headers,
-        follow_redirects=True
+        **kwargs,
     )
     _print_if_test(app, _get_response_data(app, r))
+    if check_status:
+        assert r.status_code == 200, r.status_code
     return r
 
 
@@ -526,6 +541,24 @@ def get_entry_v2(app, entry_id: int, check_status: bool = True):
         return _get_response_json(r)
     else:
         return r
+
+
+def login_v2(app, username_or_email: str, password: str, check_status: bool = True):
+    assert isinstance(username_or_email, six.text_type)
+    assert isinstance(password, six.text_type)
+    assert isinstance(check_status, bool)
+    data = {
+        "username_or_email": username_or_email,
+        "password": password
+    }
+    url = "/api/v2/login"
+    r = json_post(app, url, data)
+    _print_if_test(app, _get_response_data(app, r))
+    if check_status:
+        assert r.status_code == 200, "Failed to login with email '%s' and password '%s' (code %d)" % (
+            username_or_email, password, r.status_code)
+    return r
+
 
 # --- v3 (tokens) starts here
 

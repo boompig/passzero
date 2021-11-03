@@ -114,6 +114,7 @@ def api_v1_login(request_data):
     """
     try:
         user = backend.get_account_with_email(db.session, request_data["email"])
+
         if not user.active:
             raise UserNotActiveException
         if user.authenticate(request_data["password"]):
@@ -270,7 +271,7 @@ def api_v1_create_doc(form_data: NewDocumentForm):
     return write_json(200, {"document_id": encrypted_file.id})
 
 
-@api_v1.route("/api/v1/docs/<int:document_id>", methods=["PUT"])
+@api_v1.route("/api/v1/docs/<int:document_id>", methods=["PUT", "PATCH"])
 @requires_json_auth
 @requires_csrf_check
 @requires_json_form_validation(NewDocumentForm)

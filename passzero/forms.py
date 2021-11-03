@@ -20,9 +20,20 @@ class SignupForm(Form):
 
 
 class LoginForm(Form):
+    """This is the old (v1) login form and is now depracated"""
     email = StringField("email", [
         validators.DataRequired(),
-        validators.Email()
+        validators.Email(),
+    ])
+    password = PasswordField("password", [validators.DataRequired()])
+
+
+class LoginFormV2(Form):
+    # allow for either a username or an email
+    username_or_email = StringField("username_or_string", [
+        validators.DataRequired(),
+        # set some arbitrary upper bound on parameters
+        validators.Length(min=2, max=64),
     ])
     password = PasswordField("password", [validators.DataRequired()])
 

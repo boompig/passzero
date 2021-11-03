@@ -427,3 +427,31 @@ class PassZeroApiV1Tester(unittest.TestCase):
             assert docs_before == []
             r = api.get_document(s, 1, check_status=False)
             assert r.status_code == 400
+
+    # def test_upload_doc_then_update(self):
+    #     with requests.Session() as s:
+    #         create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+    #         api.login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+    #         docs_before = api.get_documents(s, check_status=True)
+    #         assert docs_before == []
+    #         upload_doc_token = self._get_csrf_token(s)
+    #         doc_params = {
+    #             "name": "test document",
+    #             "document": BytesIO(b"hello world\n"),
+    #             "mimetype": "text/plain"
+    #         }
+    #         doc_id = api.post_document(
+    #             app=s,
+    #             doc_params=doc_params,
+    #             csrf_token=upload_doc_token,
+    #             check_status=True
+    #         )
+    #         update_token = self._get_csrf_token(s)
+    #         new_doc_params = {
+    #             "name": "new name for document",
+    #             "document": BytesIO(b"hello world 2\n"),
+    #             "mimetype": "text/plain"
+    #         }
+    #         api.update_document(s, doc_id, new_doc_params, update_token, check_status=True)
+    #         docs_after_update = api.get_documents(s)
+    #         assert len(docs_after_update) == 1
