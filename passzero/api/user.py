@@ -1,6 +1,6 @@
 import logging
 
-from flask_restx import Namespace, Resource, reqparse
+from flask_restx import Namespace, Resource, reqparse, ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import IntegrityError
 
@@ -11,6 +11,27 @@ from .jwt_auth import authorizations
 
 logger = logging.getLogger(__name__)
 ns = Namespace("User", authorizations=authorizations)
+
+
+def username(min_len: int, max_len: int):
+    """
+    This is the parametrized validation function for usernames
+    Uniqueness is not checked here, just whether that username is allowed
+    """
+    def validate(s: str):
+        if not isinstance(s, str):
+            raise ValidationError("Parameter must be a string")
+        elif "." in s:
+            raise ValidationError("Parameter may not contain the character '.'")
+        elif s in ["admin", "root"]:
+            raise ValidationError(f"{s} is a reserved username")
+        if len(s) < min_len:
+            raise ValidationError(f"Parameter must be at least {min_len} characters long")
+        elif len(s) > max_len:
+            raise ValidationError(f"Parameter must be at most {max_len} characters long")
+        else:
+            return s
+    return validate
 
 
 @ns.route("/me")
@@ -77,7 +98,7 @@ class CurrentUser(Resource):
         user_id = get_jwt_identity()["user_id"]
         user = db.session.query(User).filter_by(id=user_id).one()
         parser = reqparse.RequestParser()
-        parser.add_argument("username", type=str, required=False)
+        parser.add_argument("username", type=username(2, 16), required=False)
         args = parser.parse_args()
         # update username first to check for failure of uniqueness constraint
         if args.username:

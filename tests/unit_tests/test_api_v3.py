@@ -965,17 +965,33 @@ def test_update_current_user_username(app, active_user: User):
         api_v3 = api.ApiV3(client)
 
         # first try to patch the current user without logging in
+        # need to call patch explicitly because api_v3 passes token in all calls
         r = client.patch("/api/v3/user/me")
         assert r.status_code == 401
 
         # login as the default user and patch it with a new username
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
 
-        r = client.patch("/api/v3/user/me", json={
+        # these attempts should fail due to parameter validation errors
+        # 1) too short
+        r = api_v3.patch_current_user({
+            "username": "x"
+        }, check_status=False)
+        assert r.status_code == 400
+        # 2) too long
+        r = api_v3.patch_current_user({
+            "username": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        }, check_status=False)
+        assert r.status_code == 400
+        # 3) reserved keyword
+        r = api_v3.patch_current_user({
+            "username": "admin",
+        }, check_status=False)
+        assert r.status_code == 400
+
+        r = api_v3.patch_current_user({
             "username": "user1"
-        }, headers={
-            "Authorization": f"Bearer {api_v3.api_token}"
-        })
+        }, check_status=False)
         assert r.status_code == 200
 
         # make sure the username has changed
@@ -989,11 +1005,9 @@ def test_update_current_user_username(app, active_user: User):
         assert user2_out["username"] is None
 
         # patch user2 with the same username as user1
-        r = client.patch("/api/v3/user/me", json={
+        r = api_v3.patch_current_user({
             "username": "user1"
-        }, headers={
-            "Authorization": f"Bearer {api_v3.api_token}"
-        })
+        }, check_status=False)
         # this should fail
         assert r.status_code == 400
         # username should still be null
@@ -1001,11 +1015,9 @@ def test_update_current_user_username(app, active_user: User):
         assert user2_out["username"] is None
 
         # patch user2 with a different username
-        r = client.patch("/api/v3/user/me", json={
+        r = api_v3.patch_current_user({
             "username": "user2"
-        }, headers={
-            "Authorization": f"Bearer {api_v3.api_token}"
-        })
+        }, check_status=False)
         # this should succeed
         assert r.status_code == 200
         user2_out = api_v3.get_current_user()

@@ -909,6 +909,6 @@ class ApiV3:
         url = "/api/v3/user/me"
         return self.json_get(url=url, check_status=True, use_token=True)
 
-    def patch_current_user(self, data: dict) -> dict:
+    def patch_current_user(self, data: dict, check_status: bool = True) -> dict:
         url = "/api/v3/user/me"
-        return self.json_patch(url=url, data=data, check_status=True)
+        return self.json_patch(url=url, data=data, check_status=check_status)
