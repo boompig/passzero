@@ -151,6 +151,7 @@ def time_decrypt_partial(db_session, user_id, user_pt_password):
 
 
 def delete_all_entries_for_user(db_session, user_id):
+    """Delete the entries individually"""
     entries = db_session.query(Entry).filter_by(user_id=user_id).all()
     for entry in entries:
         db_session.delete(entry)
@@ -267,7 +268,7 @@ def test_live(version):
         raise e
         # delete the user
         delete_user(db_session, user)
-        
+
     save_user_id(user.id)
 
 
@@ -319,7 +320,7 @@ def get_live(
         logging.info("deleting user with ID %d...", user.id)
         delete_user(db_session, user)
 
-    
+
 
 
 def delete_live():

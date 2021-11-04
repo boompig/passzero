@@ -101,7 +101,7 @@ class ApiEntryList(Resource):
 
         Arguments
         ---------
-        none
+        - password: str (required)
 
         Response
         --------
@@ -112,12 +112,19 @@ class ApiEntryList(Resource):
         Status codes
         ------------
         - 200: success
+        - 400: parameter validation error
         - 401: not authenticated
         """
+        parser = reqparse.RequestParser()
+        parser.add_argument("password", type=str, required=True)
+        args = parser.parse_args()
         identity = get_jwt_identity()
         user = db.session.query(User).filter_by(id=identity["user_id"]).one()
-        backend.delete_all_entries(db.session, user)
-        return json_success_v2("Deleted all entries")
+        if user.authenticate(args.password):
+            backend.delete_all_entries(db.session, user, args.password)
+            return json_success_v2("Deleted all entries")
+        else:
+            return json_error_v2("Failed to authenticate with given password", 401)
 
     @ns.doc(security="apikey")
     @jwt_required

@@ -116,7 +116,7 @@ def get_account_with_email(db_session: Session, email: str) -> User:
     return db_session.query(User).filter_by(email=email).one()
 
 
-def delete_all_entries(db_session: Session, user: User) -> None:
+def delete_all_entries(db_session: Session, user: User, user_key: str) -> None:
     entries = db_session.query(Entry).filter_by(user_id=user.id).all()
     for entry in entries:
         db_session.delete(entry)
@@ -210,6 +210,7 @@ def encrypt_link(user_key: str, dec_link: dict) -> Link:
 
 
 def insert_new_link(session: Session, link: Link, user_id: int) -> None:
+    # NOTE: session is not committed here
     link.user_id = user_id
     session.add(link)
 

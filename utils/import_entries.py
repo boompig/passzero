@@ -52,10 +52,10 @@ def read_entries_from_file(fp):
     logging.info("Read %d entries from file", len(entries))
     return entries
 
-def delete_entries(email):
+def delete_entries(email: str, password: str):
     db_session = get_db_session()
     user = get_account_with_email(db_session, email)
-    delete_all_entries(db_session, user)
+    delete_all_entries(db_session, user, password)
 
 
 if __name__ == "__main__":
@@ -76,5 +76,5 @@ if __name__ == "__main__":
     try:
         import_entries(args.email, password, entries)
     except Exception as e:
-        delete_entries(args.email)
+        delete_entries(args.email, password)
         raise e

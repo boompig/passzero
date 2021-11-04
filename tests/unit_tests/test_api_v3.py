@@ -222,6 +222,7 @@ def test_delete_all_entries(app):
         )
         assert len(entries) == 20
         api.delete_all_entries_with_token(client,
+                                          password,
                                           token,
                                           check_status=True)
         entries = api.get_encrypted_entries_with_token(

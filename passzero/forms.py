@@ -42,6 +42,10 @@ class DeleteUserForm(Form):
     password = PasswordField("password", [validators.DataRequired()])
 
 
+class DeleteAllEntriesForm(Form):
+    password = PasswordField("password", [validators.DataRequired()])
+
+
 class NewEntryForm(Form):
     account = StringField("account", [
         validators.DataRequired()

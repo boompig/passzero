@@ -183,7 +183,7 @@ def test_delete_all_entries(session):
                               user.id, user_key)
     enc_entries = get_entries(session, user.id)
     assert len(enc_entries) == 10
-    delete_all_entries(session, user)
+    delete_all_entries(session, user, user_key)
     enc_entries = get_entries(session, user.id)
     assert len(enc_entries) == 0
 

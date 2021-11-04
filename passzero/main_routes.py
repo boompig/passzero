@@ -289,7 +289,7 @@ def edit_entry(entry_id: int):
 @auth_or_redirect_login
 def password_strength():
     entries = get_entries(db.session, session["user_id"])
-    dec_entries = decrypt_entries(entries, session['password'])
+    dec_entries = decrypt_entries(entries, session["password"])
     entry_scores = password_strength_scores(session["email"], dec_entries)
     return render_template("password_strength.jinja2", entry_scores=entry_scores)
 
@@ -313,7 +313,7 @@ def two_factor():
 @main_routes.route("/advanced")
 @auth_or_redirect_login
 def advanced():
-    return render_template("advanced.jinja2")
+    return render_template("advanced.jinja2", master_password=session["password"])
 
 
 @main_routes.route("/profile")
