@@ -28,10 +28,19 @@ module.exports = {
 
     resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
-        extensions: ['.ts', '.tsx', '.js']
+        extensions: ['.ts', '.tsx', '.js'],
+        fallback: {
+            // needed for argon2
+            fs: false,
+            path: false,
+            Buffer: false,
+            process: false,
+        }
     },
 
     module: {
+        // ignore wasm
+        noParse: /\.wasm$/,
         rules: [
             // All files with a '.ts' or '.tsx' extension will be handled by 'awesome-typescript-loader'.
             {
@@ -60,6 +69,12 @@ module.exports = {
                 use: ["style-loader", "css-loader"],
             },
 
+            {
+                test: /\.wasm$/,
+                loader: 'base64-loader',
+                type: 'javascript/auto',
+            },
+
             // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
             { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
         ]
@@ -81,5 +96,9 @@ module.exports = {
 
         // NOTE: uncomment to look at bundle sizes
         // new BundleAnalyzerPlugin(),
-    ]
+    ],
+    experiments: {
+        // needed for argon2
+        asyncWebAssembly: true,
+    }
 };
