@@ -93,7 +93,7 @@ class Entry(db.Model):
             "has_2fa": self.has_2fa
         }
 
-    def encrypt(self, master_key: str, dec_entry: dict):
+    def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """
         WARNING: This is not secure! Do not use this!
         This is only here to satisfy the unit test for decryption of these old entries
@@ -116,6 +116,10 @@ class Entry(db.Model):
         self.has_2fa = dec_entry["has_2fa"]
         assert isinstance(self.has_2fa, bool)
         self.version = 1
+        # NOTE: we are returning something here for forward-compatibility
+        # however, this method works according to different principles than future versions
+        # and uses a different key for each field
+        return b""
 
 
 class Entry_v2(Entry):
@@ -161,7 +165,7 @@ class Entry_v2(Entry):
             "has_2fa": self.has_2fa
         }
 
-    def encrypt(self, master_key: str, dec_entry: dict):
+    def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """
         WARNING: This is not secure! Do not use this!
         This is only here to satisfy the unit test for decryption of these old entries
@@ -188,6 +192,7 @@ class Entry_v2(Entry):
         self.key_salt = byte_to_hex_legacy(key_salt)
         self.iv = byte_to_hex_legacy(iv)
         self.version = 2
+        return extended_key
 
 
 class Entry_v3(Entry):
@@ -208,10 +213,11 @@ class Entry_v3(Entry):
         "polymorphic_identity": 3
     }
 
-    def encrypt(self, master_key: str, dec_entry: dict):
+    def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """
         :param master_key:  The user's key, used to derive entry-specific enc key
         :param dec_entry:   Entry to encrypt (dictionary of fields)
+        :return: key used for entry encryption
         """
         assert isinstance(master_key, str)
         assert isinstance(dec_entry, dict)
@@ -239,6 +245,7 @@ class Entry_v3(Entry):
         self.key_salt = base64_encode(kdf_salt).decode("utf-8")
         # old information
         self.padding = None
+        return extended_key
 
     def decrypt(self, master_key: str) -> dict:
         assert isinstance(master_key, str)
@@ -322,7 +329,7 @@ class Entry_v4(Entry):
             "version": self.version
         }
 
-    def encrypt(self, master_key: str, dec_entry: dict):
+    def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """
         :param master_key:  The user's key, used to derive entry-specific enc key
         :param dec_entry:   Entry to encrypt (dictionary of fields)
@@ -332,6 +339,7 @@ class Entry_v4(Entry):
             - password
             - extra
             - has_2fa (bool)
+        :return: key used for entry encryption
         """
         assert isinstance(master_key, str)
         assert isinstance(dec_entry, dict)
@@ -366,6 +374,7 @@ class Entry_v4(Entry):
         assert isinstance(self.iv, str)
         # old information
         self.padding = None
+        return extended_key
 
 
 class Entry_v5(Entry):
@@ -434,7 +443,9 @@ class Entry_v5(Entry):
         dec_contents_d["version"] = self.version
         return dec_contents_d
 
-    def encrypt(self, master_key: str, dec_entry: dict) -> None:
+    def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
+        """
+        :return: The entry key used for the encryption"""
         # NOTE: user_id not set here
         assert isinstance(master_key, str)
         assert isinstance(dec_entry, dict)
@@ -465,3 +476,4 @@ class Entry_v5(Entry):
         self.password = b""
         self.extra = b""
         self.iv = None
+        return entry_key

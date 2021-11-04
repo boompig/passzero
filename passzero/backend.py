@@ -183,8 +183,8 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
     assert isinstance(user_id, int)
     assert isinstance(user_key, str)
     assert isinstance(version, int)
-    entry = encrypt_entry(user_key, dec_entry, version=version,
-                          prevent_deprecated_versions=prevent_deprecated_versions)
+    entry, _ = encrypt_entry(user_key, dec_entry, version=version,
+                             prevent_deprecated_versions=prevent_deprecated_versions)
     insert_new_entry(db_session, entry, user_id)
     db_session.commit()
     return entry
@@ -221,7 +221,7 @@ def insert_new_entry(session: Session, entry: Entry, user_id: int) -> None:
 
 def encrypt_entry(user_key: str, dec_entry: dict,
                   version: int = DEFAULT_ENTRY_VERSION,
-                  prevent_deprecated_versions: bool = True) -> Entry:
+                  prevent_deprecated_versions: bool = True) -> Tuple[Entry, bytes]:
     """
     A different KDF key is used for each entry.
     This is equivalent to salting the entry.
@@ -251,8 +251,8 @@ def encrypt_entry(user_key: str, dec_entry: dict,
     else:
         raise Exception(f"Invalid entry version: {version}")
     assert entry is not None
-    entry.encrypt(user_key, dec_entry)
-    return entry
+    entry_key = entry.encrypt(user_key, dec_entry)
+    return entry, entry_key
 
 
 def update_entry_versions_for_user(db_session: Session, user_id: int, master_key: str,
@@ -340,8 +340,8 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
         "has_2fa": edited_entry["has_2fa"]
     }
     # do not add e2 to session, it's just a placeholder
-    e2 = encrypt_entry(user_key, dec_entry,
-                       version=entry.version)
+    e2, _ = encrypt_entry(user_key, dec_entry,
+                          version=entry.version)
     # update those fields that the user might have changed
     entry.account = e2.account
     entry.username = e2.username

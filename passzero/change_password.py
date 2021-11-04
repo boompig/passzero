@@ -31,7 +31,7 @@ def create_pinned_entry(session, user_id: int, master_password: str) -> None:
         "extra": "sanity",
         "has_2fa": False
     }
-    new_entry = encrypt_entry(master_password, dec_entry)
+    new_entry, _ = encrypt_entry(master_password, dec_entry)
     new_entry.pinned = True
     insert_new_entry(session, new_entry, user_id)
 
@@ -52,7 +52,7 @@ def verify_pinned_entry(session, pinned_entry: Entry, old_password: str) -> None
 
 def reencrypt_entry(session, old_entry: Entry, user_id: int, old_password: str, new_password: str) -> None:
     dec_entry = old_entry.decrypt(old_password)
-    new_entry = encrypt_entry(new_password, dec_entry)
+    new_entry, _ = encrypt_entry(new_password, dec_entry)
     # reuse ID from deleted entry
     new_entry.id = old_entry.id
     # order matters here. delete before insert.
