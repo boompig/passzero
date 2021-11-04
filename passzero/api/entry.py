@@ -41,10 +41,7 @@ class ApiEntry(Resource):
         """
         user_id = get_jwt_identity()["user_id"]
         try:
-            entry = db.session.query(Entry).filter_by(id=entry_id).one()
-            assert entry.user_id == user_id
-            db.session.delete(entry)
-            db.session.commit()
+            backend.delete_entry(db.session, entry_id, user_id)
             return json_success_v2("successfully deleted entry with ID %d" % entry_id)
         except NoResultFound:
             return json_error_v2("no such entry", 400)
