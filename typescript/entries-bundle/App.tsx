@@ -4,13 +4,14 @@
 
 import { Component } from "react";
 import * as React from "react";
+
 import DecryptedEntry from "./components/decrypted-entry";
 import EncryptedEntry from "./components/encrypted-entry";
 import {IDecryptedEntry, IEncryptedEntry, IEntry} from "./components/entries";
 import NumEntries from "./components/num-entries";
 import SearchForm from "./components/search-form";
-
 import PasszeroApiV3 from "../common-modules/passzero-api-v3";
+import { decryptEntryV5 } from "./crypto_utils";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -158,31 +159,45 @@ class App extends Component<IAppProps, IAppState> {
             });
     }
 
-    handleDecrypt(entryId: number): void {
+    /**
+     * Decrypt an individual entry. Where possible, decrypt that entry on the client-side.
+     */
+    async handleDecrypt(entryId: number): Promise<void> {
         const entryIndex = this.findEntryIndex(entryId);
         if (entryIndex === null) {
             console.error(`Entry with ID ${entryId} not found`);
             return;
         }
+
+        // reset the logout timer
+        this.logoutTimer.resetLogoutTimer();
+
         const entry = this.state.entries[entryIndex];
+        let decryptedEntry = null as (IDecryptedEntry | null);
+        if (entry.is_encrypted && (entry as IEncryptedEntry).version === 5) {
+        // if (false) {
+            console.debug('decrypting this entry (v5) on the client-side...');
+            decryptedEntry = await decryptEntryV5(entry as IEncryptedEntry, this.state.masterPassword);
+        } else {
+            const start = new Date().valueOf();
+            decryptedEntry = await this.pzApi.decryptEntry(entryId, this.state.masterPassword);
+            decryptedEntry.is_encrypted = false;
+            // TODO this is a hack for the sole purpose of using the fake data
+            decryptedEntry.account = entry.account;
+            decryptedEntry.id = entry.id;
+            // this allows us to not rerun the service map stuff again
+            decryptedEntry.service_link = entry.service_link;
+            const end = new Date().valueOf();
+            console.log(`Took ${end - start}ms to decrypt`);
+        }
 
-        this.pzApi.decryptEntry(entryId, this.state.masterPassword)
-            .then((decryptedEntry: IDecryptedEntry) => {
-                decryptedEntry.is_encrypted = false;
-                // TODO this is a hack for the sole purpose of using the fake data
-                decryptedEntry.account = entry.account;
-                decryptedEntry.id = entry.id;
-                // this allows us to not rerun the service map stuff again
-                decryptedEntry.service_link = entry.service_link;
-
-                // replace the encrypted entry with the decrypted entry
-                const newEntries = this.state.entries;
-                newEntries.splice(entryIndex, 1, decryptedEntry);
-                // force state reload
-                this.setState({
-                    entries: newEntries
-                });
-            });
+        // replace the encrypted entry with the decrypted entry
+        const newEntries = this.state.entries;
+        newEntries.splice(entryIndex, 1, decryptedEntry);
+        // force state reload
+        this.setState({
+            entries: newEntries
+        });
     }
 
     handleSearch(searchString: string): void {

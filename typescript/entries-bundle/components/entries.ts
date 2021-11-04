@@ -31,6 +31,13 @@ export interface IEncryptedEntry extends IEntry {
     account: string;
 
     is_encrypted: true;
+    version: number;
+
+    // more recent entries support client-side decryption
+    // these entries will return their encrypted contents in base64-encoded form
+    enc_ciphertext_b64?: string;
+    enc_key_salt_b64?: string;
+    enc_nonce_b64?: string;
 
     service_link?: string;
 }
