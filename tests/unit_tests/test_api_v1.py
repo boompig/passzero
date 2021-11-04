@@ -64,7 +64,7 @@ class PassZeroApiTester(unittest.TestCase):
         assert len(entries) == 1
         delete_entries_token = api.get_csrf_token(self.app)
         assert delete_entries_token != create_entry_token
-        api.delete_all_entries(self.app, delete_entries_token, check_status=True)
+        api.delete_all_entries(self.app, "pass", delete_entries_token, check_status=True)
         entries = api.get_entries(self.app)
         assert len(entries) == 0
 

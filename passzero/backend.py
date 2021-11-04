@@ -116,7 +116,18 @@ def get_account_with_email(db_session: Session, email: str) -> User:
     return db_session.query(User).filter_by(email=email).one()
 
 
-def delete_all_entries(db_session: Session, user: User) -> None:
+def delete_entry(db_session: Session, entry_id: int, user_id: int, user_key: str) -> None:
+    """
+    :throws NoResultFound: When entry_id does not correspond to a valid entry
+    :throws AssertionError: When entry_id refers to an entry owned by another user
+    """
+    entry = db_session.query(Entry).filter_by(id=entry_id).one()
+    assert entry.user_id == user_id
+    db_session.delete(entry)
+    db_session.commit()
+
+
+def delete_all_entries(db_session: Session, user: User, user_key: str) -> None:
     entries = db_session.query(Entry).filter_by(user_id=user.id).all()
     for entry in entries:
         db_session.delete(entry)
@@ -183,8 +194,8 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
     assert isinstance(user_id, int)
     assert isinstance(user_key, str)
     assert isinstance(version, int)
-    entry = encrypt_entry(user_key, dec_entry, version=version,
-                          prevent_deprecated_versions=prevent_deprecated_versions)
+    entry, _ = encrypt_entry(user_key, dec_entry, version=version,
+                             prevent_deprecated_versions=prevent_deprecated_versions)
     insert_new_entry(db_session, entry, user_id)
     db_session.commit()
     return entry
@@ -210,6 +221,7 @@ def encrypt_link(user_key: str, dec_link: dict) -> Link:
 
 
 def insert_new_link(session: Session, link: Link, user_id: int) -> None:
+    # NOTE: session is not committed here
     link.user_id = user_id
     session.add(link)
 
@@ -221,7 +233,7 @@ def insert_new_entry(session: Session, entry: Entry, user_id: int) -> None:
 
 def encrypt_entry(user_key: str, dec_entry: dict,
                   version: int = DEFAULT_ENTRY_VERSION,
-                  prevent_deprecated_versions: bool = True) -> Entry:
+                  prevent_deprecated_versions: bool = True) -> Tuple[Entry, bytes]:
     """
     A different KDF key is used for each entry.
     This is equivalent to salting the entry.
@@ -251,8 +263,8 @@ def encrypt_entry(user_key: str, dec_entry: dict,
     else:
         raise Exception(f"Invalid entry version: {version}")
     assert entry is not None
-    entry.encrypt(user_key, dec_entry)
-    return entry
+    entry_key = entry.encrypt(user_key, dec_entry)
+    return entry, entry_key
 
 
 def update_entry_versions_for_user(db_session: Session, user_id: int, master_key: str,
@@ -321,7 +333,7 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     """
     Try to edit the entry with ID <entry_id>. Commit changes to DB.
     Check first if the entry belongs to the current user
-    DO NOT bump the version
+    DO NOT bump the entry's version
     :param session:         Database session
     :param entry_id:        ID of an existing entry to be edited
     :param user_key:        Password of the logged-in user
@@ -329,6 +341,7 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     :param user_id:         ID of the user
     :return:                Newly edited entry
     :rtype:                 Entry
+    :throws AssertionError: If the entry does not belong to the user
     """
     entry = session.query(Entry).filter_by(id=entry_id).one()
     assert entry.user_id == user_id
@@ -339,23 +352,8 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
         "extra": (edited_entry["extra"] or ""),
         "has_2fa": edited_entry["has_2fa"]
     }
-    # do not add e2 to session, it's just a placeholder
-    e2 = encrypt_entry(user_key, dec_entry,
-                       version=entry.version)
-    # update those fields that the user might have changed
-    entry.account = e2.account
-    entry.username = e2.username
-    entry.password = e2.password
-    entry.extra = e2.extra
-    entry.has_2fa = e2.has_2fa
-    try:
-        entry.contents = e2.contents
-    except AttributeError:
-        # this is fine, just means we're editing an old entry
-        pass
-    # update those parameters which might have changed on encryption
-    entry.iv = e2.iv
-    entry.key_salt = e2.key_salt
+    # this method should replace the correct fields
+    entry.encrypt(user_key, dec_entry)
     session.commit()
     return entry
 

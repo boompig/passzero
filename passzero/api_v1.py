@@ -2,20 +2,19 @@ import logging
 from datetime import datetime
 from io import BytesIO
 
-from flask import Blueprint, escape, session, abort, send_file
+from flask import Blueprint, abort, escape, send_file, session
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend, change_password
 from .api_utils import (generate_csrf_token, json_error, json_internal_error,
                         json_success, requires_csrf_check, requires_json_auth,
                         requires_json_form_validation, write_json)
-from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
-                    DeleteUserForm, LoginForm, NewEntryForm,
-                    RecoverPasswordForm, SignupForm, UpdatePasswordForm,
-                    UpdatePreferencesForm,
-                    NewDocumentForm)
 from .email import send_confirmation_email, send_recovery_email
-from .models import AuthToken, Entry, User, db, EncryptedDocument
+from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
+                    DeleteAllEntriesForm, DeleteUserForm, LoginForm,
+                    NewDocumentForm, NewEntryForm, RecoverPasswordForm,
+                    SignupForm, UpdatePasswordForm, UpdatePreferencesForm)
+from .models import AuthToken, EncryptedDocument, Entry, User, db
 
 api_v1 = Blueprint("api_v1", __name__)
 
@@ -419,10 +418,7 @@ def api_v1_delete_entry(entry_id: int):
     - 403: CSRF check failed
     """
     try:
-        entry = db.session.query(Entry).filter_by(id=entry_id).one()
-        assert entry.user_id == session['user_id']
-        db.session.delete(entry)
-        db.session.commit()
+        backend.delete_entry(db.session, entry_id, session["user_id"], session["password"])
         code, data = json_success("successfully deleted entry with ID %d" % entry_id)
     except NoResultFound:
         code, data = json_error(400, "no such entry")
@@ -534,12 +530,13 @@ def api_v1_update_entry(request_data: NewEntryForm, entry_id: int):
 @api_v1.route("/api/v1/entries", methods=["DELETE"])
 @requires_json_auth
 @requires_csrf_check
-def api_v1_nuke_entries():
+@requires_json_form_validation(DeleteAllEntriesForm)
+def api_v1_nuke_entries(request_data: DeleteAllEntriesForm):
     """Delete <b>all</b> entries for the logged-in user.
 
     Arguments
     ---------
-    none
+    - password: string (required)
 
     Response
     --------
@@ -554,7 +551,7 @@ def api_v1_nuke_entries():
     - 403: CSRF token validation failed
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    backend.delete_all_entries(db.session, user)
+    backend.delete_all_entries(db.session, user, request_data["password"])
     code, data = json_success("Deleted all entries")
     return write_json(code, data)
 

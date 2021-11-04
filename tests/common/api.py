@@ -161,11 +161,13 @@ def json_patch(session, relative_url: str, data: dict = {}, token: Optional[str]
     )
 
 
-def json_delete(session, relative_url: str, token: Optional[str] = None):
+def json_delete(session, relative_url: str, data: Optional[dict] = None, token: Optional[str] = None):
     """
     :param token: bearer token
     TODO for now data should reside in the URL
     """
+    if data is None:
+        data = {}
     if token:
         headers = json_header_with_token(token)
     else:
@@ -181,6 +183,7 @@ def json_delete(session, relative_url: str, token: Optional[str] = None):
     return session.delete(
         url,
         headers=headers,
+        json=data,
         **kwargs
     )
 
@@ -308,11 +311,12 @@ def delete_entry(app, entry_id: int, csrf_token: str, check_status: bool = True)
     return r
 
 
-def delete_all_entries(app, csrf_token: str, check_status: bool = True):
+def delete_all_entries(app, password: str, csrf_token: str, check_status: bool = True):
+    assert isinstance(password, str)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/entries/nuclear"
-    data = {"csrf_token": csrf_token}
+    data = {"csrf_token": csrf_token, "password": password}
     r = json_post(app, url, data)
     _print_if_test(app, _get_response_data(app, r))
     if check_status:
@@ -621,9 +625,11 @@ def create_entry_with_token(session, entry: dict, password: str, token: str, che
         return r
 
 
-def delete_all_entries_with_token(session, token: str, check_status: bool = True):
+def delete_all_entries_with_token(session, password: str, token: str, check_status: bool = True):
     url = "/api/v3/entries"
-    r = json_delete(session, url, token=token)
+    r = json_delete(session, url, data={
+        "password": password,
+    }, token=token)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     if check_status:
@@ -647,9 +653,10 @@ def get_encrypted_entries_with_token(session, token: str, check_status: bool = T
         return r
 
 
-def delete_entry_with_token(session, entry_id: int, token: str, check_status: bool = True):
+def delete_entry_with_token(session, entry_id: int, password: str, token: str, check_status: bool = True):
     url = f"/api/v3/entries/{entry_id}"
-    r = json_delete(session, url, token=token)
+    data = {"password": password}
+    r = json_delete(session, url, data=data, token=token)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     if check_status:

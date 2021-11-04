@@ -98,7 +98,7 @@ export default class PasszeroApiV3 {
 		}
     }
 
-    async deleteWithBearer(url: string, apiToken: string) {
+    async deleteWithBearer(url: string, apiToken: string, data?: any) {
         const options = {
             method: "DELETE",
             headers: {
@@ -106,6 +106,10 @@ export default class PasszeroApiV3 {
                 "Authorization": `Bearer ${apiToken}`
             },
         } as RequestInit;
+        if (data) {
+            // set data only when it's present
+            options.body = JSON.stringify(data);
+        }
         const response = await window.fetch(url, options);
         if (response.ok) {
             return response.json();
@@ -150,10 +154,13 @@ export default class PasszeroApiV3 {
         return response;
     }
 
-    async deleteEntry(entryId: number) {
+    async deleteEntry(entryId: number, masterPassword: string) {
         const apiToken = await this.fillToken();
         const url = `/api/v3/entries/${entryId}`;
-        const response = await this.deleteWithBearer(url, apiToken);
+        const data = {
+            password: masterPassword,
+        };
+        const response = await this.deleteWithBearer(url, apiToken, data);
         return response;
     }
 

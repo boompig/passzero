@@ -183,7 +183,7 @@ def test_delete_all_entries(session):
                               user.id, user_key)
     enc_entries = get_entries(session, user.id)
     assert len(enc_entries) == 10
-    delete_all_entries(session, user)
+    delete_all_entries(session, user, user_key)
     enc_entries = get_entries(session, user.id)
     assert len(enc_entries) == 0
 
@@ -194,7 +194,7 @@ def __encrypt_decrypt_entry(version: int):
     # create multiple entries for this user
     dec_entry = get_test_decrypted_entry()
     user_key = u"test master key"
-    entry = backend.encrypt_entry(user_key, dec_entry, version=version)
+    entry, _ = backend.encrypt_entry(user_key, dec_entry, version=version)
     assert isinstance(entry, Entry)
     dec_entry_out = entry.decrypt(user_key)
     assert_decrypted_entries_equal(dec_entry_out, dec_entry)

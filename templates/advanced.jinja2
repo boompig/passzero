@@ -56,6 +56,7 @@
             <form role="form" action="/api/v1/entries/nuclear" method="POST"
                 id="nuke-entries-form">
                 <input type="hidden" name="csrf_token" value={{ csrf_token() }}>
+                <input type="hidden" name="password" value={{ master_password }}>
                 <button type="submit" class="btn btn-danger">Nuke Entries</button>
             </form>
         </div>

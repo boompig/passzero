@@ -152,7 +152,7 @@ class App extends Component<IAppProps, IAppState> {
         }
 
         console.log("Deleting entry...");
-        this.pzApi.deleteEntry(entryId)
+        this.pzApi.deleteEntry(entryId, this.state.masterPassword)
             .then(() => {
                 window.location.reload();
             });
