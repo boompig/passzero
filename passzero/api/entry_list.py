@@ -113,7 +113,7 @@ class ApiEntryList(Resource):
         ------------
         - 200: success
         - 400: parameter validation error
-        - 401: not authenticated
+        - 401: not authenticated / password is not correct
         """
         parser = reqparse.RequestParser()
         parser.add_argument("password", type=str, required=True)
@@ -124,7 +124,7 @@ class ApiEntryList(Resource):
             backend.delete_all_entries(db.session, user, args.password)
             return json_success_v2("Deleted all entries")
         else:
-            return json_error_v2("Failed to authenticate with given password", 401)
+            return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
     @jwt_required

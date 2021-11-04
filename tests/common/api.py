@@ -653,9 +653,10 @@ def get_encrypted_entries_with_token(session, token: str, check_status: bool = T
         return r
 
 
-def delete_entry_with_token(session, entry_id: int, token: str, check_status: bool = True):
+def delete_entry_with_token(session, entry_id: int, password: str, token: str, check_status: bool = True):
     url = f"/api/v3/entries/{entry_id}"
-    r = json_delete(session, url, token=token)
+    data = {"password": password}
+    r = json_delete(session, url, data=data, token=token)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     if check_status:

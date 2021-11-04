@@ -116,7 +116,7 @@ def get_account_with_email(db_session: Session, email: str) -> User:
     return db_session.query(User).filter_by(email=email).one()
 
 
-def delete_entry(db_session: Session, entry_id: int, user_id: int) -> None:
+def delete_entry(db_session: Session, entry_id: int, user_id: int, user_key: str) -> None:
     """
     :throws NoResultFound: When entry_id does not correspond to a valid entry
     :throws AssertionError: When entry_id refers to an entry owned by another user

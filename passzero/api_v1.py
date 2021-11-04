@@ -418,7 +418,7 @@ def api_v1_delete_entry(entry_id: int):
     - 403: CSRF check failed
     """
     try:
-        backend.delete_entry(db.session, entry_id, session["user_id"])
+        backend.delete_entry(db.session, entry_id, session["user_id"], session["password"])
         code, data = json_success("successfully deleted entry with ID %d" % entry_id)
     except NoResultFound:
         code, data = json_error(400, "no such entry")

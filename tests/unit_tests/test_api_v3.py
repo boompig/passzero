@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import logging
 
+from flask import Flask
 from unittest import mock
 import six
 
@@ -31,7 +32,7 @@ def _assert_entries_equal(e1, e2):
 
 
 @pytest.fixture(scope="module")
-def my_app(request):
+def my_app(request) -> Flask:
     _app = create_app(__name__, settings_override={
         "SQLALCHEMY_DATABASE_URI": "sqlite://",
         "SQLALCHEMY_TRACK_MODIFICATIONS": False,
@@ -55,7 +56,7 @@ def db(request, my_app):
 
 
 @pytest.fixture(scope="function")
-def app(request, db, my_app):
+def app(request, db, my_app: Flask) -> Flask:
 
     def teardown():
         # delete API token
@@ -182,9 +183,13 @@ def test_get_entries_no_login(app):
 
 
 def test_delete_entry_no_login(app):
+    """Verify we can't hit this API with an invalid token"""
     with app.test_client() as client:
         rv = api.delete_entry_with_token(client,
-                                         1, "foo", check_status=False)
+                                         entry_id=1,
+                                         password="foo",
+                                         token="foo",
+                                         check_status=False)
         # only print on test failure
         print(rv.data)
         assert rv.status_code == INVALID_TOKEN_CODE
@@ -234,12 +239,16 @@ def test_delete_all_entries(app):
 
 
 def test_delete_invalid_entry(app):
+    """Verify we can't delete arbitrary entries"""
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_token(client,
                                      DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         rv = api.delete_entry_with_token(client,
-                                         2014, token, check_status=False)
+                                         entry_id=2014,
+                                         password=DEFAULT_PASSWORD,
+                                         token=token,
+                                         check_status=False)
         # only print on test failure
         print(rv.data)
         assert rv.status_code != 200
@@ -349,7 +358,7 @@ def test_create_and_delete_entry(app):
                                                  password, token, check_status=True)
         _assert_entries_equal(entry, out_entry)
         assert len(entries) == 1
-        api.delete_entry_with_token(client, entry_id, token, check_status=True)
+        api.delete_entry_with_token(client, entry_id, DEFAULT_PASSWORD, token, check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token,
                                                        check_status=True)
         assert len(entries) == 0
@@ -599,13 +608,29 @@ def test_delete_entry_not_your_entry(app):
         assert t1 != t2
         entries = api.get_encrypted_entries_with_token(client, t2, check_status=True)
         assert entries == []
-        # try editing the entry for user[0] as user[1]
-        r = api.delete_entry_with_token(client, entry_id, t2, check_status=False)
+        # try deleting the entry for user[0] as user[1]
+        r = api.delete_entry_with_token(client, entry_id, passwords[1], t2, check_status=False)
         assert r.status_code != 200
         # make sure the entry is still there
         out_entry_2 = api.decrypt_entry_with_token(client,
                                                    entry_id, passwords[0], t1, check_status=True)
         _assert_entries_equal(out_entry_2, entry)
+
+
+def test_delete_entry_incorrect_password(app: Flask, active_user: User):
+    assert active_user.email == DEFAULT_EMAIL
+    with app.test_client() as client:
+        token = api.login_with_token(client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        dec_entry = get_test_decrypted_entry()
+        entry_id = api.create_entry_with_token(client, dec_entry, DEFAULT_PASSWORD, token, check_status=True)
+        entries = api.get_encrypted_entries_with_token(client, token, check_status=True)
+        # number of entries should be 1 after creating the entry
+        assert len(entries) == 1
+        r = api.delete_entry_with_token(client, entry_id, "bad password", token, check_status=False)
+        assert r.status_code == 401
+        entries_after = api.get_entries(client, check_status=True)
+        # number of entries should still be 1
+        assert len(entries_after) == 1
 
 
 def test_get_entries(app):
