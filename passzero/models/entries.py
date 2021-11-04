@@ -445,8 +445,15 @@ class Entry_v5(Entry):
 
     def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """
-        :return: The entry key used for the encryption"""
-        # NOTE: user_id not set here
+        This method is used to either create or re-encrypt an entry.
+        We should zero out all fields that we don't use.
+        Change all the fields that we do use.
+
+        NOTE: user_id is not set in this method
+        NOTE: id may not be set
+
+        :return: The entry key used for the encryption
+        """
         assert isinstance(master_key, str)
         assert isinstance(dec_entry, dict)
         dec_contents_d = {

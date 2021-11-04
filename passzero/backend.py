@@ -322,7 +322,7 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     """
     Try to edit the entry with ID <entry_id>. Commit changes to DB.
     Check first if the entry belongs to the current user
-    DO NOT bump the version
+    DO NOT bump the entry's version
     :param session:         Database session
     :param entry_id:        ID of an existing entry to be edited
     :param user_key:        Password of the logged-in user
@@ -330,6 +330,7 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     :param user_id:         ID of the user
     :return:                Newly edited entry
     :rtype:                 Entry
+    :throws AssertionError: If the entry does not belong to the user
     """
     entry = session.query(Entry).filter_by(id=entry_id).one()
     assert entry.user_id == user_id
@@ -340,23 +341,8 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
         "extra": (edited_entry["extra"] or ""),
         "has_2fa": edited_entry["has_2fa"]
     }
-    # do not add e2 to session, it's just a placeholder
-    e2, _ = encrypt_entry(user_key, dec_entry,
-                          version=entry.version)
-    # update those fields that the user might have changed
-    entry.account = e2.account
-    entry.username = e2.username
-    entry.password = e2.password
-    entry.extra = e2.extra
-    entry.has_2fa = e2.has_2fa
-    try:
-        entry.contents = e2.contents
-    except AttributeError:
-        # this is fine, just means we're editing an old entry
-        pass
-    # update those parameters which might have changed on encryption
-    entry.iv = e2.iv
-    entry.key_salt = e2.key_salt
+    # this method should replace the correct fields
+    entry.encrypt(user_key, dec_entry)
     session.commit()
     return entry
 
