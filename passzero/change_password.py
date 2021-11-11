@@ -7,7 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from passzero.backend import create_pinned_entry
 from passzero.crypto_utils import get_hashed_password
-from passzero.models import Entry, User
+from passzero.models import Entry, User, EncryptionKeys
 
 
 def find_entries(session, user_id: int) -> Sequence[Entry]:
@@ -35,19 +35,34 @@ def verify_pinned_entry(session, pinned_entry: Entry, old_password: str) -> None
     assert dec_entry["extra"] == "sanity"
 
 
-def reencrypt_entry(session, entry: Entry, old_password: str, new_password: str) -> None:
+def reencrypt_entry(session, entry: Entry, old_password: str, new_password: str) -> bytes:
     """This method will not bump any entry's version.
     It will keep all entry IDs the same."""
     dec_entry = entry.decrypt(old_password)
-    entry.encrypt(new_password, dec_entry)
+    entry_key = entry.encrypt(new_password, dec_entry)
     session.add(entry)
+    return entry_key
 
 
 def reencrypt_entries(session, user_id: int, old_password: str, new_password: str) -> int:
+    """
+    Re-encrypt both each entry and the keys database for those entries
+    DO NOT commit session here
+    Return the number of modified entries
+    """
     n = 0
+    # guaranteed to exist here
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    keys_db = enc_keys_db.decrypt(old_password)
     for entry in find_entries(session, user_id):
-        reencrypt_entry(session, entry, old_password, new_password)
+        entry_key = reencrypt_entry(session, entry, old_password, new_password)
+        if str(entry.id) in keys_db["entry_keys"]:
+            # don't change the last_modified date
+            keys_db["entry_keys"][str(entry.id)]["key"] = entry_key
         n += 1
+    # add the encryption DB to the session since it has been modified by changing the encryption key
+    enc_keys_db.encrypt(new_password, keys_db)
+    session.add(enc_keys_db)
     return n
 
 

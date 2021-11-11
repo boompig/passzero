@@ -7,7 +7,7 @@ from passzero.app_factory import create_app
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               delete_account, delete_all_entries, get_entries,
                               get_services_map, insert_document_for_user,
-                              insert_entry_for_user, insert_link_for_user,
+                              insert_link_for_user,
                               password_strength_scores)
 from passzero.change_password import change_password
 from passzero.crypto_utils import PasswordHashAlgo
@@ -141,7 +141,7 @@ def test_delete_account(session):
         "extra": "e",
         "has_2fa": True
     }
-    insert_entry_for_user(session, dec_entry_in, user.id, user_key)
+    backend.insert_entry_for_user(session, dec_entry_in, user.id, user_key)
     # add a document to that account
     dec_doc = DecryptedDocument(
         name="test doc",
@@ -173,7 +173,7 @@ def test_delete_account(session):
 def test_insert_entry_for_user(session):
     dec_entry_in = get_test_decrypted_entry()
     user_key = u"master key"
-    insert_entry_for_user(session, dec_entry_in, 1, user_key)
+    backend.insert_entry_for_user(session, dec_entry_in, 1, user_key)
     # make sure the entry is inserted
     enc_entries = get_entries(session, 1)
     assert len(enc_entries) == 1
@@ -194,8 +194,8 @@ def test_delete_all_entries(session):
             "extra": "e",
             "has_2fa": False
         }
-        insert_entry_for_user(session, dec_entry_in,
-                              user.id, user_key)
+        backend.insert_entry_for_user(session, dec_entry_in,
+                                      user.id, user_key)
     enc_entries = get_entries(session, user.id)
     assert len(enc_entries) == 10
     delete_all_entries(session, user, user_key)
@@ -380,15 +380,19 @@ def test_get_account_with_email(session):
 
 
 def test_change_password(session):
+    """
+    Technically this function does not belong here since it doesn't really test the backend.
+    We are testing the change_password method of change_password module
+    """
     old_pwd = u"hello"
     new_pwd = u"world"
     user = create_inactive_user(session, u"fake@fake.com", old_pwd)
-    logging.info("Creating fake users")
+    logging.info("Creating fake entries")
     dec_entries_in = {}
     for i in range(10):
         dec_entry_in = get_test_decrypted_entry(i)
-        entry_id = insert_entry_for_user(session, dec_entry_in,
-                                         user.id, old_pwd).id
+        entry_id = backend.insert_entry_for_user(session, dec_entry_in,
+                                                 user.id, old_pwd).id
         dec_entries_in[entry_id] = dec_entry_in
     enc_entries = get_entries(session, user.id)
     logging.info("Decrypting newly created entries")
@@ -401,6 +405,10 @@ def test_change_password(session):
     dec_entries = decrypt_entries(enc_entries, new_pwd)
     for dec_entry_out in dec_entries:
         assert_decrypted_entries_equal(dec_entries_in[dec_entry_out["id"]], dec_entry_out)
+    # make sure we can still decrypt the encryption keys database
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user.id).one()
+    # this just tests whether we can in fact decrypt the database
+    enc_keys_db.decrypt(new_pwd)
 
 
 def test_password_strength_scores():
