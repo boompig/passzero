@@ -158,6 +158,22 @@ def delete_account(db_session: Session, user: User) -> None:
     db_session.commit()
 
 
+def create_pinned_entry(session, user_id: int, master_password: str) -> None:
+    """NOTE: The pinned entry is added to the session, but the session is *not* committed here"""
+    assert isinstance(user_id, int), f"Expected user_id to be of type int, was of type {type(user_id)}"
+    assert isinstance(master_password, str)
+    dec_entry = {
+        "account": "sanity",
+        "username": "sanity",
+        "password": "sanity",
+        "extra": "sanity",
+        "has_2fa": False
+    }
+    new_entry, _ = encrypt_entry(master_password, dec_entry)
+    new_entry.pinned = True
+    insert_new_entry(session, new_entry, user_id)
+
+
 def create_inactive_user(db_session: Session, email: str, password: str,
                          password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
     """Create an account which has not been activated.
@@ -183,7 +199,12 @@ def create_inactive_user(db_session: Session, email: str, password: str,
     user.active = False
     # necessary to get user ID
     db_session.add(user)
+    # commit here to get user ID
     db_session.commit()
+
+    create_pinned_entry(db_session, user.id, password)
+    db_session.commit()
+
     return user
 
 
@@ -191,12 +212,21 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
                           user_id: int, user_key: str,
                           version: int = DEFAULT_ENTRY_VERSION,
                           prevent_deprecated_versions: bool = True) -> Entry:
+    """This is the entry-point for creating new entries from API methods.
+    The entry must conform to the entry spec:
+        - account: string (required)
+        - username: string (required)
+        - password: string (required)
+        - has_2fa: boolean (required)
+        - extra: string (optional)
+    """
     assert isinstance(user_id, int)
     assert isinstance(user_key, str)
     assert isinstance(version, int)
     entry, _ = encrypt_entry(user_key, dec_entry, version=version,
                              prevent_deprecated_versions=prevent_deprecated_versions)
     insert_new_entry(db_session, entry, user_id)
+    # double commit is intentional. 1st one gets entry.id
     db_session.commit()
     return entry
 
@@ -227,6 +257,8 @@ def insert_new_link(session: Session, link: Link, user_id: int) -> None:
 
 
 def insert_new_entry(session: Session, entry: Entry, user_id: int) -> None:
+    """Set the entry's user_id appropriately and add it to the session
+    NOTE: DB session is not committed here"""
     entry.user_id = user_id
     session.add(entry)
 

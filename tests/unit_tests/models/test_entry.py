@@ -1,3 +1,7 @@
+"""
+Test entries at the model level
+"""
+
 import six
 
 from passzero.models import Entry, Entry_v4, Entry_v3, Entry_v2

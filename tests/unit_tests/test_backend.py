@@ -1,6 +1,5 @@
 import logging
 import os
-from unittest.mock import MagicMock
 
 import pytest
 from sqlalchemy.orm.exc import NoResultFound
@@ -351,8 +350,7 @@ def test_update_entry_versions_for_user_no_entries(session):
     assert entries == []
 
 
-def test_get_account_with_email():
-    session = MagicMock()
+def test_get_account_with_email(session):
     email = u"fake_email"
     password = u"fake password"
     created_user = create_inactive_user(session, email, password)

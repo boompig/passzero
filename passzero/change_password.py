@@ -5,7 +5,7 @@ from typing import Sequence
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from passzero.backend import encrypt_entry, insert_new_entry
+from passzero.backend import create_pinned_entry
 from passzero.crypto_utils import get_hashed_password
 from passzero.models import Entry, User
 
@@ -19,21 +19,6 @@ def find_pinned_entry(session, user_id: int) -> Entry:
     assert isinstance(user_id, int)
     return session.query(Entry).filter_by(
         user_id=user_id, pinned=True).one()
-
-
-def create_pinned_entry(session, user_id: int, master_password: str) -> None:
-    assert isinstance(user_id, int)
-    assert isinstance(master_password, str)
-    dec_entry = {
-        "account": "sanity",
-        "username": "sanity",
-        "password": "sanity",
-        "extra": "sanity",
-        "has_2fa": False
-    }
-    new_entry, _ = encrypt_entry(master_password, dec_entry)
-    new_entry.pinned = True
-    insert_new_entry(session, new_entry, user_id)
 
 
 def find_user(session, user_id: int) -> User:
