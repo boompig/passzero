@@ -78,15 +78,13 @@ class Link(db.Model):
             "version": self.version,
         }
 
-    def decrypt(self, master_key: str) -> DecryptedLink:
+    def decrypt_symmetric(self, symmetric_key: bytes) -> DecryptedLink:
         """
         Deliberately similar to `Entry_v5.decrypt`
         Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
         """
-        assert isinstance(master_key, str)
-        key = _get_key(master_key, self.kdf_salt)
-        assert isinstance(key, bytes)
-        box = nacl.secret.SecretBox(key)
+        assert isinstance(symmetric_key, bytes)
+        box = nacl.secret.SecretBox(symmetric_key)
         assert isinstance(self.contents, bytes)
         dec_contents = box.decrypt(self.contents)
         dec_contents_d = msgpack.unpackb(dec_contents, raw=False)
@@ -98,7 +96,16 @@ class Link(db.Model):
             version=self.version
         )
 
-    def encrypt(self, master_key: str, dec_link: dict) -> None:
+    def decrypt(self, master_key: str) -> DecryptedLink:
+        """
+        Deliberately similar to `Entry_v5.decrypt`
+        Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
+        """
+        assert isinstance(master_key, str)
+        symmetric_key = _get_key(master_key, self.kdf_salt)
+        return self.decrypt_symmetric(symmetric_key)
+
+    def encrypt(self, master_key: str, dec_link: dict) -> bytes:
         """
         Deliberately similar to `Entry_v5.encrypt`
         Assumed structure of `dec_link`:
@@ -118,12 +125,13 @@ class Link(db.Model):
         dec_contents = msgpack.packb(dec_contents_d, use_bin_type=True)
         kdf_salt = nacl.utils.random(nacl.pwhash.argon2id.SALTBYTES)
         assert isinstance(kdf_salt, bytes)
-        key = _get_key(master_key, kdf_salt)
-        assert isinstance(key, bytes)
-        box = nacl.secret.SecretBox(key)
+        symmetric_key = _get_key(master_key, kdf_salt)
+        assert isinstance(symmetric_key, bytes)
+        box = nacl.secret.SecretBox(symmetric_key)
         self.contents = box.encrypt(dec_contents)
         assert isinstance(self.contents, bytes)
         self.kdf_salt = kdf_salt
         self.version = 1
         # NOTE: do not use ID from dec_link
         # NOTE: do not use created_at from dec_link
+        return symmetric_key
