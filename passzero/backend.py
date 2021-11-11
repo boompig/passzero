@@ -392,18 +392,26 @@ def update_entry_versions_for_user(db_session: Session, user_id: int, master_key
         Entry.pinned == False,  # noqa
         Entry.version < latest_version
     )).all()
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    keys_db = enc_keys_db.decrypt(master_key)
     for entry in entries:
         dec_entry = entry.decrypt(master_key)  # type: dict
         e2 = Entry_v5()
-        e2.encrypt(master_key, dec_entry)
+        new_entry_key = e2.encrypt(master_key, dec_entry)
         e2.user_id = user_id
         # reuse ID from deleted entry
         e2.id = entry.id
         db_session.delete(entry)
         db_session.add(e2)
+        # update the keys database
+        keys_db["entry_keys"][str(e2.id)]["key"] = new_entry_key
         n += 1
         if n == limit:
             break
+    # re-encrypt
+    enc_keys_db.encrypt(master_key, keys_db)
+    # make sure updated DB is in the session
+    db_session.add(enc_keys_db)
     db_session.commit()
     return n
 

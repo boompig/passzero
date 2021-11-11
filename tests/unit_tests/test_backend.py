@@ -320,7 +320,7 @@ def __edit_entry(session, version):
     Try to edit an existing v4 entry"""
     user_key = u"test master key"
     user = create_inactive_user(session, u"fake@fake.com", user_key)
-    dec_entry = {
+    dec_entry_in = {
         "account": u"test account",
         "username": u"test username",
         "password": u"test password",
@@ -329,7 +329,7 @@ def __edit_entry(session, version):
     }
     entry = backend.insert_entry_for_user(
         session,
-        dec_entry,
+        dec_entry_in,
         user.id,
         user_key,
         version=version
@@ -337,15 +337,15 @@ def __edit_entry(session, version):
     # save this in case it changes
     entry_id = entry.id
     # edit the entry
-    dec_entry["password"] = u"a new password"
-    dec_entry["has_2fa"] = False
-    dec_entry["username"] = u"a new username"
+    dec_entry_in["password"] = u"a new password"
+    dec_entry_in["has_2fa"] = False
+    dec_entry_in["username"] = u"a new username"
     # edit the entry
     edited_entry = backend.edit_entry(
         session,
         entry_id,
         user_key,
-        dec_entry,
+        dec_entry_in,
         entry.user_id
     )
     # make sure the metadata remains the same
@@ -353,11 +353,21 @@ def __edit_entry(session, version):
     assert edited_entry.id == entry_id
     assert edited_entry.user_id == user.id
     # make sure entry is actually edited
-    dec_entry_out = edited_entry.decrypt(user_key)
-    assert_decrypted_entries_equal(dec_entry, dec_entry_out)
+    dec_entry_out_1 = edited_entry.decrypt(user_key)
+    assert_decrypted_entries_equal(dec_entry_out_1, dec_entry_in)
+    # now try to decrypt it using the key stored in encryption keys DB
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user.id).one()
+    # this step should always complete
+    keys_db = enc_keys_db.decrypt(user_key)
+    assert len(keys_db["entry_keys"]) == 1
+    assert str(edited_entry.id) in keys_db["entry_keys"]
+    entry_key = keys_db["entry_keys"][str(edited_entry.id)]["key"]
+    dec_entry_out_2 = edited_entry.decrypt_with_entry_key(entry_key)
+    assert_decrypted_entries_equal(dec_entry_in, dec_entry_out_2)
 
 
 # NOTE: v2 and v1 not tested for now
+# because encryption of old versions is no longer supported
 
 def test_edit_entry_v3(session):
     __edit_entry(session, version=3)
