@@ -11,7 +11,8 @@ from passzero.config import DEFAULT_ENTRY_VERSION, SALT_SIZE
 from passzero.crypto_utils import (PasswordHashAlgo, get_hashed_password,
                                    get_salt)
 from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
-                             EncryptedDocument, Entry, Entry_v2, Entry_v3,
+                             EncryptedDocument, EncryptionKeys,
+                             EncryptionKeysDB_V1, Entry, Entry_v2, Entry_v3,
                              Entry_v4, Entry_v5, Link, Service, User)
 
 from .utils import base64_encode
@@ -202,10 +203,33 @@ def create_inactive_user(db_session: Session, email: str, password: str,
     # commit here to get user ID
     db_session.commit()
 
+    # add additional structures
+    create_empty_encryption_key_db(db_session, user, password)
+    # necessary to commit so we can add pinned entry to it
+    db_session.commit()
+
     create_pinned_entry(db_session, user.id, password)
     db_session.commit()
 
     return user
+
+
+def create_empty_encryption_key_db(db_session: Session, user: User, user_key: str) -> None:
+    """Instantiate an empty encryption keys database for the given user.
+    NOTE: do not commit the session here"""
+    keys_db = EncryptionKeysDB_V1(
+        entry_keys={},
+        link_keys={},
+        # need to specify these fields for mypy
+        # they get overwritten in .encrypt method
+        version=1,
+        user_id=user.id,
+        id=None,
+    )
+    enc_keys_db = EncryptionKeys()
+    enc_keys_db.encrypt(user_key, keys_db)
+    enc_keys_db.user_id = user.id
+    db_session.add(enc_keys_db)
 
 
 def insert_entry_for_user(db_session: Session, dec_entry: dict,

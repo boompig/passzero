@@ -2,13 +2,10 @@ import logging
 import os
 
 import pytest
-from sqlalchemy.orm.exc import NoResultFound
-
 from passzero import backend
 from passzero.app_factory import create_app
 from passzero.backend import (create_inactive_user, decrypt_entries,
-                              delete_account, delete_all_entries,
-                              get_account_with_email, get_entries,
+                              delete_account, delete_all_entries, get_entries,
                               get_services_map, insert_document_for_user,
                               insert_entry_for_user, insert_link_for_user,
                               password_strength_scores)
@@ -17,8 +14,11 @@ from passzero.crypto_utils import PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
                              Entry, Link, Service, User)
 from passzero.models import db as _db
+from sqlalchemy.orm.exc import NoResultFound
 
-from .utils import get_test_decrypted_entry, assert_decrypted_entries_equal
+from passzero.models.encryption_keys import EncryptionKeys
+
+from .utils import assert_decrypted_entries_equal, get_test_decrypted_entry
 
 DB_FILENAME = "passzero.db"
 DEFAULT_EMAIL = u"fake@fake.com"
@@ -85,6 +85,7 @@ def session(db, request):
         session.query(AuthToken).delete()
         session.query(Link).delete()
         session.query(EncryptedDocument).delete()
+        session.query(EncryptionKeys).delete()
         session.commit()
 
         connection.close()
@@ -95,21 +96,36 @@ def session(db, request):
 
 
 def test_create_inactive_user_sha512(session):
-    email = u"fake@email.com"
-    password = u"pwd"
-    u1 = create_inactive_user(session, email, password, password_hash_algo=PasswordHashAlgo.SHA512)
+    u1 = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD,
+                                      password_hash_algo=PasswordHashAlgo.SHA512)
     assert u1.id is not None
-    u2 = get_account_with_email(session, email)
+    u2 = backend.get_account_with_email(session, DEFAULT_EMAIL)
     assert u1.id == u2.id
 
 
 def test_create_inactive_user_argon2(session):
-    email = u"fake@email.com"
-    password = u"pwd"
-    u1 = create_inactive_user(session, email, password, password_hash_algo=PasswordHashAlgo.Argon2)
+    u1 = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD,
+                                      password_hash_algo=PasswordHashAlgo.Argon2)
     assert u1.id is not None
-    u2 = get_account_with_email(session, email)
+    u2 = backend.get_account_with_email(session, DEFAULT_EMAIL)
     assert u1.id == u2.id
+
+
+def test_create_inactive_user(session):
+    """This method makes sure that when we can create an inactive user, certain structures are created"""
+    user = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+    # we should be creating a pinned entry
+    entries = session.query(Entry).filter_by(user_id=user.id).all()
+    assert len(entries) == 1
+    assert entries[0].pinned == True  # noqa
+    # we should also be creating the encryption database
+    enc_keys_dbs = session.query(EncryptionKeys).filter_by(user_id=user.id).all()
+    assert len(enc_keys_dbs) == 1
+    enc_keys_db = enc_keys_dbs[0]
+    # make sure we can decrypt it
+    keys_db = enc_keys_db.decrypt(DEFAULT_PASSWORD)
+    keys_db["entry_keys"] == {}
+    keys_db["link_keys"] == {}
 
 
 def test_delete_account(session):
@@ -146,7 +162,7 @@ def test_delete_account(session):
     _db.session.commit()
     delete_account(session, user)
     try:
-        u2 = get_account_with_email(session, email)
+        u2 = backend.get_account_with_email(session, email)
         # only printed on error
         print(u2)
         assert False
@@ -357,7 +373,7 @@ def test_get_account_with_email(session):
     assert isinstance(created_user, User)
     assert created_user.email == email
     # TODO this is not a test, just makes sure that nothing crashes
-    user = get_account_with_email(session, email)
+    user = backend.get_account_with_email(session, email)
     # print this out on error
     print(user)
     assert True
