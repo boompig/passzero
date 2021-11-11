@@ -233,10 +233,13 @@ export default class PasszeroApiV3 {
         return this.postJsonWithBearer(url, apiToken, data);
     }
 
-    async deleteLink(linkId: number) {
+    async deleteLink(linkId: number, masterPassword: string) {
         const apiToken = await this.fillToken();
         const url = `/api/v3/links/${linkId}`;
-        return this.deleteWithBearer(url, apiToken);
+        const data = {
+            password: masterPassword,
+        }
+        return this.deleteWithBearer(url, apiToken, data);
     }
 
     async getCurrentUser(): Promise<IUser> {

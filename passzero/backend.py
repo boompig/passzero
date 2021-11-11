@@ -1,5 +1,4 @@
 import time
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy import and_, func
@@ -130,16 +129,20 @@ def delete_entry(db_session: Session, entry_id: int, user_id: int, user_key: str
     assert not entry.pinned, "Cannot delete a pinned entry using this method"
     db_session.delete(entry)
     # remove corresponding decryption key
-    # DB guaranteed to exist
-    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
-    keys_db = enc_keys_db.decrypt(user_key)
-    # remove relevant entry (if present)
-    if str(entry_id) in keys_db["entry_keys"]:
-        keys_db["entry_keys"].pop(str(entry_id))
-        # re-encrypt the database
-        enc_keys_db.encrypt(user_key, keys_db)
-        # re-add it since it has been modified
-        db_session.add(enc_keys_db)
+    _delete_encryption_key(db_session, user_id, user_key, entry_id, elem_type="entry")
+    db_session.commit()
+
+
+def delete_link(db_session, link_id, user_id, user_key: str) -> None:
+    """
+    :throws NoResultFound: When link_id does not correspond to a valid link
+    :throws AssertionError: When link does not belong to that user
+    """
+    # may throw something
+    link = db_session.query(Link).filter_by(id=link_id).one()
+    assert link.user_id == user_id
+    db_session.delete(link)
+    _delete_encryption_key(db_session, user_id, user_key, link_id, elem_type="link")
     db_session.commit()
 
 
@@ -193,6 +196,15 @@ def create_pinned_entry(session, user_id: int, master_password: str) -> None:
     """NOTE: The pinned entry is added to the session, but the session is *not* committed here"""
     assert isinstance(user_id, int), f"Expected user_id to be of type int, was of type {type(user_id)}"
     assert isinstance(master_password, str)
+    # is there already a pinned entry?
+    pinned_entry = session.query(Entry).filter(and_(
+        Entry.user_id == user_id,
+        Entry.pinned == True  # noqa
+    )).one_or_none()
+    if pinned_entry:
+        # delete the old pinned entry before we create a new one
+        session.delete(pinned_entry)
+
     dec_entry = {
         "account": "sanity",
         "username": "sanity",
@@ -234,7 +246,7 @@ def create_inactive_user(db_session: Session, email: str, password: str,
     db_session.commit()
 
     # add additional structures
-    create_empty_encryption_key_db(db_session, user, password)
+    _create_empty_encryption_key_db(db_session, user, password)
     # necessary to commit so we can add pinned entry to it
     db_session.commit()
 
@@ -244,7 +256,7 @@ def create_inactive_user(db_session: Session, email: str, password: str,
     return user
 
 
-def create_empty_encryption_key_db(db_session: Session, user: User, user_key: str) -> None:
+def _create_empty_encryption_key_db(db_session: Session, user: User, user_key: str) -> None:
     """Instantiate an empty encryption keys database for the given user.
     NOTE: do not commit the session here"""
     keys_db = EncryptionKeysDB_V1(
@@ -283,24 +295,32 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
     insert_new_entry(db_session, entry, user_id)
     # double commit is intentional. 1st one gets entry.id
     db_session.commit()
-    insert_entry_key(db_session, user_key, entry, entry_key)
+    _insert_encryption_key(db_session, user_id, user_key, entry.id, entry_key, elem_type="entry")
     # second one commits the encryption key
     db_session.commit()
     return entry
 
 
-def insert_entry_key(db_session: Session, user_key: str, entry: Entry, entry_key: bytes) -> None:
+def _insert_encryption_key(db_session: Session, user_id: int, user_key: str, elem_id: int, symmetric_key: bytes,
+                           elem_type: str) -> None:
     """Insert the entry key. Entry user_id and is must be set at this point.
     We assume that the entry already exists in the DB.
-    This method also works if the key for the entry already exists and we want to overwrite it."""
-    assert entry.user_id is not None
-    assert entry.id is not None
+    This method also works if the key for the entry already exists and we want to overwrite it.
+    :param elem_type: What type of element this key belongs to (entry, link, etc.)
+    """
+    assert isinstance(user_id, int)
+    assert isinstance(elem_id, int)
+    assert elem_type in ["entry", "link"]
     # EncryptionKeys database guaranteed to exist by this point
-    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=entry.user_id).one()
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
     keys_db = enc_keys_db.decrypt(user_key)
-    keys_db["entry_keys"][str(entry.id)] = {
+    k = {
+        "entry": "entry_keys",
+        "link": "link_keys",
+    }[elem_type]
+    keys_db[k][str(elem_id)] = {
         # we store the keys in binary for a more compact representation
-        "key": entry_key,
+        "key": symmetric_key,
         # similarly with the timestamp, we store integers for a more compact repr.
         "last_modified": int(time.time()),
     }
@@ -309,23 +329,68 @@ def insert_entry_key(db_session: Session, user_key: str, entry: Entry, entry_key
     db_session.add(enc_keys_db)
 
 
+def _update_encryption_key(db_session: Session, user_id: int, user_key: str, elem_id: int, new_symmetric_key: bytes,
+                           elem_type: str) -> None:
+    """Encryption key is added but not committed"""
+    assert isinstance(user_id, int), "user_id must be an integer"
+    assert isinstance(elem_id, int), "elem_id must be an integer"
+    assert elem_type in ["entry", "link"], "elem_type must be one of entry, link"
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    keys_db = enc_keys_db.decrypt(user_key)
+    k = {
+        "entry": "entry_keys",
+        "link": "link_keys",
+    }[elem_type]
+    # guaranteed to be inside relevant keys collection
+    assert str(elem_id) in keys_db[k]
+    keys_db[k][str(elem_id)]["key"] = new_symmetric_key
+    keys_db[k][str(elem_id)]["last_modified"] = int(time.time())
+    enc_keys_db.encrypt(user_key, keys_db)
+    # re-add it to the session
+    db_session.add(enc_keys_db)
+
+
+def _delete_encryption_key(db_session: Session, user_id: int, user_key: str, elem_id: int,
+                           elem_type: str) -> None:
+    """Added but not committed"""
+    assert isinstance(user_id, int)
+    assert isinstance(elem_id, int)
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    keys_db = enc_keys_db.decrypt(user_key)
+    # relevant entry *must* be present
+    k = {
+        "entry": "entry_keys",
+        "link": "link_keys",
+    }[elem_type]
+    assert str(elem_id) in keys_db[k]
+    keys_db[k].pop(str(elem_id))
+    # re-encrypt the database
+    enc_keys_db.encrypt(user_key, keys_db)
+    # re-add it since it has been modified
+    db_session.add(enc_keys_db)
+
+
 def insert_link_for_user(db_session: Session, dec_link: dict,
                          user_id: int, user_key: str) -> Link:
     assert isinstance(user_id, int)
     assert isinstance(user_key, str)
-    link = encrypt_link(user_key, dec_link)
+    link, link_key = encrypt_link(user_key, dec_link)
     insert_new_link(db_session, link, user_id)
+    # make sure link has an ID
+    db_session.commit()
+    _insert_encryption_key(db_session, user_id, user_key, link.id, link_key, elem_type="link")
+    # second commit commits encryption key
     db_session.commit()
     return link
 
 
-def encrypt_link(user_key: str, dec_link: dict) -> Link:
+def encrypt_link(user_key: str, dec_link: dict) -> Tuple[Link, bytes]:
     assert isinstance(user_key, str)
     assert isinstance(dec_link, dict)
     link = Link()
-    link.encrypt(user_key, dec_link)
+    link_key = link.encrypt(user_key, dec_link)
     # NOTE: DO NOT save the link here
-    return link
+    return link, link_key
 
 
 def insert_new_link(session: Session, link: Link, user_id: int) -> None:
@@ -429,20 +494,16 @@ def edit_link(session: Session, link_id: int, user_key: str, edited_link: dict, 
     :rtype:                Link
     """
     link = session.query(Link).filter_by(id=link_id).one()
-    assert link.user_id == user_id
+    assert link.user_id == user_id, "The given link does not belong to the provided user ID"
     dec_link = {
         "service_name": edited_link["service_name"],
         "link": edited_link["link"],
     }
-    # do not add l2 to session, it's just a placeholder
-    l2 = encrypt_link(user_key, dec_link)
-    # update encrypted fields
-    link.contents = l2.contents
-    # update metadata
-    link.kdf_salt = l2.kdf_salt
-    # keep created_at but change modified_at
-    link.modified_at = datetime.utcnow()
-    # and save `links`; discard l2
+    # this method should replace the correct fields
+    new_link_key = link.encrypt(user_key, dec_link)
+    session.commit()
+    assert link.id == link_id, "The link's ID has changed unexpectedly during editing"
+    _update_encryption_key(session, user_id, user_key, link_id, new_link_key, elem_type="link")
     session.commit()
     return link
 
@@ -477,15 +538,7 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     session.commit()
     # entry ID should remain the same
     assert entry.id == entry_id
-    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user_id).one()
-    keys_db = enc_keys_db.decrypt(user_key)
-    # guaranteed to be inside entry_keys
-    assert str(entry_id) in keys_db["entry_keys"]
-    keys_db["entry_keys"][str(entry_id)]["key"] = new_entry_key
-    keys_db["entry_keys"][str(entry_id)]["last_modified"] = int(time.time())
-    enc_keys_db.encrypt(user_key, keys_db)
-    # re-add it to the session
-    session.add(enc_keys_db)
+    _update_encryption_key(session, user_id, user_key, entry_id, new_entry_key, elem_type="entry")
     session.commit()
     return entry
 
