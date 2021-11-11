@@ -66,6 +66,9 @@ class Entry(db.Model):
             "is_encrypted": True
         }
 
+    def decrypt_with_entry_key(self, entry_key: bytes) -> dict:
+        raise NotImplementedError("There is no entry-level key for v1 entries")
+
     def decrypt(self, master_key: str) -> dict:
         """Decrypt with padding
         :type key:              unicode string
@@ -139,21 +142,19 @@ class Entry_v2(Entry):
         "polymorphic_identity": 2
     }
 
-    def decrypt(self, master_key: str) -> dict:
-        assert isinstance(master_key, str)
-        key_salt = hex_to_byte_legacy(self.key_salt)
+    def decrypt_with_entry_key(self, entry_key: bytes) -> dict:
+        assert isinstance(entry_key, bytes)
         iv = hex_to_byte_legacy(self.iv)
-        extended_key = extend_key(master_key, key_salt)
-        dec_password = decrypt_field_v2(extended_key, self.password, iv)
+        dec_password = decrypt_field_v2(entry_key, self.password, iv)
         if self.extra:
             try:
-                dec_extra = decrypt_field_v2(extended_key, self.extra, iv)
+                dec_extra = decrypt_field_v2(entry_key, self.extra, iv)
             except TypeError:
                 dec_extra = self.extra
         else:
             dec_extra = ""
         try:
-            dec_username = decrypt_field_v2(extended_key, self.username, iv)
+            dec_username = decrypt_field_v2(entry_key, self.username, iv)
         except TypeError:
             dec_username = self.username
         return {
@@ -164,6 +165,12 @@ class Entry_v2(Entry):
             "extra": dec_extra,
             "has_2fa": self.has_2fa
         }
+
+    def decrypt(self, master_key: str) -> dict:
+        assert isinstance(master_key, str)
+        key_salt = hex_to_byte_legacy(self.key_salt)
+        extended_key = extend_key(master_key, key_salt)
+        return self.decrypt_with_entry_key(extended_key)
 
     def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """
@@ -247,10 +254,8 @@ class Entry_v3(Entry):
         self.padding = None
         return extended_key
 
-    def decrypt(self, master_key: str) -> dict:
-        assert isinstance(master_key, str)
-        kdf_salt = binascii.a2b_base64(self.key_salt)
-        extended_key = extend_key(master_key, kdf_salt)
+    def decrypt_with_entry_key(self, entry_key: bytes) -> dict:
+        assert isinstance(entry_key, bytes)
         iv = binascii.a2b_base64(self.iv)
         messages = [
             binascii.a2b_base64(self.account),
@@ -258,7 +263,7 @@ class Entry_v3(Entry):
             binascii.a2b_base64(self.password),
             binascii.a2b_base64(self.extra)
         ]
-        dec_messages = decrypt_messages(extended_key, iv, messages)
+        dec_messages = decrypt_messages(entry_key, iv, messages)
         return {
             "id": self.id,
             "account": dec_messages[0],
@@ -268,6 +273,12 @@ class Entry_v3(Entry):
             "version": self.version,
             "has_2fa": self.has_2fa,
         }
+
+    def decrypt(self, master_key: str) -> dict:
+        assert isinstance(master_key, str)
+        kdf_salt = binascii.a2b_base64(self.key_salt)
+        extended_key = extend_key(master_key, kdf_salt)
+        return self.decrypt_with_entry_key(extended_key)
 
 
 class Entry_v4(Entry):
@@ -297,6 +308,27 @@ class Entry_v4(Entry):
         "polymorphic_identity": 4
     }
 
+    def decrypt_with_entry_key(self, entry_key: bytes) -> dict:
+        assert isinstance(entry_key, bytes)
+        iv = binascii.a2b_base64(self.iv)
+        assert isinstance(iv, bytes)
+        messages = [
+            binascii.a2b_base64(self.username),
+            binascii.a2b_base64(self.password),
+            binascii.a2b_base64(self.extra)
+        ]
+        dec_messages = decrypt_messages(entry_key, iv, messages)
+        return {
+            "id": self.id,
+            "account": self.account,
+            "username": dec_messages[0],
+            "password": dec_messages[1],
+            "extra": dec_messages[2],
+            # add unencrypted metadata
+            "has_2fa": self.has_2fa,
+            "version": self.version
+        }
+
     def decrypt(self, master_key: str) -> dict:
         """
         Version 4 encrypts, sequentially, the following data:
@@ -309,25 +341,7 @@ class Entry_v4(Entry):
         kdf_salt = binascii.a2b_base64(self.key_salt)
         assert isinstance(kdf_salt, bytes)
         extended_key = extend_key(master_key, kdf_salt)
-        assert isinstance(extended_key, bytes)
-        iv = binascii.a2b_base64(self.iv)
-        assert isinstance(iv, bytes)
-        messages = [
-            binascii.a2b_base64(self.username),
-            binascii.a2b_base64(self.password),
-            binascii.a2b_base64(self.extra)
-        ]
-        dec_messages = decrypt_messages(extended_key, iv, messages)
-        return {
-            "id": self.id,
-            "account": self.account,
-            "username": dec_messages[0],
-            "password": dec_messages[1],
-            "extra": dec_messages[2],
-            # add unencrypted metadata
-            "has_2fa": self.has_2fa,
-            "version": self.version
-        }
+        return self.decrypt_with_entry_key(extended_key)
 
     def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """
@@ -424,14 +438,11 @@ class Entry_v5(Entry):
             memlimit=nacl.pwhash.MEMLIMIT_INTERACTIVE,
         )
 
-    def decrypt(self, master_key: str) -> dict:
+    def decrypt_with_entry_key(self, entry_key: bytes) -> dict:
         """
         Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
         """
-        assert isinstance(master_key, str)
-        assert isinstance(self.key_salt, str)
-        kdf_salt = binascii.a2b_base64(self.key_salt.encode("utf-8"))
-        entry_key = self.__get_entry_key(master_key, kdf_salt)
+        assert isinstance(entry_key, bytes)
         box = nacl.secret.SecretBox(entry_key)
         assert isinstance(self.contents, bytes)
         dec_contents = box.decrypt(self.contents)
@@ -442,6 +453,16 @@ class Entry_v5(Entry):
         dec_contents_d["has_2fa"] = self.has_2fa
         dec_contents_d["version"] = self.version
         return dec_contents_d
+
+    def decrypt(self, master_key: str) -> dict:
+        """
+        Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
+        """
+        assert isinstance(master_key, str)
+        assert isinstance(self.key_salt, str)
+        kdf_salt = binascii.a2b_base64(self.key_salt.encode("utf-8"))
+        entry_key = self.__get_entry_key(master_key, kdf_salt)
+        return self.decrypt_with_entry_key(entry_key)
 
     def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """
