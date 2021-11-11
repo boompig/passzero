@@ -11,8 +11,6 @@ from ..utils import base64_encode
 
 
 class EncryptionKeyEntry_V1(TypedDict):
-    # ID of the entry/link/whatever
-    id: int
     # timestamp when the key was last modified, as seconds since UNIX epoch
     last_modified: int
     # the key itself is stored in binary format

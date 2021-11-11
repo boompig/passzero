@@ -5,18 +5,16 @@ import pytest
 from passzero import backend
 from passzero.app_factory import create_app
 from passzero.backend import (create_inactive_user, decrypt_entries,
-                              delete_account, delete_all_entries, get_entries,
-                              get_services_map, insert_document_for_user,
-                              insert_link_for_user,
+                              get_entries, get_services_map,
+                              insert_document_for_user, insert_link_for_user,
                               password_strength_scores)
 from passzero.change_password import change_password
 from passzero.crypto_utils import PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
-                             Entry, Link, Service, User)
+                             EncryptionKeys, Entry, Link, Service, User)
 from passzero.models import db as _db
+from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
-
-from passzero.models.encryption_keys import EncryptionKeys
 
 from .utils import assert_decrypted_entries_equal, get_test_decrypted_entry
 
@@ -160,7 +158,7 @@ def test_delete_account(session):
     token.random_token()
     _db.session.add(token)
     _db.session.commit()
-    delete_account(session, user)
+    backend.delete_account(session, user)
     try:
         u2 = backend.get_account_with_email(session, email)
         # only printed on error
@@ -171,21 +169,32 @@ def test_delete_account(session):
 
 
 def test_insert_entry_for_user(session):
-    dec_entry_in = get_test_decrypted_entry()
+    """Test the backend method insert_entry_for_user
+    Test all aspects of that method"""
     user_key = u"master key"
-    backend.insert_entry_for_user(session, dec_entry_in, 1, user_key)
+    user = backend.create_inactive_user(session, DEFAULT_EMAIL, user_key)
+    dec_entry_in = get_test_decrypted_entry()
+    new_entry = backend.insert_entry_for_user(session, dec_entry_in, user.id, user_key)
     # make sure the entry is inserted
     enc_entries = get_entries(session, 1)
     assert len(enc_entries) == 1
     dec_entries = decrypt_entries(enc_entries, user_key)
     assert len(dec_entries) == 1
     assert_decrypted_entries_equal(dec_entry_in, dec_entries[0])
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user.id).one()
+    # this step should always complete
+    keys_db = enc_keys_db.decrypt(user_key)
+    assert len(keys_db["entry_keys"]) == 1
+    assert str(new_entry.id) in keys_db["entry_keys"]
+    entry_key = keys_db["entry_keys"][str(new_entry.id)]["key"]
+    dec_entry_out_2 = new_entry.decrypt_with_entry_key(entry_key)
+    assert_decrypted_entries_equal(dec_entry_in, dec_entry_out_2)
 
 
-def test_delete_all_entries(session):
+def test_delete_entry(session):
     user_key = u"master key"
-    user = create_inactive_user(session, u"fake@em.com",
-                                user_key)
+    user = backend.create_inactive_user(session, DEFAULT_EMAIL,
+                                        user_key)
     for i in range(10):
         dec_entry_in = {
             "account": "a-%d" % i,
@@ -196,11 +205,71 @@ def test_delete_all_entries(session):
         }
         backend.insert_entry_for_user(session, dec_entry_in,
                                       user.id, user_key)
-    enc_entries = get_entries(session, user.id)
+    enc_entries_before = backend.get_entries(session, user.id)
+    assert len(enc_entries_before) == 10
+    delete_index = 3
+    # delete one of the inserted entries
+    backend.delete_entry(session, enc_entries_before[delete_index].id, user.id, user_key)
+    enc_entries_after = get_entries(session, user.id)
+    # only 1 entry should be deleted
+    assert len(enc_entries_after) == 9
+    # make sure that entry is also not present in the keys database
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user.id).one()
+    keys_db = enc_keys_db.decrypt(user_key)
+    assert len(keys_db["entry_keys"]) == 9
+    for i, enc_entry in enumerate(enc_entries_before):
+        if i == delete_index:
+            assert str(enc_entry.id) not in keys_db["entry_keys"]
+        else:
+            assert str(enc_entry.id) in keys_db["entry_keys"]
+
+
+def test_delete_pinned_entry(session):
+    """Make sure that we can't delete the pinned entry"""
+    user_key = u"master key"
+    user = backend.create_inactive_user(session, DEFAULT_EMAIL, user_key)
+    # must exist
+    pinned_entry = session.query(Entry).filter(and_(
+        Entry.pinned == True,  # noqa
+        Entry.user_id == user.id
+    )).one()
+    try:
+        backend.delete_entry(session, pinned_entry.id, user.id, user_key)
+        assert False
+    except AssertionError:
+        assert True
+
+
+def test_delete_all_entries(session):
+    user_key = u"master key"
+    user = backend.create_inactive_user(session, DEFAULT_EMAIL,
+                                        user_key)
+    for i in range(10):
+        dec_entry_in = {
+            "account": "a-%d" % i,
+            "username": "u",
+            "password": "p",
+            "extra": "e",
+            "has_2fa": False
+        }
+        backend.insert_entry_for_user(session, dec_entry_in,
+                                      user.id, user_key)
+    enc_entries = backend.get_entries(session, user.id)
     assert len(enc_entries) == 10
-    delete_all_entries(session, user, user_key)
+    backend.delete_all_entries(session, user, user_key)
+    # make sure all entries are deleted
     enc_entries = get_entries(session, user.id)
     assert len(enc_entries) == 0
+    # make sure those entries are also not present in the keys database
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user.id).one()
+    keys_db = enc_keys_db.decrypt(user_key)
+    assert len(keys_db["entry_keys"]) == 0
+    # make sure the pinned entry is still there
+    pinned_entry = session.query(Entry).filter(and_(
+        Entry.pinned == True,  # noqa
+        Entry.user_id == user.id
+    )).one()
+    assert pinned_entry is not None
 
 
 def __encrypt_decrypt_entry(version: int):
@@ -300,6 +369,28 @@ def test_edit_entry_v4(session):
 
 def test_edit_entry_v5(session):
     __edit_entry(session, version=5)
+
+
+def test_edit_pinned_entry(session):
+    """Make sure you can't edit a pinned entry"""
+    user_key = u"test master key"
+    user = create_inactive_user(session, u"fake@fake.com", user_key)
+    pinned_entry = session.query(Entry).filter(and_(
+        Entry.pinned == True,  # noqa
+        Entry.user_id == user.id
+    )).one()
+    new_dec_entry = {
+        "account": u"test account",
+        "username": u"test username",
+        "password": u"test password",
+        "extra": u"test extra",
+        "has_2fa": True,
+    }
+    try:
+        backend.edit_entry(session, pinned_entry.id, new_dec_entry, user_key, user.id)
+        assert False
+    except AssertionError:
+        assert True
 
 
 def test_update_entry_versions_for_user(session):

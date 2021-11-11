@@ -1,3 +1,4 @@
+import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -81,7 +82,8 @@ def decrypt_entries(entries: List[Entry], key: str) -> List[dict]:
 
 def get_entries(db_session: Session, user_id: int) -> List[Entry]:
     """Return a list of entries without decrypting them.
-    Ordered by account name."""
+    Ordered by account name.
+    Do not return the pinned entry."""
     assert isinstance(user_id, int)
     return db_session.query(Entry)\
         .filter_by(user_id=user_id, pinned=False)\
@@ -121,17 +123,45 @@ def delete_entry(db_session: Session, entry_id: int, user_id: int, user_key: str
     """
     :throws NoResultFound: When entry_id does not correspond to a valid entry
     :throws AssertionError: When entry_id refers to an entry owned by another user
+                            or when it is a pinned entry
     """
     entry = db_session.query(Entry).filter_by(id=entry_id).one()
     assert entry.user_id == user_id
+    assert not entry.pinned, "Cannot delete a pinned entry using this method"
     db_session.delete(entry)
+    # remove corresponding decryption key
+    # DB guaranteed to exist
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    keys_db = enc_keys_db.decrypt(user_key)
+    # remove relevant entry (if present)
+    if str(entry_id) in keys_db["entry_keys"]:
+        keys_db["entry_keys"].pop(str(entry_id))
+        # re-encrypt the database
+        enc_keys_db.encrypt(user_key, keys_db)
+        # re-add it since it has been modified
+        db_session.add(enc_keys_db)
     db_session.commit()
 
 
 def delete_all_entries(db_session: Session, user: User, user_key: str) -> None:
-    entries = db_session.query(Entry).filter_by(user_id=user.id).all()
+    """This does not delete the pinned entry."""
+    entries = db_session.query(Entry).filter(and_(
+        Entry.user_id == user.id,
+        Entry.pinned == False,  # noqa
+    )).all()
     for entry in entries:
         db_session.delete(entry)
+    # EncryptionKeys guaranteed to exist
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user.id).one()
+    keys_db = enc_keys_db.decrypt(user_key)
+    for entry in entries:
+        # entry ID guaranteed to exist in EncryptionKeys
+        assert str(entry.id) in keys_db["entry_keys"]
+        keys_db["entry_keys"].pop(str(entry.id))
+    # re-encrypt the database
+    enc_keys_db.encrypt(user_key, keys_db)
+    # re-add it since it has been modified
+    db_session.add(enc_keys_db)
     db_session.commit()
 
 
@@ -237,6 +267,7 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
                           version: int = DEFAULT_ENTRY_VERSION,
                           prevent_deprecated_versions: bool = True) -> Entry:
     """This is the entry-point for creating new entries from API methods.
+    The session is committed in this method.
     The entry must conform to the entry spec:
         - account: string (required)
         - username: string (required)
@@ -247,12 +278,35 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
     assert isinstance(user_id, int)
     assert isinstance(user_key, str)
     assert isinstance(version, int)
-    entry, _ = encrypt_entry(user_key, dec_entry, version=version,
-                             prevent_deprecated_versions=prevent_deprecated_versions)
+    entry, entry_key = encrypt_entry(user_key, dec_entry, version=version,
+                                     prevent_deprecated_versions=prevent_deprecated_versions)
     insert_new_entry(db_session, entry, user_id)
     # double commit is intentional. 1st one gets entry.id
     db_session.commit()
+    insert_entry_key(db_session, user_key, entry, entry_key)
+    # second one commits the encryption key
+    db_session.commit()
     return entry
+
+
+def insert_entry_key(db_session: Session, user_key: str, entry: Entry, entry_key: bytes) -> None:
+    """Insert the entry key. Entry user_id and is must be set at this point.
+    We assume that the entry already exists in the DB.
+    This method also works if the key for the entry already exists and we want to overwrite it."""
+    assert entry.user_id is not None
+    assert entry.id is not None
+    # EncryptionKeys database guaranteed to exist by this point
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=entry.user_id).one()
+    keys_db = enc_keys_db.decrypt(user_key)
+    keys_db["entry_keys"][str(entry.id)] = {
+        # we store the keys in binary for a more compact representation
+        "key": entry_key,
+        # similarly with the timestamp, we store integers for a more compact repr.
+        "last_modified": int(time.time()),
+    }
+    # re-encrypt
+    enc_keys_db.encrypt(user_key, keys_db)
+    db_session.add(enc_keys_db)
 
 
 def insert_link_for_user(db_session: Session, dec_link: dict,
@@ -397,10 +451,11 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     :param user_id:         ID of the user
     :return:                Newly edited entry
     :rtype:                 Entry
-    :throws AssertionError: If the entry does not belong to the user
+    :throws AssertionError: If the entry does not belong to the user or if it is pinned
     """
     entry = session.query(Entry).filter_by(id=entry_id).one()
     assert entry.user_id == user_id
+    assert not entry.pinned, "Cannot edit a pinned entry using this method"
     dec_entry = {
         "account": edited_entry["account"],
         "username": edited_entry["username"],
@@ -409,7 +464,20 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
         "has_2fa": edited_entry["has_2fa"]
     }
     # this method should replace the correct fields
-    entry.encrypt(user_key, dec_entry)
+    new_entry_key = entry.encrypt(user_key, dec_entry)
+    # commit the entry back to the database
+    session.commit()
+    # entry ID should remain the same
+    assert entry.id == entry_id
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    keys_db = enc_keys_db.decrypt(user_key)
+    # guaranteed to be inside entry_keys
+    assert str(entry_id) in keys_db["entry_keys"]
+    keys_db["entry_keys"][str(entry_id)]["key"] = new_entry_key
+    keys_db["entry_keys"][str(entry_id)]["last_modified"] = int(time.time())
+    enc_keys_db.encrypt(user_key, keys_db)
+    # re-add it to the session
+    session.add(enc_keys_db)
     session.commit()
     return entry
 
