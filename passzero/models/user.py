@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from sqlalchemy.orm import relationship
+
 from passzero.crypto_utils import (PasswordHashAlgo,
                                    constant_time_compare_passwords,
                                    get_hashed_password)
@@ -29,6 +31,10 @@ class User(db.Model):
     default_random_password_length = db.Column(db.Integer, nullable=False, default=12)
     # number of words in passphrase
     default_random_passphrase_length = db.Column(db.Integer, nullable=False, default=4)
+
+    # this is the (symmetric) encryption key database
+    # see encryption_keys.py file in this same folder
+    enc_keys_db = relationship("EncryptionKeys", cascade="all, delete")
 
     def to_json(self) -> dict:
         return {

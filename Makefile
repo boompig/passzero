@@ -57,7 +57,7 @@ test-cov: $(SRC) $(UNIT_TEST_SRC) lint
 
 live-test-local: $(SRC) $(E2E_TEST_SRC) lint
 	# use heroku local to make extra certain everything works
-	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5100' pytest tests/end_to_end_tests
+	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5100' pytest -x tests/end_to_end_tests
 
 lint: $(SRC) $(standalone_typescript_src) $(css_src)
 	$(csslint) --quiet $(css_src)

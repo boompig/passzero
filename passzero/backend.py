@@ -199,6 +199,9 @@ def delete_account(db_session: Session, user: User) -> None:
     links = db_session.query(Link).filter_by(user_id=user.id).all()
     for link in links:
         db_session.delete(link)
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user.id).one_or_none()
+    if enc_keys_db:
+        db_session.delete(enc_keys_db)
     db_session.delete(user)
     db_session.commit()
 
