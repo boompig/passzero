@@ -34,7 +34,7 @@ class User(db.Model):
 
     # this is the (symmetric) encryption key database
     # see encryption_keys.py file in this same folder
-    enc_keys_db = relationship("EncryptionKeys", cascade="all, delete")
+    enc_keys_db = relationship("EncryptionKeys", cascade="all, delete", uselist=False)
 
     def to_json(self) -> dict:
         return {
@@ -45,7 +45,8 @@ class User(db.Model):
             "preferences": {
                 "default_random_password_length": self.default_random_password_length,
                 "default_random_passphrase_length": self.default_random_passphrase_length,
-            }
+            },
+            "encryption_keys": (self.enc_keys_db.to_json() if self.enc_keys_db else None),
         }
 
     def authenticate(self, form_password: str) -> bool:

@@ -10,8 +10,8 @@ import EncryptedEntry from "./components/encrypted-entry";
 import {IDecryptedEntry, IEncryptedEntry, IEntry} from "./components/entries";
 import NumEntries from "./components/num-entries";
 import SearchForm from "./components/search-form";
-import PasszeroApiV3 from "../common-modules/passzero-api-v3";
-import { decryptEntryV5 } from "./crypto_utils";
+import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-api-v3";
+import { decryptEntryV5, decryptEncryptionKeysDatabase } from "./crypto_utils";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -27,6 +27,14 @@ interface IAppState {
     servicesLoaded: boolean;
     services: IService[];
     loadingErrorMsg: string | null;
+    /**
+     * Details about the user
+     */
+    user: IUser | null;
+    /**
+     * Decrypted keys database (if available)
+     */
+    keysDB: IKeysDatabase | null;
 }
 
 class App extends Component<IAppProps, IAppState> {
@@ -50,9 +58,11 @@ class App extends Component<IAppProps, IAppState> {
             masterPassword: "",
             services: [],
             servicesLoaded: false,
+            user: null,
+            keysDB: null,
 
             // error msg if entries fail to load
-            loadingErrorMsg: null
+            loadingErrorMsg: null,
         };
 
         this.findEntryIndex = this.findEntryIndex.bind(this);
@@ -60,6 +70,7 @@ class App extends Component<IAppProps, IAppState> {
         this.handleDecrypt = this.handleDecrypt.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
+        this.handleGetUser = this.handleGetUser.bind(this);
 
         this.addServicesToEntries = this.addServicesToEntries.bind(this);
     }
@@ -99,7 +110,28 @@ class App extends Component<IAppProps, IAppState> {
                 this.setState({
                     loadingErrorMsg: err.message
                 });
+            }).then(() => {
+                return this.pzApi.getCurrentUser();
+            }).then((user: IUser) => {
+                this.handleGetUser(user);
             });
+    }
+
+    /**
+     * Once the current user is fetched from the backend, try to decrypt encryption keys
+     */
+    async handleGetUser(user: IUser) {
+        let decEncryptionKeys = null;
+        if (user.encryption_keys) {
+            decEncryptionKeys = await decryptEncryptionKeysDatabase(
+                user.encryption_keys,
+                this.state.masterPassword
+            );
+        }
+        this.setState({
+            user: user,
+            keysDB: decEncryptionKeys,
+        });
     }
 
     addServicesToEntries(): void {

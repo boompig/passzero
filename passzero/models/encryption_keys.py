@@ -58,6 +58,21 @@ class EncryptionKeys(db.Model):
     # base64-encoded binary
     nonce = db.Column(db.String, nullable=False)
 
+    def to_json(self) -> dict:
+        """Convert the encrypted version of this object into a JSON representation.
+        This will be sent back to the user for decryption."""
+        # decode the nonce into binary
+        nonce = binascii.a2b_base64(self.nonce.encode("utf-8"))
+        # the message must start with the nonce
+        contents = self.contents[len(nonce):]
+        return {
+            # send back the contents without the nonce in front
+            "enc_contents_b64": base64_encode(contents).decode("utf-8"),
+            # these are already base64-encoded
+            "enc_nonce_b64": self.nonce,
+            "enc_kdf_salt_b64": self.kdf_salt,
+        }
+
     def derive_symmetric_key(self, master_key: str, kdf_salt: bytes) -> bytes:
         """Derive the symmetric key to be used in encryption/decryption"""
         assert isinstance(master_key, str)

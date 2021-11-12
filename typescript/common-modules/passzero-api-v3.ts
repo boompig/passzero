@@ -12,6 +12,23 @@ interface IEntry {
 	has_2fa: boolean;
 }
 
+export interface IEncryptionKeys {
+    enc_contents_b64: string;
+    enc_kdf_salt_b64: string;
+    enc_nonce_b64: string;
+}
+
+export interface IKeysDatabaseEntry {
+    key: BinaryData;
+    last_modified: number;
+}
+
+export interface IKeysDatabase {
+    entry_keys: {[key: string]: IKeysDatabaseEntry};
+    link_keys: {[key: string]: IKeysDatabaseEntry};
+    version: number;
+}
+
 export interface IUser {
     id: number;
     email: string;
@@ -19,6 +36,7 @@ export interface IUser {
     last_login: string;
     username: string | null;
     preferences: any;
+    encryption_keys: IEncryptionKeys | null;
 }
 
 export default class PasszeroApiV3 {
@@ -39,8 +57,8 @@ export default class PasszeroApiV3 {
             (options.headers as any).Authorization = `Bearer ${apiToken}`;
         }
         const response = await window.fetch(url, options);
-        console.debug(response.headers.get("Content-Type"));
-        console.debug(response.status);
+        // console.debug(response.headers.get("Content-Type"));
+        // console.debug(response.status);
         if (response.ok) {
             return response.json();
         } else if(response.status == 500 && response.headers.get("Content-Type") === "application/json") {
