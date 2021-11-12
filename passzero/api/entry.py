@@ -1,3 +1,5 @@
+import logging
+
 from flask import escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.orm.exc import NoResultFound
@@ -10,6 +12,7 @@ from ..models import Entry, User, db
 from .jwt_auth import authorizations
 
 ns = Namespace("Entry", authorizations=authorizations)
+logger = logging.getLogger(__name__)
 
 
 @ns.route("")
@@ -121,6 +124,9 @@ class ApiEntry(Resource):
                 return json_error_v2("no such entry", 400)
             except AssertionError:
                 return json_error_v2("the given entry does not belong to you", 400)
+            except backend.InternalServerError as err:
+                logger.critical(err)
+                return json_error_v2("internal server error", 500)
         else:
             return json_error_v2("Password is not correct", 401)
 

@@ -1,3 +1,4 @@
+import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -18,9 +19,16 @@ from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
 from .utils import base64_encode
 
 UPDATE_LIMIT = 60
+logger = logging.getLogger(__name__)
 
 
 class UserNotAuthorizedError(Exception):
+    pass
+
+
+class InternalServerError(Exception):
+    """This exception is used when some internal state in the server is not consistent.
+    Done so we can give an opaque message to the client while logging the problem at the server."""
     pass
 
 
@@ -136,11 +144,14 @@ def delete_entry(db_session: Session, entry_id: int, user_id: int, user_key: str
 def delete_link(db_session, link_id, user_id, user_key: str) -> None:
     """
     :throws NoResultFound: When link_id does not correspond to a valid link
-    :throws AssertionError: When link does not belong to that user
+    :throws UserNotAuthorizedError: When link does not belong to that user
     """
-    # may throw something
+    # may throw NoResultFound -> should be caught by parent
     link = db_session.query(Link).filter_by(id=link_id).one()
+    if link.user_id != user_id:
+        raise UserNotAuthorizedError("The given link does not belong to this user")
     assert link.user_id == user_id
+    # these operations *together* form a transaction
     db_session.delete(link)
     _delete_encryption_key(db_session, user_id, user_key, link_id, elem_type="link")
     db_session.commit()
@@ -256,9 +267,11 @@ def create_inactive_user(db_session: Session, email: str, password: str,
     return user
 
 
-def _create_empty_encryption_key_db(db_session: Session, user: User, user_key: str) -> None:
+def _create_empty_encryption_key_db(db_session: Session, user: User, user_key: str) -> EncryptionKeys:
     """Instantiate an empty encryption keys database for the given user.
-    NOTE: do not commit the session here"""
+    NOTE: do not commit the session here
+    :return: Return the newly created encryption keys database
+    """
     keys_db = EncryptionKeysDB_V1(
         entry_keys={},
         link_keys={},
@@ -272,6 +285,7 @@ def _create_empty_encryption_key_db(db_session: Session, user: User, user_key: s
     enc_keys_db.encrypt(user_key, keys_db)
     enc_keys_db.user_id = user.id
     db_session.add(enc_keys_db)
+    return enc_keys_db
 
 
 def insert_entry_for_user(db_session: Session, dec_entry: dict,
@@ -312,7 +326,13 @@ def _insert_encryption_key(db_session: Session, user_id: int, user_key: str, ele
     assert isinstance(elem_id, int)
     assert elem_type in ["entry", "link"]
     # EncryptionKeys database guaranteed to exist by this point
-    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one_or_none()
+    if enc_keys_db is None:
+        # this is a legacy compatibility for users created before encryption databases
+        logger.warning("No encryption keys database found for user %d, creating", user_id)
+        user = db_session.query(User).filter_by(id=user_id).one()
+        enc_keys_db = _create_empty_encryption_key_db(db_session, user, user_key)
+
     keys_db = enc_keys_db.decrypt(user_key)
     k = {
         "entry": "entry_keys",
@@ -331,23 +351,34 @@ def _insert_encryption_key(db_session: Session, user_id: int, user_key: str, ele
 
 def _update_encryption_key(db_session: Session, user_id: int, user_key: str, elem_id: int, new_symmetric_key: bytes,
                            elem_type: str) -> None:
-    """Encryption key is added but not committed"""
+    """Encryption key is added but not committed
+    """
     assert isinstance(user_id, int), "user_id must be an integer"
     assert isinstance(elem_id, int), "elem_id must be an integer"
     assert elem_type in ["entry", "link"], "elem_type must be one of entry, link"
-    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one_or_none()
+    if enc_keys_db is None:
+        # this is a legacy compatibility for users created before encryption databases
+        logger.warning("No encryption keys database found for user %d, creating", user_id)
+        user = db_session.query(User).filter_by(id=user_id).one()
+        enc_keys_db = _create_empty_encryption_key_db(db_session, user, user_key)
+
     keys_db = enc_keys_db.decrypt(user_key)
     k = {
         "entry": "entry_keys",
         "link": "link_keys",
     }[elem_type]
-    # guaranteed to be inside relevant keys collection
-    assert str(elem_id) in keys_db[k]
-    keys_db[k][str(elem_id)]["key"] = new_symmetric_key
-    keys_db[k][str(elem_id)]["last_modified"] = int(time.time())
-    enc_keys_db.encrypt(user_key, keys_db)
-    # re-add it to the session
-    db_session.add(enc_keys_db)
+    if str(elem_id) in keys_db[k]:
+        # should be inside relevant keys collection
+        keys_db[k][str(elem_id)]["key"] = new_symmetric_key
+        keys_db[k][str(elem_id)]["last_modified"] = int(time.time())
+        enc_keys_db.encrypt(user_key, keys_db)
+        # re-add it to the session
+        db_session.add(enc_keys_db)
+    else:
+        logger.warning("Element (type %s, ID %d) not found in encryption keys database during update, inserting",
+                       elem_type, elem_id)
+        _insert_encryption_key(db_session, user_id, user_key, elem_id, new_symmetric_key, elem_type)
 
 
 def _delete_encryption_key(db_session: Session, user_id: int, user_key: str, elem_id: int,
@@ -355,19 +386,28 @@ def _delete_encryption_key(db_session: Session, user_id: int, user_key: str, ele
     """Added but not committed"""
     assert isinstance(user_id, int)
     assert isinstance(elem_id, int)
-    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one_or_none()
+    if enc_keys_db is None:
+        # this is a legacy compatibility for users created before encryption databases
+        logger.warning("No encryption keys database found for user %d, creating", user_id)
+        user = db_session.query(User).filter_by(id=user_id).one()
+        enc_keys_db = _create_empty_encryption_key_db(db_session, user, user_key)
+
     keys_db = enc_keys_db.decrypt(user_key)
     # relevant entry *must* be present
     k = {
         "entry": "entry_keys",
         "link": "link_keys",
     }[elem_type]
-    assert str(elem_id) in keys_db[k]
-    keys_db[k].pop(str(elem_id))
-    # re-encrypt the database
-    enc_keys_db.encrypt(user_key, keys_db)
-    # re-add it since it has been modified
-    db_session.add(enc_keys_db)
+    if str(elem_id) in keys_db[k]:
+        keys_db[k].pop(str(elem_id))
+        # re-encrypt the database
+        enc_keys_db.encrypt(user_key, keys_db)
+        # re-add it since it has been modified
+        db_session.add(enc_keys_db)
+    else:
+        logger.warning("Element (type %s, ID %d) not found in encryption keys database during deletion, ignoring",
+                       elem_type, elem_id)
 
 
 def insert_link_for_user(db_session: Session, dec_link: dict,
@@ -522,25 +562,30 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     :rtype:                 Entry
     :throws AssertionError: If the entry does not belong to the user or if it is pinned
     """
-    entry = session.query(Entry).filter_by(id=entry_id).one()
-    assert entry.user_id == user_id
-    assert not entry.pinned, "Cannot edit a pinned entry using this method"
-    dec_entry = {
-        "account": edited_entry["account"],
-        "username": edited_entry["username"],
-        "password": edited_entry["password"],
-        "extra": (edited_entry["extra"] or ""),
-        "has_2fa": edited_entry["has_2fa"]
-    }
-    # this method should replace the correct fields
-    new_entry_key = entry.encrypt(user_key, dec_entry)
-    # commit the entry back to the database
-    session.commit()
-    # entry ID should remain the same
-    assert entry.id == entry_id
-    _update_encryption_key(session, user_id, user_key, entry_id, new_entry_key, elem_type="entry")
-    session.commit()
-    return entry
+    try:
+        entry = session.query(Entry).filter_by(id=entry_id).one()
+        assert entry.user_id == user_id
+        assert not entry.pinned, "Cannot edit a pinned entry using this method"
+        dec_entry = {
+            "account": edited_entry["account"],
+            "username": edited_entry["username"],
+            "password": edited_entry["password"],
+            "extra": (edited_entry["extra"] or ""),
+            "has_2fa": edited_entry["has_2fa"]
+        }
+        # this method should replace the correct fields
+        new_entry_key = entry.encrypt(user_key, dec_entry)
+        # commit the entry back to the database
+        session.commit()
+        # entry ID should remain the same
+        assert entry.id == entry_id
+        _update_encryption_key(session, user_id, user_key, entry_id, new_entry_key, elem_type="entry")
+        session.commit()
+        return entry
+    except NoResultFound as e:
+        # catch the error to log something here
+        logger.error("User requested to edit entry %d but that entry does not exist", entry_id)
+        raise e
 
 
 def get_services_map(session: Session) -> Dict[str, Any]:
