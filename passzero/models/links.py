@@ -117,7 +117,8 @@ class Link(db.Model):
         """
         # NOTE: user_id not set here
         assert isinstance(master_key, str)
-        assert isinstance(dec_link, dict)
+        assert isinstance(dec_link, dict), \
+            f"expected decrypted link to be a dictionary, got type {type(dec_link)}"
         dec_contents_d = {
             "service_name": dec_link["service_name"],
             "link": dec_link["link"]

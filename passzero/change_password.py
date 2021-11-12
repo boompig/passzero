@@ -7,12 +7,17 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from passzero.backend import create_pinned_entry
 from passzero.crypto_utils import get_hashed_password
-from passzero.models import Entry, User, EncryptionKeys
+from passzero.models import Entry, Link, User, EncryptionKeys
 
 
 def find_entries(session, user_id: int) -> Sequence[Entry]:
+    """Find all (non-pinned) entries"""
     return session.query(Entry).filter_by(
         user_id=user_id, pinned=False)
+
+
+def find_link(session, user_id: int) -> Sequence[Link]:
+    return session.query(Link).filter_by(user_id=user_id)
 
 
 def find_pinned_entry(session, user_id: int) -> Entry:
@@ -44,13 +49,19 @@ def reencrypt_entry(session, entry: Entry, old_password: str, new_password: str)
     return entry_key
 
 
-def reencrypt_entries(session, user_id: int, old_password: str, new_password: str) -> int:
+def reencrypt_link(session, link: Link, old_password: str, new_password: str) -> bytes:
+    dec_link = link.decrypt(old_password).to_json()
+    link_key = link.encrypt(new_password, dec_link)
+    session.add(link)
+    return link_key
+
+
+def reencrypt_entries(session, user_id: int, old_password: str, new_password: str):
     """
-    Re-encrypt both each entry and the keys database for those entries
+    Re-encrypt each entry and update the keys database for those entries
+    DO NOT change the password for the keys database here
     DO NOT commit session here
-    Return the number of modified entries
     """
-    n = 0
     # guaranteed to exist here
     enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user_id).one()
     keys_db = enc_keys_db.decrypt(old_password)
@@ -59,11 +70,31 @@ def reencrypt_entries(session, user_id: int, old_password: str, new_password: st
         if str(entry.id) in keys_db["entry_keys"]:
             # don't change the last_modified date
             keys_db["entry_keys"][str(entry.id)]["key"] = entry_key
-        n += 1
-    # add the encryption DB to the session since it has been modified by changing the encryption key
+    # use the old password here
+    enc_keys_db.encrypt(old_password, keys_db)
+    session.add(enc_keys_db)
+
+
+def reencrypt_links(session, user_id: int, old_password: str, new_password: str):
+    # guaranteed to exist here
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    keys_db = enc_keys_db.decrypt(old_password)
+    for link in find_link(session, user_id):
+        link_key = reencrypt_link(session, link, old_password, new_password)
+        if str(link.id) in keys_db["link_keys"]:
+            # don't change the last_modified date
+            keys_db["link_keys"][str(link.id)]["key"] = link_key
+    # use the old password here
+    enc_keys_db.encrypt(old_password, keys_db)
+    session.add(enc_keys_db)
+
+
+def reencrypt_keys_db(session, user_id: int, old_password: str, new_password: str):
+    """Do not commit, just add to session"""
+    enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user_id).one()
+    keys_db = enc_keys_db.decrypt(old_password)
     enc_keys_db.encrypt(new_password, keys_db)
     session.add(enc_keys_db)
-    return n
 
 
 def change_password_in_user_table(session, user_id: int, new_password: str) -> None:
@@ -108,6 +139,8 @@ def change_password(session, user_id: int, old_password: str, new_password: str)
             user_id
         ))
     reencrypt_entries(session, user_id, old_password, new_password)
+    reencrypt_links(session, user_id, old_password, new_password)
+    reencrypt_keys_db(session, user_id, old_password, new_password)
     change_password_in_user_table(session, user_id, new_password)
     create_pinned_entry(session, user_id, new_password)
     session.commit()

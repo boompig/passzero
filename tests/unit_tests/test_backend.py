@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Dict
 
 import pytest
 from passzero import backend
@@ -16,7 +17,8 @@ from passzero.models import db as _db
 from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
-from .utils import assert_decrypted_entries_equal, get_test_decrypted_entry
+from .utils import (assert_decrypted_entries_equal,
+                    assert_decrypted_links_equal, get_test_decrypted_entry)
 
 DB_FILENAME = "passzero.db"
 DEFAULT_EMAIL = u"fake@fake.com"
@@ -489,16 +491,36 @@ def test_change_password(session):
     new_pwd = u"world"
     user = create_inactive_user(session, u"fake@fake.com", old_pwd)
     logging.info("Creating fake entries")
-    dec_entries_in = {}
+    dec_entries_in = {}  # type: Dict[int, dict]
+    dec_links_in = {}  # type: Dict[int, dict]
     for i in range(10):
         dec_entry_in = get_test_decrypted_entry(i)
         entry_id = backend.insert_entry_for_user(session, dec_entry_in,
                                                  user.id, old_pwd).id
+        assert isinstance(entry_id, int)
         dec_entries_in[entry_id] = dec_entry_in
+    for i in range(10):
+        dec_link_in = {
+            "service_name": f"service {i}",
+            "link": f"https://example.com/foo/{i}",
+        }
+        link_id = backend.insert_link_for_user(session, dec_link_in,
+                                               user.id, old_pwd).id
+        assert isinstance(link_id, int)
+        dec_links_in[link_id] = dec_link_in
+
+    # validate everything works as it's supposed to with the old password
     enc_entries = get_entries(session, user.id)
     logging.info("Decrypting newly created entries")
     dec_entries = decrypt_entries(enc_entries, old_pwd)
     assert len(dec_entries) == 10
+    enc_links = backend.get_links(session, user.id)
+    assert len(enc_links) == 10
+    # validate the decryption using old password does work
+    dec_links_out = [link.decrypt(old_pwd).to_json() for link in enc_links]
+    assert len(dec_links_out) == 10
+
+    # validate everything works as it's supposed to with the new password
     logging.info("Changing password")
     change_password(session, user.id, old_pwd, new_pwd)
     logging.info("Password has changed")
@@ -506,6 +528,12 @@ def test_change_password(session):
     dec_entries = decrypt_entries(enc_entries, new_pwd)
     for dec_entry_out in dec_entries:
         assert_decrypted_entries_equal(dec_entries_in[dec_entry_out["id"]], dec_entry_out)
+    enc_links = backend.get_links(session, user.id)
+    dec_links_out = [link.decrypt(new_pwd).to_json() for link in enc_links]
+    assert len(dec_links_out) == 10
+    for dec_link_out in dec_links_out:
+        assert_decrypted_links_equal(dec_link_out, dec_links_in[dec_link_out["id"]])
+
     # make sure we can still decrypt the encryption keys database
     enc_keys_db = session.query(EncryptionKeys).filter_by(user_id=user.id).one()
     # this just tests whether we can in fact decrypt the database
