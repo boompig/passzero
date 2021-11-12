@@ -20,8 +20,8 @@ all: lint test build-name
 install: package.json
 	yarn
 
-build-name: scripts/add_build_name.py passzero/config.py
-	python scripts/add_build_name.py passzero/config.py
+build-name: scripts/add_build_name.py config/config.json
+	python scripts/add_build_name.py config/config.json
 
 minify: minify-js minify-css
 
