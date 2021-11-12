@@ -1,8 +1,9 @@
+import logging
+
 from flask import escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
-from sqlalchemy.orm.exc import NoResultFound
-
 from flask_restx import Namespace, Resource, reqparse
+from sqlalchemy.orm.exc import NoResultFound
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
@@ -10,6 +11,7 @@ from ..models import Link, User, db
 from .jwt_auth import authorizations
 
 ns = Namespace("link", authorizations=authorizations)
+logger = logging.getLogger(__name__)
 
 
 @ns.route("")
@@ -26,7 +28,7 @@ class ApiLink(Resource):
 
         Arguments
         ---------
-        none
+        - password: string (required)
 
         Response
         --------
@@ -38,18 +40,23 @@ class ApiLink(Resource):
         ------------
         - 200: success
         - 400: link does not exist or does not belong to logged-in user
+        - 401: password is not correct
         """
+        parser = reqparse.RequestParser()
+        parser.add_argument("password", type=str, required=True)
+        args = parser.parse_args()
         user_id = get_jwt_identity()["user_id"]
-        try:
-            link = backend.get_link_by_id(db.session, user_id, link_id)
-            assert link is not None
-            db.session.delete(link)
-            db.session.commit()
-            return json_success_v2("successfully deleted link with ID %d" % link_id)
-        except NoResultFound:
-            return json_error_v2("no such link", 400)
-        except AssertionError:
-            return json_error_v2("the given link does not belong to you", 400)
+        user = db.session.query(User).filter_by(id=user_id).one()
+        if user.authenticate(args.password):
+            try:
+                backend.delete_link(db.session, link_id, user_id, args.password)
+                return json_success_v2("successfully deleted link with ID %d" % link_id)
+            except NoResultFound:
+                return json_error_v2("no such link", 400)
+            except backend.UserNotAuthorizedError:
+                return json_error_v2("the given link does not belong to you", 400)
+        else:
+            return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
     @jwt_required
@@ -107,7 +114,8 @@ class ApiLink(Resource):
                 )
             except NoResultFound:
                 return json_error_v2("no such link", 400)
-            except AssertionError:
+            except AssertionError as err:
+                logger.error("Assertion Error during link editing: %s" % str(err))
                 return json_error_v2("the given link does not belong to you", 400)
         else:
             return json_error_v2("Password is not correct", 401)

@@ -117,18 +117,21 @@ class App extends Component<IProps, IState> {
     }
 
     handleDelete(linkIndex: number): void {
-        const link = this.state.links[linkIndex];
-        console.debug(`Deleting link with ID ${link.id}...`);
-        this.pzApi.deleteLink(link.id)
-            .then((response) => {
-                console.debug("Got decrypted link from server");
-                const newLinks = this.state.links;
-                newLinks.splice(linkIndex, 1);
-                // force state reload
-                this.setState({
-                    links: newLinks,
+        const ok = confirm('Are you sure you want to delete this link?');
+        if (ok) {
+            const link = this.state.links[linkIndex];
+            console.debug(`Deleting link with ID ${link.id}...`);
+            this.pzApi.deleteLink(link.id, this.state.masterPassword)
+                .then((response) => {
+                    console.debug("Got decrypted link from server");
+                    const newLinks = this.state.links;
+                    newLinks.splice(linkIndex, 1);
+                    // force state reload
+                    this.setState({
+                        links: newLinks,
+                    });
                 });
-            });
+        }
     }
 
     /**

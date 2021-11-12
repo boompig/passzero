@@ -591,6 +591,7 @@ def api_v1_signup(request_data: SignupForm):
         token = AuthToken()
         token.random_token()
         if send_confirmation_email(request_data["email"], token.token):
+            # this also creates a number of backend structures
             user = backend.create_inactive_user(
                 db.session,
                 request_data["email"],
@@ -599,7 +600,6 @@ def api_v1_signup(request_data: SignupForm):
             token.user_id = user.id
             # now add token
             db.session.add(token)
-            change_password.create_pinned_entry(db.session, user.id, request_data["password"])
             db.session.commit()
             code, data = json_success(
                 "Successfully created account with email %s" % request_data['email']

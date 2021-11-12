@@ -7,7 +7,7 @@ from unittest import mock
 import six
 
 from passzero.app_factory import create_app
-from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service
+from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service, EncryptionKeys
 from passzero.models import db as _db
 from passzero.api.link_list import MAX_NUM_DECRYPT
 from passzero.backend import create_inactive_user, activate_account
@@ -71,6 +71,8 @@ def app(request, db, my_app: Flask) -> Flask:
         db.session.query(User).delete()
         # delete services
         db.session.query(Service).delete()
+        # delete encryption key database
+        db.session.query(EncryptionKeys).delete()
         db.session.commit()
 
     request.addfinalizer(teardown)

@@ -11,13 +11,18 @@ def test_encrypt_and_decrypt_entry_v5():
     }
     user_key = u"test master key"
     entry = Entry_v5()
-    entry.encrypt(user_key, dec_entry_in)
+    entry_key = entry.encrypt(user_key, dec_entry_in)
     assert entry.version == 5
-    dec_entry_out = entry.decrypt(user_key)
+    # test .decrypt
+    dec_entry_out_1 = entry.decrypt(user_key)
     for field in dec_entry_in:
-        assert dec_entry_out[field] == dec_entry_in[field]
+        assert dec_entry_out_1[field] == dec_entry_in[field]
     # make sure that the resultant entry has a last_modified field
-    assert "last_modified" in dec_entry_out
+    assert "last_modified" in dec_entry_out_1
+    # test .decrypt_with_entry_key
+    dec_entry_out_2 = entry.decrypt_with_entry_key(entry_key)
+    for field in dec_entry_in:
+        assert dec_entry_out_2[field] == dec_entry_in[field]
 
 
 def test_encrypt_and_decrypt_entry_v5_utf_password():
@@ -31,10 +36,15 @@ def test_encrypt_and_decrypt_entry_v5_utf_password():
     }
     user_key = u"你好Sträfchen"
     entry = Entry_v5()
-    entry.encrypt(user_key, dec_entry_in)
+    entry_key = entry.encrypt(user_key, dec_entry_in)
     assert entry.version == 5
-    dec_entry_out = entry.decrypt(user_key)
+    # test .decrypt
+    dec_entry_out_1 = entry.decrypt(user_key)
     for field in dec_entry_in:
-        assert dec_entry_out[field] == dec_entry_in[field]
+        assert dec_entry_out_1[field] == dec_entry_in[field]
     # make sure that the resultant entry has a last_modified field
-    assert "last_modified" in dec_entry_out
+    assert "last_modified" in dec_entry_out_1
+    # test .decrypt_with_entry_key
+    dec_entry_out_2 = entry.decrypt_with_entry_key(entry_key)
+    for field in dec_entry_in:
+        assert dec_entry_out_2[field] == dec_entry_in[field]

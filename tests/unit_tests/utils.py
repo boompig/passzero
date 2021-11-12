@@ -25,3 +25,12 @@ def assert_decrypted_entries_equal(actual: dict, expected: dict) -> None:
         print(actual)
         print(expected)
         assert actual[field] == expected[field], "Failed entry validation for field %s" % field
+
+
+def assert_decrypted_links_equal(actual: dict, expected: dict) -> None:
+    assert isinstance(actual, dict)
+    assert isinstance(expected, dict)
+    for field in ["service_name", "link"]:
+        print(actual)
+        print(expected)
+        assert actual[field] == expected[field], "Failed entry validation for field %s" % field

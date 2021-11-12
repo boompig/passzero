@@ -88,7 +88,7 @@ class ApiLinkList(Resource):
 
         Arguments
         ---------
-        none
+        - password: string (required)
 
         Response
         --------
@@ -101,10 +101,16 @@ class ApiLinkList(Resource):
         - 200: success
         - 401: not authenticated
         """
+        parser = reqparse.RequestParser()
+        parser.add_argument("password", type=str, required=True)
+        args = parser.parse_args()
         identity = get_jwt_identity()
         user = db.session.query(User).filter_by(id=identity["user_id"]).one()
-        backend.delete_all_links(db.session, user)
-        return json_success_v2("Deleted all links")
+        if user.authenticate(args.password):
+            backend.delete_all_links(db.session, user)
+            return json_success_v2("Deleted all links")
+        else:
+            return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
     @jwt_required

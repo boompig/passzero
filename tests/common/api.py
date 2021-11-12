@@ -791,9 +791,9 @@ class ApiV3:
         else:
             return r
 
-    def json_delete(self, url: str, check_status: bool = True):
+    def json_delete(self, url: str, data: Optional[dict] = None, check_status: bool = True):
         assert self.api_token is not None
-        r = json_delete(self.client, url, token=self.api_token)
+        r = json_delete(self.client, url, token=self.api_token, data=data)
         _print_if_test(self.client, _get_response_data(self.client, r))
         try:
             if check_status:
@@ -899,10 +899,15 @@ class ApiV3:
         )
 
     def delete_link(self, link_id: int) -> None:
+        assert self.password is not None and self.password != ""
         url = f"/api/v3/links/{link_id}"
+        data = {
+            "password": self.password,
+        }
         self.json_delete(
             url=url,
-            check_status=True
+            check_status=True,
+            data=data,
         )
 
     def edit_link(self, link_id: int, new_link: dict) -> None:
@@ -935,6 +940,18 @@ class ApiV3:
             url=url,
             data=data,
             check_status=check_status
+        )
+
+    def delete_all_links(self) -> None:
+        assert self.password is not None and self.password != ""
+        url = "/api/v3/links"
+        data = {
+            "password": self.password,
+        }
+        self.json_delete(
+            url=url,
+            check_status=True,
+            data=data,
         )
 
     # services
