@@ -1,11 +1,12 @@
 import { Component } from "react";
 import * as React from "react";
 import { chunk } from "lodash";
-import PasszeroApiV3 from "../common-modules/passzero-api-v3";
+import PasszeroApiV3, {IUser, IKeysDatabase} from "../common-modules/passzero-api-v3";
 import DecryptedLink from "./components/decrypted-link";
 import EncryptedLink from "./components/encrypted-link";
 import {IDecryptedLink, IEncryptedLink, ILink} from "./components/links";
 import SearchForm from "../entries-bundle/components/search-form";
+import { decryptEncryptionKeysDatabase } from "../common-modules/crypto_utils";
 
 // instead of importing, include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -25,6 +26,14 @@ interface IState {
     isDecrypting: boolean;
     // true iff all links have been decrypted
     isAllDecrypted: boolean;
+    /**
+     * Details about the user
+     */
+    user: IUser | null;
+    /**
+     * Decrypted keys database (if available)
+     */
+    keysDB: IKeysDatabase | null;
 }
 
 /**
@@ -46,6 +55,8 @@ class App extends Component<IProps, IState> {
             masterPassword: null,
             isDecrypting: false,
             isAllDecrypted: false,
+            user: null,
+            keysDB: null,
         };
 
         this.logoutTimer = new LogoutTimer();
@@ -60,6 +71,7 @@ class App extends Component<IProps, IState> {
         this.handleDecryptAll = this.handleDecryptAll.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.decryptList = this.decryptList.bind(this);
+        this.handleGetUser = this.handleGetUser.bind(this);
     }
 
     componentDidMount() {
@@ -95,8 +107,33 @@ class App extends Component<IProps, IState> {
                 } else {
                     console.debug("different type of error: " + err.name);
                 }
+            }).then(() => {
+                return this.pzApi.getCurrentUser();
+            }).then((user: IUser) => {
+                // run with a delay so it doesn't interfere with rendering
+                window.setTimeout(() => {
+                    this.handleGetUser(user);
+                }, 1500);
             });
     }
+
+    /**
+     * Once the current user is fetched from the backend, try to decrypt encryption keys
+     */
+    async handleGetUser(user: IUser) {
+        let decEncryptionKeys = null;
+        if (user.encryption_keys) {
+            decEncryptionKeys = await decryptEncryptionKeysDatabase(
+                user.encryption_keys,
+                this.state.masterPassword
+            );
+        }
+        this.setState({
+            user: user,
+            keysDB: decEncryptionKeys,
+        });
+    }
+
 
     renderLoading() {
         return <div>Loading links...</div>;

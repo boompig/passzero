@@ -3,7 +3,7 @@ import * as argon2 from "argon2-browser";
 import { decode } from "@msgpack/msgpack";
 import * as nacl from "tweetnacl";
 
-import { IEncryptedEntry, IDecryptedEntry } from "./components/entries";
+import { IEncryptedEntry, IDecryptedEntry } from "./entries";
 import { IEncryptionKeys, IKeysDatabase } from "../common-modules/passzero-api-v3";
 
 
@@ -66,8 +66,6 @@ export async function decryptEncryptionKeysDatabase(encryptionKeys: IEncryptionK
         salt: kdfSalt,
     });
     const key = h.hash;
-    console.debug('key in hex:');
-    console.debug(Buffer.from(key).toString('base64'));
 
     let end = new Date().valueOf();
     console.log(`${end - start}ms to generate password for keys database using argon2`);
@@ -76,7 +74,6 @@ export async function decryptEncryptionKeysDatabase(encryptionKeys: IEncryptionK
     const pt = nacl.secretbox.open(encMessage, nonce, key);
     end = new Date().valueOf();
     console.log(`${end - start}ms to decrypt the encryption DB`);
-    console.debug(pt);
 
     start = new Date().valueOf();
     const keysDb = decode(pt) as IKeysDatabase;

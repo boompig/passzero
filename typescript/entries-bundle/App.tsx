@@ -7,11 +7,11 @@ import * as React from "react";
 
 import DecryptedEntry from "./components/decrypted-entry";
 import EncryptedEntry from "./components/encrypted-entry";
-import {IDecryptedEntry, IEncryptedEntry, IEntry} from "./components/entries";
+import {IDecryptedEntry, IEncryptedEntry, IEntry} from "../common-modules/entries";
 import NumEntries from "./components/num-entries";
 import SearchForm from "./components/search-form";
 import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-api-v3";
-import { decryptEntryV5, decryptEncryptionKeysDatabase } from "./crypto_utils";
+import { decryptEntryV5, decryptEncryptionKeysDatabase } from "../common-modules/crypto_utils";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -113,7 +113,10 @@ class App extends Component<IAppProps, IAppState> {
             }).then(() => {
                 return this.pzApi.getCurrentUser();
             }).then((user: IUser) => {
-                this.handleGetUser(user);
+                // NOTE: the 1500ms delay is so the decryption does not block anything important in the rendering thread
+                window.setTimeout(() => {
+                    this.handleGetUser(user);
+                }, 1500);
             });
     }
 
