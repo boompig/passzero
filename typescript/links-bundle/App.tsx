@@ -32,8 +32,11 @@ interface IState {
     user: IUser | null;
     /**
      * Decrypted keys database (if available)
+     * Can sometimes be null even when it's been loaded
      */
     keysDB: IKeysDatabase | null;
+    // true iff the keys database has been loaded
+    isKeysDBLoaded: boolean;
 }
 
 /**
@@ -61,6 +64,7 @@ class App extends Component<IProps, IState> {
             isAllDecrypted: false,
             user: null,
             keysDB: null,
+            isKeysDBLoaded: false,
         };
 
         this.logoutTimer = new LogoutTimer();
@@ -125,16 +129,19 @@ class App extends Component<IProps, IState> {
      * Once the current user is fetched from the backend, try to decrypt encryption keys
      */
     async handleGetUser(user: IUser) {
-        let decEncryptionKeys = null;
+        let keysDB = null;
+        // NOTE: some users may not have a keysDB associated with their user
+        // in that case, we don't want to prevent decryption
         if (user.encryption_keys) {
-            decEncryptionKeys = await decryptEncryptionKeysDatabase(
+            keysDB = await decryptEncryptionKeysDatabase(
                 user.encryption_keys,
                 this.state.masterPassword
             );
         }
         this.setState({
             user: user,
-            keysDB: decEncryptionKeys,
+            keysDB: keysDB,
+            isKeysDBLoaded: true,
         });
     }
 
@@ -434,7 +441,7 @@ class App extends Component<IProps, IState> {
                     </a>
                     { this.state.isAllDecrypted ? null : <button type="button"
                         className="decrypt-all-btn control-panel-btn btn btn-lg btn-info"
-                        disabled={ this.state.isDecrypting || !this.state.keysDB }
+                        disabled={ this.state.isDecrypting || !this.state.isKeysDBLoaded }
                         onClick={ this.handleDecryptAll }>
                         Decrypt All
                     </button> }

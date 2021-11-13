@@ -28,17 +28,17 @@ export async function decryptEntryV5(entry: IEncryptedEntry, masterPassword: str
     const entryKey = entryKeyHash.hash;
 
     let end = new Date().valueOf();
-    console.log(`${end - start}ms to generate password for entry using argon2`);
+    console.debug(`${end - start}ms to generate password for entry using argon2`);
 
     start = new Date().valueOf();
     const pt = nacl.secretbox.open(encMessage, nonce, entryKey);
     end = new Date().valueOf();
-    console.log(`${end - start}ms to decrypt the entry`);
+    console.debug(`${end - start}ms to decrypt the entry`);
 
     start = new Date().valueOf();
     const decEntry = decode(pt) as any;
     end = new Date().valueOf();
-    console.log(`${end - start}ms to decode the entry (msgpack)`);
+    console.debug(`${end - start}ms to decode the entry (msgpack)`);
 
     // copy properties from entry
     decEntry.id = entry.id;
@@ -111,4 +111,39 @@ export async function decryptLinkWithKeysDB(link: IEncryptedLink, keysDB: IKeysD
     decLink.is_encrypted = false;
 
     return decLink as IDecryptedLink;
+}
+
+export async function decryptEntryV5WithKeysDatabase(entry: IEncryptedEntry, keysDB: IKeysDatabase): Promise<IDecryptedEntry> {
+    const encMessage = Buffer.from(entry.enc_ciphertext_b64, 'base64');
+    const nonce = Buffer.from(entry.enc_nonce_b64, 'base64');
+    const keyEntry = keysDB.entry_keys[entry.id.toString()];
+
+    if (!keyEntry) {
+        throw new Error(`Entry with ID ${entry.id} not present in keys database`);
+    }
+    const key = (keyEntry.key as Buffer);
+
+    let start = new Date().valueOf();
+
+    let end = new Date().valueOf();
+    console.log(`${end - start}ms to generate password for entry using argon2`);
+
+    start = new Date().valueOf();
+    const pt = nacl.secretbox.open(encMessage, nonce, key);
+    end = new Date().valueOf();
+    console.log(`${end - start}ms to decrypt the entry`);
+
+    start = new Date().valueOf();
+    const decEntry = decode(pt) as any;
+    end = new Date().valueOf();
+    console.log(`${end - start}ms to decode the entry (msgpack)`);
+
+    // copy properties from entry
+    decEntry.id = entry.id;
+    decEntry.account = entry.account;
+    decEntry.service_link = entry.service_link;
+    // set these nice static properties
+    decEntry.is_encrypted = false;
+
+    return decEntry as IDecryptedEntry;
 }

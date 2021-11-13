@@ -11,13 +11,17 @@ import {IDecryptedEntry, IEncryptedEntry, IEntry} from "../common-modules/entrie
 import NumEntries from "./components/num-entries";
 import SearchForm from "./components/search-form";
 import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-api-v3";
-import { decryptEntryV5, decryptEncryptionKeysDatabase } from "../common-modules/crypto-utils";
+import { decryptEncryptionKeysDatabase, decryptEntryV5WithKeysDatabase } from "../common-modules/crypto-utils";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
 /// <reference path="../common/logoutTimer.ts" />
 
 interface IAppProps {}
+/**
+ * Time in milliseconds to delay decrypting the keys database
+ */
+const DECRYPT_KEYS_DB_DELAY = 750;
 
 interface IAppState {
     entries: IEntry[];
@@ -35,6 +39,8 @@ interface IAppState {
      * Decrypted keys database (if available)
      */
     keysDB: IKeysDatabase | null;
+    // true iff the keys database has been loaded
+    isKeysDBLoaded: boolean;
 }
 
 class App extends Component<IAppProps, IAppState> {
@@ -60,6 +66,7 @@ class App extends Component<IAppProps, IAppState> {
             servicesLoaded: false,
             user: null,
             keysDB: null,
+            isKeysDBLoaded: false,
 
             // error msg if entries fail to load
             loadingErrorMsg: null,
@@ -116,7 +123,7 @@ class App extends Component<IAppProps, IAppState> {
                 // NOTE: the 1500ms delay is so the decryption does not block anything important in the rendering thread
                 window.setTimeout(() => {
                     this.handleGetUser(user);
-                }, 1500);
+                }, DECRYPT_KEYS_DB_DELAY);
             });
     }
 
@@ -124,16 +131,20 @@ class App extends Component<IAppProps, IAppState> {
      * Once the current user is fetched from the backend, try to decrypt encryption keys
      */
     async handleGetUser(user: IUser) {
-        let decEncryptionKeys = null;
+        let keysDB = null;
         if (user.encryption_keys) {
-            decEncryptionKeys = await decryptEncryptionKeysDatabase(
+            keysDB = await decryptEncryptionKeysDatabase(
                 user.encryption_keys,
                 this.state.masterPassword
             );
+            console.log('keys database has been decrypted');
         }
+        // NOTE: some users may have a null keysDB
+        // we don't want to prevent encryption if that is the case
         this.setState({
             user: user,
-            keysDB: decEncryptionKeys,
+            keysDB: keysDB,
+            isKeysDBLoaded: true,
         });
     }
 
@@ -209,10 +220,12 @@ class App extends Component<IAppProps, IAppState> {
 
         const entry = this.state.entries[entryIndex];
         let decryptedEntry = null as (IDecryptedEntry | null);
-        if (entry.is_encrypted && (entry as IEncryptedEntry).version === 5) {
-        // if (false) {
+        if (entry.is_encrypted && (entry as IEncryptedEntry).version === 5 && this.state.keysDB) {
             console.debug('decrypting this entry (v5) on the client-side...');
-            decryptedEntry = await decryptEntryV5(entry as IEncryptedEntry, this.state.masterPassword);
+            decryptedEntry = await decryptEntryV5WithKeysDatabase(
+                entry as IEncryptedEntry,
+                this.state.keysDB,
+            );
         } else {
             const start = new Date().valueOf();
             decryptedEntry = await this.pzApi.decryptEntry(entryId, this.state.masterPassword);
@@ -223,7 +236,7 @@ class App extends Component<IAppProps, IAppState> {
             // this allows us to not rerun the service map stuff again
             decryptedEntry.service_link = entry.service_link;
             const end = new Date().valueOf();
-            console.log(`Took ${end - start}ms to decrypt`);
+            console.log(`Took ${end - start}ms to decrypt on the server`);
         }
 
         // replace the encrypted entry with the decrypted entry
