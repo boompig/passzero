@@ -8,7 +8,7 @@ from sqlalchemy import and_
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
-from ..models import Link, User, db
+from ..models import DecryptedLink, Link, User, db
 from .jwt_auth import authorizations
 
 
@@ -202,7 +202,7 @@ class DecryptedApiLink(Resource):
                 400
             )
 
-        dec_links = []
+        dec_links = []  # type: List[DecryptedLink]
         start = time.time()
         query = db.session.query(Link)
         enc_links = query.filter(and_(
@@ -214,7 +214,29 @@ class DecryptedApiLink(Resource):
         start = time.time()
         for enc_link in enc_links:
             dec_link = enc_link.decrypt(args.password)
-            dec_links.append(dec_link.to_json())
+            dec_links.append(dec_link)
         end = time.time()
         logger.debug(f"Took {end - start:.2f}ms to decrypt links")
-        return dec_links
+        # this will be helpful for users with links that are not in the encryption keys database
+        # update the encryption database
+        # this may take extra time
+        if user.enc_keys_db:
+            keys_db = user.enc_keys_db.decrypt(args.password)
+            num_inserted = 0
+            for dec_link in dec_links:
+                if dec_link.symmetric_key and dec_link.id and str(dec_link.id) not in keys_db["link_keys"]:
+                    logger.warning("Link %d does not exist in the encryption keys database, inserting", dec_link.id)
+                    backend._insert_encryption_key(
+                        db_session=db.session,
+                        user_id=user_id,
+                        user_key=args.password,
+                        elem_id=dec_link.id,
+                        symmetric_key=dec_link.symmetric_key,
+                        elem_type="link",
+                    )
+                    num_inserted += 1
+            if num_inserted > 0:
+                db.session.commit()
+                logger.warning("Inserted %d new links into the keys database", num_inserted)
+        dec_links_rval = [dec_link.to_json() for dec_link in dec_links]
+        return dec_links_rval

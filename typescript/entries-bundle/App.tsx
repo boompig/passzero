@@ -4,19 +4,24 @@
 
 import { Component } from "react";
 import * as React from "react";
+
 import DecryptedEntry from "./components/decrypted-entry";
 import EncryptedEntry from "./components/encrypted-entry";
-import {IDecryptedEntry, IEncryptedEntry, IEntry} from "./components/entries";
+import {IDecryptedEntry, IEncryptedEntry, IEntry} from "../common-modules/entries";
 import NumEntries from "./components/num-entries";
 import SearchForm from "./components/search-form";
-
-import PasszeroApiV3 from "../common-modules/passzero-api-v3";
+import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-api-v3";
+import { decryptEncryptionKeysDatabase, decryptEntryV5WithKeysDatabase } from "../common-modules/crypto-utils";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
 /// <reference path="../common/logoutTimer.ts" />
 
 interface IAppProps {}
+/**
+ * Time in milliseconds to delay decrypting the keys database
+ */
+const DECRYPT_KEYS_DB_DELAY = 750;
 
 interface IAppState {
     entries: IEntry[];
@@ -26,6 +31,16 @@ interface IAppState {
     servicesLoaded: boolean;
     services: IService[];
     loadingErrorMsg: string | null;
+    /**
+     * Details about the user
+     */
+    user: IUser | null;
+    /**
+     * Decrypted keys database (if available)
+     */
+    keysDB: IKeysDatabase | null;
+    // true iff the keys database has been loaded
+    isKeysDBLoaded: boolean;
 }
 
 class App extends Component<IAppProps, IAppState> {
@@ -49,9 +64,12 @@ class App extends Component<IAppProps, IAppState> {
             masterPassword: "",
             services: [],
             servicesLoaded: false,
+            user: null,
+            keysDB: null,
+            isKeysDBLoaded: false,
 
             // error msg if entries fail to load
-            loadingErrorMsg: null
+            loadingErrorMsg: null,
         };
 
         this.findEntryIndex = this.findEntryIndex.bind(this);
@@ -59,6 +77,7 @@ class App extends Component<IAppProps, IAppState> {
         this.handleDecrypt = this.handleDecrypt.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
+        this.handleGetUser = this.handleGetUser.bind(this);
 
         this.addServicesToEntries = this.addServicesToEntries.bind(this);
     }
@@ -98,7 +117,35 @@ class App extends Component<IAppProps, IAppState> {
                 this.setState({
                     loadingErrorMsg: err.message
                 });
+            }).then(() => {
+                return this.pzApi.getCurrentUser();
+            }).then((user: IUser) => {
+                // NOTE: the 1500ms delay is so the decryption does not block anything important in the rendering thread
+                window.setTimeout(() => {
+                    this.handleGetUser(user);
+                }, DECRYPT_KEYS_DB_DELAY);
             });
+    }
+
+    /**
+     * Once the current user is fetched from the backend, try to decrypt encryption keys
+     */
+    async handleGetUser(user: IUser) {
+        let keysDB = null;
+        if (user.encryption_keys) {
+            keysDB = await decryptEncryptionKeysDatabase(
+                user.encryption_keys,
+                this.state.masterPassword
+            );
+            console.log('keys database has been decrypted');
+        }
+        // NOTE: some users may have a null keysDB
+        // we don't want to prevent encryption if that is the case
+        this.setState({
+            user: user,
+            keysDB: keysDB,
+            isKeysDBLoaded: true,
+        });
     }
 
     addServicesToEntries(): void {
@@ -158,31 +205,47 @@ class App extends Component<IAppProps, IAppState> {
             });
     }
 
-    handleDecrypt(entryId: number): void {
+    /**
+     * Decrypt an individual entry. Where possible, decrypt that entry on the client-side.
+     */
+    async handleDecrypt(entryId: number): Promise<void> {
         const entryIndex = this.findEntryIndex(entryId);
         if (entryIndex === null) {
             console.error(`Entry with ID ${entryId} not found`);
             return;
         }
+
+        // reset the logout timer
+        this.logoutTimer.resetLogoutTimer();
+
         const entry = this.state.entries[entryIndex];
+        let decryptedEntry = null as (IDecryptedEntry | null);
+        if (entry.is_encrypted && (entry as IEncryptedEntry).version === 5 && this.state.keysDB) {
+            console.debug('decrypting this entry (v5) on the client-side...');
+            decryptedEntry = await decryptEntryV5WithKeysDatabase(
+                entry as IEncryptedEntry,
+                this.state.keysDB,
+            );
+        } else {
+            const start = new Date().valueOf();
+            decryptedEntry = await this.pzApi.decryptEntry(entryId, this.state.masterPassword);
+            decryptedEntry.is_encrypted = false;
+            // TODO this is a hack for the sole purpose of using the fake data
+            decryptedEntry.account = entry.account;
+            decryptedEntry.id = entry.id;
+            // this allows us to not rerun the service map stuff again
+            decryptedEntry.service_link = entry.service_link;
+            const end = new Date().valueOf();
+            console.log(`Took ${end - start}ms to decrypt on the server`);
+        }
 
-        this.pzApi.decryptEntry(entryId, this.state.masterPassword)
-            .then((decryptedEntry: IDecryptedEntry) => {
-                decryptedEntry.is_encrypted = false;
-                // TODO this is a hack for the sole purpose of using the fake data
-                decryptedEntry.account = entry.account;
-                decryptedEntry.id = entry.id;
-                // this allows us to not rerun the service map stuff again
-                decryptedEntry.service_link = entry.service_link;
-
-                // replace the encrypted entry with the decrypted entry
-                const newEntries = this.state.entries;
-                newEntries.splice(entryIndex, 1, decryptedEntry);
-                // force state reload
-                this.setState({
-                    entries: newEntries
-                });
-            });
+        // replace the encrypted entry with the decrypted entry
+        const newEntries = this.state.entries;
+        newEntries.splice(entryIndex, 1, decryptedEntry);
+        // force state reload
+        this.setState({
+            entries: newEntries
+        });
     }
 
     handleSearch(searchString: string): void {
