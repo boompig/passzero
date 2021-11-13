@@ -1,4 +1,5 @@
 import { UnauthorizedError, ServerError } from './errors';
+import { IDecryptedLink } from './links';
 
 interface IApiKey {
     token: string;
@@ -234,11 +235,13 @@ export default class PasszeroApiV3 {
         return this.patchJsonWithBearer(url, apiToken, linkData);
     }
 
-    async decryptLink(linkId: number, masterPassword: string) {
+    async decryptLink(linkId: number, masterPassword: string): Promise<IDecryptedLink> {
         const apiToken = await this.fillToken();
         const url = `/api/v3/links/${linkId}`;
         const data = { "password": masterPassword };
-        return this.postJsonWithBearer(url, apiToken, data);
+        const decLink = (await this.postJsonWithBearer(url, apiToken, data)) as any;
+        decLink.is_encrypted = false;
+        return decLink;
     }
 
     async decryptLinks(linkIds: number[], masterPassword: string) {

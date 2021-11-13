@@ -1,9 +1,14 @@
 import * as React from "react";
-import {IEncryptedLink} from "./links";
+import { IEncryptedLink } from "../../common-modules/links";
 
 interface IEncryptedLinkProps {
     link: IEncryptedLink;
     index: number;
+    /**
+     * Whether the app is currently decrypting something
+     * This should disable some interactions
+     */
+    isDecrypting: boolean;
     onDecrypt(index: number): void;
     onDelete(index: number): void;
 }
@@ -35,6 +40,7 @@ export default class EncryptedLink extends React.Component<IEncryptedLinkProps, 
                 <div className="link-id">Link #{ this.props.link.id }</div>
                 <div className="button-panel">
                     <button type="button" className="btn btn-info"
+                        disabled={ this.props.isDecrypting }
                         onClick={ this.handleDecrypt }>Decrypt</button>
                     <button type="button" className="btn btn-warning"
                         onClick={ this.handleEdit }>Edit</button>

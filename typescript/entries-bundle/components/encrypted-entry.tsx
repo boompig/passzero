@@ -1,6 +1,6 @@
-import {Component} from "react";
+import { Component } from "react";
 import * as React from "react";
-import {IEncryptedEntry} from "./entries";
+import { IEncryptedEntry } from "../../common-modules/entries";
 
 interface IEncryptedEntryProps {
     entry: IEncryptedEntry;

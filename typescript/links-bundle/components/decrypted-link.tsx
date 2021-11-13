@@ -1,5 +1,5 @@
 import * as React from "react";
-import {IDecryptedLink} from "./links";
+import {IDecryptedLink} from "../../common-modules/links";
 
 interface IDecryptedLinkProps {
     link: IDecryptedLink;

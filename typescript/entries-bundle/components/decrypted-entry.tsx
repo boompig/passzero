@@ -2,7 +2,7 @@ import * as moment from "moment";
 import {Component} from "react";
 import * as React from "react";
 import ReactTooltip from "react-tooltip";
-import {IDecryptedEntry} from "./entries";
+import {IDecryptedEntry} from "../../common-modules/entries";
 
 interface IDecryptedEntryProps {
     entry: IDecryptedEntry;

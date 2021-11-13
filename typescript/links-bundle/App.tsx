@@ -6,7 +6,7 @@ import DecryptedLink from "./components/decrypted-link";
 import EncryptedLink from "./components/encrypted-link";
 import {IDecryptedLink, IEncryptedLink, ILink} from "../common-modules/links";
 import SearchForm from "../entries-bundle/components/search-form";
-import { decryptEncryptionKeysDatabase } from "../common-modules/crypto-utils";
+import { decryptEncryptionKeysDatabase, decryptLinkWithKeysDB } from "../common-modules/crypto-utils";
 
 // instead of importing, include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -43,7 +43,7 @@ const DECRYPTION_BATCH_SIZE = 10;
 /**
  * Time in milliseconds to delay decrypting the keys database
  */
-const DECRYPT_KEYS_DB_DELAY = 900;
+const DECRYPT_KEYS_DB_DELAY = 750;
 
 class App extends Component<IProps, IState> {
     logoutTimer: LogoutTimer;
@@ -209,6 +209,7 @@ class App extends Component<IProps, IState> {
         this.setState({
             // don't allow the user to press the decrypt button while we're decrypting
             isDecrypting: true,
+            isAllDecrypted: false,
         }, async () => {
             // this is just used for metrics collection
             const startTime = (new Date()).valueOf();
@@ -222,8 +223,23 @@ class App extends Component<IProps, IState> {
                 indexMap[this.state.links[i].id] = i;
             }
 
+            const localIds = [];
+            const remoteIds = [];
+            const numToDecrypt = encLinkIds.length;
+            // some of these link IDs are in the local keys database
+            if (this.state.keysDB) {
+                encLinkIds.forEach((id: number) => {
+                    if (id.toString() in this.state.keysDB.link_keys) {
+                        localIds.push(id);
+                    } else {
+                        remoteIds.push(id);
+                    }
+                });
+            }
+            console.log(`Split the IDs into ${localIds.length} local links and ${remoteIds.length} remote links`);
+
             // split the IDs into chunks of DECRYPTION_BATCH_SIZE
-            const chunks = chunk(encLinkIds, DECRYPTION_BATCH_SIZE);
+            const chunks = chunk(remoteIds, DECRYPTION_BATCH_SIZE);
             // keep track of how many have been decrypted
             let numDecrypted = 0;
 
@@ -250,7 +266,30 @@ class App extends Component<IProps, IState> {
                     isDecrypting: isDecrypting,
                 });
 
-                if (numDecrypted === this.state.links.length) {
+                if (numDecrypted === numToDecrypt) {
+                    this.setState({
+                        isAllDecrypted: true,
+                    });
+                }
+            });
+
+            localIds.map(async (linkId: number) => {
+                // we know that this ID exists in the local keys DB
+                const idx = indexMap[linkId];
+                const link = this.state.links[idx] as IEncryptedLink;
+                const decLink = await decryptLinkWithKeysDB(link, this.state.keysDB);
+                numDecrypted += 1;
+                const isDecrypting = numDecrypted < encLinkIds.length;
+
+                const newLinks = this.state.links;
+                newLinks.splice(idx, 1, decLink);
+
+                this.setState({
+                    links: newLinks,
+                    isDecrypting: isDecrypting,
+                });
+
+                if (numDecrypted === numToDecrypt) {
                     this.setState({
                         isAllDecrypted: true,
                     });
@@ -324,24 +363,28 @@ class App extends Component<IProps, IState> {
         }
         this.setState({
             isDecrypting: true
-        }, () => {
+        }, async () => {
             const link = this.state.links[linkIndex];
-            console.debug(`Decrypting link with ID ${link.id}...`);
-            this.pzApi.decryptLink(link.id, this.state.masterPassword)
-                .then((response) => {
-                    console.debug("Got decrypted link from server");
-                    // console.debug(response);
-                    const decLink = response;
-                    decLink.is_encrypted = false;
-                    // replace encrypted link with new link
-                    const newLinks = this.state.links;
-                    newLinks.splice(linkIndex, 1, decLink);
-                    // force state reload
-                    this.setState({
-                        links: newLinks,
-                        isDecrypting: false,
-                    });
+            let decLink = null;
+            if (this.state.keysDB && link.id.toString() in this.state.keysDB.link_keys) {
+                console.debug(`Locally decrypting link with ID ${link.id}...`)
+                decLink = await decryptLinkWithKeysDB(link as IEncryptedLink, this.state.keysDB);
+                console.debug('Successfully decrypted link locally');
+            } else {
+                console.debug(`Remotely decrypting link with ID ${link.id}...`);
+                decLink = await this.pzApi.decryptLink(link.id, this.state.masterPassword);
+                console.debug('Got decrypted link from server');
+            }
+            if (decLink) {
+                // replace encrypted link with new link
+                const newLinks = this.state.links;
+                newLinks.splice(linkIndex, 1, decLink);
+                // force state reload
+                this.setState({
+                    links: newLinks,
+                    isDecrypting: false,
                 });
+            }
         });
     }
 
@@ -355,9 +398,13 @@ class App extends Component<IProps, IState> {
             const link = this.state.links[i];
             let linkElem = null;
             if (link.is_encrypted) {
-                linkElem = <EncryptedLink link={ (link as IEncryptedLink) } key={ `enc-link-${link.id}` } index={ i }
+                linkElem = <EncryptedLink
+                    link={ (link as IEncryptedLink) }
+                    key={ `enc-link-${link.id}` }
+                    index={ i }
+                    isDecrypting={ this.state.isDecrypting }
                     onDecrypt={ this.handleDecrypt }
-                    onDelete={ this.handleDelete }/>;
+                    onDelete={ this.handleDelete } />;
             } else {
                 let isFiltered = false;
                 if (this.state.isAllDecrypted && this.state.searchString !== "") {
@@ -385,12 +432,12 @@ class App extends Component<IProps, IState> {
                     <a href="/links/new" className="new-link-btn control-panel-btn btn btn-lg btn-success">
                         Create New Link
                     </a>
-                    <button type="button"
+                    { this.state.isAllDecrypted ? null : <button type="button"
                         className="decrypt-all-btn control-panel-btn btn btn-lg btn-info"
-                        disabled={ this.state.isDecrypting }
+                        disabled={ this.state.isDecrypting || !this.state.keysDB }
                         onClick={ this.handleDecryptAll }>
                         Decrypt All
-                    </button>
+                    </button> }
                 </div>
                 {(this.state.linksLoaded && this.state.links.length > 0 && this.state.isAllDecrypted) ?
                     <SearchForm onSearch={this.handleSearch} /> :

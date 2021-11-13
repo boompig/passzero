@@ -68,17 +68,47 @@ export async function decryptEncryptionKeysDatabase(encryptionKeys: IEncryptionK
     const key = h.hash;
 
     let end = new Date().valueOf();
-    console.log(`${end - start}ms to generate password for keys database using argon2`);
+    console.debug(`${end - start}ms to generate password for keys database using argon2`);
 
     start = new Date().valueOf();
     const pt = nacl.secretbox.open(encMessage, nonce, key);
     end = new Date().valueOf();
-    console.log(`${end - start}ms to decrypt the encryption DB`);
+    console.debug(`${end - start}ms to decrypt the encryption DB`);
 
     start = new Date().valueOf();
     const keysDb = decode(pt) as IKeysDatabase;
     end = new Date().valueOf();
-    console.log(`${end - start}ms to decode the keys database (msgpack)`);
+    console.debug(`${end - start}ms to decode the keys database (msgpack)`);
 
     return keysDb;
+}
+
+export async function decryptLinkWithKeysDB(link: IEncryptedLink, keysDB: IKeysDatabase): Promise<IDecryptedLink> {
+    const encMessage = Buffer.from(link.enc_ciphertext_b64, 'base64');
+    const nonce = Buffer.from(link.enc_nonce_b64, 'base64');
+    const keyEntry = keysDB.link_keys[link.id.toString()];
+
+    if (!keyEntry) {
+        throw new Error(`Link with ID ${link.id} not present in keys database`);
+    }
+    const key = (keyEntry.key as Buffer);
+
+    let start = new Date().valueOf();
+    const pt = nacl.secretbox.open(encMessage, nonce, key);
+    let end = new Date().valueOf();
+    console.debug(`${end - start}ms to decrypt the link`);
+
+    start = new Date().valueOf();
+    const decLink = decode(pt) as any;
+    end = new Date().valueOf();
+    console.debug(`${end - start}ms to decode the link (msgpack)`);
+
+    // copy properties from link
+    decLink.id = link.id;
+    decLink.user_id = link.user_id;
+    decLink.version = link.version;
+    // set these nice static properties
+    decLink.is_encrypted = false;
+
+    return decLink as IDecryptedLink;
 }
