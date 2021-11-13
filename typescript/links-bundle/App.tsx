@@ -4,9 +4,9 @@ import { chunk } from "lodash";
 import PasszeroApiV3, {IUser, IKeysDatabase} from "../common-modules/passzero-api-v3";
 import DecryptedLink from "./components/decrypted-link";
 import EncryptedLink from "./components/encrypted-link";
-import {IDecryptedLink, IEncryptedLink, ILink} from "./components/links";
+import {IDecryptedLink, IEncryptedLink, ILink} from "../common-modules/links";
 import SearchForm from "../entries-bundle/components/search-form";
-import { decryptEncryptionKeysDatabase } from "../common-modules/crypto_utils";
+import { decryptEncryptionKeysDatabase } from "../common-modules/crypto-utils";
 
 // instead of importing, include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -40,6 +40,10 @@ interface IState {
  * Batch size used to decrypt links
  */
 const DECRYPTION_BATCH_SIZE = 10;
+/**
+ * Time in milliseconds to delay decrypting the keys database
+ */
+const DECRYPT_KEYS_DB_DELAY = 900;
 
 class App extends Component<IProps, IState> {
     logoutTimer: LogoutTimer;
@@ -113,7 +117,7 @@ class App extends Component<IProps, IState> {
                 // run with a delay so it doesn't interfere with rendering
                 window.setTimeout(() => {
                     this.handleGetUser(user);
-                }, 1100);
+                }, DECRYPT_KEYS_DB_DELAY);
             });
     }
 
@@ -133,7 +137,6 @@ class App extends Component<IProps, IState> {
             keysDB: decEncryptionKeys,
         });
     }
-
 
     renderLoading() {
         return <div>Loading links...</div>;

@@ -2,6 +2,7 @@
 This class provides the model for all links
 """
 
+from base64 import b64encode
 from datetime import datetime
 from typing import Optional
 
@@ -9,6 +10,7 @@ import msgpack
 import nacl.pwhash
 import nacl.secret
 import nacl.utils
+from nacl.bindings import crypto_secretbox_NONCEBYTES
 
 from .shared import db
 
@@ -78,10 +80,17 @@ class Link(db.Model):
     }
 
     def to_json(self) -> dict:
+        # see https://pynacl.readthedocs.io/en/latest/_modules/nacl/secret/#SecretBox.decrypt
+        nonce = self.contents[: crypto_secretbox_NONCEBYTES]
+        # note that this includes the MAC
+        ciphertext = self.contents[crypto_secretbox_NONCEBYTES:]
         return {
             "id": self.id,
             "user_id": self.user_id,
             "version": self.version,
+            "enc_kdf_salt_b64": b64encode(self.kdf_salt).decode("utf-8"),
+            "enc_ciphertext_b64": b64encode(ciphertext).decode("utf-8"),
+            "enc_nonce_b64": b64encode(nonce).decode("utf-8"),
         }
 
     def decrypt_symmetric(self, symmetric_key: bytes) -> DecryptedLink:

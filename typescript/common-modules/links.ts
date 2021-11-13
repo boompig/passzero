@@ -13,6 +13,9 @@ export interface IEncryptedLink {
     user_id: number;
     version: number;
     is_encrypted: true;
+    enc_kdf_salt_b64: string;
+    enc_contents_b64: string;
+    enc_nonce_b64: string;
 }
 
 export type ILink = (IEncryptedLink | IDecryptedLink);

@@ -4,8 +4,8 @@ import { decode } from "@msgpack/msgpack";
 import * as nacl from "tweetnacl";
 
 import { IEncryptedEntry, IDecryptedEntry } from "./entries";
-import { IEncryptionKeys, IKeysDatabase } from "../common-modules/passzero-api-v3";
-
+import { IEncryptionKeys, IKeysDatabase } from "./passzero-api-v3";
+import { IDecryptedLink, IEncryptedLink } from "./links";
 
 export async function decryptEntryV5(entry: IEncryptedEntry, masterPassword: string): Promise<IDecryptedEntry> {
     const kdfSalt = Buffer.from(entry.enc_key_salt_b64, 'base64');

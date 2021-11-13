@@ -11,7 +11,7 @@ import {IDecryptedEntry, IEncryptedEntry, IEntry} from "../common-modules/entrie
 import NumEntries from "./components/num-entries";
 import SearchForm from "./components/search-form";
 import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-api-v3";
-import { decryptEntryV5, decryptEncryptionKeysDatabase } from "../common-modules/crypto_utils";
+import { decryptEntryV5, decryptEncryptionKeysDatabase } from "../common-modules/crypto-utils";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
