@@ -323,6 +323,7 @@ def _insert_encryption_key(db_session: Session, user_id: int, user_key: str, ele
     """Insert the entry key. Entry user_id and is must be set at this point.
     We assume that the entry already exists in the DB.
     This method also works if the key for the entry already exists and we want to overwrite it.
+    Do not commit the session here.
     :param elem_type: What type of element this key belongs to (entry, link, etc.)
     """
     assert isinstance(user_id, int)

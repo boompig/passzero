@@ -3,6 +3,7 @@ This class provides the model for all links
 """
 
 from datetime import datetime
+from typing import Optional
 
 import msgpack
 import nacl.pwhash
@@ -28,12 +29,17 @@ def _get_key(master_key: str, kdf_salt: bytes):
 class DecryptedLink:
     def __init__(self, service_name: str, link: str,
                  id: int = None, user_id: int = None,
-                 version: int = None) -> None:
+                 version: int = None,
+                 symmetric_key: Optional[bytes] = None) -> None:
         self.service_name = service_name
         self.link = link
+        # if the link exists in the database
         self.id = id
         self.user_id = user_id
         self.version = version
+        # if the link exists in the database
+        # this is the symmetric key used to decrypt this link
+        self.symmetric_key = symmetric_key
 
     def to_json(self) -> dict:
         return {
@@ -93,7 +99,8 @@ class Link(db.Model):
             link=dec_contents_d["link"],
             id=self.id,
             user_id=self.user_id,
-            version=self.version
+            version=self.version,
+            symmetric_key=symmetric_key,
         )
 
     def decrypt(self, master_key: str) -> DecryptedLink:

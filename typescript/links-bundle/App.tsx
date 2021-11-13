@@ -113,7 +113,7 @@ class App extends Component<IProps, IState> {
                 // run with a delay so it doesn't interfere with rendering
                 window.setTimeout(() => {
                     this.handleGetUser(user);
-                }, 1500);
+                }, 1100);
             });
     }
 
