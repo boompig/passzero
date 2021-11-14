@@ -220,7 +220,7 @@ class App extends Component<IAppProps, IAppState> {
 
         const entry = this.state.entries[entryIndex];
         let decryptedEntry = null as (IDecryptedEntry | null);
-        if (entry.is_encrypted && (entry as IEncryptedEntry).version === 5 && this.state.keysDB) {
+        if (entry.is_encrypted && (entry as IEncryptedEntry).version === 5 && this.state.keysDB && entry.id.toString() in this.state.keysDB.entry_keys) {
             console.debug('decrypting this entry (v5) on the client-side...');
             decryptedEntry = await decryptEntryV5WithKeysDatabase(
                 entry as IEncryptedEntry,
