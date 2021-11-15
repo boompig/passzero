@@ -37,9 +37,10 @@ interface IAppState {
     user: IUser | null;
     /**
      * Decrypted keys database (if available)
+     * Can be null even if it is loaded (for example local decryption failed)
      */
     keysDB: IKeysDatabase | null;
-    // true iff the keys database has been loaded
+    // true iff the keys database has been loaded from server
     isKeysDBLoaded: boolean;
 }
 
@@ -133,11 +134,16 @@ class App extends Component<IAppProps, IAppState> {
     async handleGetUser(user: IUser) {
         let keysDB = null;
         if (user.encryption_keys) {
-            keysDB = await decryptEncryptionKeysDatabase(
-                user.encryption_keys,
-                this.state.masterPassword
-            );
-            console.log('keys database has been decrypted');
+            try {
+                keysDB = await decryptEncryptionKeysDatabase(
+                    user.encryption_keys,
+                    this.state.masterPassword
+                );
+                console.log('keys database has been decrypted');
+            } catch (err) {
+                console.error('Failed to decrypt encryption keys database locally');
+                console.error(err);
+            }
         }
         // NOTE: some users may have a null keysDB
         // we don't want to prevent encryption if that is the case

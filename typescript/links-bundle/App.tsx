@@ -32,10 +32,10 @@ interface IState {
     user: IUser | null;
     /**
      * Decrypted keys database (if available)
-     * Can sometimes be null even when it's been loaded
+     * Can be null even if it is loaded (for example local decryption failed)
      */
     keysDB: IKeysDatabase | null;
-    // true iff the keys database has been loaded
+    // true iff the keys database has been loaded from server
     isKeysDBLoaded: boolean;
 }
 
@@ -133,10 +133,15 @@ class App extends Component<IProps, IState> {
         // NOTE: some users may not have a keysDB associated with their user
         // in that case, we don't want to prevent decryption
         if (user.encryption_keys) {
-            keysDB = await decryptEncryptionKeysDatabase(
-                user.encryption_keys,
-                this.state.masterPassword
-            );
+            try {
+                keysDB = await decryptEncryptionKeysDatabase(
+                    user.encryption_keys,
+                    this.state.masterPassword
+                );
+            } catch (err) {
+                console.error('Failed to decrypt the encryption keys database locally:');
+                console.error(err);
+            }
         }
         this.setState({
             user: user,
@@ -208,6 +213,9 @@ class App extends Component<IProps, IState> {
      * This method decrypts the links in batches of DECRYPTION_BATCH_SIZE using the batch-decryption API for links
      * The view (state) is updated every time a batch is returned from the server
      * The down-side of this method is it can keep the server occupied for a significant amount of time as a batch takes a while to decrypt
+     *
+     * This method will decrypt links locally if it can
+     * If the keys database fails to load or decrypt, decryption will continue as normal on the server
      */
     handleDecryptAll(): void {
         // reset the logout timer when button is pressed
@@ -242,7 +250,10 @@ class App extends Component<IProps, IState> {
                         remoteIds.push(id);
                     }
                 });
+            } else {
+                remoteIds.push(...encLinkIds);
             }
+
             console.log(`Split the IDs into ${localIds.length} local links and ${remoteIds.length} remote links`);
 
             // split the IDs into chunks of DECRYPTION_BATCH_SIZE
