@@ -11,17 +11,14 @@ import {IDecryptedEntry, IEncryptedEntry, IEntry} from "../common-modules/entrie
 import NumEntries from "./components/num-entries";
 import SearchForm from "./components/search-form";
 import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-api-v3";
-import { decryptEncryptionKeysDatabase, decryptEntryV5WithKeysDatabase } from "../common-modules/crypto-utils";
+import { decryptEntryV5WithKeysDatabase } from "../common-modules/crypto-utils";
+import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/message";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
 /// <reference path="../common/logoutTimer.ts" />
 
 interface IAppProps {}
-/**
- * Time in milliseconds to delay decrypting the keys database
- */
-const DECRYPT_KEYS_DB_DELAY = 750;
 
 interface IAppState {
     entries: IEntry[];
@@ -47,6 +44,7 @@ interface IAppState {
 class App extends Component<IAppProps, IAppState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
+    worker: Worker;
 
     constructor(props: IAppProps) {
         super(props);
@@ -79,8 +77,13 @@ class App extends Component<IAppProps, IAppState> {
         this.handleDelete = this.handleDelete.bind(this);
         this.handleSearch = this.handleSearch.bind(this);
         this.handleGetUser = this.handleGetUser.bind(this);
-
+        this.handleWorkerMessage = this.handleWorkerMessage.bind(this);
         this.addServicesToEntries = this.addServicesToEntries.bind(this);
+
+        // create worker thread
+        this.worker = new window.Worker('/js/dist/web-worker.bundle.js');
+        // prepare to receive a message from worker
+        this.worker.onmessage = this.handleWorkerMessage;
     }
 
     componentDidMount() {
@@ -121,35 +124,50 @@ class App extends Component<IAppProps, IAppState> {
             }).then(() => {
                 return this.pzApi.getCurrentUser();
             }).then((user: IUser) => {
-                // NOTE: the 1500ms delay is so the decryption does not block anything important in the rendering thread
-                window.setTimeout(() => {
-                    this.handleGetUser(user);
-                }, DECRYPT_KEYS_DB_DELAY);
+                this.handleGetUser(user);
             });
+    }
+
+    async handleWorkerMessage(event: MessageEvent) {
+        console.debug('Received message in main thread from worker');
+        console.debug(event.data);
+        if (event.data.source && event.data.source === WEBWORKER_MSG_SOURCE && event.data.method) {
+            const message = event.data as CryptoWorkerRcvMessage;
+            switch (message.method) {
+                case 'decryptEncryptionKeysDatabase': {
+                    this.setState({
+                        keysDB: message.data.keysDB as IKeysDatabase,
+                    });
+                    break;
+                }
+                default: {
+                    console.error(`Got invalid method in main thread: ${message.method}`);
+                    break;
+                }
+            }
+        } else {
+            console.warn(`Received message in main thread from unknown source ${event.data.source}`);
+        }
     }
 
     /**
      * Once the current user is fetched from the backend, try to decrypt encryption keys
      */
     async handleGetUser(user: IUser) {
-        let keysDB = null;
         if (user.encryption_keys) {
-            try {
-                keysDB = await decryptEncryptionKeysDatabase(
-                    user.encryption_keys,
-                    this.state.masterPassword
-                );
-                console.log('keys database has been decrypted');
-            } catch (err) {
-                console.error('Failed to decrypt encryption keys database locally');
-                console.error(err);
-            }
+            this.worker.postMessage({
+                source: 'entries-bundle',
+                method: 'decryptEncryptionKeysDatabase',
+                data: {
+                    encryption_keys: user.encryption_keys,
+                    master_password: this.state.masterPassword,
+                }
+            } as CryptoWorkerRcvMessage);
         }
         // NOTE: some users may have a null keysDB
         // we don't want to prevent encryption if that is the case
         this.setState({
             user: user,
-            keysDB: keysDB,
             isKeysDBLoaded: true,
         });
     }

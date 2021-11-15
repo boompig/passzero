@@ -17,6 +17,7 @@ module.exports = {
         'new-doc': './typescript/new-doc-bundle/index.tsx',
         'view-doc': './typescript/view-doc-bundle/index.tsx',
         'user-profile': './typescript/user-profile-bundle/index.tsx',
+        'web-worker': './typescript/crypto-webworker-bundle/web-worker.ts',
     },
     output: {
         filename: '[name].bundle.js',
@@ -48,6 +49,7 @@ module.exports = {
                 // loader: 'awesome-typescript-loader',
                 loader: 'ts-loader',
                 include: [
+                    path.resolve(__dirname, 'typescript/crypto-webworker-bundle'),
                     path.resolve(__dirname, 'typescript/entries-bundle'),
                     path.resolve(__dirname, 'typescript/new-entry-bundle'),
                     path.resolve(__dirname, 'typescript/links-bundle'),
