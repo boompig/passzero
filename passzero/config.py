@@ -12,9 +12,12 @@ def read_build_name() -> str:
         return config["BUILD_ID"]
 
 
-BUILD_ID = read_build_name()
 SALT_SIZE = 32
-PORT = 5050
 TOKEN_SIZE = 32
 CSRF_TOKEN_LENGTH = 64
 DEFAULT_ENTRY_VERSION = 5
+
+
+class DefaultConfig:
+    BUILD_ID = read_build_name()
+    PORT = 5050

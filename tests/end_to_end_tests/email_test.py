@@ -6,7 +6,7 @@ It *really* sends the email, so the test is live
 import os
 
 from passzero import email as pz_email
-from passzero.config import BUILD_ID
+from passzero.config import DefaultConfig
 from passzero.my_env import REAL_EMAIL, SENDGRID_API_KEY
 
 
@@ -16,7 +16,7 @@ def test_send_email() -> None:
     # in case I kick off the build by accident
     success = pz_email.send_email(
         REAL_EMAIL,
-        "Live Test Local with build ID %s" % BUILD_ID,
-        "Running local live test for build with ID %s" % BUILD_ID
+        "Live Test Local with build ID %s" % DefaultConfig.BUILD_ID,
+        "Running local live test for build with ID %s" % DefaultConfig.BUILD_ID
     )
     assert success

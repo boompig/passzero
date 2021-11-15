@@ -12,7 +12,7 @@ from jwt.exceptions import DecodeError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-import passzero.config as pz_config
+from passzero.config import DefaultConfig
 from passzero.api import api
 from passzero.api_utils import generate_csrf_token
 from passzero.api_v1 import api_v1
@@ -48,7 +48,7 @@ def create_app(name: str, settings_override: dict = {}):
         setup_env()
 
     # app config
-    app.config.from_object(pz_config)
+    app.config.from_object(DefaultConfig)
     app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
     app.config["OFFLINE"] = os.environ.get("OFFLINE", "0") == "1"
     if app.config["OFFLINE"]:
