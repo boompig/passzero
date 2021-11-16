@@ -1,6 +1,4 @@
-import logging
-
-from flask import escape
+from flask import current_app, escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, reqparse
 from sqlalchemy.orm.exc import NoResultFound
@@ -11,7 +9,6 @@ from ..models import Link, User, db
 from .jwt_auth import authorizations
 
 ns = Namespace("link", authorizations=authorizations)
-logger = logging.getLogger(__name__)
 
 
 @ns.route("")
@@ -115,7 +112,7 @@ class ApiLink(Resource):
             except NoResultFound:
                 return json_error_v2("no such link", 400)
             except AssertionError as err:
-                logger.error("Assertion Error during link editing: %s" % str(err))
+                current_app.logger.error("Assertion Error during link editing: %s" % str(err))
                 return json_error_v2("the given link does not belong to you", 400)
         else:
             return json_error_v2("Password is not correct", 401)

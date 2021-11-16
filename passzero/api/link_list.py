@@ -1,7 +1,7 @@
-import logging
 import time
 from typing import List
 
+from flask import current_app
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, reqparse
 from sqlalchemy import and_
@@ -17,7 +17,6 @@ def jsonify_links(enc_links: List[Link]) -> List[dict]:
 
 
 ns = Namespace("LinkList", authorizations=authorizations)
-logger = logging.getLogger(__name__)
 
 
 @ns.route("")
@@ -210,13 +209,15 @@ class DecryptedApiLink(Resource):
             Link.user_id == user_id,
         )).all()
         end = time.time()
-        logger.debug(f"Took {end - start:.2f}ms to retrieve links from DB")
+        current_app.logger.info("Took %.2f seconds to retrieve %d encrypted links from DB",
+                                end - start, len(enc_links))
         start = time.time()
         for enc_link in enc_links:
             dec_link = enc_link.decrypt(args.password)
             dec_links.append(dec_link)
         end = time.time()
-        logger.debug(f"Took {end - start:.2f}ms to decrypt links")
+        current_app.logger.info("Took %.2f seconds to decrypt links",
+                                end - start, len(enc_links))
         # this will be helpful for users with links that are not in the encryption keys database
         # update the encryption database
         # this may take extra time
@@ -225,7 +226,8 @@ class DecryptedApiLink(Resource):
             num_inserted = 0
             for dec_link in dec_links:
                 if dec_link.symmetric_key and dec_link.id and str(dec_link.id) not in keys_db["link_keys"]:
-                    logger.warning("Link %d does not exist in the encryption keys database, inserting", dec_link.id)
+                    current_app.logger.warning("Link %d does not exist in the encryption keys database, inserting",
+                                               dec_link.id)
                     backend._insert_encryption_key(
                         db_session=db.session,
                         user_id=user_id,
@@ -237,6 +239,6 @@ class DecryptedApiLink(Resource):
                     num_inserted += 1
             if num_inserted > 0:
                 db.session.commit()
-                logger.warning("Inserted %d new links into the keys database", num_inserted)
+                current_app.logger.warning("Inserted %d new links into the keys database", num_inserted)
         dec_links_rval = [dec_link.to_json() for dec_link in dec_links]
         return dec_links_rval

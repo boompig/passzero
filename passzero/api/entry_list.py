@@ -1,7 +1,9 @@
+import time
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from typing import List
 from base64 import b64encode
 
+from flask import current_app
 from flask_restx import Namespace, Resource, reqparse
 from nacl.bindings import crypto_secretbox_NONCEBYTES
 
@@ -169,12 +171,21 @@ class ApiEntryList(Resource):
         - 500: there are some old entries (version < 4) so this method cannot work
         """
         user_id = get_jwt_identity()["user_id"]
+        start = time.time()
         enc_entries = backend.get_entries(db.session, user_id)
+        end = time.time()
+        current_app.logger.info("Took %.3f seconds to retrieve %d encrypted entries from database",
+                                end - start, len(enc_entries))
         if any([entry.version < 4 for entry in enc_entries]):
             return json_error_v2("This method does not work if there are entries below version 4",
                                  http_status_code=500,
                                  app_error_code=app_error_codes.ENTRIES_TOO_OLD)
-        return jsonify_entries(enc_entries)
+        start = time.time()
+        rval = jsonify_entries(enc_entries)
+        end = time.time()
+        current_app.logger.info("Took %.3f seconds to JSON-ify %d encrypted entries",
+                                end - start, len(enc_entries))
+        return rval
 
     @ns.doc(security="apikey")
     @jwt_required
