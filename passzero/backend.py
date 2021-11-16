@@ -141,7 +141,7 @@ def delete_entry(db_session: Session, entry_id: int, user_id: int, user_key: str
     db_session.commit()
 
 
-def delete_link(db_session, link_id, user_id, user_key: str) -> None:
+def delete_link(db_session: Session, link_id: int, user_id: int, user_key: str) -> None:
     """
     :throws NoResultFound: When link_id does not correspond to a valid link
     :throws UserNotAuthorizedError: When link does not belong to that user
@@ -163,19 +163,28 @@ def delete_all_entries(db_session: Session, user: User, user_key: str) -> None:
         Entry.user_id == user.id,
         Entry.pinned == False,  # noqa
     )).all()
-    for entry in entries:
-        db_session.delete(entry)
+    # first delete the entries from the keys DB
     # EncryptionKeys guaranteed to exist
     enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user.id).one()
     keys_db = enc_keys_db.decrypt(user_key)
     for entry in entries:
-        # entry ID guaranteed to exist in EncryptionKeys
-        assert str(entry.id) in keys_db["entry_keys"]
-        del keys_db["entry_keys"][str(entry.id)]
+        try:
+            # entry ID guaranteed to exist in EncryptionKeys
+            assert str(entry.id) in keys_db["entry_keys"]
+            del keys_db["entry_keys"][str(entry.id)]
+        except AssertionError:
+            logger.error("Entered inconsistent state in keys DB: entry %d not found", entry.id)
     # re-encrypt the database
     enc_keys_db.encrypt(user_key, keys_db)
     # re-add it since it has been modified
     db_session.add(enc_keys_db)
+    # now delete the entries
+    entries_q = db_session.query(Entry).filter(and_(
+        Entry.user_id == user.id,
+        Entry.pinned == False,  # noqa
+    ))
+    entries_q.delete()
+    # commit everything as a single transaction
     db_session.commit()
 
 
@@ -184,21 +193,16 @@ def delete_account(db_session: Session, user: User) -> None:
     Also delete all entries associated with that user
     Also delete all documents associated with that user
     Delete all data for that user across all tables"""
-    entries = db_session.query(Entry).filter_by(user_id=user.id).all()
-    for entry in entries:
-        db_session.delete(entry)
-    auth_tokens = db_session.query(AuthToken).filter_by(user_id=user.id).all()
-    for token in auth_tokens:
-        db_session.delete(token)
-    api_tokens = db_session.query(ApiToken).filter_by(user_id=user.id).all()
-    for token in api_tokens:
-        db_session.delete(token)
-    docs = db_session.query(EncryptedDocument).filter_by(user_id=user.id).all()
-    for doc in docs:
-        db_session.delete(doc)
-    links = db_session.query(Link).filter_by(user_id=user.id).all()
-    for link in links:
-        db_session.delete(link)
+    entries_q = db_session.query(Entry).filter_by(user_id=user.id)
+    entries_q.delete()
+    auth_tokens_q = db_session.query(AuthToken).filter_by(user_id=user.id)
+    auth_tokens_q.delete()
+    api_tokens_q = db_session.query(ApiToken).filter_by(user_id=user.id)
+    api_tokens_q.delete()
+    docs_q = db_session.query(EncryptedDocument).filter_by(user_id=user.id)
+    docs_q.delete()
+    links_q = db_session.query(Link).filter_by(user_id=user.id)
+    links_q.delete()
     enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user.id).one_or_none()
     if enc_keys_db:
         db_session.delete(enc_keys_db)
@@ -272,7 +276,7 @@ def create_inactive_user(db_session: Session, email: str, password: str,
 
 def _create_empty_encryption_key_db(db_session: Session, user: User, user_key: str) -> EncryptionKeys:
     """Instantiate an empty encryption keys database for the given user.
-    NOTE: do not commit the session here
+    NOTE: It's added to the session but is *not* committed here
     :return: Return the newly created encryption keys database
     """
     keys_db = EncryptionKeysDB_V1(

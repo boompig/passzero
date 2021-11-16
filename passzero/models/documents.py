@@ -14,7 +14,7 @@ from .shared import db
 class EncryptedDocument(db.Model):
     __tablename__ = "documents"
     id = db.Column(db.Integer, db.Sequence("documents_id_seq"), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     # not encrypted
     name = db.Column(db.String, nullable=False)
     mimetype = db.Column(db.String, nullable=False)

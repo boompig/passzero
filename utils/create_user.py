@@ -5,13 +5,13 @@ import getpass
 from argparse import ArgumentParser
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 
 from passzero.backend import activate_account, create_inactive_user
 from passzero.my_env import DATABASE_URL
 
 
-def get_db_session():
+def get_db_session() -> Session:
     engine = create_engine(DATABASE_URL)
     Session = sessionmaker(bind=engine)
     return Session()
@@ -21,7 +21,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument("--email", required=True)
     parser.add_argument("--password",
-        help="Optionally specify on the command-line. Otherwise ask securely.")
+                        help="Optionally specify on the command-line. Otherwise ask securely.")
     return parser.parse_args()
 
 

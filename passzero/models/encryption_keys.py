@@ -44,7 +44,7 @@ class EncryptionKeys(db.Model):
 
     __tablename__ = "encryption_keys"
     id = db.Column(db.Integer, db.Sequence("encryption_keys_id_seq"), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     # data - contains nonce (prefix)
     contents = db.Column(db.LargeBinary, nullable=False)

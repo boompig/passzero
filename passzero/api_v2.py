@@ -19,9 +19,12 @@ def jsonify_entries_pool(entry: Entry) -> dict:
     assert entry.version >= 4
     out = entry.to_json()
     # remove the encrypted elements in order to conserve bandwidth
-    del out["username"]
-    del out["password"]
-    del out["extra"]
+    if "username" in out:
+        del out["username"]
+    if "password" in out:
+        del out["password"]
+    if "extra" in out:
+        del out["extra"]
     return out
 
 

@@ -243,8 +243,13 @@ class App extends Component<IAppProps, IAppState> {
         this.logoutTimer.resetLogoutTimer();
 
         const entry = this.state.entries[entryIndex];
+        if (!entry.is_encrypted) {
+            console.warn(`Entry with ID ${entryId} is already decrypted, nothing to do`);
+            return;
+        }
+
         let decryptedEntry = null as (IDecryptedEntry | null);
-        if (entry.is_encrypted && (entry as IEncryptedEntry).version === 5 && this.state.keysDB && entry.id.toString() in this.state.keysDB.entry_keys) {
+        if ((entry as IEncryptedEntry).version === 5 && this.state.keysDB && entry.id.toString() in this.state.keysDB.entry_keys) {
             console.debug('decrypting this entry (v5) on the client-side...');
             decryptedEntry = await decryptEntryV5WithKeysDatabase(
                 entry as IEncryptedEntry,

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from flask import current_app, escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, reqparse
@@ -5,7 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
-from ..models import Entry, User, db
+from ..models import EncryptionKeys, Entry, User, db
 from .jwt_auth import authorizations
 
 ns = Namespace("Entry", authorizations=authorizations)
@@ -169,8 +171,29 @@ class ApiEntry(Resource):
                 entry = db.session.query(Entry)\
                     .filter_by(id=entry_id, user_id=user_id, pinned=False)\
                     .one()
-                data = entry.decrypt(args.password)
-                return data
+                dec_entry = entry.decrypt(args.password, return_symmetric_key=True)
+                enc_keys_db = user.enc_keys_db  # type: Optional[EncryptionKeys]
+                if enc_keys_db is None:
+                    current_app.logger.warning("User %d does not yet have an encryption DB, creating", user.id)
+                    enc_keys_db = backend._create_empty_encryption_key_db(db.session, user, args.password)
+                if enc_keys_db and "symmetric_key" in dec_entry:
+                    keys_db = enc_keys_db.decrypt(args.password)
+                    if str(entry_id) not in keys_db["entry_keys"]:
+                        current_app.logger.warning("Key for existing entry %d is not in keys DB, inserting", entry_id)
+                        backend._insert_encryption_key(
+                            db_session=db.session,
+                            user_id=user.id,
+                            user_key=args.password,
+                            elem_id=entry_id,
+                            symmetric_key=dec_entry["symmetric_key"],
+                            elem_type="entry"
+                        )
+                        # modified keys DB - need to commit
+                        db.session.commit()
+                if "symmetric_key" in dec_entry:
+                    # in any case do not return the symmetric key
+                    del dec_entry["symmetric_key"]
+                return dec_entry
             except NoResultFound:
                 return json_error_v2("no such entry or the entry does not belong to you", 400)
         else:

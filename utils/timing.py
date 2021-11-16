@@ -4,58 +4,76 @@ This file tests different versions of encrypt/decrypt algorithms for performance
 This file also tests the performance of the web server at servicing typical requests
 """
 
-from __future__ import print_function
-
+import cProfile
 import logging
 import os
+import pstats
 import random
 import time
 from argparse import ArgumentParser
 from pprint import pprint
+from typing import Optional, List, Tuple
 
 import requests
+from sqlalchemy import and_
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from create_user import get_db_session
 from passzero import backend
-from passzero.models import ApiToken, Entry, User
+from passzero.api.entry_list import jsonify_entries
+from passzero.models import Entry, User
 from utils import api
 
 # number of entries to create for a user
 NUM_ENTRIES = 300
+DEFAULT_EMAIL = "testing@example.com"
+DEFAULT_PASSWORD = "hello_world_test"
 
 
-def get_user_id_by_email(db_session, email):
+def read_words() -> List[str]:
+    with open("static/dictionary/words.txt") as fp:
+        words = [line.rstrip() for line in fp]
+    return words
+
+
+WORDS = read_words()
+
+
+def get_user_by_email(db_session: Session, email: str) -> User:
     user = backend.get_account_with_email(db_session, email)
-    return user.id
+    return user
 
 
-def create_active_user(db_session, email: str, password: str):
+def create_active_user(db_session: Session, email: str, password: str):
     """:return: user"""
     user = backend.create_inactive_user(db_session, email, password)
     backend.activate_account(db_session, user)
     return user
 
 
-def create_fake_user(db_session):
+def create_fake_user(db_session: Session, email: Optional[str] = None,
+                     password: Optional[str] = None) -> Tuple[User, str]:
     """:return: (user, plaintext password)"""
-    email = "fake_fakington_%d@fake.com" % random.randint(1, 1000)
-    password = "hello_world_%d" % random.randint(1, 1000)
+    if email is None:
+        email = "fake_fakington_%d@fake.com" % random.randint(1, 1000)
+    if password is None:
+        password = "hello_world_%d" % random.randint(1, 1000)
     user = create_active_user(db_session, email, password)
     return (user, password)
 
 
 def get_fake_account_name(random_nonce: str):
-    with open("static/dictionary/words.txt") as fp:
-        words = [line.rstrip() for line in fp]
-    base = " ".join(random.sample(words, 2))
+    base = " ".join(random.sample(WORDS, 2))
     return base + " " + random_nonce
 
 
-def create_fake_entry_for_user(db_session, user_id, user_pt_password, version=4):
-    # account name will be generated from the static words
+def create_fake_entry_for_user(db_session: Session, user_id, user_pt_password, version=4):
     random_nonce = str(hash(random.random()))
+    account_name = get_fake_account_name(random_nonce)
+
     dec_entry = {
-        "account": get_fake_account_name(random_nonce),
+        "account": account_name,
         "username": "fake email %s" % random_nonce,
         "password": "fake password %s" % random_nonce,
         "extra": "a very long extra string %s" % random_nonce,
@@ -76,12 +94,14 @@ def create_fake_entry_for_user(db_session, user_id, user_pt_password, version=4)
     )
     return entry
 
+
 def _decrypt_entry_v2(pair):
     entry, master_key = pair
     if entry.version >= 4:
         return entry.to_json()
     else:
         return entry.decrypt(master_key)
+
 
 def _decrypt_entries_multiprocess_v2(entries, master_key):
     from multiprocessing import Pool
@@ -92,7 +112,8 @@ def _decrypt_entries_multiprocess_v2(entries, master_key):
     pool.join()
     return results
 
-def _decrypt_entries_normal_v2(db_session, user_id, master_key):
+
+def _decrypt_entries_normal_v2(db_session: Session, user_id: int, master_key: str):
     entries = backend.get_entries(db_session, user_id)
     l = []
     for entry in entries:
@@ -102,11 +123,12 @@ def _decrypt_entries_normal_v2(db_session, user_id, master_key):
             l.append(entry.decrypt(master_key))
     return l
 
-def decrypt_entries_v2(enc_entries, master_key):
+
+def decrypt_entries_v2(enc_entries, master_key: str):
     return _decrypt_entries_multiprocess_v2(enc_entries, master_key)
 
 
-def time_decrypt_entries_v2(db_session, user_id, user_pt_password):
+def time_decrypt_entries_v2(db_session: Session, user_id: int, user_pt_password: str):
     enc_entries = backend.get_entries(db_session, user_id)
     print("[v2] Timing start: v2")
     start = time.time()
@@ -116,7 +138,8 @@ def time_decrypt_entries_v2(db_session, user_id, user_pt_password):
     print("[v2] Time: %.2f seconds" % (end - start))
     return dec_entries
 
-def time_decrypt_entries_v1(db_session, user_id, user_pt_password):
+
+def time_decrypt_entries_v1(db_session: Session, user_id: int, user_pt_password: str):
     enc_entries = backend.get_entries(db_session, user_id)
     print("[v1] Timing start")
     start = time.time()
@@ -127,7 +150,7 @@ def time_decrypt_entries_v1(db_session, user_id, user_pt_password):
     return dec_entries
 
 
-def time_decrypt_entries(db_session, user_id, user_pt_password):
+def time_decrypt_entries(db_session: Session, user_id: int, user_pt_password: str):
     enc_entries = backend.get_entries(db_session, user_id)
     print("Timing start")
     start = time.time()
@@ -138,33 +161,29 @@ def time_decrypt_entries(db_session, user_id, user_pt_password):
     return dec_entries
 
 
-def time_decrypt_partial(db_session, user_id, user_pt_password):
+def time_decrypt_partial(db_session: Session, user_id: int, user_pt_password: str):
     enc_entries = backend.get_entries(db_session, user_id)
     print("Timing start")
     start = time.time()
-    partially_dec_entries = [
-            {"account": entry.account} for entry in enc_entries ]
+    partially_dec_entries = [{"account": entry.account} for entry in enc_entries]
     end = time.time()
     print("Timing end")
     print("Time: %.2f seconds" % (end - start))
     return partially_dec_entries
 
 
-def delete_all_entries_for_user(db_session, user_id):
+def delete_all_entries_for_user(db_session: Session, user_id: int):
     """Delete the entries individually"""
-    entries = db_session.query(Entry).filter_by(user_id=user_id).all()
+    entries = db_session.query(Entry).filter(and_(
+        Entry.user_id == user_id,
+        Entry.pinned == False  # noqa
+    )).all()
     for entry in entries:
         db_session.delete(entry)
     db_session.commit()
 
 
-def delete_user(db_session, user):
-    db_session.query(ApiToken).delete()
-    db_session.delete(user)
-    db_session.commit()
-
-
-def main(version):
+def main(version: int):
     print("Testing entries with version {}".format(version))
     db_session = get_db_session()
     logging.debug("creating user...")
@@ -190,11 +209,12 @@ def main(version):
         raise e
     finally:
         logging.debug("deleting all entries for user with ID %d...", user.id)
-        delete_all_entries_for_user(db_session, user.id)
+        backend.delete_all_entries(db_session, user, user_pt_password)
         logging.debug("deleting user with ID %d...", user.id)
-        delete_user(db_session, user)
+        backend.delete_account(db_session, user)
 
-def main_api_v2(proportions):
+
+def main_api_v2(proportions: dict):
     print("Testing entries with version proportions {}".format(str(proportions)))
     db_session = get_db_session()
     logging.debug("creating user...")
@@ -223,16 +243,16 @@ def main_api_v2(proportions):
         raise e
     finally:
         logging.info("deleting all entries for user with ID %d...", user.id)
-        delete_all_entries_for_user(db_session, user.id)
+        backend.delete_all_entries(db_session, user.id, user_pt_password)
         logging.info("deleting user with ID %d...", user.id)
-        delete_user(db_session, user)
+        backend.delete_account(db_session, user)
 
 
-def create_fake_entries_for_user(db_session,
-        user_id: int,
-        password: str,
-        version: int,
-        num: int) -> None:
+def create_fake_entries_for_user(db_session: Session,
+                                 user_id: int,
+                                 password: str,
+                                 version: int,
+                                 num: int) -> None:
     for i in range(num):
         logging.debug("[%d] creating entry for user %d...", i + 1, user_id)
         entry = create_fake_entry_for_user(
@@ -259,15 +279,15 @@ def test_live(version):
     logging.debug("creating user...")
     user, user_pt_password = create_fake_user(db_session)
     logging.info("Creating %d entries. email = %s password = %s",
-        NUM_ENTRIES, user.email, user_pt_password)
+                 NUM_ENTRIES, user.email, user_pt_password)
     try:
         create_fake_entries_for_user(db_session, user.id, user_pt_password,
-            version=version, num=NUM_ENTRIES)
+                                     version=version, num=NUM_ENTRIES)
     except Exception as e:
         logging.error(e)
         raise e
         # delete the user
-        delete_user(db_session, user)
+        backend.delete_account(db_session, user)
 
     save_user_id(user.id)
 
@@ -312,15 +332,13 @@ def get_live(
                         num_entries, avg_time_ms, num_samples))
             finally:
                 logging.info("deleting all entries for user with ID %d...", user.id)
-                delete_all_entries_for_user(db_session, user.id)
+                backend.delete_all_entries(db_session, user, user_pt_password)
     except Exception as e:
         logging.error(e)
         raise e
     finally:
         logging.info("deleting user with ID %d...", user.id)
-        delete_user(db_session, user)
-
-
+        backend.delete_account(db_session, user)
 
 
 def delete_live():
@@ -344,22 +362,159 @@ def delete_live():
     os.remove(fname)
 
 
+def time_jsonify_encrypted_entries(num_entries_list: List[int], cleanup: bool = True):
+    """
+    It is November 16, 2021 and the current problem I'm debugging is that it's over half a second to get the encrypted entries on the local server.
+    On Heroku, it's taking as much as 1.5 seconds and usually around 800ms.
+    After I added logging, it looks like the encoding process of around 500 entries is the element that's taking so long.
+    To test this theory, let's create a bunch of entries and see how long it takes to encode them.
+
+    Based on the profiling below, for some reason the Entry objects' properties are expired
+
+    Here are the current times (using our to_json method):
+
+    GET:
+    - 300: 0.01s, 0.01s, 0.01s
+    - 400: 0.02s, 0.02s, 0.02s
+    - 500: 0.02s, 0.02s, 0.02s
+    - 600: 0.02s, 0.02s, 0.02s
+
+    JSONIFY:
+    - 300: 0.20s, 0.21s, 0.21s
+    - 400: 0.26s, 0.26s, 0.27s
+    - 500: 0.32s, 0.34s, 0.42s
+    - 600: 0.44s, 0.40s, 0.40s
+
+    And using the old method:
+
+    GET:
+    - 300: 0.01s, 0.01s
+    - 400: 0.02s, 0.02s
+    - 500: 0.02s, 0.02s
+    - 600: 0.02s, 0.03s
+
+    JSONIFY:
+    - 300: 0.20s, 0.23s
+    - 400: 0.30s, 0.29s
+    - 500: 0.36s, 0.33s
+    - 600: 0.41s, 0.42s
+
+    It's about the same.
+
+    I then enabled postgres statement-level logging. It turns out that some properties were not being loaded at the initial select statement level.
+    They were only loaded once we accessed the entry, because that property was set on Entry v5 only.
+    By moving the property up to the base entry, I was able to fix it.
+
+    :param cleanup: By default we delete the entry and user at the end of the testcase
+    """
+
+    db_session = get_db_session()
+    pid = os.getpid()
+    try:
+        user, user_pt_password = create_fake_user(db_session, email=DEFAULT_EMAIL, password=DEFAULT_PASSWORD)
+    except IntegrityError:
+        logging.warning("User with email %s already exists. Using that one.", DEFAULT_EMAIL)
+        db_session.rollback()
+        user = get_user_by_email(db_session, email=DEFAULT_EMAIL)
+        user_pt_password = DEFAULT_PASSWORD
+
+    # cleanup just in case
+    if cleanup:
+        backend.delete_all_entries(db_session, user, user_pt_password)
+        num_current_entries = 0
+    else:
+        enc_entries = backend.get_entries(db_session, user.id)
+        num_current_entries = len(enc_entries)
+        logging.warning("Starting test case with %d entries. Not cleaning these up.", num_current_entries)
+
+    db_session.flush()
+
+    try:
+        for num_entries in num_entries_list:
+            print(f"[run {pid}] Running test on {num_entries} entries")
+
+            print(f"[run {pid}] Creating entries...")
+            # reuse the entries between different parts of timing
+            while num_current_entries < num_entries:
+                enc_entry = create_fake_entry_for_user(db_session, user.id, user_pt_password, version=5)
+                assert enc_entry.version == 5
+                num_current_entries += 1
+            print(f"[run {pid}] Created {num_entries} entries")
+
+            db_session.flush()
+            # reset the session
+            db_session.close()
+
+            user = get_user_by_email(db_session, email=DEFAULT_EMAIL)
+
+            profiler = cProfile.Profile()
+            profiler.enable()
+            start = time.time()
+            enc_entries = backend.get_entries(db_session, user.id)
+            for entry in enc_entries:
+                assert entry.version == 5
+            end = time.time()
+            profiler.disable()
+            print(f"[run {pid}] get_entries : # entries = {num_entries}, time = {end-start:.2f} seconds")
+            stats = pstats.Stats(profiler).sort_stats('cumtime')
+            fname = f"data/stats-{num_entries}-get-entries-{pid}.profile"
+            stats.dump_stats(fname)
+            print(f"[run {pid}] Dumped get_entries stats to file {fname}")
+
+            profiler = cProfile.Profile()
+            profiler.enable()
+            start = time.time()
+            jsonify_entries(enc_entries)
+            end = time.time()
+            profiler.disable()
+            print(f"[run {pid}] jsonify_entries : # entries = {num_entries}, time = {end-start:.2f} seconds")
+            stats = pstats.Stats(profiler).sort_stats('cumtime')
+            fname = f"data/stats-{num_entries}-jsonify-entries-{pid}.profile"
+            stats.dump_stats(fname)
+            print(f"[run {pid}] Dumped jsonify_entries stats to file {fname}")
+            print("")
+
+    except Exception as err:
+        logging.exception(err)
+    finally:
+        if cleanup:
+            # entries are deleted when account is deleted
+            user = get_user_by_email(db_session, email=DEFAULT_EMAIL)
+            backend.delete_account(db_session, user)
+        else:
+            logging.warning("Not cleaning up")
+
+
+def read_pstats(fname):
+    p = pstats.Stats(fname)
+    p.strip_dirs()
+    p.sort_stats('cumtime')
+    p.print_stats(50)
+
+
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.INFO,
-        format="[%(levelname)s] %(message)s")
+        format="[%(levelname)s] %(message)s"
+    )
     logging.getLogger("urllib3").setLevel(logging.ERROR)
     logging.getLogger("requests").setLevel(logging.WARNING)
 
     parser = ArgumentParser()
     parser.add_argument("--create-live", action="store_true", default=False,
-        help="Use to test the speed with server")
+                        help="Use to test the speed with server")
     parser.add_argument("--version", type=int,
-        help="For use with --live")
+                        help="For use with --live")
     parser.add_argument("--delete-live", action="store_true", default=False,
-        help="Cleanup of --create-live")
+                        help="Cleanup of --create-live")
+    parser.add_argument("--time-jsonify-entries", action="store_true", default=False,
+                        help="Time how long it takes to JSON-ify varying numbers of encrypted entries")
     parser.add_argument("--get-live", action="store_true", default=False,
-        help="After creating the entries (not over web server), evaluate performance of getting all encrypted entries")
+                        help="After creating the entries (not over web server), evaluate performance of getting all encrypted entries")
+    parser.add_argument("--no-cleanup", action="store_true",
+                        help="Use with --time-jsonify-entries. Do not clean up created user and entries.")
+    parser.add_argument("--read-pstats", type=str,
+                        help="pstats file to read")
 
     args = parser.parse_args()
 
@@ -372,6 +527,13 @@ if __name__ == "__main__":
         delete_live()
     elif args.get_live:
         get_live()
+    elif args.time_jsonify_entries:
+        time_jsonify_encrypted_entries(
+            num_entries_list=[10, 100],
+            cleanup=not args.no_cleanup
+        )
+    elif args.read_pstats:
+        read_pstats(args.read_pstats)
     else:
         main_api_v2({4: 0, 3: 100})
         main_api_v2({4: 20, 3: 80})

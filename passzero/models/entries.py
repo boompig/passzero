@@ -1,10 +1,12 @@
 import binascii
+import time
+from base64 import b64encode
 
 import msgpack
 import nacl.pwhash
 import nacl.secret
 import nacl.utils
-import time
+from nacl.bindings import crypto_secretbox_NONCEBYTES
 
 from passzero.crypto_utils import (byte_to_hex_legacy, decrypt_field_v1,
                                    decrypt_field_v2, decrypt_messages,
@@ -22,7 +24,7 @@ class Entry(db.Model):
     """This entry serves as both the v1 entry and the base class to other entries"""
     __tablename__ = "entries"
     id = db.Column(db.Integer, db.Sequence("entries_id_seq"), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     account = db.Column(db.String, nullable=False)
 
     # these fields are *always* encrypted
@@ -40,6 +42,8 @@ class Entry(db.Model):
     version = db.Column(db.Integer, nullable=False)
     pinned = db.Column(db.Boolean, default=False, nullable=False)
 
+    contents = db.Column(db.LargeBinary)
+
     __mapper_args__ = {
         "polymorphic_identity": 1,
         "polymorphic_on": version
@@ -51,6 +55,9 @@ class Entry(db.Model):
 
     def to_json(self) -> dict:
         """
+        Convert the encrypted entry for export to the user over the network.
+        Removes many non-public fields.
+
         :return:            All fields of the entry, some possibly still encrypted
         :rtype:             dict
         """
@@ -310,6 +317,14 @@ class Entry_v4(Entry):
         "polymorphic_identity": 4
     }
 
+    def to_json(self) -> dict:
+        out = super().to_json()
+        # remove irrelevant elements in order to conserve bandwidth
+        del out["username"]
+        del out["password"]
+        del out["extra"]
+        return out
+
     def decrypt_with_entry_key(self, entry_key: bytes) -> dict:
         assert isinstance(entry_key, bytes)
         iv = binascii.a2b_base64(self.iv)
@@ -407,16 +422,11 @@ class Entry_v5(Entry):
     For the same reason as in v4.
 
     HOWEVER: the encrypted fields are stored in one monolithic binary blob in the `contents` field
-    The fields relevant fields are left as empty strings
 
-    The fields are encrypted using the `encrypt_messages` method in crypto_utils
-    It is roughly equivalent to applying AES - MODE CFB.
-    The issue with this approach is that there is no authentication associated with the message contents:
-    i.e. there is no guarantee that the data has not been tampered with while in storage
+    The fields are encrypted using libsodium secret box (AEAD)
+    The encryption key is derived from the master key using argon2id
 
-    When using this version, you have to be careful with the (iv, nonce, salt): do not reuse these
-
-    Entry-specific keys are generated using PBKDF2.
+    When using this version, you have to be careful with the key_salt: do not reuse this
     """
 
     # self.key_salt should be of type unicode
@@ -425,8 +435,24 @@ class Entry_v5(Entry):
         "polymorphic_identity": 5
     }
 
-    # a new contents object
-    contents = db.Column(db.LargeBinary)
+    def to_json(self) -> dict:
+        out = super().to_json()
+
+        # remove irrelevant elements in order to conserve bandwidth
+        del out["username"]
+        del out["password"]
+        del out["extra"]
+
+        # return a variety of parameters for client-side encryption
+        # key salt is already base64-encoded
+        out["enc_key_salt_b64"] = self.key_salt
+        # see https://pynacl.readthedocs.io/en/latest/_modules/nacl/secret/#SecretBox.decrypt
+        nonce = self.contents[: crypto_secretbox_NONCEBYTES]
+        # note that this includes the MAC
+        ciphertext = self.contents[crypto_secretbox_NONCEBYTES:]
+        out["enc_nonce_b64"] = b64encode(nonce).decode("utf-8")
+        out["enc_ciphertext_b64"] = b64encode(ciphertext).decode("utf-8")
+        return out
 
     def __get_entry_key(self, master_key: str, kdf_salt: bytes) -> bytes:
         assert isinstance(master_key, str)
@@ -456,15 +482,19 @@ class Entry_v5(Entry):
         dec_contents_d["version"] = self.version
         return dec_contents_d
 
-    def decrypt(self, master_key: str) -> dict:
+    def decrypt(self, master_key: str, return_symmetric_key: bool = False) -> dict:
         """
+        :param return_symmetric_key: If specified as True, return the symmetric key used to decrypt the entry
         Raises `nacl.exceptions.CryptoError` on failure to authenticate cyphertext
         """
         assert isinstance(master_key, str)
         assert isinstance(self.key_salt, str)
         kdf_salt = binascii.a2b_base64(self.key_salt.encode("utf-8"))
         entry_key = self.__get_entry_key(master_key, kdf_salt)
-        return self.decrypt_with_entry_key(entry_key)
+        dec_entry = self.decrypt_with_entry_key(entry_key)
+        if return_symmetric_key:
+            dec_entry["symmetric_key"] = entry_key
+        return dec_entry
 
     def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
         """

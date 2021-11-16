@@ -1,11 +1,9 @@
 import time
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from typing import List
-from base64 import b64encode
 
 from flask import current_app
 from flask_restx import Namespace, Resource, reqparse
-from nacl.bindings import crypto_secretbox_NONCEBYTES
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
@@ -14,28 +12,8 @@ from .jwt_auth import authorizations
 from . import app_error_codes
 
 
-def jsonify_entries_pool(entry: Entry) -> dict:
-    assert entry.version >= 4
-    out = entry.to_json()
-    # remove the encrypted elements in order to conserve bandwidth
-    del out["username"]
-    del out["password"]
-    del out["extra"]
-    if entry.version >= 5:
-        # return a variety of parameters for client-side encryption
-        # key salt is already base64-encoded
-        out["enc_key_salt_b64"] = entry.key_salt
-        # see https://pynacl.readthedocs.io/en/latest/_modules/nacl/secret/#SecretBox.decrypt
-        nonce = entry.contents[: crypto_secretbox_NONCEBYTES]
-        # note that this includes the MAC
-        ciphertext = entry.contents[crypto_secretbox_NONCEBYTES:]
-        out["enc_nonce_b64"] = b64encode(nonce).decode("utf-8")
-        out["enc_ciphertext_b64"] = b64encode(ciphertext).decode("utf-8")
-    return out
-
-
 def jsonify_entries(enc_entries: List[Entry]):
-    return [jsonify_entries_pool(entry) for entry in enc_entries]
+    return [entry.to_json() for entry in enc_entries]
 
 
 ns = Namespace("EntryList", authorizations=authorizations)

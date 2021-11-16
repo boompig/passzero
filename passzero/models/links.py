@@ -61,7 +61,7 @@ class Link(db.Model):
     __tablename__ = "links"
 
     id = db.Column(db.Integer, db.Sequence("links_id_seq"), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     # this field contains all encrypted fields
     contents = db.Column(db.LargeBinary, nullable=False)

@@ -61,6 +61,9 @@ static/js/src
 .vscode
 *.code-workspace
 
+# data directory
+data
+
 # private future work document
 TODO.md
 IDEA.md
