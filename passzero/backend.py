@@ -171,7 +171,7 @@ def delete_all_entries(db_session: Session, user: User, user_key: str) -> None:
     for entry in entries:
         # entry ID guaranteed to exist in EncryptionKeys
         assert str(entry.id) in keys_db["entry_keys"]
-        keys_db["entry_keys"].pop(str(entry.id))
+        del keys_db["entry_keys"][str(entry.id)]
     # re-encrypt the database
     enc_keys_db.encrypt(user_key, keys_db)
     # re-add it since it has been modified
@@ -404,7 +404,7 @@ def _delete_encryption_key(db_session: Session, user_id: int, user_key: str, ele
         "link": "link_keys",
     }[elem_type]
     if str(elem_id) in keys_db[k]:
-        keys_db[k].pop(str(elem_id))
+        del keys_db[k][str(elem_id)]
         # re-encrypt the database
         enc_keys_db.encrypt(user_key, keys_db)
         # re-add it since it has been modified

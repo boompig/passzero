@@ -18,9 +18,9 @@ def jsonify_entries_pool(entry: Entry) -> dict:
     assert entry.version >= 4
     out = entry.to_json()
     # remove the encrypted elements in order to conserve bandwidth
-    out.pop("username")
-    out.pop("password")
-    out.pop("extra")
+    del out["username"]
+    del out["password"]
+    del out["extra"]
     if entry.version >= 5:
         # return a variety of parameters for client-side encryption
         # key salt is already base64-encoded

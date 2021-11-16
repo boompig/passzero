@@ -23,6 +23,7 @@ def test_encrypt_and_decrypt_entry_v4():
     dec_entry_out_1 = entry.decrypt(user_key)
     for field in dec_entry_in:
         assert dec_entry_out_1[field] == dec_entry_in[field]
+    assert dec_entry_out_1["version"] == 4
     # test .decrypt_with_entry_key
     dec_entry_out_2 = entry.decrypt_with_entry_key(entry_key)
     for field in dec_entry_in:
@@ -45,6 +46,7 @@ def test_encrypt_and_decrypt_entry_v3():
     dec_entry_out_1 = entry.decrypt(user_key)
     for field in dec_entry_in:
         assert dec_entry_out_1[field] == dec_entry_in[field]
+    assert dec_entry_out_1["version"] == 3
     # test .decrypt_with_entry_key
     dec_entry_out_2 = entry.decrypt_with_entry_key(entry_key)
     for field in dec_entry_in:
@@ -68,6 +70,7 @@ def test_encrypt_and_decrypt_entry_v2():
     dec_entry_out_1 = entry.decrypt(user_key)
     for field in [u"account", u"username", u"password", u"extra", u"has_2fa"]:
         assert dec_entry_out_1[field] == dec_entry_in[field]
+    assert dec_entry_out_1["version"] == 2
     # test .decrypt_with_entry_key
     dec_entry_out_2 = entry.decrypt_with_entry_key(entry_key)
     for field in dec_entry_in:
@@ -90,3 +93,4 @@ def test_encrypt_and_decrypt_entry_v1():
     dec_entry_out = entry.decrypt(user_key)
     for field in [u"account", u"username", u"password", u"extra", u"has_2fa"]:
         assert dec_entry_out[field] == dec_entry_in[field]
+    assert dec_entry_out["version"] == 1

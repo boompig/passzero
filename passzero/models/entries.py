@@ -93,7 +93,8 @@ class Entry(db.Model):
             "username": dec_username,
             "password": dec_password,
             "extra": dec_extra,
-            "has_2fa": self.has_2fa
+            "has_2fa": self.has_2fa,
+            "version": self.version,
         }
 
     def encrypt(self, master_key: str, dec_entry: dict) -> bytes:
@@ -163,7 +164,8 @@ class Entry_v2(Entry):
             "username": dec_username,
             "password": dec_password,
             "extra": dec_extra,
-            "has_2fa": self.has_2fa
+            "has_2fa": self.has_2fa,
+            "version": self.version,
         }
 
     def decrypt(self, master_key: str) -> dict:
