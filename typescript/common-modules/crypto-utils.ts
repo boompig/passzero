@@ -51,7 +51,7 @@ export async function decryptEntryV5(entry: IEncryptedEntry, masterPassword: str
 }
 
 export async function decryptEncryptionKeysDatabase(encryptionKeys: IEncryptionKeys, masterPassword: string): Promise<IKeysDatabase> {
-    console.debug('Decrypting encryption keys database...');
+    console.debug('Decrypting encryption keys database locally...');
     const kdfSalt = Buffer.from(encryptionKeys.enc_kdf_salt_b64, 'base64');
     const encMessage = Buffer.from(encryptionKeys.enc_contents_b64, 'base64');
     const nonce = Buffer.from(encryptionKeys.enc_nonce_b64, 'base64');

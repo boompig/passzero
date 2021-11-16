@@ -216,7 +216,7 @@ class DecryptedApiLink(Resource):
             dec_link = enc_link.decrypt(args.password)
             dec_links.append(dec_link)
         end = time.time()
-        current_app.logger.info("Took %.2f seconds to decrypt links",
+        current_app.logger.info("Took %.2f seconds to decrypt %d links",
                                 end - start, len(enc_links))
         # this will be helpful for users with links that are not in the encryption keys database
         # update the encryption database

@@ -121,7 +121,7 @@ def create_app(name: str, settings_override: dict = {}):
     csp = {
         "default-src": "\'self\'",
         # CDN for javascript
-        "script-src": ["\'self\'", "cdnjs.cloudflare.com"],
+        "script-src": ["\'self\'", "cdnjs.cloudflare.com", "\'wasm-unsafe-eval\'"],
         # CDN for CSS
         # NOTE: unsafe-inline is needed for tooltips
         "style-src": ["\'self\'", "\'unsafe-inline\'", "cdnjs.cloudflare.com"],

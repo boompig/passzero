@@ -6,7 +6,8 @@ import DecryptedLink from "./components/decrypted-link";
 import EncryptedLink from "./components/encrypted-link";
 import {IDecryptedLink, IEncryptedLink, ILink} from "../common-modules/links";
 import SearchForm from "../entries-bundle/components/search-form";
-import { decryptEncryptionKeysDatabase, decryptLinkWithKeysDB } from "../common-modules/crypto-utils";
+import { decryptLinkWithKeysDB } from "../common-modules/crypto-utils";
+import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/message";
 
 // instead of importing, include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -43,14 +44,11 @@ interface IState {
  * Batch size used to decrypt links
  */
 const DECRYPTION_BATCH_SIZE = 10;
-/**
- * Time in milliseconds to delay decrypting the keys database
- */
-const DECRYPT_KEYS_DB_DELAY = 750;
 
 class App extends Component<IProps, IState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
+    worker: Worker;
 
     constructor(props: any) {
         super(props);
@@ -80,6 +78,12 @@ class App extends Component<IProps, IState> {
         this.handleSearch = this.handleSearch.bind(this);
         this.decryptList = this.decryptList.bind(this);
         this.handleGetUser = this.handleGetUser.bind(this);
+        this.handleWorkerMessage = this.handleWorkerMessage.bind(this);
+
+        // create worker thread
+        this.worker = new window.Worker('/js/dist/web-worker.bundle.js');
+        // prepare to receive a message from worker
+        this.worker.onmessage = this.handleWorkerMessage;
     }
 
     componentDidMount() {
@@ -118,34 +122,50 @@ class App extends Component<IProps, IState> {
             }).then(() => {
                 return this.pzApi.getCurrentUser();
             }).then((user: IUser) => {
-                // run with a delay so it doesn't interfere with rendering
-                window.setTimeout(() => {
-                    this.handleGetUser(user);
-                }, DECRYPT_KEYS_DB_DELAY);
+                this.handleGetUser(user);
             });
+    }
+
+    async handleWorkerMessage(event: MessageEvent) {
+        console.debug('Received message in main thread from worker');
+        console.debug(event.data);
+        if (event.data.source && event.data.source === WEBWORKER_MSG_SOURCE && event.data.method) {
+            const message = event.data as CryptoWorkerRcvMessage;
+            switch (message.method) {
+                case 'decryptEncryptionKeysDatabase': {
+                    this.setState({
+                        keysDB: message.data.keysDB as IKeysDatabase,
+                    });
+                    break;
+                }
+                default: {
+                    console.error(`Got invalid method in main thread: ${message.method}`);
+                    break;
+                }
+            }
+        } else {
+            console.warn(`Received message in main thread from unknown source ${event.data.source}`);
+        }
     }
 
     /**
      * Once the current user is fetched from the backend, try to decrypt encryption keys
      */
     async handleGetUser(user: IUser) {
-        let keysDB = null;
         // NOTE: some users may not have a keysDB associated with their user
         // in that case, we don't want to prevent decryption
         if (user.encryption_keys) {
-            try {
-                keysDB = await decryptEncryptionKeysDatabase(
-                    user.encryption_keys,
-                    this.state.masterPassword
-                );
-            } catch (err) {
-                console.error('Failed to decrypt the encryption keys database locally:');
-                console.error(err);
-            }
+            this.worker.postMessage({
+                source: 'entries-bundle',
+                method: 'decryptEncryptionKeysDatabase',
+                data: {
+                    encryption_keys: user.encryption_keys,
+                    master_password: this.state.masterPassword,
+                }
+            } as CryptoWorkerRcvMessage);
         }
         this.setState({
             user: user,
-            keysDB: keysDB,
             isKeysDBLoaded: true,
         });
     }
