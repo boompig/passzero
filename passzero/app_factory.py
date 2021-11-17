@@ -27,6 +27,14 @@ def dict_to_base64(d: dict) -> str:
     return s.decode('utf-8')
 
 
+def read_database_uri() -> str:
+    uri = os.environ["DATABASE_URL"]
+    if uri.startswith("postgres://"):
+        # SQLAlchemy v1.4+ expects the postgresql:// scheme
+        uri = uri.replace("postgres://", "postgresql://", 1)
+    return uri
+
+
 def create_app(name: str, settings_override: dict = {}):
     compress = Compress()
 
@@ -49,7 +57,7 @@ def create_app(name: str, settings_override: dict = {}):
 
     # app config
     app.config.from_object(DefaultConfig)
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ["DATABASE_URL"]
+    app.config["SQLALCHEMY_DATABASE_URI"] = read_database_uri()
     app.config["OFFLINE"] = os.environ.get("OFFLINE", "0") == "1"
     if app.config["OFFLINE"]:
         print("Working offline")
