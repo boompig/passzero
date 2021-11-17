@@ -10,6 +10,7 @@ from passzero.backend import (create_inactive_user, decrypt_entries,
                               insert_document_for_user, insert_link_for_user,
                               password_strength_scores)
 from passzero.change_password import change_password
+from passzero.config import ENTRY_LIMITS
 from passzero.crypto_utils import PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
                              EncryptionKeys, Entry, Link, Service, User)
@@ -175,6 +176,22 @@ def test_insert_entry_for_user(session):
     Test all aspects of that method"""
     user_key = u"master key"
     user = backend.create_inactive_user(session, DEFAULT_EMAIL, user_key)
+
+    # first test form validation
+    for field, max_length in ENTRY_LIMITS.items():
+        try:
+            dec_entry = {
+                "account": "a",
+                "username": "b",
+                "password": "c",
+                "extra": "d"
+            }
+            dec_entry[field] = "x" * (max_length + 1)
+            backend.insert_entry_for_user(session, dec_entry, user.id, user_key)
+        except backend.EntryValidationError:
+            assert True
+        else:
+            assert False
     dec_entry_in = get_test_decrypted_entry()
     new_entry = backend.insert_entry_for_user(session, dec_entry_in, user.id, user_key)
     # make sure the entry is inserted
@@ -383,6 +400,44 @@ def test_edit_entry_v5(session):
     __edit_entry(session, version=5)
 
 
+def test_edit_entry_fail_validation(session):
+    """Try to edit an existing entry but modify it in a way that it would fail validation"""
+    user_key = u"test master key"
+    user = create_inactive_user(session, u"fake@fake.com", user_key)
+    dec_entry_in = {
+        "account": "test account",
+        "username": "test username",
+        "password": "test password",
+        "extra": "test extra",
+        "has_2fa": True,
+    }
+    entry = backend.insert_entry_for_user(
+        session,
+        dec_entry_in,
+        user.id,
+        user_key,
+    )
+    # save this in case it changes
+    entry_id = entry.id
+    # edit the entry
+    dec_entry_in["password"] = "a new password"
+    dec_entry_in["has_2fa"] = False
+    dec_entry_in["username"] = "a" * 1000
+    # edit the entry
+    try:
+        backend.edit_entry(
+            session,
+            entry_id,
+            user_key,
+            dec_entry_in,
+            entry.user_id
+        )
+    except backend.EntryValidationError:
+        assert True
+    else:
+        assert False
+
+
 def test_edit_pinned_entry(session):
     """Make sure you can't edit a pinned entry"""
     user_key = u"test master key"
@@ -399,7 +454,7 @@ def test_edit_pinned_entry(session):
         "has_2fa": True,
     }
     try:
-        backend.edit_entry(session, pinned_entry.id, new_dec_entry, user_key, user.id)
+        backend.edit_entry(session, pinned_entry.id, user_key, new_dec_entry, user.id)
         assert False
     except AssertionError:
         assert True

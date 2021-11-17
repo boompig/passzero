@@ -62,6 +62,9 @@ export default class PasszeroApiV3 {
         // console.debug(response.status);
         if (response.ok) {
             return response.json();
+        } else if (response.status === 401) {
+            const text = await response.text();
+            throw new UnauthorizedError(text);
         } else if(response.status == 500 && response.headers.get("Content-Type") === "application/json") {
             const j = await response.json();
             throw new ServerError(j.msg, response, j.app_error_code);
@@ -152,6 +155,9 @@ export default class PasszeroApiV3 {
         return apiKey.token;
     }
 
+    /**
+     * If we have a 401 error response, throw UnauthorizedError
+     */
     async getToken() {
         const url = "/api/v3/token";
         return this.getJsonWithBearer(url);
@@ -193,7 +199,10 @@ export default class PasszeroApiV3 {
         return response;
 	}
 
-	async createEntry(entry: IEntry, masterPassword: string) {
+    /**
+     * Return the raw response
+     */
+	async createEntry(entry: IEntry, masterPassword: string): Promise<Response> {
 		const apiToken = await this.fillToken();
 		const url = "/api/v3/entries";
 		const data = {

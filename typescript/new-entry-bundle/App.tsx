@@ -4,6 +4,7 @@ import ReactTooltip from "react-tooltip";
 import { Settings } from "./components/settings";
 import PasszeroApiV3 from "../common-modules/passzero-api-v3";
 import { random } from "lodash";
+import classnames from "classnames";
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -17,6 +18,9 @@ interface INewEntryState {
 	extra: string;
 	has_2fa: boolean;
 	version: number;
+
+	formErrors: {[key: string]: string};
+	errorMsg: string;
 
 	isEntryNew: boolean;
 
@@ -37,6 +41,14 @@ interface INewEntryState {
 interface IUserPrefs {
 	default_random_passphrase_length: number;
 	default_random_password_length: number;
+}
+
+// see ENTRY_LIMITS in config.py
+const ENTRY_LIMITS = {
+	account: 100,
+	username: 100,
+	password: 256,
+	extra: 4096
 }
 
 class App extends PureComponent<{}, INewEntryState> {
@@ -69,6 +81,14 @@ class App extends PureComponent<{}, INewEntryState> {
 			has_2fa: false,
 			version: -1,
 
+			// form validation errors
+			formErrors: {},
+
+			/**
+			 * Error message received from the server
+			 */
+			errorMsg: null,
+
 			isEntryNew: true,
 
 			masterPassword: "",
@@ -96,14 +116,11 @@ class App extends PureComponent<{}, INewEntryState> {
 		this.dictionary = "common.txt";
 
 		// javascript is stupid
-		this.handleAccountChange = this.handleAccountChange.bind(this);
-		this.handleUsernameChange = this.handleUsernameChange.bind(this);
-		this.handlePasswordChange = this.handlePasswordChange.bind(this);
+		this.handleEntryFieldChange = this.handleEntryFieldChange.bind(this);
 		this.handleGenModeChange = this.handleGenModeChange.bind(this);
 		this.handlePasswordLengthChange = this.handlePasswordLengthChange.bind(this);
 		this.toggleUseSpecialChars = this.toggleUseSpecialChars.bind(this);
 		this.handlePhraseLengthChange = this.handlePhraseLengthChange.bind(this);
-		this.handleExtraChange = this.handleExtraChange.bind(this);
 		this.handle2faChange = this.handle2faChange.bind(this);
 		this.handleGenPassword = this.handleGenPassword.bind(this);
 
@@ -145,12 +162,25 @@ class App extends PureComponent<{}, INewEntryState> {
 			has_2fa: this.state.has_2fa,
 			extra: this.state.extra
 		};
+
+		// zero out the server error message (if any)
+		this.setState({
+			errorMsg: null,
+		});
+
 		const r = await this.pzApi.updateEntry(this.state.id, entry, this.state.masterPassword);
 		if(r.status === 200) {
 			window.location.href = `/entries/done_edit/${entry.account}`;
 		} else {
 			console.error(r.status);
 			console.error(r);
+
+			const j = await r.json();
+			if (j.msg) {
+				this.setState({
+					errorMsg: j.msg,
+				});
+			}
 		}
 	}
 
@@ -162,12 +192,25 @@ class App extends PureComponent<{}, INewEntryState> {
 			has_2fa: this.state.has_2fa,
 			extra: this.state.extra
 		};
+
+		// zero out the server error message (if any)
+		this.setState({
+			errorMsg: null,
+		});
+
 		const r = await this.pzApi.createEntry(entry, this.state.masterPassword);
 		if(r.status === 200) {
 			window.location.href = `/entries/done_new/${entry.account}`;
 		} else {
 			console.error(r.status);
 			console.error(r);
+
+			const j = await r.json();
+			if (j.msg) {
+				this.setState({
+					errorMsg: j.msg,
+				});
+			}
 		}
 	}
 
@@ -181,28 +224,27 @@ class App extends PureComponent<{}, INewEntryState> {
 		}
 	}
 
-	handleAccountChange(event) {
-		this.setState({
-			account: event.target.value
-		});
-	}
+	/**
+	 * Handle changes for entry fields (text only)
+	 */
+	handleEntryFieldChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+		const val = event.target.value;
+		const field = event.target.name;
+		const formErrors = this.state.formErrors;
 
-	handleUsernameChange(event) {
-		this.setState({
-			username: event.target.value
-		});
-	}
+		const ENTRY_FIELDS = ['account', 'username', 'password', 'extra'];
+		console.assert(ENTRY_FIELDS.includes(field));
 
-	handlePasswordChange(event) {
-		this.setState({
-			password: event.target.value
-		});
-	}
+		if (val.length > ENTRY_LIMITS[field]) {
+			formErrors[field] = `${field} is too long`;
+		} else {
+			formErrors[field] = null;
+		}
 
-	handleExtraChange(event) {
 		this.setState({
-			extra: event.target.value
-		});
+			[field]: val,
+			formErrors: formErrors,
+		} as Pick<INewEntryState, any>);
 	}
 
 	handle2faChange(event) {
@@ -445,36 +487,49 @@ class App extends PureComponent<{}, INewEntryState> {
 					{ this.state.isEntryNew ? "Create New Entry" :  "Edit PassZero entry for " + this.state.account }
 				</h3>
 
+				{/* display the error message from server (if any) */}
+				{ this.state.errorMsg ?
+					<div className="alert alert-danger" role="alert">
+						<strong>Error!</strong>&nbsp; {this.state.errorMsg}
+					</div> :
+					null }
+
 				<div className="form-group">
 					<label htmlFor="account">Account</label>
 					<input type="text"
-						name="account" required={ true }
-						className="form-control"
+						name="account"
+						required={ true }
+						className={ classnames("form-control", {"is-invalid": this.state.formErrors.account}) }
 						autoComplete="off"
 						value={ this.state.account }
-						onChange={ this.handleAccountChange } />
+						onChange={ this.handleEntryFieldChange } />
+					<div className="invalid-feedback">{ this.state.formErrors.account }</div>
 				</div>
 
 				<div className="form-group">
 					<label htmlFor="username">Username</label>
 					<input type="text"
-						name="username" required={ true }
-						className="form-control"
+						name="username"
+						required={ true }
+						className={ classnames("form-control", {"is-invalid": this.state.formErrors.username}) }
 						autoComplete="email"
 						value={ this.state.username }
-						onChange={ this.handleUsernameChange } />
+						onChange={ this.handleEntryFieldChange } />
+					<div className="invalid-feedback">{ this.state.formErrors.username }</div>
 				</div>
 
 				<div className="form-group">
 					<label htmlFor="password">Password</label>
 					<input type={ this.state.isPasswordVisible ? "text" : "password" }
-						name="password" required={ true }
+						name="password"
+						required={ true }
 						id="password"
-						className="form-control"
+						className={ classnames("form-control", {"is-invalid": this.state.formErrors.password}) }
 						autoComplete="off"
 						ref={ this.passwordFieldRef }
 						value={ this.state.password }
-						onChange={ this.handlePasswordChange } />
+						onChange={ this.handleEntryFieldChange } />
+					<div className="invalid-feedback">{ this.state.formErrors.password }</div>
 				</div>
 
 				<div className="btn-container">
@@ -505,11 +560,13 @@ class App extends PureComponent<{}, INewEntryState> {
 
 				{ settings }
 
-				<div id="extra-container">
+				<div id="extra-container" className="form-group">
 					<label htmlFor="extra">Extra</label>
-					<textarea className="form-control" name="extra" id="extra" rows={4} cols={50}
+					<textarea name="extra" id="extra" rows={4} cols={50}
+						className={ classnames("form-control", {"is-invalid": this.state.formErrors.extra}) }
 						value={ this.state.extra }
-						onChange={ this.handleExtraChange }></textarea>
+						onChange={ this.handleEntryFieldChange }></textarea>
+					<div className="invalid-feedback">{ this.state.formErrors.extra }</div>
 				</div>
 
 				<div className="form-group">

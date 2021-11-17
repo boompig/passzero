@@ -8,7 +8,7 @@ from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import asc
 
 from passzero import audit
-from passzero.config import DEFAULT_ENTRY_VERSION, SALT_SIZE
+from passzero.config import DEFAULT_ENTRY_VERSION, ENTRY_LIMITS, SALT_SIZE
 from passzero.crypto_utils import (PasswordHashAlgo, get_hashed_password,
                                    get_salt)
 from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
@@ -29,6 +29,11 @@ class UserNotAuthorizedError(Exception):
 class InternalServerError(Exception):
     """This exception is used when some internal state in the server is not consistent.
     Done so we can give an opaque message to the client while logging the problem at the server."""
+    pass
+
+
+class EntryValidationError(Exception):
+    """Exception when we fail to validate some aspects of user-provided entry"""
     pass
 
 
@@ -295,6 +300,22 @@ def _create_empty_encryption_key_db(db_session: Session, user: User, user_key: s
     return enc_keys_db
 
 
+def validate_user_supplied_entry(dec_entry: dict):
+    """
+    On success, nothing happens
+    On error, throw EntryValidationError
+    """
+    # check the length of string fields
+    # note that these might not be supplied, or might be set to None
+    for field, max_length in ENTRY_LIMITS.items():
+        val = dec_entry.get(field, None)
+        if val is not None:
+            if not isinstance(dec_entry[field], str):
+                raise EntryValidationError(f"entry field {field} must be a string")
+            if len(dec_entry[field]) > max_length:
+                raise EntryValidationError(f"entry field {field} cannot be longer than {max_length} characters")
+
+
 def insert_entry_for_user(db_session: Session, dec_entry: dict,
                           user_id: int, user_key: str,
                           version: int = DEFAULT_ENTRY_VERSION,
@@ -307,10 +328,15 @@ def insert_entry_for_user(db_session: Session, dec_entry: dict,
         - password: string (required)
         - has_2fa: boolean (required)
         - extra: string (optional)
+    :throws EntryValidationError: If some basic checks on the user-provided entry fails
     """
     assert isinstance(user_id, int)
     assert isinstance(user_key, str)
     assert isinstance(version, int)
+
+    # validate the user-provided entry
+    validate_user_supplied_entry(dec_entry)
+
     entry, entry_key = encrypt_entry(user_key, dec_entry, version=version,
                                      prevent_deprecated_versions=prevent_deprecated_versions)
     insert_new_entry(db_session, entry, user_id)
@@ -569,7 +595,9 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     :return:                Newly edited entry
     :rtype:                 Entry
     :throws AssertionError: If the entry does not belong to the user or if it is pinned
+    :throws EntryValidationError: If one or more of the entry's fields fail validation
     """
+    validate_user_supplied_entry(edited_entry)
     try:
         entry = session.query(Entry).filter_by(id=entry_id).one()
         assert entry.user_id == user_id

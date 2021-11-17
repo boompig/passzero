@@ -72,13 +72,16 @@ class ApiEntryList(Resource):
         user_id = get_jwt_identity()["user_id"]
         user = db.session.query(User).filter_by(id=user_id).one()
         if user.authenticate(args.password):
-            entry = backend.insert_entry_for_user(
-                db_session=db.session,
-                dec_entry=args.entry,
-                user_id=user_id,
-                user_key=args.password
-            )
-            return {"entry_id": entry.id}
+            try:
+                entry = backend.insert_entry_for_user(
+                    db_session=db.session,
+                    dec_entry=args.entry,
+                    user_id=user_id,
+                    user_key=args.password
+                )
+                return {"entry_id": entry.id}
+            except backend.EntryValidationError as err:
+                return json_error_v2(f"Failed to validate entry: {err}", 400)
         else:
             return json_error_v2("Password is not correct", 401)
 

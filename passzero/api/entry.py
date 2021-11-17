@@ -118,6 +118,8 @@ class ApiEntry(Resource):
                 return json_success_v2(
                     "successfully edited account %s" % escape(args.entry["account"])
                 )
+            except backend.EntryValidationError as err:
+                return json_error_v2(f"Failed to validate entry: {err}", 400)
             except NoResultFound:
                 return json_error_v2("no such entry", 400)
             except AssertionError:

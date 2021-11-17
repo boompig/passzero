@@ -16,6 +16,13 @@ SALT_SIZE = 32
 TOKEN_SIZE = 32
 CSRF_TOKEN_LENGTH = 64
 DEFAULT_ENTRY_VERSION = 5
+# in string characters
+ENTRY_LIMITS = {
+    "account": 100,
+    "username": 100,
+    "password": 256,
+    "extra": 4096
+}
 
 
 class DefaultConfig:
