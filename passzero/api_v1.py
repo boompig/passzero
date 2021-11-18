@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 from io import BytesIO
 
-from flask import Blueprint, abort, escape, send_file, session
+from flask import Blueprint, abort, escape, request, send_file, session
 from sqlalchemy.orm.exc import NoResultFound
 
 from . import backend, change_password
@@ -14,7 +14,7 @@ from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
                     DeleteAllEntriesForm, DeleteUserForm, LoginForm,
                     NewDocumentForm, NewEntryForm, RecoverPasswordForm,
                     SignupForm, UpdatePasswordForm, UpdatePreferencesForm)
-from .models import AuthToken, EncryptedDocument, Entry, User, db
+from .models import ApiStats, AuthToken, EncryptedDocument, Entry, User, db
 
 api_v1 = Blueprint("api_v1", __name__)
 
@@ -25,6 +25,25 @@ class UserNotActiveException(Exception):
 
 class TokenExpiredException(Exception):
     pass
+
+
+@api_v1.after_app_request
+def log_api_stats(response):
+    day = datetime.now().isoformat().split("T")[0]
+    path = request.path
+    stats = db.session.query(ApiStats).filter_by(
+        path=path, day=day).one_or_none()
+    if stats is None:
+        stats = ApiStats(
+            path=path,
+            day=day,
+            count=1,
+        )
+    else:
+        stats.count += 1
+    db.session.add(stats)
+    db.session.commit()
+    return response
 
 
 @api_v1.route("/api/status", methods=["GET"])

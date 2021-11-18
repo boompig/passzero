@@ -1,3 +1,4 @@
+from .api_stats import ApiStats
 from .api_token import ApiToken
 from .auth_tokens import AuthToken
 from .documents import DecryptedDocument, EncryptedDocument
@@ -16,6 +17,7 @@ __all__ = [
     Entry_v5,
     User,
     AuthToken,
+    ApiStats,
     ApiToken,
     EncryptionKeys,
     EncryptionKeysDB_V1,
