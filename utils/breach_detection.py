@@ -7,7 +7,7 @@ import logging
 from argparse import ArgumentParser
 import hashlib
 import requests
-from tests.unit_tests import api
+from tests.common import api
 import getpass
 import json
 import os

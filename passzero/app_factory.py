@@ -11,6 +11,7 @@ from flask_talisman import Talisman
 from jwt.exceptions import DecodeError
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.middleware.proxy_fix import ProxyFix
+from whitenoise import WhiteNoise
 
 from passzero.config import DefaultConfig
 from passzero.api import api
@@ -157,5 +158,8 @@ def create_app(name: str, settings_override: dict = {}):
     # add the database
     db.app = app
     db.init_app(app)
+
+    # enable WhiteNoise for more efficient treatment of static files
+    app.wsgi_app = WhiteNoise(app.wsgi_app, root="static/")  # type: ignore
 
     return app

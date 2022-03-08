@@ -29,7 +29,7 @@ def _is_requests_session(session) -> bool:
     return "requests" in str(type(session))
 
 
-def _get_response_data(session, response) -> str:
+def _get_response_data(session, response: Union[requests.Response, flask.Response]) -> str:
     """
     FIXME: massive hack to allow use of this file in end-to-end tests
     """
