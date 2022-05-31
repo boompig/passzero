@@ -73,7 +73,7 @@ def json_header_with_token(token: str) -> Dict[str, str]:
     return h
 
 
-def json_get(session, relative_url: str, token: Optional[str] = None):
+def json_get(session, relative_url: str, token: Optional[str] = None, verify: bool = False):
     if token:
         headers = json_header_with_token(token)
     else:
@@ -83,7 +83,7 @@ def json_get(session, relative_url: str, token: Optional[str] = None):
     url = relative_url
     if _is_requests_session(session):
         url = BASE_URL + relative_url
-        kwargs["verify"] = False
+        kwargs["verify"] = verify
     else:
         kwargs["follow_redirects"] = True
     return session.get(
@@ -93,7 +93,7 @@ def json_get(session, relative_url: str, token: Optional[str] = None):
     )
 
 
-def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] = None):
+def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] = None, verify: bool = False):
     if token:
         headers = json_header_with_token(token)
     else:
@@ -103,7 +103,7 @@ def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] 
     url = relative_url
     if _is_requests_session(session):
         url = BASE_URL + relative_url
-        kwargs["verify"] = False
+        kwargs["verify"] = verify
     else:
         kwargs["follow_redirects"] = True
     return session.post(
@@ -579,13 +579,13 @@ def get_api_token_with_login(session, check_status: bool = True):
         return r
 
 
-def login_with_token(session, email: str, password: str, check_status: bool = True):
+def login_with_token(session, email: str, password: str, check_status: bool = True, verify: bool = False):
     assert isinstance(email, str)
     url = "/api/v3/token"
     r = json_post(session, url, data={
         "email": email,
         "password": password
-    })
+    }, verify=verify)
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
     try:
@@ -637,12 +637,12 @@ def delete_all_entries_with_token(session, password: str, token: str, check_stat
     return r
 
 
-def get_encrypted_entries_with_token(session, token: str, check_status: bool = True):
+def get_encrypted_entries_with_token(session, token: str, check_status: bool = True, verify: bool = False):
     """
     Return entry metadata without decrypting the entries
     """
     url = "/api/v3/entries"
-    r = json_get(session, url, token=token)
+    r = json_get(session, url, token=token, verify=verify)
     # will not be printed unless there is an error
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)
@@ -668,7 +668,8 @@ def decrypt_entry_with_token(session,
                              entry_id: int,
                              password: str,
                              token: str,
-                             check_status: bool = True):
+                             check_status: bool = True,
+                             verify: bool = False):
     assert isinstance(entry_id, int)
     assert isinstance(password, str) and password != ""
     assert isinstance(token, str)
@@ -678,7 +679,8 @@ def decrypt_entry_with_token(session,
         session,
         url,
         {"password": password},
-        token=token
+        token=token,
+        verify=verify
     )
     response_data = _get_response_data(session, r)
     # will not be printed unless there is an error
@@ -728,11 +730,13 @@ class ApiV3:
             BASE_URL = base_url
         logger.debug("Using BASE_URL %s", BASE_URL)
 
-    def login(self, email: str, password: str) -> None:
-        """Always checks status"""
+    def login(self, email: str, password: str, verify: bool = False) -> None:
+        """Always checks status
+        :param verify: Verify SSL cert
+        """
         assert isinstance(email, str)
         assert isinstance(password, str) and password != ""
-        token = login_with_token(self.client, email, password, check_status=True)
+        token = login_with_token(self.client, email, password, check_status=True, verify=verify)
         self.api_token = token
         self.password = password
 
@@ -806,15 +810,16 @@ class ApiV3:
 
     # entries
 
-    def get_encrypted_entries(self):
+    def get_encrypted_entries(self, verify: bool = False):
         assert self.api_token is not None
         return get_encrypted_entries_with_token(
             self.client,
             self.api_token,
-            check_status=True
+            check_status=True,
+            verify=verify
         )
 
-    def decrypt_entry(self, entry_id: int):
+    def decrypt_entry(self, entry_id: int, verify: bool = False):
         assert self.api_token is not None
         assert self.password is not None
         return decrypt_entry_with_token(
@@ -822,7 +827,8 @@ class ApiV3:
             entry_id,
             self.password,
             self.api_token,
-            check_status=True
+            check_status=True,
+            verify=verify
         )
 
     def create_entry(self, entry: dict) -> int:

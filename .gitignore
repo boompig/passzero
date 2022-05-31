@@ -69,5 +69,6 @@ TODO.md
 IDEA.md
 
 # breach detection should not be committed for now
+utils/download_entries.py
 utils/breach_detection.py
 config/schema.sql
