@@ -67,3 +67,7 @@ data
 # private future work document
 TODO.md
 IDEA.md
+
+# breach detection should not be committed for now
+utils/breach_detection.py
+config/schema.sql
