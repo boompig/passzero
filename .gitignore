@@ -7,9 +7,10 @@
 # ignore the dump file for database
 dump.sql
 
-# virtualenv
+# virtualenv and pyenv
 venv*
 env
+.python-version
 
 # code coverage
 .coverage*
