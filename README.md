@@ -28,7 +28,7 @@ PassZero is implemented as a simple web app with results held in a database, the
         - `postgres://<username>:<password>@<host>:<port>/<database>`
     - `SENDGRID_API_KEY`
     - alternatively create file `passzero/my_env.py` with method `setup_env` which sets above environment variables
-* `heroku local`
+* `heroku local web`
 
 ## Development
 
@@ -75,6 +75,10 @@ When modifying the CSS you have to rebuild the minified CSS using the command:
 ```
 make minify-css
 ```
+
+### Running Unit Tests
+
+`make test`
 
 ## Deploying
 
