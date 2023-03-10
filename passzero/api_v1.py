@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 
 from flask import Blueprint, abort, escape, request, send_file, session
@@ -29,8 +29,18 @@ class TokenExpiredException(Exception):
 
 @api_v1.after_app_request
 def log_api_stats(response):
-    day = datetime.now().isoformat().split("T")[0]
+    now = datetime.now()
+    day = now.isoformat().split("T")[0]
     path = request.path
+    week_of_year = now.isocalendar().week
+    # find the first antecedent Monday (note that Monday is weekday == 0)
+    t = now
+    day_of_week = t.weekday()
+    while day_of_week > 0:
+        t -= timedelta(days=1)
+        day_of_week = t.weekday()
+    day = t.isoformat().split("T")[0]
+
     stats = db.session.query(ApiStats).filter_by(
         path=path, day=day).one_or_none()
     if stats is None:
@@ -38,6 +48,7 @@ def log_api_stats(response):
             path=path,
             day=day,
             count=1,
+            week_of_year=week_of_year,
         )
     else:
         stats.count += 1
