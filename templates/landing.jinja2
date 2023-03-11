@@ -1,53 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+{% extends "layout-landing.jinja2" %}
 
-        <title>PassZero</title>
+{% block body %}
+    <div id="react-root"></div>
+{% endblock %}
 
-        <link rel="manifest" href="/manifest.json">
-        {# various icons #}
-        <link rel="icon" type="image/png" href="/favicon.png">
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-
-        {# custom CSS #}
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/landing.min.css") + "?build=" + config['BUILD_ID'] }}">
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/navbar.min.css") + "?build=" + config['BUILD_ID'] }}">
-    </head>
-    <body>
-        <div id="hero">
-            <nav class="navbar">
-                <ul class="nav-items">
-                    <li class="nav-item"><a href="/login">Sign In</a></li>
-                    <li class="nav-item"><a href="/about">About</a></li>
-                    <li class="nav-item"><a href="https://github.com/boompig/passzero">Code</a></li>
-                    <li class="nav-item"><a href="https://github.com/boompig/passzero/issues">Bug Tracker</a></li>
-                </ul>
-            </nav>
-
-            <div id="hero-text-container">
-                <div id="title-text-container">
-                    <h1 id="title-text">PassZero</h1>
-                    <div id="beta-sticker">Beta</div>
-                </div>
-
-                <div id="explain-stub">
-                    Generate strong passwords and store them securely
-                </div>
-
-                <div id="btn-container">
-                    <a id="try-now-btn" class="btn btn-primary"
-                        href="/signup">Join Now</a>
-                    <a id="learn-more-btn" class="btn"
-                        href="/about">Learn More</a>
-                </div>
-            </div>
-        </div>
-
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
-        {# custom js #}
-        <script src="{{ url_for("static", filename="/js/dist/register-sw.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
-    </body>
-</html>
+{% block extra_js %}
+    <script src="/js/dist/landing.bundle.js"></script>
+{% endblock %}

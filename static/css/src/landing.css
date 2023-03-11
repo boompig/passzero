@@ -29,6 +29,7 @@ head {
     color: #fff;
 
     z-index: -2;
+    min-height: 100vh;
 }
 
 @media(min-height: 500px) {
@@ -82,6 +83,7 @@ head {
 #try-now-btn {
     background-color: #34B526;
     border: 1px solid #16700C;
+    margin-right: 0.5rem;
 }
 
 #learn-more-btn {
