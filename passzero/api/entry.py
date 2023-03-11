@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional  # noqa: F401
 
 from flask import current_app, escape
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -7,7 +7,8 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from .. import backend
 from ..api_utils import json_error_v2, json_success_v2
-from ..models import EncryptionKeys, Entry, User, db
+from passzero.models import Entry, User, db
+from passzero.models import EncryptionKeys  # noqa: F401
 from .jwt_auth import authorizations
 
 ns = Namespace("Entry", authorizations=authorizations)

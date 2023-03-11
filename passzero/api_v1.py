@@ -626,7 +626,7 @@ def api_v1_signup(request_data: SignupForm):
         )
         return write_json(code, data)
     except backend.UserExistsError as err:
-        code, data = json_error(400, err.message)
+        code, data = json_error(400, str(err))
         return write_json(code, data)
     except backend.EmailSendError:
         code, data = json_internal_error("failed to send email")

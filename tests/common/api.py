@@ -34,8 +34,10 @@ def _get_response_data(session, response: Union[requests.Response, flask.Respons
     FIXME: massive hack to allow use of this file in end-to-end tests
     """
     if _is_requests_session(session):
+        assert isinstance(response, requests.Response)
         return response.text
     else:
+        assert isinstance(response, flask.Response)
         return response.data
 
 
@@ -47,7 +49,9 @@ def _get_response_json(response: Union[requests.Response, flask.Response]) -> di
         return response.json()
     else:
         assert isinstance(response, flask.Response)
-        return response.get_json()
+        j = response.get_json()
+        assert j is not None
+        return j
 
 
 def _print_if_test(session, data) -> None:

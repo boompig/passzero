@@ -214,7 +214,7 @@ class ApiEntryList(Resource):
                 master_key=args.password,
                 limit=(args.limit if args.limit else None)
             )
-            return{
+            return {
                 "num_updated": num_updated
             }
         else:

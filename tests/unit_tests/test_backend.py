@@ -1,8 +1,11 @@
 import logging
 import os
-from typing import Dict
+from typing import Dict  # noqa: F401
 
 import pytest
+from sqlalchemy import and_
+from sqlalchemy.orm.exc import NoResultFound
+
 from passzero import backend
 from passzero.app_factory import create_app
 from passzero.backend import (create_inactive_user, decrypt_entries,
@@ -15,11 +18,9 @@ from passzero.crypto_utils import PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
                              EncryptionKeys, Entry, Link, Service, User)
 from passzero.models import db as _db
-from sqlalchemy import and_
-from sqlalchemy.orm.exc import NoResultFound
 
-from .utils import (assert_decrypted_entries_equal,
-                    assert_decrypted_links_equal, get_test_decrypted_entry)
+from tests.unit_tests.utils import (assert_decrypted_entries_equal,
+                                    assert_decrypted_links_equal, get_test_decrypted_entry)
 
 DB_FILENAME = "passzero.db"
 DEFAULT_EMAIL = u"fake@fake.com"

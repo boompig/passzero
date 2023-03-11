@@ -6,10 +6,11 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, reqparse
 from sqlalchemy import and_
 
-from .. import backend
-from ..api_utils import json_error_v2, json_success_v2
-from ..models import DecryptedLink, Link, User, db
-from .jwt_auth import authorizations
+from passzero import backend
+from passzero.api_utils import json_error_v2, json_success_v2
+from passzero.models import Link, User, db
+from passzero.models import DecryptedLink  # noqa F401
+from passzero.api.jwt_auth import authorizations
 
 
 def jsonify_links(enc_links: List[Link]) -> List[dict]:

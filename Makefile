@@ -47,7 +47,7 @@ static/css/dist/%.min.css: static/css/src/%.css
 
 test: python-test
 
-python-test: $(SRC) $(UNIT_TEST_SRC) lint
+python-test: $(SRC) $(UNIT_TEST_SRC) python-lint
 	# run until only first failure to not waste time
 	PYTHONPATH=$(CWD) pytest -x tests/unit_tests
 
@@ -59,12 +59,18 @@ live-test-local: $(SRC) $(E2E_TEST_SRC) lint
 	# use heroku local to make extra certain everything works
 	PYTHONPATH=$(CWD) LIVE_TEST_HOST='https://localhost:5100' pytest -x tests/end_to_end_tests
 
-lint: $(SRC) $(standalone_typescript_src) $(css_src)
-	$(csslint) --quiet $(css_src)
-	yarn lint
+python-lint: $(SRC)
 	flake8 $(SRC) tests/unit_tests tests/end_to_end_tests
 	mypy --ignore-missing-imports $(SRC)
 	mypy --ignore-missing-imports tests/unit_tests tests/end_to_end_tests
+
+js-lint: $(standalone_typescript_src)
+	yarn lint
+
+css-lint: $(css_src)
+	$(csslint) --quiet $(css_src)
+
+lint: python-lint js-lint css-lint
 
 clean:
 	find . -name '*.pyc' -delete

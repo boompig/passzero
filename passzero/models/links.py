@@ -30,8 +30,8 @@ def _get_key(master_key: str, kdf_salt: bytes):
 
 class DecryptedLink:
     def __init__(self, service_name: str, link: str,
-                 id: int = None, user_id: int = None,
-                 version: int = None,
+                 id: Optional[int] = None, user_id: Optional[int] = None,
+                 version: Optional[int] = None,
                  symmetric_key: Optional[bytes] = None) -> None:
         self.service_name = service_name
         self.link = link
