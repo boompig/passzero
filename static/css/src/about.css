@@ -19,3 +19,7 @@
     padding-top: 1.5rem;
     padding-bottom: 1rem;
 }
+
+nav .nav-text {
+    margin-left: 6px;
+}

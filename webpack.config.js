@@ -9,6 +9,7 @@ const mode = (process.env.NODE_ENV === 'dev' ? 'development' : 'production');
 module.exports = {
     mode: mode,
     entry: {
+        'about': './typescript/about-bundle/index.tsx',
         'entries': './typescript/entries-bundle/index.tsx',
         'new-entry': './typescript/new-entry-bundle/index.tsx',
         'links': './typescript/links-bundle/index.tsx',
@@ -59,6 +60,8 @@ module.exports = {
                     path.resolve(__dirname, 'typescript/view-doc-bundle'),
                     path.resolve(__dirname, 'typescript/user-profile-bundle'),
                     path.resolve(__dirname, 'typescript/common'),
+                    path.resolve(__dirname, 'typescript/components'),
+                    path.resolve(__dirname, 'typescript/about-bundle'),
                 ],
                 exclude: [
                     path.resolve(__dirname, 'typescript/standalone'),
