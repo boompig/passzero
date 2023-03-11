@@ -5,16 +5,16 @@ from io import BytesIO
 from flask import Blueprint, abort, escape, request, send_file, session
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import backend, change_password
-from .api_utils import (generate_csrf_token, json_error, json_internal_error,
-                        json_success, requires_csrf_check, requires_json_auth,
-                        requires_json_form_validation, write_json)
-from .email import send_confirmation_email, send_recovery_email
-from .forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
-                    DeleteAllEntriesForm, DeleteUserForm, LoginForm,
-                    NewDocumentForm, NewEntryForm, RecoverPasswordForm,
-                    SignupForm, UpdatePasswordForm, UpdatePreferencesForm)
-from .models import ApiStats, AuthToken, EncryptedDocument, Entry, User, db
+from passzero import backend, change_password
+from passzero.api_utils import (generate_csrf_token, json_error, json_internal_error,
+                                json_success, requires_csrf_check, requires_json_auth,
+                                requires_json_form_validation, write_json)
+from passzero.email import send_recovery_email
+from passzero.forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
+                            DeleteAllEntriesForm, DeleteUserForm, LoginForm,
+                            NewDocumentForm, NewEntryForm, RecoverPasswordForm,
+                            SignupForm, UpdatePasswordForm, UpdatePreferencesForm)
+from passzero.models import ApiStats, AuthToken, EncryptedDocument, Entry, User, db
 
 api_v1 = Blueprint("api_v1", __name__)
 
@@ -616,38 +616,21 @@ def api_v1_signup(request_data: SignupForm):
     - 500: failed to send email
     """
     try:
-        user = backend.get_account_with_email(db.session, request_data["email"])
-    except NoResultFound:
-        token = AuthToken()
-        token.random_token()
-        if send_confirmation_email(request_data["email"], token.token):
-            # this also creates a number of backend structures
-            user = backend.create_inactive_user(
-                db.session,
-                request_data["email"],
-                request_data["password"]
-            )
-            token.user_id = user.id
-            # now add token
-            db.session.add(token)
-            db.session.commit()
-            code, data = json_success(
-                "Successfully created account with email %s" % request_data['email']
-            )
-        else:
-            code, data = json_internal_error("failed to send email")
-    else:
-        if user.active:
-            code, data = json_error(
-                400,
-                "an account with this email address already exists"
-            )
-        else:
-            code, data = json_error(
-                400,
-                "This account has already been created. Check your inbox for a confirmation email."
-            )
-    return write_json(code, data)
+        backend.create_new_account(
+            db_session=db.session,
+            email=request_data["email"],
+            password=request_data["password"],
+        )
+        code, data = json_success(
+            "Successfully created account with email %s" % request_data['email']
+        )
+        return write_json(code, data)
+    except backend.UserExistsError as err:
+        code, data = json_error(400, err.message)
+        return write_json(code, data)
+    except backend.EmailSendError:
+        code, data = json_internal_error("failed to send email")
+        return write_json(code, data)
 
 
 @api_v1.route("/api/v1/user/activate", methods=["POST"])

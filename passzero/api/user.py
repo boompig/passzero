@@ -2,9 +2,10 @@ from flask_restx import Namespace, Resource, reqparse, ValidationError
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy.exc import IntegrityError
 
-from ..api_utils import json_error_v2, json_success_v2
-from ..models import User, db
-from .jwt_auth import authorizations
+from passzero.api_utils import json_error_v2, json_success_v2
+from passzero.models import User, db
+from passzero.api.jwt_auth import authorizations
+from passzero import backend
 
 
 ns = Namespace("User", authorizations=authorizations)
@@ -29,6 +30,34 @@ def username(min_len: int, max_len: int):
         else:
             return s
     return validate
+
+
+@ns.route("/register")
+class ApiUser(Resource):
+    def post(self):
+        """Create a new user. Behaves identically to v1 register user API"""
+        parser = reqparse.RequestParser()
+        parser.add_argument("email", type=str, required=True)
+        parser.add_argument("password", type=str, required=True)
+        parser.add_argument("confirm_password", type=str, required=True)
+        args = parser.parse_args()
+
+        if args.password != args.confirm_password:
+            return json_error_v2("password and confirm_password must match", 400)
+
+        try:
+            backend.create_new_account(
+                db_session=db.session,
+                email=args.email,
+                password=args.password,
+            )
+            return json_success_v2(
+                "Successfully created (inactive) account with email %s" % args.email
+            )
+        except backend.UserExistsError as err:
+            return json_error_v2(str(err), 400)
+        except backend.EmailSendError:
+            return json_error_v2("failed to send email", 500)
 
 
 @ns.route("/me")

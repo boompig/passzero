@@ -8,6 +8,7 @@ from sqlalchemy.orm.session import Session
 from sqlalchemy.sql.expression import asc
 
 from passzero import audit
+from passzero import email as pz_email
 from passzero.config import DEFAULT_ENTRY_VERSION, ENTRY_LIMITS, SALT_SIZE
 from passzero.crypto_utils import (PasswordHashAlgo, get_hashed_password,
                                    get_salt)
@@ -35,6 +36,55 @@ class InternalServerError(Exception):
 class EntryValidationError(Exception):
     """Exception when we fail to validate some aspects of user-provided entry"""
     pass
+
+
+class UserExistsError(Exception):
+    """The account already exists. Raise the exception with a helpful message."""
+    pass
+
+
+class EmailSendError(Exception):
+    """Failed to send an email"""
+    pass
+
+
+def create_new_account(db_session, email: str, password: str) -> User:
+    """Create a new account. Perform all steps necessary including sending an email.
+    :throws UserExistsError: make sure to read the error message
+    :throws EmailSendError:
+    """
+    try:
+        user = get_account_with_email(db_session, email)
+        # this is the bad case
+        if user.active:
+            raise UserExistsError(
+                "an account with this email address already exists"
+            )
+        else:
+            raise UserExistsError(
+                "This account has already been created. Check your inbox for a confirmation email."
+            )
+    except NoResultFound:
+        # this is the good case
+        token = AuthToken()
+        token.random_token()
+        if pz_email.send_confirmation_email(email, token.token):
+            # this also creates a number of backend structures
+            user = create_inactive_user(
+                db_session,
+                email,
+                password,
+            )
+            token.user_id = user.id
+            # now add token
+            db_session.add(token)
+            db_session.commit()
+            logger.info(
+                "Successfully created account with email %s", email
+            )
+            return user
+        else:
+            raise EmailSendError("failed to send email")
 
 
 def activate_account(db_session: Session, user: User):
