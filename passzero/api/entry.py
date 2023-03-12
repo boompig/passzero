@@ -18,7 +18,7 @@ ns = Namespace("Entry", authorizations=authorizations)
 class ApiEntry(Resource):
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def delete(self, entry_id: int):
         """Delete the entry with the given ID.
 
@@ -60,7 +60,7 @@ class ApiEntry(Resource):
             return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def patch(self, entry_id: int):
         """Update the specified entry.
 
@@ -132,7 +132,7 @@ class ApiEntry(Resource):
             return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def post(self, entry_id: int):
         """Decrypt the given entry and return the contents
 

@@ -73,8 +73,6 @@ def create_app(name: str, settings_override: dict = {}):
     app.config["WTF_CSRF_ENABLED"] = False
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=5)
     app.config["WEB_SESSION_EXPIRES"] = timedelta(minutes=20)
-    app.config["JWT_BLACKLIST_ENABLED"] = True
-    app.config["JWT_BLACKLIST_TOKEN_CHECKS"] = ["access"]
     app.config["SWAGGER_UI_DOC_EXPANSION"] = "list"
     # remove whitespace from json responses through the API
     app.config["RESTPLUS_JSON"] = {
@@ -86,12 +84,13 @@ def create_app(name: str, settings_override: dict = {}):
 
     jwt = JWTManager(app)
 
-    @jwt.token_in_blacklist_loader
-    def check_token_in_blacklist(token_dict: dict) -> bool:
-        user_id = token_dict["identity"]["user_id"]
+    @jwt.token_in_blocklist_loader
+    def check_token_in_blocklist(jwt_header, jwt_payload: dict) -> bool:
+        # see https://flask-jwt-extended.readthedocs.io/en/stable/blocklist_and_token_revoking/
+        user_id = jwt_payload["sub"]["user_id"]
         try:
             api_token = db.session.query(ApiToken).filter_by(user_id=user_id).one()
-            return api_token.token_identity != token_dict["jti"]
+            return api_token.token_identity != jwt_payload["jti"]
         except NoResultFound:
             # no token registered - may mean the token is revoked
             return True

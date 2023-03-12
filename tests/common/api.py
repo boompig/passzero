@@ -5,6 +5,7 @@ import os
 from typing import Dict, List, Optional, Union
 
 import flask
+import flask.testing
 import requests
 import six
 
@@ -97,25 +98,30 @@ def json_get(session, relative_url: str, token: Optional[str] = None, verify: bo
     )
 
 
-def json_post(session, relative_url: str, data: dict = {}, token: Optional[str] = None, verify: bool = False):
+def json_post(session: flask.testing.FlaskClient | requests.Session, relative_url: str, data: dict = {},
+              token: Optional[str] = None, verify: bool = False):
     if token:
         headers = json_header_with_token(token)
     else:
         headers = json_header
-    # FIXME: massive hack around unit test vs real test
-    kwargs = {}
     url = relative_url
     if _is_requests_session(session):
+        assert isinstance(session, requests.Session)
         url = BASE_URL + relative_url
-        kwargs["verify"] = verify
+        return session.post(
+            url,
+            data=json.dumps(data),
+            headers=headers,
+            verify=True,
+        )
     else:
-        kwargs["follow_redirects"] = True
-    return session.post(
-        url,
-        data=json.dumps(data),
-        headers=headers,
-        **kwargs
-    )
+        assert isinstance(session, flask.testing.FlaskClient)
+        return session.post(
+            url,
+            data=json.dumps(data),
+            headers=headers,
+            follow_redirects=True,
+        )
 
 
 def json_put(session, relative_url: str, data: dict = {}, token: Optional[str] = None):
@@ -360,7 +366,7 @@ def edit_entry(app, entry_id: int, entry: dict, csrf_token: str,
     return r
 
 
-def signup(app, email: str, password: str, check_status: bool = False):
+def user_signup_v1(app, email: str, password: str, check_status: bool = False):
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
     assert isinstance(check_status, bool)

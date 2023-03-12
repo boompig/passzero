@@ -1,17 +1,14 @@
-from __future__ import print_function
-
 import json
 import logging
 import unittest
-
 from unittest import mock
+
 import six
 from six import BytesIO
 
 from passzero.app_factory import create_app
 from passzero.models import db
-
-from ..common import api
+from tests.common import api
 
 DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"
@@ -225,7 +222,7 @@ class PassZeroApiTester(unittest.TestCase):
     def test_signup(self, m1):
         email = DEFAULT_EMAIL
         password = u"fake password"
-        r = api.signup(self.app, email, password)
+        r = api.user_signup_v1(self.app, email, password)
         print(r.data)
         # only printed on error
         assert r.status_code == 200
@@ -269,7 +266,7 @@ class PassZeroApiTester(unittest.TestCase):
         # signup, etc etc
         # TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
-        r = api.signup(self.app, email, password)
+        r = api.user_signup_v1(self.app, email, password)
         print(r.data)
         # only printed on error
         assert r.status_code == 200

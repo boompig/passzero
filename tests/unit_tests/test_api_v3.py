@@ -82,7 +82,7 @@ def create_active_account(client, email: str, password: str, m1):
     # signup, etc etc
     # TODO for some reason can't mock out send_confirmation_email so mocking this instead
     m1.return_value = True
-    r = api.signup(client, email, password)
+    r = api.user_signup_v1(client, email, password)
     assert r.status_code == 200
     # get the token from calls
     token = m1.call_args[0][2].split("?")[1].replace("token=", "")

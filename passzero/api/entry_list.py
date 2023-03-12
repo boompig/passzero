@@ -23,7 +23,7 @@ ns = Namespace("EntryList", authorizations=authorizations)
 class ApiEntryList(Resource):
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def post(self):
         """Create a new entry for the logged-in user.
 
@@ -86,7 +86,7 @@ class ApiEntryList(Resource):
             return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def delete(self):
         """Delete *all* entries for the logged-in user.
 
@@ -122,7 +122,7 @@ class ApiEntryList(Resource):
             return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def get(self):
         """Return a list of encrypted entries.
 
@@ -169,7 +169,7 @@ class ApiEntryList(Resource):
         return rval
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def patch(self):
         """
         Update the versions of all the entries to the latest version.

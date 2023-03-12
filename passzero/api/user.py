@@ -85,7 +85,7 @@ class ApiUser(Resource):
 @ns.route("/me")
 class CurrentUser(Resource):
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def get(self):
         """Return details about the current user
 
@@ -119,7 +119,7 @@ class CurrentUser(Resource):
         return user.to_json()
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def patch(self):
         """Update the current user. Can update a few fields. Specify the ones you want to update, leave the rest blank.
 

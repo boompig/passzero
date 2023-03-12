@@ -44,7 +44,7 @@ class PassZeroApiTester(unittest.TestCase):
         # signup, etc etc
         # TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
-        r = api.signup(self.app, email, password)
+        r = api.user_signup_v1(self.app, email, password)
         assert r.status_code == 200
         m1.assert_called_once()
 
@@ -55,7 +55,7 @@ class PassZeroApiTester(unittest.TestCase):
         # signup, etc etc
         # TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
-        r = api.signup(self.app, email, password)
+        r = api.user_signup_v1(self.app, email, password)
         print(r.data)
         # only printed on error
         assert r.status_code == 200

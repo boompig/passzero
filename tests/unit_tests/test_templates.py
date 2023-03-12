@@ -51,7 +51,7 @@ def _create_active_account(client, email: str, password: str):
         # signup, etc etc
         # TODO for some reason can't mock out send_confirmation_email so mocking this instead
         m1.return_value = True
-        api.signup(client, email, password, check_status=True)
+        api.user_signup_v1(client, email, password, check_status=True)
         # get the token from calls
         token = m1.call_args[0][2].split("?")[1].replace("token=", "")
         # link = m1.call_args[0][2][m1.call_args[0][2].index("http://"):]
@@ -559,7 +559,7 @@ def test_signup_confirm(test_client):
     with mock.patch("passzero.email.send_email") as m1:
         m1.return_value = True
         with test_client as c:
-            api.signup(c, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+            api.user_signup_v1(c, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
             # NOTE for whatever reason cannot patch send_recovery_email...
             recovery_token = m1.call_args[0][2].split("token=")[1]
             response = c.get("/signup/confirm?token=%s" % recovery_token,

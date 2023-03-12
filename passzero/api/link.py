@@ -15,7 +15,7 @@ ns = Namespace("link", authorizations=authorizations)
 class ApiLink(Resource):
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def delete(self, link_id: int):
         """Delete the link with the given ID.
 
@@ -56,7 +56,7 @@ class ApiLink(Resource):
             return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def patch(self, link_id: int):
         """Update the specified link.
 
@@ -118,7 +118,7 @@ class ApiLink(Resource):
             return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def post(self, link_id: int):
         """Decrypt the given link and return the contents
 

@@ -157,7 +157,7 @@ class ApiTokenResource(Resource):
             return json_error_v2("The account has not been activated. Check your email!", 401)
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def delete(self):
         """Logout. Destroy current token.
 

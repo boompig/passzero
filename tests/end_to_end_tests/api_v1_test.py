@@ -87,7 +87,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
         api.logout(session, check_status=True)
 
     def _signup(self, session: Session, email: str, password: str):
-        auth_response = api.signup(session, email, password, check_status=False)
+        auth_response = api.user_signup_v1(session, email, password, check_status=False)
         assert auth_response.status_code == 200
         return auth_response
 

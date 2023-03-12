@@ -24,7 +24,7 @@ ns = Namespace("LinkList", authorizations=authorizations)
 class ApiLinkList(Resource):
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def post(self):
         """Create a new link for the logged-in user.
 
@@ -78,7 +78,7 @@ class ApiLinkList(Resource):
             return json_error_v2("Password is not correct", 401)
 
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def get(self):
         """Return a list of encrypted links.
 
@@ -118,7 +118,7 @@ MAX_NUM_DECRYPT = 10
 @ns.route("/decrypt")
 class DecryptedApiLink(Resource):
     @ns.doc(security="apikey")
-    @jwt_required
+    @jwt_required()
     def post(self):
         """Return a list of decrypted links.
 
