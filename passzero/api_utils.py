@@ -85,7 +85,7 @@ def generate_csrf_token() -> str:
     return session["csrf_token"]
 
 
-def write_json(code: int, data: dict) -> Response:
+def write_json(code: int, data: dict | str | list) -> Response:
     """Write JSON response. Code is status code."""
     return Response(
         json.dumps(data, separators=(",", ":")),

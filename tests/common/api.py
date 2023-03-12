@@ -287,7 +287,7 @@ def put_user_preferences(app, prefs: dict, csrf_token: str,
     return r
 
 
-def create_entry(app, entry: dict, csrf_token: str, check_status: bool = True) -> int:
+def create_entry(app, entry: dict, csrf_token: str, check_status: bool = True) -> int | requests.Response:
     """
     :return entry_id:       The entry ID of the newly created entry
     """
@@ -950,18 +950,6 @@ class ApiV3:
             url=url,
             data=data,
             check_status=check_status
-        )
-
-    def delete_all_links(self) -> None:
-        assert self.password is not None and self.password != ""
-        url = "/api/v3/links"
-        data = {
-            "password": self.password,
-        }
-        self.json_delete(
-            url=url,
-            check_status=True,
-            data=data,
         )
 
     # services

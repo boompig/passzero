@@ -70,7 +70,9 @@ def _create_entry(client) -> int:
         "extra": "some xtra",
         "has_2fa": True
     }
-    return api.create_entry(client, entry, token, check_status=True)
+    entry_id = api.create_entry(client, entry, token, check_status=True)
+    assert isinstance(entry_id, int)
+    return entry_id
 
 
 def _create_document(client) -> int:

@@ -175,6 +175,7 @@ class PassZeroApiV1Tester(unittest.TestCase):
                 "password": "entry_pass",
             }
             response = api.create_entry(s, entry, u"", check_status=False)
+            assert isinstance(response, requests.Response)
             assert response is not None and response.status_code == 403
             entries = self._get_entries(s)
             assert entries == []
