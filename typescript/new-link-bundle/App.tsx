@@ -91,7 +91,7 @@ class App extends PureComponent<{}, INewLinkState> {
         this.pzApi.saveLink(linkData)
             .then(() => {
                 console.log("Link saved");
-                window.location.href = "/links";
+                window.location.assign("/links");
             })
             .catch((err) => {
                 console.error("Failed to save link");
@@ -110,7 +110,7 @@ class App extends PureComponent<{}, INewLinkState> {
         this.pzApi.editLink(this.state.linkId, linkData)
             .then(() => {
                 console.log("Link saved");
-                window.location.href = "/links";
+                window.location.assign("/links");
             })
             .catch((err) => {
                 console.error("Failed to save link");

@@ -19,7 +19,7 @@ export default class EncryptedDocument extends React.PureComponent<IEncDocProps,
     }
 
     handleEdit(event) {
-        window.location.href = `/docs/${this.props.document.id}/edit`;
+        window.location.assign(`/docs/${this.props.document.id}/edit`);
     }
 
     handleDecrypt() {

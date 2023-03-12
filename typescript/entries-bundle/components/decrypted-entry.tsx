@@ -88,7 +88,7 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
     }
 
     handleEdit(): void {
-        window.location.href = `/edit/${this.props.entry.id}`;
+        window.location.assign(`/edit/${this.props.entry.id}`);
     }
 
     toggleHidePassword(): void {

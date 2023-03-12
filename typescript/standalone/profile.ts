@@ -116,7 +116,7 @@ class Profile {
         Profile.renderState();
         pzAPI.deleteUser(password)
         .done((response, textStatus, obj) => {
-            window.location.href = "/post_account_delete";
+            window.location.assign("/post_account_delete");
         })
         .catch((obj, textStatus, textCode) => {
             Profile.state.successMsg = null;

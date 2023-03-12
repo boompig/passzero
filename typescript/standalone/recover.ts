@@ -25,7 +25,7 @@ function recoverPasswordConfirm(e: Event) {
     pzAPI.recoverAccountConfirm(token, password, confirmPassword)
     .done((response, textStatus, obj) => {
         console.log(response);
-        window.location.href = "/logout";
+        window.location.assign("/logout");
     })
     .catch((obj, textStatus, err) => {
         $("#server-msg").text(obj.responseJSON.msg);

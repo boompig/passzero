@@ -35,7 +35,27 @@ def username(min_len: int, max_len: int):
 @ns.route("/register")
 class ApiUser(Resource):
     def post(self):
-        """Create a new user. Behaves identically to v1 register user API"""
+        """Create a new user. Behaves identically to v1 register user API.
+
+        Arguments
+        ---------
+        - email: string (required)
+        - password: string (required)
+        - confirm_password: string (required)
+
+        Response
+        --------
+        On success or failure, return:
+
+            { "status": status (as string), "msg": message (as string) }
+
+        Status Codes
+        ------------
+        - 200: On success
+        - 400: Various kinds of form validation errors, or user exists
+        - 500: Internal error (e.g. email service is down)
+
+        """
         parser = reqparse.RequestParser()
         parser.add_argument("email", type=str, required=True)
         parser.add_argument("password", type=str, required=True)

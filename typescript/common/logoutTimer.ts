@@ -52,7 +52,7 @@ class LogoutTimer {
     }
 
     logout() {
-        window.location.href = "/logout";
+        window.location.assign("/logout");
     }
 }
 

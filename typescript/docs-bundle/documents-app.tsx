@@ -69,7 +69,7 @@ class DocumentApp extends Component<IProps, IState> {
                 console.error("Failed to get documents");
                 console.error(err);
                 if (err.name === "UnauthorizedError") {
-                    window.location.href = "/login";
+                    window.location.assign("/login");
                 } else {
                     console.log("different type of error: " + err.name);
                 }
@@ -113,7 +113,7 @@ class DocumentApp extends Component<IProps, IState> {
 
     handleDecrypt(index: number): void {
         const doc = this.state.documents[index];
-        window.location.href = `/docs/${doc.id}/view`;
+        window.location.assign(`/docs/${doc.id}/view`);
     }
 
     /**

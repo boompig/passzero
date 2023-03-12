@@ -74,7 +74,7 @@ class NewDocumentApp extends React.Component<{}, INewDocumentState> {
         const r = await this.pzAPI.createDocument(this.state.fileName, formData)
         if(r.ok) {
             console.log("Document saved");
-            window.location.href = "/docs";
+            window.location.assign("/docs");
         } else {
             console.error("Failed to save document");
             console.error(r);
@@ -88,7 +88,7 @@ class NewDocumentApp extends React.Component<{}, INewDocumentState> {
         const r = await this.pzAPI.updateDocument(this.state.documentId, this.state.fileName, formData);
         if(r.ok) {
             console.log("Document updated");
-            window.location.href = "/docs";
+            window.location.assign("/docs");
         } else {
             console.error("Failed to update document");
             console.error(r);

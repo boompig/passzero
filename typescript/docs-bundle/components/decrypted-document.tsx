@@ -16,7 +16,7 @@ export default class DecryptedDocument extends React.Component<IDecryptedDocumen
     }
 
     handleEdit(event) {
-        window.location.href = `/links/${this.props.document.id}`;
+        window.location.assign(`/links/${this.props.document.id}`);
     }
 
     handleDelete(event) {

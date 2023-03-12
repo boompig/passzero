@@ -115,7 +115,7 @@ class App extends Component<IProps, IState> {
                 console.error("Failed to get links");
                 console.error(err);
                 if (err.name === "UnauthorizedError") {
-                    window.location.href = "/login";
+                    window.location.assign("/login");
                 } else {
                     console.debug("different type of error: " + err.name);
                 }

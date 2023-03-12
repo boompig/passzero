@@ -5,7 +5,7 @@ import * as React from "react";
 
 export const LoggedOutNavbar = () => {
     const path = window.location.pathname;
-    let navItems;
+    let navItems: React.ReactNode;
     if (path === '/') {
         navItems = <>
             <li className="nav-item"><a href="/login">Sign In</a></li>

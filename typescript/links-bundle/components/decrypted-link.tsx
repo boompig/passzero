@@ -16,7 +16,7 @@ export default class DecryptedLink extends React.Component<IDecryptedLinkProps, 
     }
 
     handleEdit(event) {
-        window.location.href = `/links/${this.props.link.id}`;
+        window.location.assign(`/links/${this.props.link.id}`);
     }
 
     handleDelete(event) {

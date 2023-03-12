@@ -3,6 +3,7 @@
 
 # Python binaries are boring
 *.pyc
+__pycache__
 
 # ignore the dump file for database
 dump.sql
@@ -10,6 +11,7 @@ dump.sql
 # virtualenv and pyenv
 venv*
 env
+env311
 .python-version
 
 # code coverage

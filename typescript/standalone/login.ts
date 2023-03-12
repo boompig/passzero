@@ -43,7 +43,7 @@ const Login = {
         pzAPI.signup(data.email, data.password, data.confirm_password)
         .done((response) => {
             console.debug(response);
-            window.location.href = "/done_signup/" + data.email;
+            window.location.assign("/done_signup/" + data.email);
 
             // clear error message
             $("#error-msg-container").hide();
@@ -125,7 +125,7 @@ const Login = {
                 // erase the cookie
                 Cookies.remove("username_or_email");
             }
-            window.location.href = "/done_login";
+            window.location.assign("/done_login");
         }).catch((obj, textStatus, textCode) => {
             Login.isRequestComplete = true;
             $("#progress-alert").hide();

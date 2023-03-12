@@ -23,7 +23,7 @@ export default class EncryptedLink extends React.Component<IEncryptedLinkProps, 
     }
 
     handleEdit(event) {
-        window.location.href = `/links/${this.props.link.id}`;
+        window.location.assign(`/links/${this.props.link.id}`);
     }
 
     handleDecrypt(event) {
