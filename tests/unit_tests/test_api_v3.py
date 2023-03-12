@@ -503,14 +503,10 @@ def test_edit_entry(app):
         assert old_entry_out["last_modified"] < new_entry_out["last_modified"]
 
 
-def test_edit_entry_bad_password(app):
-    email = DEFAULT_EMAIL
-    password = DEFAULT_PASSWORD
+def test_edit_entry_bad_password(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client,
-                              email, password)
         token = api.login_with_email_with_token(client,
-                                                email, password, check_status=True)
+                                                active_user.email, DEFAULT_PASSWORD, check_status=True)
         old_entry = {
             "account": "fake",
             "username": "entry_username",
@@ -521,7 +517,7 @@ def test_edit_entry_bad_password(app):
         entry_id = api.create_entry_with_token(
             client,
             old_entry,
-            password,
+            DEFAULT_PASSWORD,
             token,
             check_status=True
         )
@@ -536,7 +532,7 @@ def test_edit_entry_bad_password(app):
             client,
             entry_id,
             new_entry,
-            password + "2",
+            DEFAULT_PASSWORD + "2",
             token,
             check_status=False
         )
@@ -547,7 +543,7 @@ def test_edit_entry_bad_password(app):
         assert len(entries) == 1
         assert entries[0]["id"] == entry_id
         entry_prime = api.decrypt_entry_with_token(client,
-                                                   entry_id, password, token, check_status=True)
+                                                   entry_id, DEFAULT_PASSWORD, token, check_status=True)
         _assert_entries_equal(old_entry, entry_prime)
 
 
@@ -599,19 +595,15 @@ def test_edit_not_your_entry(app):
         _assert_entries_equal(actual_entry, old_entry)
 
 
-def test_decrypt_entry_bad_password(app):
-    email = DEFAULT_EMAIL
-    password = DEFAULT_PASSWORD
+def test_decrypt_entry_bad_password(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client,
-                              email, password)
         token = api.login_with_email_with_token(client,
-                                                email, password, check_status=True)
+                                                active_user.email, DEFAULT_PASSWORD, check_status=True)
         entry = get_test_decrypted_entry()
         entry_id = api.create_entry_with_token(
             client,
             entry=entry,
-            password=password,
+            password=DEFAULT_PASSWORD,
             token=token,
             check_status=True
         )
@@ -646,7 +638,7 @@ def test_decrypt_entry_not_your_entry(app):
         assert r.status_code != 200
 
 
-def test_delete_entry_not_your_entry(app):
+def test_delete_entry_not_your_entry(app: Flask):
     """
     Try to delete someone else's entry
     """
@@ -695,13 +687,11 @@ def test_delete_entry_incorrect_password(app: Flask, active_user: User):
         assert len(entries_after) == 1
 
 
-def test_get_entries(app):
+def test_get_entries(app: Flask, active_user: User):
     with app.test_client() as client:
         entry = get_test_decrypted_entry()
-        create_active_account(client,
-                              DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_email_with_token(client,
-                                                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+                                                active_user.email, DEFAULT_PASSWORD, check_status=True)
         entry_id = api.create_entry_with_token(client,
                                                entry,
                                                password=DEFAULT_PASSWORD,
@@ -768,11 +758,10 @@ def test_get_entries_not_your_entry(app):
         assert r.status_code != 200
 
 
-def test_update_entry_versions(app):
+def test_update_entry_versions(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         pzApi = api.ApiV3(client)
-        pzApi.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        pzApi.login(active_user.email, DEFAULT_PASSWORD)
         dec_entry = get_test_decrypted_entry()
         entry_id = pzApi.create_entry(dec_entry)
         num_updated = pzApi.update_entry_versions()
@@ -789,20 +778,18 @@ def _assert_links_equal(l1: dict, l2: dict) -> None:
         assert l1[key] == l2[key]
 
 
-def test_get_links_empty(app):
+def test_get_links_empty(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api_v3 = api.ApiV3(client)
-        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3.login(active_user.email, DEFAULT_PASSWORD)
         links = api_v3.get_encrypted_links()
         assert links == []
 
 
-def test_create_link(app):
+def test_create_link(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api_v3 = api.ApiV3(client)
-        api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        api_v3.login(active_user.email, DEFAULT_PASSWORD)
         input_link = {
             "service_name": "hello",
             "link": "world",
