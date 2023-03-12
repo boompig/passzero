@@ -26,7 +26,9 @@ export default class DecryptedLink extends React.Component<IDecryptedLinkProps, 
     render() {
         return (
             <div className="link">
-                <a href={this.props.link.link} className="link-service-name" target="_blank">
+                {/* NOTE: the noreferrer and noopener attributes are very important for privacy */}
+                {/* see: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#security_and_privacy */}
+                <a href={this.props.link.link} className="link-service-name" target="_blank" rel="noreferrer noopener">
                     {this.props.link.service_name}
                     <span className="fas fa-external-link-alt"></span>
                 </a>
