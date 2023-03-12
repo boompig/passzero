@@ -58,7 +58,8 @@ def post_login():
 
 @main_routes.route("/login", methods=["GET"])
 def login():
-    return render_template("login.jinja2", login=True, error=None)
+    return render_template("login_existing.jinja2",
+                           title="PassZero &middot; Login")
 
 
 @main_routes.route("/logout", methods=["GET", "POST"])

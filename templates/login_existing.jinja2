@@ -1,39 +1,13 @@
-<nav class="navbar">
-    <ul class="nav-items">
-        <li class="nav-item"><a href="/">Home</a></li>
-        <li class="nav-item"><a href="/signup">Register</a></li>
-        <li class="nav-item"><a href="/about">About</a></li>
-    </ul>
-</nav>
-{% include "flash_messages.jinja2" %}
-<div id="form-container">
-    <form method="POST" action="/login" id="login-existing-form" role="form">
-        <h1 class="title">
-            Login to PassZero
-        </h1>
+{% extends "layout-landing.jinja2" %}
 
-        <div class="alert alert-danger" id="error-msg-container" role="alert">
-            <div id="error-msg"></div>
-        </div>
+{% block body %}
+    <div id="react-root"></div>
+{% endblock %}
 
-        <div class="alert alert-warning" id="progress-alert" role="alert">
-            <span>This is taking longer than usual...</span>
-        </div>
+{% block extra_js %}
+    <script src="{{ url_for("static", filename="js/dist/login.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
+{% endblock %}
 
-        <span class="form-error" id="form-error-email"></span>
-        <input type="text" class="form-control" name="username_or_email" tabindex="1"
-                placeholder="username or email" required="true" autocomplete="username">
-
-        <span class="form-error" id="form-error-password"></span>
-        <input type="password" class="form-control" name="password" tabindex="2"
-                placeholder="password" required="true">
-        <label for="remember">
-            <input type="checkbox" name="remember" tabindex="3">
-            <span>Remember me</span>
-        </label>
-
-        <a id="forgot-password" href="{{ url_for("main_routes.recover_password") }}">Forgot Password</a>
-
-        <button id="submit-btn" type="submit" name="submit">Log In</button>
-    </form>
-</div>
+{% block extra_css %}
+    <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/login.min.css") + "?build=" + config['BUILD_ID'] }}">
+{% endblock %}

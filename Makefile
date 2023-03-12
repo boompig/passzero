@@ -62,8 +62,7 @@ live-test-local: $(SRC) $(E2E_TEST_SRC) lint
 python-lint: $(SRC)
 	flake8 $(SRC) tests/unit_tests tests/end_to_end_tests
 	mypy --ignore-missing-imports --check-untyped-defs $(SRC)
-	mypy --ignore-missing-imports tests/unit_tests
-	mypy --ignore-missing-imports tests/end_to_end_tests
+	mypy --ignore-missing-imports tests/unit_tests tests/end_to_end_tests
 
 js-lint: $(standalone_typescript_src)
 	yarn lint

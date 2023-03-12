@@ -97,7 +97,8 @@ class ApiTokenResource(Resource):
 
         Arguments
         ---------
-        - email: string (required)
+        - email: string (one of email or username is required)
+        - username: string (one of email or username is required)
         - password: string (required)
 
         Response
@@ -117,11 +118,25 @@ class ApiTokenResource(Resource):
         - 401: bad username-password combo or account doesn't exist or account isn't activated
         """
         parser = reqparse.RequestParser()
-        parser.add_argument("email", type=str, required=True)
+        parser.add_argument("email", type=str, required=False)
+        parser.add_argument("username", type=str, required=False)
         parser.add_argument("password", type=str, required=True)
         args = parser.parse_args()
+
+        if not args.email and not args.username:
+            return json_error_v2("One of email or username is required", 400)
+        elif args.email and args.username:
+            return json_error_v2("Specify only one of email and username", 400)
+        elif args.email and "@" not in args.email:
+            return json_error_v2("Email must contain an '@' symbol", 400)
+        elif args.username and "@" in args.username:
+            return json_error_v2("Usernames may not contain an '@' symbol", 400)
+
         try:
-            user = backend.get_account_with_email(db.session, args.email)
+            if args.username:
+                user = backend.get_account_with_username(db.session, args.username)
+            else:
+                user = backend.get_account_with_email(db.session, args.email)
             if not user.active:
                 raise UserNotActiveException
             if user.authenticate(args.password):

@@ -25,7 +25,7 @@ export default class EncryptedEntry extends Component<IEncryptedEntryProps, IEnc
     }
 
     handleEdit(): void {
-        window.location.href = `/edit/${this.props.entry.id}`;
+        window.location.assign(`/edit/${this.props.entry.id}`);
     }
 
     handleDelete(): void {

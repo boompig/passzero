@@ -11,3 +11,20 @@ export class ServerError extends Error {
         this.appErrorCode = appErrorCode;
     }
 }
+
+export class ApiError extends Error {
+    /**
+     * Denotes the specific type of error being thrown
+     */
+    _type: string;
+    /**
+     * Numerical status code
+     */
+    status: number;
+
+    constructor(message: string, status: number) {
+        super(message);
+        this.status = status;
+        this._type = 'ApiError';
+    }
+}

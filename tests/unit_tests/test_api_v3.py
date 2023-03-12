@@ -1,22 +1,18 @@
-from __future__ import print_function
-
 import logging
-
-from flask import Flask
 from unittest import mock
-import six
 
-from passzero.app_factory import create_app
-from passzero.models import ApiToken, User, Entry, AuthToken, Link, Service, EncryptionKeys
-from passzero.models import db as _db
-from passzero.api.link_list import MAX_NUM_DECRYPT
-from passzero.backend import create_inactive_user, activate_account
-
-from ..common import api
-from .utils import get_test_decrypted_entry
-from ..common.api import BadStatusCodeException
 import pytest
+import six
+from flask import Flask
 
+from passzero import app_factory, backend
+from passzero.api.link_list import MAX_NUM_DECRYPT
+from passzero.models import (ApiToken, AuthToken, EncryptionKeys, Entry, Link,
+                             Service, User)
+from passzero.models import db as _db
+from tests.common import api
+from tests.common.api import BadStatusCodeException
+from tests.unit_tests.utils import get_test_decrypted_entry
 
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"
@@ -33,7 +29,7 @@ def _assert_entries_equal(e1, e2):
 
 @pytest.fixture(scope="module")
 def my_app(request) -> Flask:
-    _app = create_app(__name__, settings_override={
+    _app = app_factory.create_app(__name__, settings_override={
         "SQLALCHEMY_DATABASE_URI": "sqlite://",
         "SQLALCHEMY_TRACK_MODIFICATIONS": False,
         "BUILD_ID": "test",
@@ -98,12 +94,12 @@ def create_active_account(client, email: str, password: str, m1):
 @pytest.fixture(scope="function")
 def active_user(db):
     """Create a default active user with email=`DEFAULT_EMAIL` and password=`DEFAULT_PASSWORD`"""
-    user = create_inactive_user(
+    user = backend.create_inactive_user(
         db_session=db.session,
         email=DEFAULT_EMAIL,
         password=DEFAULT_PASSWORD,
     )
-    activate_account(db.session, user)
+    backend.activate_account(db.session, user)
     yield user
 
     # then delete that user
@@ -111,7 +107,7 @@ def active_user(db):
     db.session.commit()
 
 
-def test_login_then_get_token(app):
+def test_login_with_email_then_get_token(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login_v2(client,
@@ -131,21 +127,51 @@ def test_login_then_get_token_twice(app):
         assert token == t2
 
 
-def test_login_with_token(app):
+def test_login_with_email_with_token_ok(app: Flask, active_user: User):
+    assert isinstance(active_user, User)
     with app.test_client() as client:
-        create_active_account(client,
-                              DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        token = api.login_with_token(client,
-                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         assert isinstance(token, six.text_type)
+
+
+def test_login_with_email_with_token_invalid_email(app: Flask, active_user: User):
+    assert isinstance(active_user, User)
+    with app.test_client() as client:
+        # emails must have an @ sign
+        r = api.login_with_email_with_token(client,
+                                            "invalid email", DEFAULT_PASSWORD, check_status=False)
+        assert r.status_code == 400
+
+
+def test_login_with_username_with_token_ok(app: Flask, active_user: User, db):
+    with app.test_client() as client:
+        # modify the user to give them a username
+        active_user.username = "test"
+        db.session.commit()
+
+        # login with that username to get a token
+        token = api.login_with_username_with_token(client, "test", DEFAULT_PASSWORD, check_status=True)
+        assert isinstance(token, str)
+
+
+def test_login_with_username_with_token_invalid_username(app: Flask, active_user: User, db):
+    with app.test_client() as client:
+        # modify the user to give them a username
+        active_user.username = "test"
+        db.session.commit()
+
+        # usernames may not have an @ sign
+        r = api.login_with_username_with_token(client, "test@example.com", DEFAULT_PASSWORD, check_status=False)
+        assert r.status_code == 400
 
 
 def test_login_logout(app):
     with app.test_client() as client:
         create_active_account(client,
                               DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        token = api.login_with_token(client,
-                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token, check_status=True)
         # really checking if this operation succeeded
         assert len(entries) == 0
@@ -157,8 +183,8 @@ def test_login_logout(app):
 def test_login_invalid_account(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        r = api.login_with_token(client,
-                                 "wrong email", "wrong password", check_status=False)
+        r = api.login_with_email_with_token(client,
+                                            "wrong_email@example.com", "wrong password", check_status=False)
         # only printed on error
         print(r.data)
         assert r.status_code == 401
@@ -167,8 +193,8 @@ def test_login_invalid_account(app):
 def test_login_invalid_password(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        r = api.login_with_token(client,
-                                 DEFAULT_EMAIL, "wrong password", check_status=False)
+        r = api.login_with_email_with_token(client,
+                                            DEFAULT_EMAIL, "wrong password", check_status=False)
         # only printed on error
         print(r.data)
         assert r.status_code == 401
@@ -216,8 +242,8 @@ def test_delete_all_entries(app):
     with app.test_client() as client:
         password = DEFAULT_PASSWORD
         create_active_account(client, DEFAULT_EMAIL, password)
-        token = api.login_with_token(client,
-                                     DEFAULT_EMAIL, password, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                DEFAULT_EMAIL, password, check_status=True)
         for i in range(20):
             dec_entry = get_test_decrypted_entry()
             api.create_entry_with_token(client,
@@ -244,8 +270,8 @@ def test_delete_invalid_entry(app):
     """Verify we can't delete arbitrary entries"""
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        token = api.login_with_token(client,
-                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         rv = api.delete_entry_with_token(client,
                                          entry_id=2014,
                                          password=DEFAULT_PASSWORD,
@@ -259,8 +285,8 @@ def test_delete_invalid_entry(app):
 def test_get_entries_empty(app):
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        token = api.login_with_token(client,
-                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         entries = api.get_encrypted_entries_with_token(client,
                                                        token, check_status=True)
         assert entries == []
@@ -271,8 +297,8 @@ def test_create_entry(app):
         email = DEFAULT_EMAIL
         password = DEFAULT_PASSWORD
         create_active_account(client, email, password)
-        token = api.login_with_token(client, email, password,
-                                     check_status=True)
+        token = api.login_with_email_with_token(client, email, password,
+                                                check_status=True)
         dec_entry = get_test_decrypted_entry()
         api.create_entry_with_token(client, dec_entry, password, token,
                                     check_status=True)
@@ -286,7 +312,7 @@ def test_create_entry_no_account(app):
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         create_active_account(client, email, password)
-        token = api.login_with_token(client, email, password)
+        token = api.login_with_email_with_token(client, email, password)
         entry = {
             "username": "entry_username",
             "password": "entry_pass",
@@ -305,7 +331,7 @@ def test_create_entry_bad_token(app):
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         create_active_account(client, email, password)
-        real_token = api.login_with_token(client, email, password)
+        real_token = api.login_with_email_with_token(client, email, password)
         dec_entry = get_test_decrypted_entry()
         r = api.create_entry_with_token(client, dec_entry,
                                         password=DEFAULT_PASSWORD,
@@ -322,8 +348,8 @@ def test_create_entry_bad_password(app):
     with app.test_client() as client:
         create_active_account(client,
                               email, password)
-        token = api.login_with_token(client,
-                                     email, password, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                email, password, check_status=True)
         dec_entry = get_test_decrypted_entry()
         r = api.create_entry_with_token(
             client,
@@ -344,7 +370,7 @@ def test_create_and_delete_entry(app):
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         create_active_account(client, email, password)
-        token = api.login_with_token(client, email, password, check_status=True)
+        token = api.login_with_email_with_token(client, email, password, check_status=True)
         # make sure we start with 0 entries
         entries = api.get_encrypted_entries_with_token(client, token,
                                                        check_status=True)
@@ -371,7 +397,7 @@ def test_edit_non_existant_entry(app):
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         create_active_account(client, email, password)
-        token = api.login_with_token(client, email, password)
+        token = api.login_with_email_with_token(client, email, password)
         old_entry = {
             "account": "fake",
             "username": "entry_username",
@@ -449,8 +475,8 @@ def test_edit_entry_bad_password(app):
     with app.test_client() as client:
         create_active_account(client,
                               email, password)
-        token = api.login_with_token(client,
-                                     email, password, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                email, password, check_status=True)
         old_entry = {
             "account": "fake",
             "username": "entry_username",
@@ -499,8 +525,8 @@ def test_edit_not_your_entry(app):
             create_active_account(client,
                                   email, password)
         # create an entry for user[0]
-        t1 = api.login_with_token(client,
-                                  emails[0], passwords[0], check_status=True)
+        t1 = api.login_with_email_with_token(client,
+                                             emails[0], passwords[0], check_status=True)
         old_entry = {
             "account": "fake",
             "username": "entry_username",
@@ -513,7 +539,7 @@ def test_edit_not_your_entry(app):
         entries = api.get_encrypted_entries_with_token(client, t1, check_status=True)
         assert len(entries) == 1
         # make sure user[1] has no entries
-        t2 = api.login_with_token(client, emails[1], passwords[1], check_status=True)
+        t2 = api.login_with_email_with_token(client, emails[1], passwords[1], check_status=True)
         assert t1 != t2
         entries = api.get_encrypted_entries_with_token(client, t2, check_status=True)
         assert entries == []
@@ -545,8 +571,8 @@ def test_decrypt_entry_bad_password(app):
     with app.test_client() as client:
         create_active_account(client,
                               email, password)
-        token = api.login_with_token(client,
-                                     email, password, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                email, password, check_status=True)
         entry = get_test_decrypted_entry()
         entry_id = api.create_entry_with_token(
             client,
@@ -571,13 +597,13 @@ def test_decrypt_entry_not_your_entry(app):
             create_active_account(client,
                                   email, password)
         # create an entry for user[0]
-        t1 = api.login_with_token(client,
-                                  emails[0], passwords[0], check_status=True)
+        t1 = api.login_with_email_with_token(client,
+                                             emails[0], passwords[0], check_status=True)
         entry = get_test_decrypted_entry()
         entry_id = api.create_entry_with_token(client,
                                                entry, passwords[0], t1, check_status=True)
         # make sure user[1] has no entries
-        t2 = api.login_with_token(client, emails[1], passwords[1], check_status=True)
+        t2 = api.login_with_email_with_token(client, emails[1], passwords[1], check_status=True)
         assert t1 != t2
         entries = api.get_encrypted_entries_with_token(client, t2, check_status=True)
         assert entries == []
@@ -597,8 +623,8 @@ def test_delete_entry_not_your_entry(app):
             create_active_account(client,
                                   email, password)
         # create an entry for user[0]
-        t1 = api.login_with_token(client,
-                                  emails[0], passwords[0], check_status=True)
+        t1 = api.login_with_email_with_token(client,
+                                             emails[0], passwords[0], check_status=True)
         entry = get_test_decrypted_entry()
         entry_id = api.create_entry_with_token(client,
                                                entry, passwords[0], t1, check_status=True)
@@ -606,7 +632,7 @@ def test_delete_entry_not_your_entry(app):
                                                    entry_id, passwords[0], t1, check_status=True)
         _assert_entries_equal(out_entry_1, entry)
         # make sure user[1] has no entries
-        t2 = api.login_with_token(client, emails[1], passwords[1], check_status=True)
+        t2 = api.login_with_email_with_token(client, emails[1], passwords[1], check_status=True)
         assert t1 != t2
         entries = api.get_encrypted_entries_with_token(client, t2, check_status=True)
         assert entries == []
@@ -622,7 +648,7 @@ def test_delete_entry_not_your_entry(app):
 def test_delete_entry_incorrect_password(app: Flask, active_user: User):
     assert active_user.email == DEFAULT_EMAIL
     with app.test_client() as client:
-        token = api.login_with_token(client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        token = api.login_with_email_with_token(client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         dec_entry = get_test_decrypted_entry()
         entry_id = api.create_entry_with_token(client, dec_entry, DEFAULT_PASSWORD, token, check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token, check_status=True)
@@ -640,8 +666,8 @@ def test_get_entries(app):
         entry = get_test_decrypted_entry()
         create_active_account(client,
                               DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        token = api.login_with_token(client,
-                                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         entry_id = api.create_entry_with_token(client,
                                                entry,
                                                password=DEFAULT_PASSWORD,
@@ -676,8 +702,8 @@ def test_get_entries_not_your_entry(app):
         # create two accounts
         create_active_account(client, emails[0], passwords[0])
         create_active_account(client, emails[1], passwords[1])
-        token = api.login_with_token(client,
-                                     emails[0], passwords[0], check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                emails[0], passwords[0], check_status=True)
         # create entry for account #1
         entry_id = api.create_entry_with_token(
             client,
@@ -694,8 +720,8 @@ def test_get_entries_not_your_entry(app):
         )
         assert len(entries) == 1
         # get a token for the second account
-        token = api.login_with_token(client,
-                                     emails[1], passwords[1], check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                emails[1], passwords[1], check_status=True)
         # cannot decrypt entry of person #1 with password of person #2
         r = api.decrypt_entry_with_token(
             client,

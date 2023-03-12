@@ -14,6 +14,7 @@ module.exports = {
         'new-entry': './typescript/new-entry-bundle/index.tsx',
         'landing': './typescript/landing-bundle/index.tsx',
         'links': './typescript/links-bundle/index.tsx',
+        'login': './typescript/login-bundle/index.tsx',
         'new-link': './typescript/new-link-bundle/index.tsx',
         'docs': './typescript/docs-bundle/index.tsx',
         'new-doc': './typescript/new-doc-bundle/index.tsx',
@@ -64,6 +65,8 @@ module.exports = {
                     path.resolve(__dirname, 'typescript/components'),
                     path.resolve(__dirname, 'typescript/about-bundle'),
                     path.resolve(__dirname, 'typescript/landing-bundle'),
+                    path.resolve(__dirname, 'typescript/login-bundle'),
+                    path.resolve(__dirname, 'typescript/providers'),
                 ],
                 exclude: [
                     path.resolve(__dirname, 'typescript/standalone'),

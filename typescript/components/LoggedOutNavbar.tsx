@@ -17,7 +17,7 @@ export const LoggedOutNavbar = () => {
         navItems = <>
             <li className="nav-item"><a href="/">Home</a></li>
             { (window.location.pathname === '/login') || (window.location.pathname === '/') ?
-                <li className="nav-item"><a href="/register">Register</a></li> :
+                <li className="nav-item"><a href="/signup">Register</a></li> :
                 <li className="nav-item"><a href="/login">Login</a></li> }
             <li className="nav-item"><a href="/about">About</a></li>
         </>;

@@ -1,4 +1,4 @@
-import { UnauthorizedError, ServerError } from './errors';
+import { UnauthorizedError, ServerError, ApiError } from './errors';
 import { IDecryptedLink } from './links';
 
 interface IApiKey {
@@ -39,6 +39,126 @@ export interface IUser {
     preferences: any;
     encryption_keys: IEncryptionKeys | null;
 }
+/**
+ * If rawResponse is not defined, default to false
+ */
+const postJsonWithBearer = async (url: string, apiToken: string | null, data: any, rawResponse?: boolean) => {
+    if(!rawResponse) {
+        rawResponse = false;
+    }
+
+    const headers = {
+        "Content-Type": "application/json",
+    } as {[key: string]: string};
+
+    if (apiToken) {
+        headers.Authorization = `Bearer ${apiToken}`
+    }
+
+    const options = {
+        method: "POST",
+        headers: headers,
+        body: JSON.stringify(data),
+    } as RequestInit;
+    const response = await window.fetch(url, options);
+    if(rawResponse) {
+        return response;
+    } else {
+        return response.json();
+    }
+};
+
+interface ILoginRequest {
+    email?: string;
+    username?: string;
+    password: string;
+}
+
+interface ILoginResponse {
+    token: string;
+}
+
+interface ILoginErrorResponse {
+    status: string;
+    msg: string;
+}
+
+interface IRegisterRequest {
+    email: string;
+    password: string;
+    confirm_password: string;
+}
+
+/**
+ * This occurs on both success and failure
+ */
+interface IRegisterResponse {
+    status: string;
+    msg: string;
+}
+
+export const pzApiv3 = {
+    /**
+     * On success, return a parsed response
+     * On error, throw ApiError
+     */
+    login: async (usernameOrEmail: string, password: string): Promise<ILoginResponse> => {
+        const path = '/api/v3/token';
+        const data = {
+            password: password,
+        } as ILoginRequest;
+        if(usernameOrEmail.includes('@')) {
+            console.debug('logging in with email...');
+            data.email = usernameOrEmail;
+        } else {
+            console.debug('logging in with username...');
+            data.username = usernameOrEmail;
+        }
+
+        const r = await postJsonWithBearer(path, null, data, true);
+        if (r.ok) {
+            const j = await r.json();
+            return j as ILoginResponse;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                // we can read the body
+                const j = (await r.json()) as ILoginErrorResponse;
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('something went wrong', r.status);
+            }
+        }
+    },
+
+    /**
+     * On success return IRegisterResponse
+     * On error throw ApiError with appropriate message
+     */
+    registerUser: async (email: string, password: string, confirmPassword: string): Promise<IRegisterResponse> => {
+        const path = '/api/v3/user/register';
+
+        const data = {
+            email: email,
+            password: password,
+            confirm_password: confirmPassword,
+        } as IRegisterRequest;
+
+        const r = await postJsonWithBearer(path, null, data, true);
+        if (r.ok) {
+            const j = (await r.json()) as IRegisterResponse;
+            return j;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                // we can read the body
+                const j = (await r.json()) as IRegisterResponse;
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('something went wrong', r.status);
+            }
+        }
+    },
+};
+
 
 export default class PasszeroApiV3 {
     private apiKey: (IApiKey | null);

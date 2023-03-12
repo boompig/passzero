@@ -2,15 +2,15 @@ from datetime import datetime
 from multiprocessing import Pool
 from typing import List
 
-from flask import Blueprint, session, escape
+from flask import Blueprint, escape, session
 from sqlalchemy.orm.exc import NoResultFound
 
-from . import backend
-from .api_utils import (json_error, json_success, requires_json_auth,
-                        requires_json_form_validation, write_json)
-from .api_v1 import UserNotActiveException
-from .forms import LoginFormV2
-from .models import Entry, User, db
+from passzero import backend
+from passzero.api_utils import (json_error, json_success, requires_json_auth,
+                                requires_json_form_validation, write_json)
+from passzero.api_v1 import UserNotActiveException
+from passzero.forms import LoginFormV2
+from passzero.models import Entry, db
 
 api_v2 = Blueprint("api_v2", __name__)
 
@@ -137,7 +137,7 @@ def api_v1_login(request_data):
         if is_email:
             user = backend.get_account_with_email(db.session, request_data["username_or_email"])
         else:
-            user = db.session.query(User).filter_by(username=request_data["username_or_email"]).one()
+            user = backend.get_account_with_username(db.session, request_data["username_or_email"])
 
         if not user.active:
             raise UserNotActiveException

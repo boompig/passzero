@@ -583,11 +583,31 @@ def get_api_token_with_login(session, check_status: bool = True):
         return r
 
 
-def login_with_token(session, email: str, password: str, check_status: bool = True, verify: bool = False):
+def login_with_email_with_token(session, email: str, password: str,
+                                check_status: bool = True, verify: bool = False):
     assert isinstance(email, str)
     url = "/api/v3/token"
     r = json_post(session, url, data={
         "email": email,
+        "password": password
+    }, verify=verify)
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
+    try:
+        if check_status:
+            assert r.status_code == 200
+            return _get_response_json(r)["token"]
+        else:
+            return r
+    except AssertionError:
+        raise BadStatusCodeException(r.status_code)
+
+
+def login_with_username_with_token(session, username: str, password: str, check_status: bool = True, verify: bool = False):
+    assert isinstance(username, str)
+    url = "/api/v3/token"
+    r = json_post(session, url, data={
+        "username": username,
         "password": password
     }, verify=verify)
     response_data = _get_response_data(session, r)
@@ -740,7 +760,7 @@ class ApiV3:
         """
         assert isinstance(email, str)
         assert isinstance(password, str) and password != ""
-        token = login_with_token(self.client, email, password, check_status=True, verify=verify)
+        token = login_with_email_with_token(self.client, email, password, check_status=True, verify=verify)
         self.api_token = token
         self.password = password
 

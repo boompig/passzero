@@ -5,5 +5,5 @@
 {% endblock %}
 
 {% block extra_js %}
-    <script src="/js/dist/landing.bundle.js"></script>
+    <script src="{{ url_for("static", filename="js/dist/landing.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}

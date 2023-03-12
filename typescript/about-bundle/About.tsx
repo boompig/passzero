@@ -47,7 +47,7 @@ const navbarItems = [
         icon: <FontAwesomeIcon icon={["fas", "sign-in-alt"]} />,
     },
     {
-        path: "/register",
+        path: "/signup",
         key: "register",
         friendlyName: "Register",
         icon: <FontAwesomeIcon icon={["fas", "edit"]} />,
