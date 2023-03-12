@@ -85,7 +85,7 @@ def post_signup(email: str):
     return redirect(url_for("main_routes.login"))
 
 
-# --- entries --- #
+# --- BEGIN entries --- #
 @main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
 @auth_or_abort
 def post_delete(account_name: str):
@@ -123,10 +123,10 @@ def post_create(account_name):
 @auth_or_redirect_login
 def view_entries():
     return render_template("entries.jinja2")
-# --- entries --- #
+# --- END entries --- #
 
 
-# --- links --- #
+# --- BEGIN links --- #
 @main_routes.route("/links", methods=["GET"])
 @auth_or_redirect_login
 def view_links():
@@ -152,10 +152,10 @@ def edit_link(link_id: int):
                            link_id=link_id,
                            service_name=dec_link.service_name,
                            link=dec_link.link)
-# --- links --- #
+# --- END links --- #
 
 
-# --- documents --- #
+# --- BEGIN documents --- #
 @main_routes.route("/docs", methods=["GET"])
 @auth_or_redirect_login
 def view_docs():
@@ -199,13 +199,13 @@ def view_decrypted_doc(document_id: int):
         document_name=dec_doc.name
     )
 
-# --- documents --- #
+# --- END documents --- #
 
 
 @main_routes.route("/signup", methods=["GET"])
 def signup():
-    error = None
-    return render_template("login.jinja2", login=False, error=error)
+    return render_template("login_new.jinja2",
+                           title="PassZero &middot; Register")
 
 
 @main_routes.route("/signup/post_confirm")

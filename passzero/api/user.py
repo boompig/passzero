@@ -72,7 +72,9 @@ class ApiUser(Resource):
                 password=args.password,
             )
             return json_success_v2(
-                "Successfully created (inactive) account with email %s" % args.email
+                ("Your account was successfully created." +
+                 " A confirmation email was sent to %s." +
+                 " You will need to confirm your email before you can log in.") % args.email
             )
         except backend.UserExistsError as err:
             return json_error_v2(str(err), 400)
