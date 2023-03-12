@@ -7,6 +7,7 @@ from flask import Flask
 
 from passzero import app_factory, backend
 from passzero.api.link_list import MAX_NUM_DECRYPT
+from passzero.crypto_utils import PasswordHashAlgo
 from passzero.models import (ApiToken, AuthToken, EncryptionKeys, Entry, Link,
                              Service, User)
 from passzero.models import db as _db
@@ -107,19 +108,20 @@ def active_user(db):
     db.session.commit()
 
 
-def test_login_with_email_then_get_token(app):
+def test_login_with_email_then_get_token(app: Flask, active_user: User):
+    """Test that we can get the token for an account where we have previously logged in."""
+    assert isinstance(active_user, User)
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login_v2(client,
                      DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         assert isinstance(token, six.text_type)
 
 
-def test_login_then_get_token_twice(app):
+def test_login_then_get_token_twice(app: Flask, active_user: User):
     """If you get the token twice, make sure it's the same token"""
+    assert isinstance(active_user, User)
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api.login_v2(client,
                      DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
@@ -133,6 +135,39 @@ def test_login_with_email_with_token_ok(app: Flask, active_user: User):
         token = api.login_with_email_with_token(client,
                                                 DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         assert isinstance(token, six.text_type)
+
+
+def test_login_with_email_rehash_password(app: Flask, db):
+    with app.test_client() as client:
+        # create a user with the old type of password hash
+        # note that the backend will save this user
+        new_user = backend.create_inactive_user(
+            db_session=db.session,
+            email=DEFAULT_EMAIL,
+            password=DEFAULT_PASSWORD,
+            password_hash_algo=PasswordHashAlgo.SHA512,
+        )
+        backend.activate_account(db.session, new_user)
+        token = api.login_with_email_with_token(client,
+                                                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        # this should work just fine
+        assert isinstance(token, six.text_type)
+        # but now we should verify that the user has a new type of password hash algo
+        user = db.session.query(User).filter_by(email=DEFAULT_EMAIL).one()  # type: User
+        assert user.password_hash_algo == User.DEFAULT_PASSWORD_HASH_ALGO
+        assert user.password_hash_algo != PasswordHashAlgo.SHA512
+        # the modified_at time must be different from the creation time since it was just modified
+        assert user.last_modified_at != user.created_at
+        # now we need to verify that we can still log in
+        api.delete_token(client, token, check_status=True)
+        token = api.login_with_email_with_token(client,
+                                                DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        # this should work just fine
+        assert isinstance(token, six.text_type)
+
+        # finally clean up
+        db.session.delete(new_user)
+        db.session.commit()
 
 
 def test_login_with_email_with_token_invalid_email(app: Flask, active_user: User):
@@ -166,10 +201,9 @@ def test_login_with_username_with_token_invalid_username(app: Flask, active_user
         assert r.status_code == 400
 
 
-def test_login_logout(app):
+def test_login_logout(app: Flask, active_user: User):
+    assert isinstance(active_user, User)
     with app.test_client() as client:
-        create_active_account(client,
-                              DEFAULT_EMAIL, DEFAULT_PASSWORD)
         token = api.login_with_email_with_token(client,
                                                 DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         entries = api.get_encrypted_entries_with_token(client, token, check_status=True)
@@ -180,9 +214,9 @@ def test_login_logout(app):
         assert r.status_code != 200
 
 
-def test_login_invalid_account(app):
+def test_login_with_email_non_existent_account(app: Flask, active_user: User):
+    assert isinstance(active_user, User)
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         r = api.login_with_email_with_token(client,
                                             "wrong_email@example.com", "wrong password", check_status=False)
         # only printed on error
@@ -190,9 +224,9 @@ def test_login_invalid_account(app):
         assert r.status_code == 401
 
 
-def test_login_invalid_password(app):
+def test_login_with_email_incorrect_password(app: Flask, active_user: User):
+    assert isinstance(active_user, User)
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         r = api.login_with_email_with_token(client,
                                             DEFAULT_EMAIL, "wrong password", check_status=False)
         # only printed on error

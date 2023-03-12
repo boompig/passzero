@@ -4,17 +4,18 @@ Manages the API id tokens
 
 from datetime import datetime, timezone
 
-from flask import session
+from flask import current_app, session
 from flask_jwt_extended import (create_access_token, decode_token,
                                 get_jwt_identity, jwt_required)
 from sqlalchemy.orm.exc import NoResultFound
 
 from flask_restx import Namespace, Resource, reqparse
 
-from .. import backend
-from ..api_utils import json_error_v2, json_success_v2, requires_json_auth
-from ..models import ApiToken, db
-from .jwt_auth import authorizations
+from passzero import backend
+from passzero import crypto_utils
+from passzero.api_utils import json_error_v2, json_success_v2, requires_json_auth
+from passzero.models import ApiToken, User, db
+from passzero.api.jwt_auth import authorizations
 
 
 class UserNotActiveException(Exception):
@@ -143,10 +144,31 @@ class ApiTokenResource(Resource):
                 session["email"] = user.email
                 session["password"] = args.password
                 session["user_id"] = user.id
+
+                # if the type of password hashing algorithm is old, rehash their password with the new algorithm
+                if user.password_hash_algo != User.DEFAULT_PASSWORD_HASH_ALGO:
+                    current_app.logger.info(
+                        "Detected old hash algo (%d) for user %d's password. Rehashing password with latest algo...",
+                        user.password_hash_algo,
+                        user.id
+                    )
+                    assert isinstance(user.salt, str)
+                    assert isinstance(args.password, str)
+                    # note that we are not changing the password
+                    hashed_password = crypto_utils.get_hashed_password(
+                        password=args.password,
+                        salt=user.salt.encode("utf-8"),
+                        hash_algo=User.DEFAULT_PASSWORD_HASH_ALGO
+                    )
+                    user.password = hashed_password.decode("utf-8")
+                    user.password_hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
+                    user.last_modified_at = datetime.utcnow()
+
                 # write into last_login
                 user.last_login = datetime.utcnow()
                 db.session.add(user)
                 db.session.commit()
+
                 token = self.maybe_create_token_and_add_to_database(user.id)
                 return {"token": token}
             else:

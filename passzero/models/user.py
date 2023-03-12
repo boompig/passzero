@@ -5,8 +5,7 @@ from sqlalchemy.orm import relationship
 from passzero.crypto_utils import (PasswordHashAlgo,
                                    constant_time_compare_passwords,
                                    get_hashed_password)
-
-from .shared import db
+from passzero.models.shared import db
 
 
 class User(db.Model):
@@ -18,6 +17,10 @@ class User(db.Model):
     salt = db.Column(db.String(32), nullable=False)
     active = db.Column(db.Boolean, nullable=False, default=False)
     last_login = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    # write here whenever a user's details are changed
+    last_modified_at = db.Column(db.DateTime, default=datetime.utcnow)
+    # this should be written once and never changed
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     DEFAULT_PASSWORD_HASH_ALGO = PasswordHashAlgo.Argon2
 
@@ -81,6 +84,7 @@ class User(db.Model):
         # this field is unicode
         self.password = hashed_password.decode("utf-8")
         self.password_hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
+        self.last_modified_at = datetime.utcnow()
         assert isinstance(self.password, str)
 
     def __repr__(self) -> str:

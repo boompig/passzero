@@ -20,6 +20,8 @@ from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
 from .utils import base64_encode
 
 UPDATE_LIMIT = 60
+# we are using this form of logging here
+# because we might not be in a flask context when calling functions in this file
 logger = logging.getLogger(__name__)
 
 
