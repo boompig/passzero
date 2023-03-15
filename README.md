@@ -13,6 +13,24 @@ PassZero is implemented as a simple web app with results held in a database, the
 
 ## Running Locally
 
+### Docker
+
+build:
+
+```
+docker compose build
+```
+
+run:
+
+First edit `docker-compose.yml` and change the environment variable `SENDGRID_API_KEY` and `DATABASE_URL`.
+
+```
+docker compose up
+```
+
+### Local Machine
+
 * install postgres
     - on some platforms it may be necessary to install python bindings at the system level
 * install the following packages if not present:

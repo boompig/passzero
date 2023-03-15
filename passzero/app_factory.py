@@ -30,7 +30,7 @@ def dict_to_base64(d: dict) -> str:
 
 
 def read_database_uri() -> str:
-    assert "DATABASE_URL" in os.environ, "DATABASE_URI environment variable must be set"
+    assert "DATABASE_URL" in os.environ, "DATABASE_URL environment variable must be set"
 
     uri = os.environ["DATABASE_URL"]
     if uri.startswith("postgres://"):
@@ -122,8 +122,6 @@ def create_app(name: str, settings_override: dict = {}):
     # register CSRF generation function
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
     app.jinja_env.globals["to_base64"] = dict_to_base64
-
-    print(repr(app.config["DEBUG"]))
 
     # create SSL secret keys
     if "FLASK_SECRET_KEY" in os.environ:

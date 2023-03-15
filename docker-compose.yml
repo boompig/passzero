@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  passzero:
+    build: .
+    image: 'passzero:latest'
+    container_name: passzero
+    environment:
+      - DATABASE_URL=postgresql://gru:gru@host.docker.internal/passzero
+      # NOTE: this is fake (obviously)
+      - SENDGRID_API_KEY=x
+    ports:
+      - "8000:8000"

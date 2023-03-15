@@ -12,12 +12,12 @@ if __name__ == "__main__":
     if app.config["DEBUG"]:
         app.debug = True
         app.logger.setLevel(logging.INFO)
-        assert os.path.exists("cert.pem")
-        assert os.path.exists("key.pem")
         if "NO_SSL" in os.environ:
             # used for testing service workers
             app.run(port=app.config["PORT"])
         else:
+            assert os.path.exists("cert.pem")
+            assert os.path.exists("key.pem")
             app.run(port=app.config["PORT"], ssl_context=("cert.pem", "key.pem"))
     else:
         app.debug = False

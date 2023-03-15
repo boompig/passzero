@@ -5,7 +5,7 @@
 *.pyc
 __pycache__
 
-# ignore the dump file for database
+# ignore the dump files for database
 dump.sql
 latest.dump
 
@@ -27,7 +27,7 @@ server.key*
 *.pem
 
 # environment setup
-my_env.py
+passzero/my_env.py
 
 # ctags
 tags
