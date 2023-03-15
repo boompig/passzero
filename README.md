@@ -24,6 +24,7 @@ PassZero is implemented as a simple web app with results held in a database, the
 * create self-signed certificate for SSL, place it at root of PassZero
     - instructions [here](https://stackoverflow.com/questions/10175812/how-to-create-a-self-signed-certificate-with-openssl)
 * set environment variables
+    - `FLASK_ENV` - recommended to set this explicitly to "production" when running in a production capacity
     - `DATABASE_URL`
         - `postgres://<username>:<password>@<host>:<port>/<database>`
     - `SENDGRID_API_KEY`

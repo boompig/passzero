@@ -13,11 +13,12 @@ from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.middleware.proxy_fix import ProxyFix
 from whitenoise import WhiteNoise
 
-from passzero.config import DefaultConfig
+from passzero import crypto_utils
 from passzero.api import api
 from passzero.api_utils import generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
+from passzero.config import DefaultConfig
 from passzero.main_routes import main_routes
 from passzero.models import ApiToken, db
 
@@ -29,6 +30,8 @@ def dict_to_base64(d: dict) -> str:
 
 
 def read_database_uri() -> str:
+    assert "DATABASE_URL" in os.environ, "DATABASE_URI environment variable must be set"
+
     uri = os.environ["DATABASE_URL"]
     if uri.startswith("postgres://"):
         # SQLAlchemy v1.4+ expects the postgresql:// scheme
@@ -74,6 +77,8 @@ def create_app(name: str, settings_override: dict = {}):
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=5)
     app.config["WEB_SESSION_EXPIRES"] = timedelta(minutes=20)
     app.config["SWAGGER_UI_DOC_EXPANSION"] = "list"
+    assert "SENDGRID_API_KEY" in os.environ, "SENDGRID_API_KEY must be present in environment variables"
+    app.config["SENDGRID_API_KEY"] = os.environ["SENDGRID_API_KEY"]
     # remove whitespace from json responses through the API
     app.config["RESTPLUS_JSON"] = {
         "indent": None,
@@ -118,11 +123,19 @@ def create_app(name: str, settings_override: dict = {}):
     app.jinja_env.globals["csrf_token"] = generate_csrf_token
     app.jinja_env.globals["to_base64"] = dict_to_base64
 
+    print(repr(app.config["DEBUG"]))
+
     # create SSL secret keys
     if "FLASK_SECRET_KEY" in os.environ:
+        app.logger.info("Using stored FLASK_SECRET_KEY as secret key")
         app.secret_key = str(os.environ["FLASK_SECRET_KEY"])
         app.config["DEBUG"] = False
+    elif "FLASK_ENV" in os.environ and os.environ["FLASK_ENV"] == "production":
+        app.logger.info("Running in production. Generating random secret key...")
+        app.config["DEBUG"] = False
+        app.secret_key = crypto_utils.random_bytes(32)
     else:
+        # NOTE: just used for local debugging, do not use in production
         app.config["DEBUG"] = True
         app.secret_key = "64f5abcf8369e362c36a6220128de068"
 

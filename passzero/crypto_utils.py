@@ -1,6 +1,7 @@
 import enum
 import hashlib
 import hmac
+import logging
 import random
 from typing import List
 
@@ -9,6 +10,9 @@ import six
 from Crypto import Random
 from Crypto.Cipher import AES
 from Crypto.Protocol import KDF
+
+
+logger = logging.getLogger(__name__)
 
 
 @enum.unique
@@ -143,19 +147,16 @@ def decrypt_messages(extended_key: bytes, iv: bytes, messages: List[bytes]):
             dec_messages.append(msg.decode("utf-8"))
         except Exception as e:
             print(msg)
+            logger.error("Failed to decrypt messages. Error:")
+            logger.error(msg)
             raise e
     return dec_messages
 
 
-def random_bytes(length):
+def random_bytes(length) -> bytes:
     """
     :return bytes
     """
-    return Random.new().read(length)
-
-
-def random_string(length):
-    """Return random byte string of given length"""
     return Random.new().read(length)
 
 

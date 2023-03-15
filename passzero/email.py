@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import logging
 import os
 import sys
@@ -9,6 +7,10 @@ from flask import request
 from sendgrid.helpers.mail import Mail
 
 
+# NOTE: we may note be working inside an app context here
+logger = logging.getLogger(__name__)
+
+
 def send_email_sendgrid(to_email: str, subject: str, msg: str) -> bool:
     """Directly taken from sendgrid site code sample"""
     assert isinstance(to_email, str)
@@ -16,8 +18,10 @@ def send_email_sendgrid(to_email: str, subject: str, msg: str) -> bool:
     assert isinstance(msg, str)
     try:
         assert os.environ.get("SENDGRID_API_KEY", None)
-    except AssertionError:
+    except AssertionError as err:
         print("SENDGRID_API_KEY not found in env", file=sys.stderr)
+        logger.error("SENDGRID_API_KEY not found in env")
+        logger.error(err)
         return False
     try:
         sg = sendgrid.SendGridAPIClient(os.environ['SENDGRID_API_KEY'])
@@ -30,16 +34,16 @@ def send_email_sendgrid(to_email: str, subject: str, msg: str) -> bool:
         )
         response = sg.send(message)
     except Exception as e:
-        logging.error("Failed to send email:")
-        logging.error(str(e))
+        logger.error("Failed to send email:")
+        logger.error(str(e))
         return False
     if response.status_code in [200, 202]:
         return True
     else:
         # log errors before returning false
-        logging.error("status code = %d", response.status_code)
-        logging.error("response body = %s", response.body)
-        logging.error("response headers = %s", str(response.headers))
+        logger.error("status code = %d", response.status_code)
+        logger.error("response body = %s", response.body)
+        logger.error("response headers = %s", str(response.headers))
         return False
 
 
