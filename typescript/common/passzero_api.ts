@@ -8,6 +8,8 @@
 
 /**
  * API v1 and v2
+ * NOTE: This is deprecated! Use API v3 from now on.
+ * @deprecated
  */
 const pzAPI = {
     base_url: window.location.protocol + "//" + window.location.host,
@@ -72,97 +74,9 @@ const pzAPI = {
         return newObj;
     },
 
-    getStatus: (): any => {
-        const url = pzAPI.base_url + "/api/v1/status";
-        return pzAPI.getJSON(url);
-    },
-
-    /**
-     * @param usernameOrEmail Accepts either the username or the email
-     * @returns {Response}
-     */
-    login: (usernameOrEmail: string, password: string) => {
-        const url = pzAPI.base_url + "/api/v2/login";
-        const data = {
-            username_or_email: usernameOrEmail,
-            password: password
-        };
-        return pzAPI.postJSON(url, data);
-    },
-
-    logout: () => {
-        const url = pzAPI.base_url + "/api/v1/logout";
-        return pzAPI.postJSON(url);
-    },
-
-    signup: (email: string, password: string, confirmPassword: string) => {
-        const url = pzAPI.base_url + "/api/v1/user/signup";
-        const data = {
-            email: email,
-            password: password,
-            confirm_password: confirmPassword
-        };
-        return pzAPI.postJSON(url, data);
-    },
-
     getCSRFToken: () => {
         const url = pzAPI.base_url + "/api/v1/csrf_token";
         return pzAPI.getJSON(url);
-    },
-
-    getEntries: () => {
-        const url = pzAPI.base_url + "/api/v1/entries";
-        return pzAPI.getJSON(url);
-    },
-
-    getEntriesV2: () => {
-        const url = pzAPI.base_url + "/api/v2/entries";
-        return pzAPI.getJSON(url);
-    },
-
-    decryptEntry: (entryId: number) => {
-        const url = pzAPI.base_url + `/api/v2/entries/${entryId}`;
-        return pzAPI.getJSON(url);
-    },
-
-    _createEntry: (entry: IEntryUpload, csrfToken: string) => {
-        const url = pzAPI.base_url + "/api/v1/entries";
-        const data = pzAPI._copyObject(entry);
-        data.csrf_token = csrfToken;
-        return pzAPI.postJSON(url, data);
-    },
-
-    createEntry: (entry: IEntryUpload) => {
-        return pzAPI.getCSRFToken()
-            .then((response) => {
-                return pzAPI._createEntry(entry, response);
-            });
-    },
-
-    _editEntry: (entryId: number, entry: IEntryUpload, csrfToken: string) => {
-        const url = "/api/v1/entries/" + entryId;
-        const data = pzAPI._copyObject(entry);
-        data.csrf_token = csrfToken;
-        return pzAPI.putJSON(url, data);
-    },
-
-    editEntry: (entryId: number, entry: IEntryUpload) => {
-        return pzAPI.getCSRFToken()
-            .then((response) => {
-                return pzAPI._editEntry(entryId, entry, response);
-            });
-    },
-
-    _deleteEntry: (csrfToken: string, entryId: number) => {
-        const url = "/api/v1/entries/" + entryId;
-        return pzAPI.deleteJSON(url, { "csrf_token": csrfToken });
-    },
-
-    deleteEntry: (entryId: number) => {
-        return pzAPI.getCSRFToken()
-            .then((response) => {
-                return pzAPI._deleteEntry(response, entryId);
-            });
     },
 
     _recoverAccount: (email: string, csrfToken: string) => {
@@ -187,6 +101,7 @@ const pzAPI = {
         };
         return pzAPI.postJSON(url, data);
     },
+
     recoverAccountConfirm: (token: string, password: string, confirmPassword: string) => {
         return pzAPI.getCSRFToken()
             .then((response) => {

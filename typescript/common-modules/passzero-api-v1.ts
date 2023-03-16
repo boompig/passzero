@@ -5,6 +5,11 @@
 
 import { UnauthorizedError } from './errors';
 
+
+/**
+ * NOTE: do not use this! This API is deprecated.
+ * @deprecated
+ */
 export default class PassZeroAPIv1 {
     constructor() {
         this.getJSON = this.getJSON.bind(this);

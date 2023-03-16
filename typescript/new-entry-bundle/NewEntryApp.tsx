@@ -51,7 +51,7 @@ const ENTRY_LIMITS = {
 	extra: 4096
 }
 
-class App extends PureComponent<{}, INewEntryState> {
+class NewEntryApp extends PureComponent<{}, INewEntryState> {
 	logoutTimer: LogoutTimer;
 	pzApi: PasszeroApiV3;
 
@@ -222,6 +222,7 @@ class App extends PureComponent<{}, INewEntryState> {
 		} else {
 			this.submitExistingEntry();
 		}
+		return false;
 	}
 
 	/**
@@ -451,11 +452,6 @@ class App extends PureComponent<{}, INewEntryState> {
 	}
 
 	render() {
-		let action = "/entries/" + this.state.id;
-		if(this.state.isEntryNew) {
-			action = "/api/v1/entries/new";
-		}
-
 		let showHidePasswordBtn = null;
 		if(this.state.password) {
 			showHidePasswordBtn = (
@@ -482,7 +478,7 @@ class App extends PureComponent<{}, INewEntryState> {
 		}
 
 		return (
-			<form method="POST" action={ action } role="form" onSubmit={ this.handleSubmit }>
+			<form method="POST" role="form" onSubmit={ this.handleSubmit }>
 				<h3 className="title">
 					{ this.state.isEntryNew ? "Create New Entry" :  "Edit PassZero entry for " + this.state.account }
 				</h3>
@@ -587,4 +583,4 @@ class App extends PureComponent<{}, INewEntryState> {
 	}
 }
 
-export default App;
+export default NewEntryApp;
