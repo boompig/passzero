@@ -800,21 +800,7 @@ def api_v1_delete_user(request_data: DeleteUserForm):
     """
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     if user.authenticate(request_data["password"]):
-        # delete all entries
-        entries = db.session.query(Entry).filter_by(user_id=user.id).all()
-        for entry in entries:
-            db.session.delete(entry)
-        # delete all the documents
-        docs = db.session.query(EncryptedDocument).filter_by(user_id=user.id).all()
-        for doc in docs:
-            db.session.delete(doc)
-        # delete all auth tokens
-        tokens = db.session.query(AuthToken).filter_by(user_id=user.id).all()
-        for token in tokens:
-            db.session.delete(token)
-        # delete the user
-        db.session.delete(user)
-        db.session.commit()
+        backend.delete_account(db.session, user)
         code, data = json_success(
             "The user and all associated information has been deleted. You have been logged out.")
         # have to log out

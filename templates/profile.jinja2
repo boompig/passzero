@@ -1,4 +1,4 @@
-{% extends "layout.jinja2" %}
+{% extends "layout-react.jinja2" %}
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}">
@@ -6,92 +6,11 @@
 {% endblock %}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/dist/profile.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     {# custom JS - webpack bundle #}
-    <script src="{{ url_for("static", filename="js/dist/user-profile.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/profile.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block body %}
-<h1 class="title">Profile</h1>
-
-<div id="global-error-msg" class="alert alert-danger" role="alert">
-    <strong>Error</strong>
-    <span class="text"></span>
-</div>
-<div id="global-success-msg" class="alert alert-success" role="alert"></div>
-
-<div id="advanced-tabpanel" role="tabpanel">
-    <ul class="nav nav-tabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <a class="nav-link active" href="#user-prefs" aria-controls="user-prefs" role="tab" data-toggle="tab" aria-selected="true">Preferences</a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" href="#change-password" aria-controls="change-password" role="tab" data-toggle="tab" aria-selected="false">Change Account Password</a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" href="#delete-user" aria-controls="delete-user" role="tab" data-toggle="tab" aria-selected="false">Delete Account</a>
-        </li>
-    </ul>
-    <div class="tab-content" id="profile-tab-content">
-        <div id="user-prefs" class="tab-pane active" role="tabpanel">
-            <div id="user-profile-react-root">
-            </div>
-            <div id="user-prefs-container">
-                <h3 class="title">Random password generation preferences</h3>
-                <form role="form" id="user-prefs-form">
-                    <label>Default number of characters in random password</label>
-                    <input type="number" name="default_random_password_length"
-                        class="form-control"
-                        value="{{ user_prefs["default_random_password_length"] }}"
-                        min="1" max="255>
-                        <label>Default number of words in random passphrase</label>
-                    <input type="number" name="default_random_passphrase_length"
-                        class="form-control"
-                        value="{{ user_prefs["default_random_passphrase_length"] }}"
-                        min="1" max="10">
-                    <button type="submit" class="btn btn-success form-control">Save</button>
-                </form>
-            </div>
-        </div>
-        <div id="delete-user" class="tab-pane" role="tabpanel">
-            <h3 class="title">Delete Account</h3>
-            <div class="alert alert-danger" role="alert">
-                <strong>Warning!</strong> This action cannot be undone.
-            </div>
-            <form role="form" id="delete-user-form">
-                <p>Type your master password to proceed</p>
-                <input type="password" name="password" class="form-control" required="true"
-                    placeholder="master password">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="btn btn-danger form-control">Delete my account forever</button>
-            </form>
-        </div>
-        <div id="change-password" class="tab-pane" role="presentation">
-            <div class="progress-alert alert alert-info" role="alert"></div>
-            <div id="change-password-container">
-                <h3 class="title">Change Account Password</h3>
-                <form role="form" id="change-password-form"
-                    action="/advanced/password" method="UPDATE">
-                    <div class="error-msg"></div>
-                    <label for="old_password">Old Password</label>
-                    <span class="form-error" id="form-error-old_password"></span>
-                    <input type="password" name="old_password" class="form-control"
-                        placeholder="old password" required="true">
-                    <label for="new_password">New Password</label>
-                    <span class="form-error" id="form-error-new_password"></span>
-                    <input type="password" name="new_password" class="form-control"
-                        placeholder="new password" required="true">
-                    <label for="confirm_new_password">Confirm New Password</label>
-                    <span class="form-error" id="form-error-confirm_new_password"></span>
-                    <input type="password" name="confirm_new_password" class="form-control"
-                        placeholder="confirm new password" required="true">
-                    <input type="hidden" name="csrf_token" value={{ csrf_token() }}>
-                    <button type="submit" class="btn btn-success form-control"
-                            id="change-password-btn">Change Password</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+    <div id="react-root"></div>
 {% endblock %}

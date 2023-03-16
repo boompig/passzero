@@ -319,15 +319,9 @@ def advanced():
 @main_routes.route("/profile")
 @auth_or_redirect_login
 def profile():
-    user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    user_prefs = {
-        "default_random_password_length": user.default_random_password_length,
-        "default_random_passphrase_length": user.default_random_passphrase_length,
-    }
     return render_template(
         "profile.jinja2",
         title="PassZero &middot; Profile",
-        user_prefs=user_prefs
     )
 
 

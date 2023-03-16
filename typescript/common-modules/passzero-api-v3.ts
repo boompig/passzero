@@ -36,8 +36,13 @@ export interface IUser {
     // ISO-encoded
     last_login: string;
     username: string | null;
-    preferences: any;
     encryption_keys: IEncryptionKeys | null;
+
+    // user preferences
+    preferences: {
+        default_random_password_length: number;
+        default_random_passphrase_length: number;
+    }
 }
 /**
  * If rawResponse is not defined, default to false
@@ -93,6 +98,11 @@ interface IRegisterRequest {
  * This occurs on both success and failure
  */
 interface IRegisterResponse {
+    status: string;
+    msg: string;
+}
+
+interface IUpdateUserResponse {
     status: string;
     msg: string;
 }
@@ -400,9 +410,48 @@ export default class PasszeroApiV3 {
         return user as IUser;
     }
 
-    async updateCurrentUser(newFields: any) {
+    /**
+     * On success return the status and message
+     * On error throw an ApiError
+     * @throws {ApiError}
+     */
+    async updateCurrentUser(newFields: any): Promise<IUpdateUserResponse> {
         const apiToken = await this.fillToken();
         const url = '/api/v3/user/me';
-        return this.patchJsonWithBearer(url, apiToken, newFields);
+        const r = await this.patchJsonWithBearer(url, apiToken, newFields, true) as Response;
+        if (r.ok) {
+            const j = await r.json();
+            return j as IUpdateUserResponse;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                // we can read the body
+                const j = (await r.json()) as IRegisterResponse;
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('something went wrong', r.status);
+            }
+        }
+    }
+
+    async changePassword(oldPassword: string, newPassword: string, confirmNewPassword: string): Promise<Response> {
+        const apiToken = await this.fillToken();
+        const url = "/api/v3/user/password";
+        const data = {
+            "old_password": oldPassword,
+            "new_password": newPassword,
+            "confirm_new_password": confirmNewPassword,
+        };
+        const r = await this.postJsonWithBearer(url, apiToken, data, true) as Response;
+        return r;
+    }
+
+    async deleteAccount(masterPassword: string): Promise<Response> {
+        const apiToken = await this.fillToken();
+        const url = "/api/v3/user/delete";
+        const data = {
+            "password": masterPassword,
+        };
+        const r = await this.postJsonWithBearer(url, apiToken, data, true) as Response;
+        return r;
     }
 }

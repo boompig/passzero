@@ -4,6 +4,7 @@
 /// <reference types="jquery" />
 /// <reference path="./utils.ts" />
 /// <reference path="../common/passzero_api.ts" />
+/// <reference path="../common/logoutTimer.ts" />
 
 
 // module imports (tsc does not like these)
