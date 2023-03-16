@@ -1,7 +1,7 @@
 from flask_restx import Namespace, Resource
 
-from ..models import Service, db
-from .jwt_auth import authorizations
+from passzero.models import Service, db
+from passzero.api.jwt_auth import authorizations
 
 ns = Namespace("Service", authorizations=authorizations)
 

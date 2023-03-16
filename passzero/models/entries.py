@@ -15,9 +15,8 @@ from passzero.crypto_utils import (byte_to_hex_legacy, decrypt_field_v1,
                                    encrypt_password_legacy, extend_key, get_iv,
                                    get_kdf_salt, hex_to_byte_legacy,
                                    pad_key_legacy)
-
-from .shared import db
-from ..utils import base64_encode
+from passzero.models.shared import db
+from passzero.utils import base64_encode
 
 
 class Entry(db.Model):

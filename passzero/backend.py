@@ -16,8 +16,7 @@ from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
                              EncryptedDocument, EncryptionKeys,
                              EncryptionKeysDB_V1, Entry, Entry_v2, Entry_v3,
                              Entry_v4, Entry_v5, Link, Service, User)
-
-from .utils import base64_encode
+from passzero.utils import base64_encode
 
 UPDATE_LIMIT = 60
 # we are using this form of logging here

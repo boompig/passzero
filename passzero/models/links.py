@@ -12,7 +12,7 @@ import nacl.secret
 import nacl.utils
 from nacl.bindings import crypto_secretbox_NONCEBYTES
 
-from .shared import db
+from passzero.models.shared import db
 
 
 def _get_key(master_key: str, kdf_salt: bytes):

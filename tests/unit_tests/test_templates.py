@@ -2,8 +2,6 @@
 This file will test whether the templates fetched can be rendered at all
 """
 
-from __future__ import print_function
-
 import logging
 import os
 from io import BytesIO
@@ -14,8 +12,7 @@ import pytest
 
 from passzero.app_factory import create_app
 from passzero.models import db
-
-from ..common import api
+from tests.common import api
 
 DEFAULT_EMAIL = "sample@fake.com"
 DEFAULT_PASSWORD = "right_pass"

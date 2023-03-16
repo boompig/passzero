@@ -5,7 +5,11 @@ services:
     image: 'passzero:latest'
     container_name: passzero
     environment:
-      - DATABASE_URL=postgresql://gru:gru@host.docker.internal/passzero
+      # NOTE: this connection string must match the credentials below
+      # this is for accessing the postgres DB on the host
+      # - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal/passzero
+      # this is for accessing the postgres DB on the network
+      - DATABASE_URL=postgresql://postgres:postgres@database/passzero
       # NOTE: this is fake (obviously)
       - SENDGRID_API_KEY=x
     ports:

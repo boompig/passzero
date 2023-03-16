@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from .shared import db
+from passzero.models.shared import db
 
 
 class ApiToken(db.Model):

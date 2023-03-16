@@ -1,13 +1,13 @@
-from typing import TypedDict, Dict, Optional
 import binascii
+from typing import Dict, Optional, TypedDict
 
 import msgpack
 import nacl.pwhash
 import nacl.secret
 import nacl.utils
 
-from .shared import db
-from ..utils import base64_encode
+from passzero.models.shared import db
+from passzero.utils import base64_encode
 
 
 class EncryptionKeyEntry_V1(TypedDict):

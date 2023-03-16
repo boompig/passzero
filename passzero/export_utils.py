@@ -1,9 +1,8 @@
 import csv
 from io import StringIO
 
-from . import backend
-from .models import User
-
+from passzero import backend
+from passzero.models import User
 
 EXPORT_FIELDS = [
     "website",

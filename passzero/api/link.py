@@ -3,10 +3,10 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, reqparse
 from sqlalchemy.orm.exc import NoResultFound
 
-from .. import backend
-from ..api_utils import json_error_v2, json_success_v2
-from ..models import Link, User, db
-from .jwt_auth import authorizations
+from passzero import backend
+from passzero.api.jwt_auth import authorizations
+from passzero.api_utils import json_error_v2, json_success_v2
+from passzero.models import Link, User, db
 
 ns = Namespace("link", authorizations=authorizations)
 

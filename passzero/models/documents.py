@@ -6,9 +6,8 @@ import nacl.secret
 import nacl.utils
 
 from passzero.crypto_utils import extend_key, get_kdf_salt
-
-from ..utils import base64_encode
-from .shared import db
+from passzero.models.shared import db
+from passzero.utils import base64_encode
 
 
 class EncryptedDocument(db.Model):

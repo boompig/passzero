@@ -2,8 +2,7 @@ from datetime import datetime
 
 from passzero.config import TOKEN_SIZE
 from passzero.crypto_utils import random_hex
-
-from .shared import db
+from passzero.models.shared import db
 
 
 class AuthToken(db.Model):

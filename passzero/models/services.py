@@ -1,4 +1,4 @@
-from .shared import db
+from passzero.models.shared import db
 
 
 class Service(db.Model):

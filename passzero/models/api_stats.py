@@ -1,6 +1,6 @@
-from .shared import db
-
 from sqlalchemy import UniqueConstraint
+
+from passzero.models.shared import db
 
 
 class ApiStats(db.Model):

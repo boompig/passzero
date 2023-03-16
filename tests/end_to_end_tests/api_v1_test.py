@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import unittest
 from typing import List, Tuple
@@ -15,9 +13,7 @@ from sqlalchemy.orm.session import Session
 from passzero import backend as pz_backend
 from passzero.models.user import User
 from passzero.my_env import DATABASE_URL
-
-from ..common import api
-
+from tests.common import api
 
 DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"

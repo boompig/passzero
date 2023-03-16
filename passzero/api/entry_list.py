@@ -5,11 +5,11 @@ from typing import List
 from flask import current_app
 from flask_restx import Namespace, Resource, reqparse
 
-from .. import backend
-from ..api_utils import json_error_v2, json_success_v2
-from ..models import Entry, User, db
-from .jwt_auth import authorizations
-from . import app_error_codes
+from passzero import backend
+from passzero.api_utils import json_error_v2, json_success_v2
+from passzero.models import Entry, User, db
+from passzero.api.jwt_auth import authorizations
+from passzero.api import app_error_codes
 
 
 def jsonify_entries(enc_entries: List[Entry]):

@@ -4,13 +4,12 @@ from flask import (Blueprint, abort, current_app, escape, flash, make_response,
                    redirect, render_template, request, session, url_for)
 from sqlalchemy.orm.exc import NoResultFound
 
+from passzero import export_utils
 from passzero.api_utils import check_auth
-from passzero.backend import (activate_account, decrypt_entries, get_entries,
-                              get_link_by_id, get_services_map,
-                              password_strength_scores, get_document_by_id)
+from passzero.backend import (activate_account, decrypt_entries,
+                              get_document_by_id, get_entries, get_link_by_id,
+                              get_services_map, password_strength_scores)
 from passzero.models import AuthToken, User, db
-
-from . import export_utils
 
 main_routes = Blueprint("main_routes", __name__)
 

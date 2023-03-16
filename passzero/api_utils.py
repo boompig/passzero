@@ -5,8 +5,8 @@ from typing import Any, Dict, Optional, Tuple
 
 from flask import Response, abort, request, session
 
-from .config import CSRF_TOKEN_LENGTH
-from .crypto_utils import random_hex
+from passzero.config import CSRF_TOKEN_LENGTH
+from passzero.crypto_utils import random_hex
 
 
 def requires_json_auth(function):

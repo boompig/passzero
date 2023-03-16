@@ -5,11 +5,11 @@ from unittest import mock
 
 import six
 from flask import Flask
+
 from passzero.api_v1 import api_v1
 from passzero.api_v2 import api_v2
 from passzero.models import User, db
-
-from ..common import api
+from tests.common import api
 
 app = Flask(__name__)
 app.secret_key = 'foo'
