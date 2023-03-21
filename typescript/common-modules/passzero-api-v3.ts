@@ -44,6 +44,7 @@ export interface IUser {
         default_random_passphrase_length: number;
     }
 }
+
 /**
  * If rawResponse is not defined, default to false
  */
@@ -71,6 +72,57 @@ const postJsonWithBearer = async (url: string, apiToken: string | null, data: an
     } else {
         return response.json();
     }
+};
+
+const deleteJsonWithBearer = async (path: string, apiToken: string, queryParams: {[key: string]: string}): Promise<Response> => {
+    // const url = new URL(BASE_URL);
+    const url = new URL(window.location.href);
+    url.pathname = path;
+    // reset hash
+    url.hash = '';
+
+    const options = {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiToken}`,
+        },
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'no-cache',
+    } as RequestInit;
+    if (queryParams) {
+        Object.entries(queryParams).forEach(([key, value]) => {
+            url.searchParams.set(key, value);
+        });
+    }
+    // console.debug(`Using BASE_URL ${BASE_URL}`);
+    const response = await window.fetch(url.toString(), options);
+    return response;
+};
+
+/**
+ * If rawResponse is not defined, default to false
+ */
+const patchJsonWithBearer = async (path: string, apiToken: string, data: any): Promise<Response> => {
+    // const url = new URL(BASE_URL);
+    const url = new URL(window.location.href);
+    url.pathname = path;
+    url.hash = '';
+
+    const options = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiToken}`
+        },
+        body: JSON.stringify(data),
+        credentials: 'omit',
+        mode: 'cors',
+        cache: 'no-cache',
+    } as RequestInit;
+    const response = await window.fetch(url.toString(), options);
+    return response;
 };
 
 interface ILoginRequest {
@@ -105,6 +157,22 @@ interface IRegisterResponse {
 interface IUpdateUserResponse {
     status: string;
     msg: string;
+}
+
+/**
+ * This occurs on both success and failure
+ */
+interface IDeleteAllEntriesResponse {
+    status: string;
+    msg: string;
+}
+
+/**
+ * On success
+ */
+interface IUpdateEntryVersionsResponse {
+    status: string;
+    num_updated: number;
 }
 
 export const pzApiv3 = {
@@ -161,6 +229,50 @@ export const pzApiv3 = {
             if (r.headers.get('Content-Type') === 'application/json') {
                 // we can read the body
                 const j = (await r.json()) as IRegisterResponse;
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('something went wrong', r.status);
+            }
+        }
+    },
+
+    /**
+     * @throws an API error on failure
+     */
+    deleteAllEntries: async (accessToken: string, masterPassword: string): Promise<IDeleteAllEntriesResponse> => {
+        const path = "/api/v3/entries";
+        const data = {
+            password: masterPassword,
+        };
+        console.debug('deleting all entries...');
+        const r = await deleteJsonWithBearer(path, accessToken, data);
+        if (r.ok) {
+            const j = await r.json();
+            return j as IDeleteAllEntriesResponse;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                // we can read the body
+                const j = (await r.json()) as IDeleteAllEntriesResponse;
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('something went wrong', r.status);
+            }
+        }
+    },
+
+    updateEntryVersions: async (accessToken: string, masterPassword: string): Promise<IUpdateEntryVersionsResponse> => {
+        const path = "/api/v3/entries";
+        const data = {
+            password: masterPassword,
+        };
+        const r = await patchJsonWithBearer(path, accessToken, data);
+        if (r.ok) {
+            const j = await r.json();
+            return j as IUpdateEntryVersionsResponse;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                // we can read the body
+                const j = (await r.json()) as IDeleteAllEntriesResponse;
                 throw new ApiError(j.msg, r.status);
             } else {
                 throw new ApiError('something went wrong', r.status);

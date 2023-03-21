@@ -1,76 +1,14 @@
-{% extends "layout.jinja2" %}
+{% extends "layout-react.jinja2" %}
 
 {% block css %}
+    <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}">
 {% endblock %}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/dist/advanced.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/advanced.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block body %}
-<h1 class="title">Advanced Options</h1>
-<div id="advanced-tabpanel" role="tabpanel">
-    <ul class="nav nav-tabs" role="tablist">
-        <li role="presentation" class="nav-item">
-            <a href="#password-strength" class="nav-link" aria-controls="password-strength" role="tab" data-toggle="tab" aria-selected="false">Password Strength</a>
-        </li>
-        <li role="presentation" class="nav-item">
-            <a href="#mfa-audit" class="nav-link" aria-controls="mfa-audit" role="tab" data-toggle="tab" aria-selected="false">MFA Audit</a>
-        </li>
-        <li role="presentation" class="nav-item">
-            <a href="#export" class="nav-link active" aria-controls="export" role="tab" data-toggle="tab" aria-selected="true">Export</a>
-        </li>
-        <li role="presentation" class="nav-item">
-            <a href="#nuke" class="nav-link" aria-controls="nuke" role="tab" data-toggle="tab" aria-selected="false">Nuke</a>
-        </li>
-        <li role="presentation" class="nav-item">
-            <a href="#update-entry-versions" class="nav-link" aria-controls="nuke" role="tab" data-toggle="tab" aria-selected="false">Update Entry Versions</a>
-        </li>
-    </ul>
-    <div class="tab-content">
-        <div id="password-strength" class="tab-pane" role="tabpanel">
-            <div id="password-strength-container" class="tab-text-container">
-                <p><a href="/entries/strength">Click here</a> to see password strength for all your entries</p>
-            </div>
-        </div>
-        <div id="mfa-audit" class="tab-pane" role="tabpanel">
-            <div id="2fa-audit-container" class="tab-text-container">
-                <p><a href="/entries/2fa">Click here</a> to see whether 2FA is enabled for all your entries</p>
-            </div>
-        </div>
-        <div id="export" class="tab-pane show active" role="tabpanel">
-            <div id="export-container" class="tab-text-container">
-                <p>Generate a CSV file of all your entries, still encrypted. Read about how your data is encrypted so you can decrypt it locally.</p>
-
-                <a id="export-btn" class="btn btn-success"
-                    href="/advanced/export">Export Entries</a>
-            </div>
-        </div>
-        <div id="nuke" class="tab-pane" role="tabpanel">
-            <div class="alert alert-warning"><strong>Warning</strong> This action deletes all your entries and cannot be undone</div>
-
-            {# filled in via javascript #}
-            <div class="alert alert-success success-msg" id="nuke-success-msg" style="display: none;"></div>
-
-            <form role="form" action="/api/v1/entries/nuclear" method="POST"
-                id="nuke-entries-form">
-                <input type="hidden" name="csrf_token" value={{ csrf_token() }}>
-                <input type="hidden" name="password" value={{ master_password }}>
-                <button type="submit" class="btn btn-danger">Nuke Entries</button>
-            </form>
-        </div>
-        <div id="update-entry-versions" class="tab-pane" role="tabpanel">
-            <p>Update all your entries to the newest version to increase security and gain access to new features.</p>
-
-            {# filled in via javascript #}
-            <div class="alert alert-success success-msg" style="display: none;"></div>
-
-            <form role="form">
-                <input type="hidden" name="master_password" class="master-password" value={{ session['password'] }}>
-                <button type="submit" class="btn btn-success">Update</button>
-            </form>
-        </div>
-    </div>
-</div>
+    <div id="react-root"></div>
 {% endblock %}

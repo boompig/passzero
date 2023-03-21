@@ -313,7 +313,7 @@ def two_factor():
 @main_routes.route("/advanced")
 @auth_or_redirect_login
 def advanced():
-    return render_template("advanced.jinja2", master_password=session["password"])
+    return render_template("advanced.jinja2")
 
 
 @main_routes.route("/profile")

@@ -10,6 +10,7 @@ module.exports = {
     mode: mode,
     entry: {
         'about': './typescript/about-bundle/index.tsx',
+        'advanced': './typescript/advanced-bundle/index.tsx',
         'docs': './typescript/docs-bundle/index.tsx',
         'entries': './typescript/entries-bundle/index.tsx',
         'landing': './typescript/landing-bundle/index.tsx',
@@ -65,6 +66,7 @@ module.exports = {
                     path.resolve(__dirname, 'typescript/common'),
                     path.resolve(__dirname, 'typescript/components'),
                     path.resolve(__dirname, 'typescript/about-bundle'),
+                    path.resolve(__dirname, 'typescript/advanced-bundle'),
                     path.resolve(__dirname, 'typescript/landing-bundle'),
                     path.resolve(__dirname, 'typescript/login-bundle'),
                     path.resolve(__dirname, 'typescript/register-bundle'),
