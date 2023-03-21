@@ -1,4 +1,3 @@
-// import { useState, useEffect } from "react";
 import { useState } from "react";
 import * as React from "react";
 
@@ -93,8 +92,6 @@ export const Register = () => {
     return <div id="new-login">
         <div id="hero">
             <LoggedOutNavbar />
-            {/* TODO */}
-            {/* {% include "flash_messages.jinja2" %} */}
             <RegisterForm />
         </div>
     </div>;

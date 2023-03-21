@@ -1,46 +1,13 @@
-{% extends "layout.jinja2" %}
+{% extends "layout-react.jinja2" %}
 
 {% block css %}
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/recover.min.css") + "?build=" + config['BUILD_ID'] }}">
 {% endblock %}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/dist/recover.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
+    <script src="{{ url_for("static", filename="js/dist/recover.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
 {% block body %}
-    <h2 class="title">Recover Password</h2>
-
-    <div class="alert alert-warning"><strong>Warning</strong> unless you have key rotation turned on, this will delete all your saved passwords. This is because your passwords are encrypted using your old password, so not even we can break this encryption.</div>
-
-    <div id="success-msg" class="alert"></div>
-
-    {%- if confirm -%}
-    <form role="form" action="/api/v1/user/recover/confirm" method="POST"
-        id="recover-confirm-form">
-    {%- else -%}
-    <form role="form" action="/api/v1/user/recover" method="POST"
-        id="recover-form">
-    {%- endif -%}
-        <div id="server-msg" class="error"></div>
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        {%- if confirm -%}
-            <label for="password">Password</label>
-            <input type="password" name="password" class="form-control"
-                required="true" placeholder="password">
-            <label for="confirm_password">Confirm Password</label>
-            <input type="password" name="confirm_password" class="form-control"
-                required="true" placeholder="confirm password">
-        {%- else -%}
-            <label for="email">Email</label>
-            <input type="email" class="form-control" name="email"
-                required="true" placeholder="email">
-        {%- endif -%}
-        <div class="check-container">
-            <input type="checkbox" name="accept-risk" required="true" id="accept-risk">
-            I understand the risks
-        </div>
-        <button type="submit" class="btn btn-primary form-control" disabled="true">
-            Reset Password</button>
-    </form>
+    <div id="react-root"></div>
 {% endblock %}

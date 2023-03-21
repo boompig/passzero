@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import Advanced from "./Advanced";
+// not using the full page
+import { AdvancedMain } from "./Advanced";
 
-ReactDOM.render(<Advanced />, document.getElementById("react-root"));
+ReactDOM.render(<AdvancedMain />, document.getElementById("react-root"));

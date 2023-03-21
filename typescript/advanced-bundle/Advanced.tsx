@@ -121,7 +121,7 @@ const UpdateEntryVersionsPane = () => {
     </div>;
 };
 
-const AdvancedMain = () => {
+export const AdvancedMain = () => {
     return <div id="advanced-main">
         <h1 className="title">Advanced Options</h1>
 
@@ -156,7 +156,7 @@ const AdvancedMain = () => {
     </div>;
 };
 
-const Advanced = () => {
+export const Advanced = () => {
     return <LoggedInLayout>
         <AdvancedMain />
     </LoggedInLayout>;

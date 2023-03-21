@@ -313,7 +313,10 @@ def two_factor():
 @main_routes.route("/advanced")
 @auth_or_redirect_login
 def advanced():
-    return render_template("advanced.jinja2")
+    return render_template(
+        "advanced.jinja2",
+        title="PassZero &middot; Advanced Features",
+    )
 
 
 @main_routes.route("/profile")
@@ -327,11 +330,20 @@ def profile():
 
 @main_routes.route("/recover")
 def recover_password():
-    return render_template("recover.jinja2")
+    return render_template(
+        "recover.jinja2",
+        title="PassZero &middot; Recover Account",
+    )
 
 
 @main_routes.route("/recover/confirm")
 def recover_account_confirm():
+    if "token" not in request.args:
+        return "token is required"
+    return render_template(
+        "recover.jinja2",
+        title="PassZero &middot; Confirm Recover Account",
+    )
     try:
         token = request.args['token']
         token_obj = db.session.query(AuthToken).filter_by(token=token).one()
@@ -343,7 +355,10 @@ def recover_account_confirm():
             return redirect(url_for("main_routes.recover_password"))
         else:
             # token deleted when password changed
-            return render_template("recover.jinja2", confirm=True)
+            return render_template(
+                "recover.jinja2",
+                title="PassZero &middot; Confirm Recover Account",
+            )
     except NoResultFound:
         flash("Token is invalid", "error")
         return redirect(url_for("main_routes.recover_password"))

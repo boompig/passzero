@@ -3,14 +3,14 @@
  */
 import * as React from "react";
 
-import { LoggedInNavbar } from './LoggedInNavbar';
+// import { LoggedInNavbar } from './LoggedInNavbar';
 
 // import './main.css';
 
 export const LoggedInLayout = ({ children }: { children: React.ReactNode }) => {
     return <>
         {/* <header> */}
-            <LoggedInNavbar />
+        {/* <LoggedInNavbar /> */}
         {/* </header> */}
         <main className="container logged-in-main">
             <div className="inner-container">

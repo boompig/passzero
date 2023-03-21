@@ -219,7 +219,10 @@ def delete_link(db_session: Session, link_id: int, user_id: int, user_key: str) 
 
 
 def delete_all_entries(db_session: Session, user: User, user_key: str) -> None:
-    """This does not delete the pinned entry."""
+    """This does not delete the pinned entry.
+    To use this function, the user's current master password must be known.
+    :param user_key:    The user's master password. Must be correc.t
+    """
     entries = db_session.query(Entry).filter(and_(
         Entry.user_id == user.id,
         Entry.pinned == False,  # noqa
@@ -268,6 +271,48 @@ def delete_account(db_session: Session, user: User) -> None:
     if enc_keys_db:
         db_session.delete(enc_keys_db)
     db_session.delete(user)
+    db_session.commit()
+
+
+def recover_account_confirm(db_session: Session, user: User, new_master_password: str) -> None:
+    assert isinstance(new_master_password, str), "Type of password is %s" % type(new_master_password)
+
+    # delete subordinate entities such as entries, API tokens, documents, links, and encryption keys
+    entries_q = db_session.query(Entry).filter_by(user_id=user.id)
+    entries_q.delete()
+    # NOTE: we do not delete auth tokens here
+    api_tokens_q = db_session.query(ApiToken).filter_by(user_id=user.id)
+    api_tokens_q.delete()
+    docs_q = db_session.query(EncryptedDocument).filter_by(user_id=user.id)
+    docs_q.delete()
+    links_q = db_session.query(Link).filter_by(user_id=user.id)
+    links_q.delete()
+    enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user.id).one_or_none()
+    if enc_keys_db:
+        db_session.delete(enc_keys_db)
+
+    # however we are *not* deleting the user
+    # instead we are changing the password
+    salt = get_salt(SALT_SIZE)
+    assert isinstance(salt, bytes), "Type of salt is %s" % type(salt)
+    hash_algo = User.DEFAULT_PASSWORD_HASH_ALGO
+    password_hash = get_hashed_password(new_master_password, salt, hash_algo)
+    assert isinstance(password_hash, bytes)
+    # the hashed password is a binary string, so have to convert to unicode
+    # will be unicode when it comes out of DB anyway
+    user.password = password_hash.decode("utf-8")
+    user.password_hash_algo = hash_algo
+    assert isinstance(user.password, str)
+    # even though it would make a lot of sense to store the salt as a binary string, in reality it is stored in unicode
+    user.salt = salt.decode("utf-8")
+    db_session.add(user)
+
+    # add additional structures
+    _create_empty_encryption_key_db(db_session, user, new_master_password)
+    # necessary to commit so we can add pinned entry to it
+    db_session.commit()
+
+    create_pinned_entry(db_session, user.id, new_master_password)
     db_session.commit()
 
 

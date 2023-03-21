@@ -45,6 +45,30 @@ export interface IUser {
     }
 }
 
+const getJsonWithBearer = async (path: string, apiToken: string | null, queryParams: { [key: string]: string | number | boolean }) => {
+    const url = new URL(window.location.href);
+    url.pathname = path;
+    url.hash = '';
+
+    if (queryParams) {
+        Object.entries(queryParams).forEach(([key, value]) => {
+            url.searchParams.set(key, value.toString());
+        });
+    }
+
+    const options = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    } as RequestInit;
+    if (apiToken) {
+        (options.headers as any).Authorization = `Bearer ${apiToken}`;
+    }
+    const response = await window.fetch(url.toString(), options);
+    return response;
+};
+
 /**
  * If rawResponse is not defined, default to false
  */
@@ -279,6 +303,40 @@ export const pzApiv3 = {
             }
         }
     },
+
+    /**
+     * Step 1 of the account recovery flow
+     */
+    recoverAccountStart: async(email: string, acceptRisks: boolean): Promise<Response> => {
+        const path = '/api/v3/recover';
+        const data = {
+            email: email,
+            accept_risks: acceptRisks,
+        };
+        return postJsonWithBearer(path, null, data, true);
+    },
+
+    recoveryGetEmailWithToken: async(token: string): Promise<Response> => {
+        const path = '/api/v3/recover/email';
+        const data = {
+            token: token,
+        };
+        return getJsonWithBearer(path, null, data);
+    },
+
+    /**
+     * Step 2 of the recovery flow
+     */
+    recoverAccountConfirm: async(token: string, password: string, confirmPassword: string, acceptRisks: boolean): Promise<Response> => {
+        const path = '/api/v3/recover/confirm';
+        const data = {
+            token: token,
+            password: password,
+            confirm_password: confirmPassword,
+            accept_risks: acceptRisks,
+        };
+        return postJsonWithBearer(path, null, data, true);
+    },
 };
 
 
@@ -307,7 +365,7 @@ export default class PasszeroApiV3 {
         } else if (response.status === 401) {
             const text = await response.text();
             throw new UnauthorizedError(text);
-        } else if(response.status == 500 && response.headers.get("Content-Type") === "application/json") {
+        } else if(response.status === 500 && response.headers.get("Content-Type") === "application/json") {
             const j = await response.json();
             throw new ServerError(j.msg, response, j.app_error_code);
         } else {
