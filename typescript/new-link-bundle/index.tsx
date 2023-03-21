@@ -1,5 +1,5 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import App from "./App";
+import NewLinkApp from "./NewLinkApp";
 
-ReactDOM.render(<App />, document.getElementById("root"));
+ReactDOM.render(<NewLinkApp />, document.getElementById("root"));
