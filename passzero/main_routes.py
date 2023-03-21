@@ -100,8 +100,11 @@ def new_entry_view():
         "default_random_password_length": user.default_random_password_length,
         "default_random_passphrase_length": user.default_random_passphrase_length
     }
-    return render_template("new.jinja2", title="PassZero &middot; New Entry",
-                           user_prefs=user_prefs, error=None)
+    return render_template(
+        "new_entry.jinja2",
+        title="PassZero &middot; New Entry",
+        user_prefs=user_prefs, error=None
+    )
 
 
 @main_routes.route("/entries/done_edit/<account_name>")
@@ -277,7 +280,7 @@ def edit_entry(entry_id: int):
             "default_random_passphrase_length": user.default_random_passphrase_length
         }
         return render_template(
-            "new.jinja2",
+            "new_entry.jinja2",
             user_prefs=user_prefs,
             e_id=entry_id,
             entry=fe[0],
@@ -291,7 +294,11 @@ def password_strength():
     entries = get_entries(db.session, session["user_id"])
     dec_entries = decrypt_entries(entries, session["password"])
     entry_scores = password_strength_scores(session["email"], dec_entries)
-    return render_template("password_strength.jinja2", entry_scores=entry_scores)
+    return render_template(
+        "password_strength.jinja2",
+        entry_scores=entry_scores,
+        title="PassZero &middot; Two Factor Audit",
+    )
 
 
 @main_routes.route("/entries/2fa")
@@ -307,7 +314,11 @@ def two_factor():
             "entry_has_2fa": entry.has_2fa,
             "entry_id": entry.id
         }
-    return render_template("entries_2fa.jinja2", two_factor_map=two_factor_map)
+    return render_template(
+        "entries_2fa.jinja2",
+        two_factor_map=two_factor_map,
+        title="PassZero &middot; Two Factor Audit",
+    )
 
 
 @main_routes.route("/advanced")
@@ -344,32 +355,14 @@ def recover_account_confirm():
         "recover.jinja2",
         title="PassZero &middot; Confirm Recover Account",
     )
-    try:
-        token = request.args['token']
-        token_obj = db.session.query(AuthToken).filter_by(token=token).one()
-        if token_obj.is_expired():
-            flash("Token has expired", "error")
-            # delete old token from database
-            db.session.delete(token_obj)
-            db.session.commit()
-            return redirect(url_for("main_routes.recover_password"))
-        else:
-            # token deleted when password changed
-            return render_template(
-                "recover.jinja2",
-                title="PassZero &middot; Confirm Recover Account",
-            )
-    except NoResultFound:
-        flash("Token is invalid", "error")
-        return redirect(url_for("main_routes.recover_password"))
-    except KeyError:
-        flash("Token is mandatory", "error")
-        return redirect(url_for("main_routes.recover_password"))
 
 
 @main_routes.route("/about")
 def about():
-    return render_template("about.jinja2")
+    return render_template(
+        "about.jinja2",
+        title="PassZero &middot; About"
+    )
 
 
 @main_routes.route("/version")
