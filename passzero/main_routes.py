@@ -297,7 +297,7 @@ def password_strength():
     return render_template(
         "password_strength.jinja2",
         entry_scores=entry_scores,
-        title="PassZero &middot; Two Factor Audit",
+        title="PassZero &middot; Password Strength Audit",
     )
 
 

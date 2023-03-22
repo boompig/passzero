@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 from sqlalchemy import and_, func
 from sqlalchemy.orm.exc import NoResultFound
@@ -111,6 +111,29 @@ def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, An
             continue
         dec_entries_json.append(d)
     return dec_entries_json
+
+
+class TwoFactorAuditEntry(TypedDict):
+    service_has_2fa: bool
+    entry_has_2fa: bool
+    entry_id: int
+
+
+def two_factor_audit(db_session: Session, user_id: int) -> Dict[str, TwoFactorAuditEntry]:
+    """
+    :return a map from entry *account names* to an audit entry
+    """
+    entries = get_entries(db_session, user_id)
+    services_map = get_services_map(db_session)
+    two_factor_map = {}
+    for entry in entries:
+        account = entry.account.lower()
+        two_factor_map[entry.account] = TwoFactorAuditEntry(
+            service_has_2fa=services_map.get(account, {}).get("has_two_factor", False),
+            entry_has_2fa=entry.has_2fa,
+            entry_id=entry.id,
+        )
+    return two_factor_map
 
 
 def decrypt_entries_pool(entry_key_pair: Tuple[Entry, str]) -> dict:
