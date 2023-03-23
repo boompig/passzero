@@ -219,3 +219,92 @@ class ApiEntryList(Resource):
             }
         else:
             return json_error_v2("Password is not correct", 401)
+
+
+@ns.route("/password-strength")
+class PasswordStrength(Resource):
+    @ns.doc(security="apikey")
+    @jwt_required()
+    def get(self):
+        """Return a list of decrypted entries and their relative strengths.
+
+        Authentication
+        --------------
+        JWT
+
+        Arguments
+        ---------
+        - password: string (required)
+
+        Response
+        --------
+        on success::
+
+            [ dec-entry-scores-1, dec-entry-scores-2, ..., dec-entry-scores-n ]
+
+        exactly what information is returned depends on the entry version
+
+        on error::
+
+            { "status": "error", "msg": string, "code": int }
+
+        Status codes
+        ------------
+        - 200: success
+        - 401: incorrect master password
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("password", type=str, required=True)
+        args = parser.parse_args()
+
+        user_id = get_jwt_identity()["user_id"]
+        # guaranteed to exist
+        user = db.session.query(User).filter_by(id=user_id).one()  # type: User
+        if user.authenticate(args.password):
+            start = time.time()
+            entries = backend.get_entries(db.session, user_id)
+            dec_entries = backend.decrypt_entries(entries, args.password)
+            entry_scores = backend.password_strength_scores(user.email, dec_entries)
+            end = time.time()
+            current_app.logger.info("Took %.3f seconds to complete password score evaluation", end - start)
+            return entry_scores
+        else:
+            return json_error_v2("Failed to authenticate with provided password", 401)
+
+
+@ns.route("/two-factor-audit")
+class TwoFactorAudit(Resource):
+
+    @ns.doc(security="apikey")
+    @jwt_required()
+    def get(self):
+        """Return a list of decrypted entries and their relative strengths.
+
+        Authentication
+        --------------
+        JWT
+
+        Arguments
+        ---------
+        none
+
+        Response
+        --------
+        on success::
+
+        A map from entries' account names to their audit info.
+        Each entry will look like this:
+
+            { "service_has_2fa": bool, "entry_has_2fa": bool, "entry_id": int }
+
+        on error::
+
+            { "status": "error", "msg": string, "code": int }
+
+        Status codes
+        ------------
+        - 200: success
+        """
+        user_id = get_jwt_identity()["user_id"]
+        two_factor_map = backend.two_factor_audit(db.session, user_id)
+        return two_factor_map

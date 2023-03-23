@@ -9,15 +9,12 @@ from passzero.api.entry import ns as ApiEntryNamespace
 from passzero.api.entry_list import ns as ApiEntryListNamespace
 from passzero.api.link import ns as ApiLinkNamespace
 from passzero.api.link_list import ns as ApiLinkListNamespace
+from passzero.api.recovery import ns as ApiRecoveryNamespace
 from passzero.api.services import ns as ApiServicesNamespace
 from passzero.api.user import ns as ApiUserNamespace
 
 api = Api(title="PassZero v3 API", version="3.0", doc="/doc/")
 
-api.add_namespace(ApiTokenNamespace,
-                  path="/api/v3/token")
-api.add_namespace(ApiServicesNamespace,
-                  path="/api/v3/services")
 api.add_namespace(ApiEntryListNamespace,
                   path="/api/v3/entries")
 api.add_namespace(ApiEntryNamespace,
@@ -26,5 +23,11 @@ api.add_namespace(ApiLinkListNamespace,
                   path="/api/v3/links")
 api.add_namespace(ApiLinkNamespace,
                   path="/api/v3/links/<int:link_id>")
+api.add_namespace(ApiRecoveryNamespace,
+                  path="/api/v3/recover")
+api.add_namespace(ApiServicesNamespace,
+                  path="/api/v3/services")
+api.add_namespace(ApiTokenNamespace,
+                  path="/api/v3/token")
 api.add_namespace(ApiUserNamespace,
                   path="/api/v3/user")

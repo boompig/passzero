@@ -20,6 +20,12 @@ import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/
 
 interface IAppProps {}
 
+interface IService {
+    name: string;
+    link: string;
+    has_two_factor: boolean;
+}
+
 interface IAppState {
     entries: IEntry[];
     entriesLoaded: boolean;
@@ -89,6 +95,8 @@ class App extends Component<IAppProps, IAppState> {
     componentDidMount() {
         // start the logout timer
         this.logoutTimer.startLogoutTimer();
+
+        // try to read the access token from context.
 
         const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
         this.setState({

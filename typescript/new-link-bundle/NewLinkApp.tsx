@@ -17,7 +17,7 @@ interface INewLinkState {
 /**
  * Represents editing a new or existing link
  */
-class App extends PureComponent<{}, INewLinkState> {
+class NewLinkApp extends PureComponent<{}, INewLinkState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
 
@@ -156,4 +156,4 @@ class App extends PureComponent<{}, INewLinkState> {
     }
 }
 
-export default App;
+export default NewLinkApp;

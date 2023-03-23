@@ -7,8 +7,7 @@ from sqlalchemy.orm.exc import NoResultFound
 from passzero import export_utils
 from passzero.api_utils import check_auth
 from passzero.backend import (activate_account, decrypt_entries,
-                              get_document_by_id, get_entries, get_link_by_id,
-                              get_services_map, password_strength_scores)
+                              get_document_by_id, get_entries, get_link_by_id)
 from passzero.models import AuthToken, User, db
 
 main_routes = Blueprint("main_routes", __name__)
@@ -57,8 +56,10 @@ def post_login():
 
 @main_routes.route("/login", methods=["GET"])
 def login():
-    return render_template("login_existing.jinja2",
-                           title="PassZero &middot; Login")
+    return render_template(
+        "login_existing.jinja2",
+        title="PassZero &middot; Login"
+    )
 
 
 @main_routes.route("/logout", methods=["GET", "POST"])
@@ -100,8 +101,13 @@ def new_entry_view():
         "default_random_password_length": user.default_random_password_length,
         "default_random_passphrase_length": user.default_random_passphrase_length
     }
-    return render_template("new.jinja2", title="PassZero &middot; New Entry",
-                           user_prefs=user_prefs, error=None)
+    # user_prefs are passed in this way to React
+    return render_template(
+        "new_entry.jinja2",
+        title="PassZero &middot; New Entry",
+        user_prefs=user_prefs,
+        error=None
+    )
 
 
 @main_routes.route("/entries/done_edit/<account_name>")
@@ -121,7 +127,11 @@ def post_create(account_name):
 @main_routes.route("/entries", methods=["GET"])
 @auth_or_redirect_login
 def view_entries():
-    return render_template("entries.jinja2")
+    return render_template(
+        "entries.jinja2",
+        title="PassZero &middot; Entries"
+    )
+
 # --- END entries --- #
 
 
@@ -129,13 +139,20 @@ def view_entries():
 @main_routes.route("/links", methods=["GET"])
 @auth_or_redirect_login
 def view_links():
-    return render_template("links/links.jinja2")
+    return render_template(
+        "links/links.jinja2",
+        title="PassZero &middot; Links"
+    )
 
 
 @main_routes.route("/links/new", methods=["GET"])
 @auth_or_redirect_login
 def new_link_view():
-    return render_template("links/new-link.jinja2", title="PassZero &middot; New Link", link_id=-1)
+    return render_template(
+        "links/new-link.jinja2",
+        title="PassZero &middot; New Link",
+        link_id=-1
+    )
 
 
 @main_routes.route("/links/<int:link_id>", methods=["GET"])
@@ -147,10 +164,13 @@ def edit_link(link_id: int):
         flash("Error: no link with ID %d" % link_id, "error")
         return redirect(url_for("main_routes.view_links"))
     dec_link = link.decrypt(session["password"])
-    return render_template("links/new-link.jinja2", title="PassZero &middot; Edit Link",
-                           link_id=link_id,
-                           service_name=dec_link.service_name,
-                           link=dec_link.link)
+    return render_template(
+        "links/new-link.jinja2",
+        title="PassZero &middot; Edit Link",
+        link_id=link_id,
+        service_name=dec_link.service_name,
+        link=dec_link.link
+    )
 # --- END links --- #
 
 
@@ -158,14 +178,20 @@ def edit_link(link_id: int):
 @main_routes.route("/docs", methods=["GET"])
 @auth_or_redirect_login
 def view_docs():
-    return render_template("docs/docs.jinja2")
+    return render_template(
+        "docs/docs.jinja2",
+        title="PassZero &middot; Documents",
+    )
 
 
 @main_routes.route("/docs/new", methods=["GET"])
 @auth_or_redirect_login
 def new_doc_view():
-    return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
-                           document_id=-1)
+    return render_template(
+        "docs/new-doc.jinja2",
+        title="PassZero &middot; New Document",
+        document_id=-1
+    )
 
 
 @main_routes.route("/docs/<int:document_id>/edit", methods=["GET"])
@@ -177,8 +203,11 @@ def edit_doc(document_id: int):
     if doc is None:
         flash(f"Error: no document with ID {document_id}", "error")
         return redirect(url_for("main_routes.view_docs"))
-    return render_template("docs/new-doc.jinja2", title="PassZero &middot; New Document",
-                           document_id=document_id)
+    return render_template(
+        "docs/new-doc.jinja2",
+        title="PassZero &middot; Edit Document",
+        document_id=document_id
+    )
 
 
 @main_routes.route("/docs/<int:document_id>/view", methods=["GET"])
@@ -203,8 +232,10 @@ def view_decrypted_doc(document_id: int):
 
 @main_routes.route("/signup", methods=["GET"])
 def signup():
-    return render_template("login_new.jinja2",
-                           title="PassZero &middot; Register")
+    return render_template(
+        "login_new.jinja2",
+        title="PassZero &middot; Register"
+    )
 
 
 @main_routes.route("/signup/post_confirm")
@@ -277,7 +308,8 @@ def edit_entry(entry_id: int):
             "default_random_passphrase_length": user.default_random_passphrase_length
         }
         return render_template(
-            "new.jinja2",
+            "new_entry.jinja2",
+            title="PassZero &middot; Edit Entry",
             user_prefs=user_prefs,
             e_id=entry_id,
             entry=fe[0],
@@ -288,32 +320,28 @@ def edit_entry(entry_id: int):
 @main_routes.route("/entries/strength")
 @auth_or_redirect_login
 def password_strength():
-    entries = get_entries(db.session, session["user_id"])
-    dec_entries = decrypt_entries(entries, session["password"])
-    entry_scores = password_strength_scores(session["email"], dec_entries)
-    return render_template("password_strength.jinja2", entry_scores=entry_scores)
+    return render_template(
+        "entries_password_strength.jinja2",
+        title="PassZero &middot; Password Strength Audit",
+    )
 
 
 @main_routes.route("/entries/2fa")
 @auth_or_redirect_login
 def two_factor():
-    entries = get_entries(db.session, session["user_id"])
-    services_map = get_services_map(db.session)
-    two_factor_map = {}
-    for entry in entries:
-        account = entry.account.lower()
-        two_factor_map[entry.account] = {
-            "service_has_2fa": services_map.get(account, {}).get("has_two_factor", False),
-            "entry_has_2fa": entry.has_2fa,
-            "entry_id": entry.id
-        }
-    return render_template("entries_2fa.jinja2", two_factor_map=two_factor_map)
+    return render_template(
+        "entries_two_factor.jinja2",
+        title="PassZero &middot; Two Factor Audit",
+    )
 
 
 @main_routes.route("/advanced")
 @auth_or_redirect_login
 def advanced():
-    return render_template("advanced.jinja2", master_password=session["password"])
+    return render_template(
+        "advanced.jinja2",
+        title="PassZero &middot; Advanced Features",
+    )
 
 
 @main_routes.route("/profile")
@@ -327,34 +355,28 @@ def profile():
 
 @main_routes.route("/recover")
 def recover_password():
-    return render_template("recover.jinja2")
+    return render_template(
+        "recover.jinja2",
+        title="PassZero &middot; Recover Account",
+    )
 
 
 @main_routes.route("/recover/confirm")
 def recover_account_confirm():
-    try:
-        token = request.args['token']
-        token_obj = db.session.query(AuthToken).filter_by(token=token).one()
-        if token_obj.is_expired():
-            flash("Token has expired", "error")
-            # delete old token from database
-            db.session.delete(token_obj)
-            db.session.commit()
-            return redirect(url_for("main_routes.recover_password"))
-        else:
-            # token deleted when password changed
-            return render_template("recover.jinja2", confirm=True)
-    except NoResultFound:
-        flash("Token is invalid", "error")
-        return redirect(url_for("main_routes.recover_password"))
-    except KeyError:
-        flash("Token is mandatory", "error")
-        return redirect(url_for("main_routes.recover_password"))
+    if "token" not in request.args:
+        return "token is required"
+    return render_template(
+        "recover.jinja2",
+        title="PassZero &middot; Confirm Recover Account",
+    )
 
 
 @main_routes.route("/about")
 def about():
-    return render_template("about.jinja2")
+    return render_template(
+        "about.jinja2",
+        title="PassZero &middot; About"
+    )
 
 
 @main_routes.route("/version")

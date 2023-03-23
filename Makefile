@@ -6,10 +6,10 @@ E2E_TEST_SRC=tests/end_to_end_tests/*.py
 CWD=$(shell pwd)
 
 css_src 		:= static/css/src/*.css
-standalone_typescript_src := typescript/standalone/*.ts
+common_typescript_src := typescript/common/*.ts
 css_targets 	:= $(patsubst static/css/src/%.css, static/css/dist/%.min.css, $(wildcard static/css/src/*.css))
-js_src_targets 	:= $(patsubst typescript/standalone/%.ts, static/js/src/standalone/%.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/src/common/%.js, $(wildcard typescript/common/*.ts))
-js_dist_targets := $(patsubst typescript/standalone/%.ts, static/js/dist/%.min.js, $(wildcard typescript/standalone/*.ts)) $(patsubst typescript/common/%.ts, static/js/dist/%.min.js, $(wildcard typescript/common/*.ts))
+js_src_targets 	:= $(patsubst typescript/common/%.ts, static/js/src/common/%.js, $(wildcard typescript/common/*.ts))
+js_dist_targets := $(patsubst typescript/common/%.ts, static/js/dist/%.min.js, $(wildcard typescript/common/*.ts))
 
 csslint  := node_modules/csslint/dist/cli.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
@@ -25,10 +25,10 @@ build-name: scripts/add_build_name.py config/config.json
 
 minify: minify-js minify-css
 
-ts-compile: $(standalone_typescript_src) typescript/standalone/tsconfig.json
+ts-compile: $(common_typescript_src) typescript/common/tsconfig.json
 	mkdir -p static/js/src
-	# use the standalone tsconfig.json file for this
-	yarn run tsc --project typescript/standalone/
+	# use the common tsconfig.json file for this
+	yarn run tsc --project typescript/common/
 
 minify-js: ts-compile $(js_dist_targets)
 
@@ -36,8 +36,7 @@ static/js/dist/%.min.js: static/js/src/**/%.js
 	mkdir -p static/js/dist
 	$(uglifyjs) $< -o $@
 
-static/js/src/standalone/%.js: $(standalone_typescript_src) ts-compile
-static/js/src/common/%.js: $(standalone_typescript_src) ts-compile
+static/js/src/common/%.js: $(common_typescript_src) ts-compile
 
 minify-css: $(css_targets)
 
@@ -65,7 +64,7 @@ python-lint: $(SRC)
 	mypy --ignore-missing-imports tests/unit_tests
 	mypy --ignore-missing-imports --check-untyped-defs tests/end_to_end_tests
 
-js-lint: $(standalone_typescript_src)
+js-lint: $(common_typescript_src)
 	yarn lint
 
 css-lint: $(css_src)

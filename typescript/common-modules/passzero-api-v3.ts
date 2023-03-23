@@ -1,3 +1,4 @@
+import { saveAccessToken } from '../providers/access-token-provider';
 import { UnauthorizedError, ServerError, ApiError } from './errors';
 import { IDecryptedLink } from './links';
 
@@ -44,6 +45,38 @@ export interface IUser {
         default_random_passphrase_length: number;
     }
 }
+
+const getJsonWithBearer = async (path: string, apiToken: string | null, queryParams: { [key: string]: string | number | boolean },
+    rawResponse: boolean) => {
+        if (!rawResponse) {
+            throw new Error('for now raw response must be set');
+        }
+
+    const url = new URL(window.location.href);
+    url.pathname = path;
+    url.hash = '';
+
+    if (queryParams) {
+        Object.entries(queryParams).forEach(([key, value]) => {
+            url.searchParams.set(key, value.toString());
+        });
+    }
+
+    const options = {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        // TODO: this is just temporary
+        credentials: 'same-origin',
+    } as RequestInit;
+    if (apiToken) {
+        (options.headers as any).Authorization = `Bearer ${apiToken}`;
+    }
+    const response = await window.fetch(url.toString(), options);
+    return response;
+};
+
 /**
  * If rawResponse is not defined, default to false
  */
@@ -71,6 +104,57 @@ const postJsonWithBearer = async (url: string, apiToken: string | null, data: an
     } else {
         return response.json();
     }
+};
+
+const deleteJsonWithBearer = async (path: string, apiToken: string, queryParams: {[key: string]: string}): Promise<Response> => {
+    // const url = new URL(BASE_URL);
+    const url = new URL(window.location.href);
+    url.pathname = path;
+    // reset hash
+    url.hash = '';
+
+    const options = {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiToken}`,
+        },
+        mode: 'cors',
+        credentials: 'omit',
+        cache: 'no-cache',
+    } as RequestInit;
+    if (queryParams) {
+        Object.entries(queryParams).forEach(([key, value]) => {
+            url.searchParams.set(key, value);
+        });
+    }
+    // console.debug(`Using BASE_URL ${BASE_URL}`);
+    const response = await window.fetch(url.toString(), options);
+    return response;
+};
+
+/**
+ * If rawResponse is not defined, default to false
+ */
+const patchJsonWithBearer = async (path: string, apiToken: string, data: any): Promise<Response> => {
+    // const url = new URL(BASE_URL);
+    const url = new URL(window.location.href);
+    url.pathname = path;
+    url.hash = '';
+
+    const options = {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiToken}`
+        },
+        body: JSON.stringify(data),
+        credentials: 'omit',
+        mode: 'cors',
+        cache: 'no-cache',
+    } as RequestInit;
+    const response = await window.fetch(url.toString(), options);
+    return response;
 };
 
 interface ILoginRequest {
@@ -107,7 +191,44 @@ interface IUpdateUserResponse {
     msg: string;
 }
 
+/**
+ * This occurs on both success and failure
+ */
+interface IDeleteAllEntriesResponse {
+    status: string;
+    msg: string;
+}
+
+/**
+ * On success
+ */
+interface IUpdateEntryVersionsResponse {
+    status: string;
+    num_updated: number;
+}
+
+interface ITokenResponse {
+    token: string;
+}
+
 export const pzApiv3 = {
+    async getToken(): Promise<string> {
+        const path = '/api/v3/token';
+        const r = await getJsonWithBearer(path, null, null, true);
+        if (r.ok) {
+            const j = (await r.json()) as ITokenResponse;
+            const token = j.token;
+            return token;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                const j = await r.json();
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('Unknown error when fetching token', r.status);
+            }
+        }
+	},
+
     /**
      * On success, return a parsed response
      * On error, throw ApiError
@@ -167,6 +288,101 @@ export const pzApiv3 = {
             }
         }
     },
+
+    /**
+     * @throws an API error on failure
+     */
+    deleteAllEntries: async (accessToken: string, masterPassword: string): Promise<IDeleteAllEntriesResponse> => {
+        const path = "/api/v3/entries";
+        const data = {
+            password: masterPassword,
+        };
+        console.debug('deleting all entries...');
+        const r = await deleteJsonWithBearer(path, accessToken, data);
+        if (r.ok) {
+            const j = await r.json();
+            return j as IDeleteAllEntriesResponse;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                // we can read the body
+                const j = (await r.json()) as IDeleteAllEntriesResponse;
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('something went wrong', r.status);
+            }
+        }
+    },
+
+    updateEntryVersions: async (accessToken: string, masterPassword: string): Promise<IUpdateEntryVersionsResponse> => {
+        const path = "/api/v3/entries";
+        const data = {
+            password: masterPassword,
+        };
+        const r = await patchJsonWithBearer(path, accessToken, data);
+        if (r.ok) {
+            const j = await r.json();
+            return j as IUpdateEntryVersionsResponse;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                // we can read the body
+                const j = (await r.json()) as IDeleteAllEntriesResponse;
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('something went wrong', r.status);
+            }
+        }
+    },
+
+    /**
+     * Step 1 of the account recovery flow
+     */
+    recoverAccountStart: async(email: string, acceptRisks: boolean): Promise<Response> => {
+        const path = '/api/v3/recover';
+        const data = {
+            email: email,
+            accept_risks: acceptRisks,
+        };
+        return postJsonWithBearer(path, null, data, true);
+    },
+
+    recoveryGetEmailWithToken: async(token: string): Promise<Response> => {
+        const path = '/api/v3/recover/email';
+        const data = {
+            token: token,
+        };
+        return getJsonWithBearer(path, null, data, true);
+    },
+
+    /**
+     * Step 2 of the recovery flow
+     */
+    recoverAccountConfirm: async(token: string, password: string, confirmPassword: string, acceptRisks: boolean): Promise<Response> => {
+        const path = '/api/v3/recover/confirm';
+        const data = {
+            token: token,
+            password: password,
+            confirm_password: confirmPassword,
+            accept_risks: acceptRisks,
+        };
+        return postJsonWithBearer(path, null, data, true);
+    },
+
+    getPasswordStrengthScores: async (accessToken: string, password: string): Promise<Response> => {
+        if (!password) {
+            throw new Error('password is required');
+        }
+        const path = '/api/v3/entries/password-strength';
+        const data = {
+            password: password,
+        };
+        return getJsonWithBearer(path, accessToken, data, true);
+    },
+
+    getTwoFactorAudit: async (accessToken: string): Promise<Response> => {
+        const path = '/api/v3/entries/two-factor-audit';
+        const data = {};
+        return await getJsonWithBearer(path, accessToken, data, true);
+    },
 };
 
 
@@ -195,7 +411,7 @@ export default class PasszeroApiV3 {
         } else if (response.status === 401) {
             const text = await response.text();
             throw new UnauthorizedError(text);
-        } else if(response.status == 500 && response.headers.get("Content-Type") === "application/json") {
+        } else if(response.status === 500 && response.headers.get("Content-Type") === "application/json") {
             const j = await response.json();
             throw new ServerError(j.msg, response, j.app_error_code);
         } else {
@@ -281,6 +497,11 @@ export default class PasszeroApiV3 {
             return this.apiKey.token;
         }
         const apiKey = await this.getToken();
+        if (apiKey && apiKey.token) {
+            // TODO
+            // also save it to localStorage
+            saveAccessToken(apiKey.token);
+        }
         this.apiKey = apiKey;
         return apiKey.token;
     }

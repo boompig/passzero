@@ -1,20 +1,23 @@
-form {
-    max-width: 400px;
+main#recovery-start-main,
+main#recovery-confirm-main {
+    max-width: 700px;
     margin: 0 auto;
 }
 
+form {
+    max-width: 430px;
+    margin: 0 auto;
+}
+
+/* make sure to not capture label for checkmark */
+fieldset label {
+    font-weight: 600;
+}
+
+.form-check {
+    margin-top: 0.5rem;
+}
+
 button[type='submit'] {
-    margin-top: 10px;
-}
-
-.check-container {
-    margin-top: 10px;
-}
-
-label {
-    margin-top: 10px;
-}
-
-#success-msg {
-    display: none;
+    margin-top: 0.5rem;
 }
