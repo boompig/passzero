@@ -571,7 +571,8 @@ def login_with_email_with_token(session, email: str, password: str,
         raise BadStatusCodeException(r.status_code)
 
 
-def login_with_username_with_token(session, username: str, password: str, check_status: bool = True, verify: bool = False):
+def login_with_username_with_token(session, username: str, password: str, check_status: bool = True,
+                                   verify: bool = False):
     assert isinstance(username, str)
     url = "/api/v3/token"
     r = json_post(session, url, data={
@@ -721,6 +722,9 @@ class ApiV3:
             global BASE_URL
             BASE_URL = base_url
         logger.debug("Using BASE_URL %s", BASE_URL)
+
+    def get_status(self):
+        return self.json_get("/api/v3/status", check_status=True, use_token=False)
 
     def login(self, email: str, password: str, verify: bool = False) -> None:
         """Always checks status
@@ -921,7 +925,8 @@ class ApiV3:
             check_status=True
         )
 
-    def decrypt_links(self, link_ids: List[int], password: Optional[str] = None, check_status: bool = True) -> list:
+    def decrypt_links(self, link_ids: List[int],
+                      password: Optional[str] = None, check_status: bool = True) -> list | flask.Response:
         """
         :param password: password is optional. if not provided, will use `self.password` (useful for testing)
         :param check_status: defaults to check_status=True unless stated otherwise
@@ -952,6 +957,6 @@ class ApiV3:
         url = "/api/v3/user/me"
         return self.json_get(url=url, check_status=True, use_token=True)
 
-    def patch_current_user(self, data: dict, check_status: bool = True) -> dict:
+    def patch_current_user(self, data: dict, check_status: bool = True) -> dict | flask.Response:
         url = "/api/v3/user/me"
         return self.json_patch(url=url, data=data, check_status=check_status)

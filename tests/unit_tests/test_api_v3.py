@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 import six
-from flask import Flask
+from flask import Flask, Response
 
 from passzero import app_factory, backend
 from passzero.api.link_list import MAX_NUM_DECRYPT
@@ -907,17 +907,18 @@ def test_edit_link(app):
         _assert_links_equal(edited_link, edited_link_out)
 
 
-def test_decrypt_links_no_links(app):
+def test_decrypt_links_no_links(app: Flask):
     """decrypt_links should fail gracefully when no IDs are provided"""
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api_v3 = api.ApiV3(client)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         r = api_v3.decrypt_links([], check_status=False)
+        assert isinstance(r, Response)
         assert r.status_code == 400
 
 
-def test_decrypt_links_some_not_yours(app):
+def test_decrypt_links_some_not_yours(app: Flask):
     """decrypt_links should gracefully handle when some links are not yours"""
     with app.test_client() as client:
         api_v3 = api.ApiV3(client)
@@ -941,11 +942,12 @@ def test_decrypt_links_some_not_yours(app):
         my_link_id = api_v3.create_link(dec_link_in_mine)
         # try to decrypt with my own account
         dec_links_out = api_v3.decrypt_links([other_link_id, my_link_id], check_status=True)
+        assert isinstance(dec_links_out, list)
         assert len(dec_links_out) == 1
         _assert_links_equal(dec_links_out[0], dec_link_in_mine)
 
 
-def test_decrypt_links_too_many(app):
+def test_decrypt_links_too_many(app: Flask):
     dec_links_in = [{
         "service_name": f"hello - {i}",
         "link": f"world - {i}"
@@ -960,10 +962,11 @@ def test_decrypt_links_too_many(app):
             my_link_ids.append(api_v3.create_link(dec_link))
 
         r = api_v3.decrypt_links(my_link_ids, check_status=False)
+        assert isinstance(r, Response)
         assert r.status_code == 400
 
 
-def test_decrypt_links_bad_password(app):
+def test_decrypt_links_bad_password(app: Flask):
     """Try to decrypt links without the proper password"""
     with app.test_client() as client:
         create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
@@ -975,10 +978,11 @@ def test_decrypt_links_bad_password(app):
         }
         my_link_id = api_v3.create_link(dec_link_in)
         r = api_v3.decrypt_links([my_link_id], password="bad password", check_status=False)
+        assert isinstance(r, Response)
         assert r.status_code == 401
 
 
-def test_decrypt_links_max(app):
+def test_decrypt_links_max(app: Flask):
     dec_links_in = [{
         "service_name": f"hello - {i}",
         "link": f"world - {i}"
@@ -993,6 +997,7 @@ def test_decrypt_links_max(app):
             my_link_ids.append(api_v3.create_link(dec_link))
 
         dec_links_out = api_v3.decrypt_links(my_link_ids, check_status=True)
+        assert isinstance(dec_links_out, list)
         assert len(dec_links_out) == len(dec_links_in)
         # arrange the output in order of id
         dec_links_out.sort(key=lambda dec_link: dec_link["id"])
@@ -1000,7 +1005,7 @@ def test_decrypt_links_max(app):
             _assert_links_equal(dec_link_in, dec_link_out)
 
 
-def test_get_services(app):
+def test_get_services(app: Flask):
     with app.test_client() as client:
         api_v3 = api.ApiV3(client)
         service = Service(name="foo", link="bar")
@@ -1013,7 +1018,7 @@ def test_get_services(app):
         assert services[0]["link"] == "bar"
 
 
-def test_get_current_user(app, active_user: User):
+def test_get_current_user(app: Flask, active_user: User):
     # create user using test fixture
     assert active_user.username is None
     with app.test_client() as client:
@@ -1029,7 +1034,7 @@ def test_get_current_user(app, active_user: User):
         assert user_out["username"] is None
 
 
-def test_update_current_user_username(app, active_user: User):
+def test_update_current_user_username(app: Flask, active_user: User):
     # create primary user using test fixture
     assert active_user.username is None
 
@@ -1049,30 +1054,35 @@ def test_update_current_user_username(app, active_user: User):
 
         # these attempts should fail due to parameter validation errors
         # 1) too short
-        r = api_v3.patch_current_user({
+        r2 = api_v3.patch_current_user({
             "username": "x"
         }, check_status=False)
-        assert r.status_code == 400
+        assert isinstance(r2, Response)
+        assert r2.status_code == 400
         # 2) too long
-        r = api_v3.patch_current_user({
+        r2 = api_v3.patch_current_user({
             "username": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
         }, check_status=False)
-        assert r.status_code == 400
+        assert isinstance(r2, Response)
+        assert r2.status_code == 400
         # 3) reserved keyword
-        r = api_v3.patch_current_user({
+        r2 = api_v3.patch_current_user({
             "username": "admin",
         }, check_status=False)
-        assert r.status_code == 400
+        assert isinstance(r2, Response)
+        assert r2.status_code == 400
         # 4) reserved character/email
-        r = api_v3.patch_current_user({
+        r2 = api_v3.patch_current_user({
             "username": "test@example.com",
         }, check_status=False)
-        assert r.status_code == 400
+        assert isinstance(r2, Response)
+        assert r2.status_code == 400
 
-        r = api_v3.patch_current_user({
+        r2 = api_v3.patch_current_user({
             "username": "user1"
         }, check_status=False)
-        assert r.status_code == 200
+        assert isinstance(r2, Response)
+        assert r2.status_code == 200
 
         # make sure the username has changed
         user1_out = api_v3.get_current_user()
@@ -1085,20 +1095,29 @@ def test_update_current_user_username(app, active_user: User):
         assert user2_out["username"] is None
 
         # patch user2 with the same username as user1
-        r = api_v3.patch_current_user({
+        r2 = api_v3.patch_current_user({
             "username": "user1"
         }, check_status=False)
+        assert isinstance(r2, Response)
         # this should fail
-        assert r.status_code == 400
+        assert r2.status_code == 400
         # username should still be null
         user2_out = api_v3.get_current_user()
         assert user2_out["username"] is None
 
         # patch user2 with a different username
-        r = api_v3.patch_current_user({
+        r2 = api_v3.patch_current_user({
             "username": "user2"
         }, check_status=False)
+        assert isinstance(r2, Response)
         # this should succeed
-        assert r.status_code == 200
+        assert r2.status_code == 200
         user2_out = api_v3.get_current_user()
         assert user2_out["username"] == "user2"
+
+
+def test_api_v3_status(app: Flask):
+    with app.test_client() as client:
+        api_v3 = api.ApiV3(client)
+        d = api_v3.get_status()
+        assert d["status"] == "ok"

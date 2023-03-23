@@ -7,15 +7,14 @@ from datetime import datetime, timezone
 from flask import current_app, session
 from flask_jwt_extended import (create_access_token, decode_token,
                                 get_jwt_identity, jwt_required)
+from flask_restx import Namespace, Resource, reqparse
 from sqlalchemy.orm.exc import NoResultFound
 
-from flask_restx import Namespace, Resource, reqparse
-
-from passzero import backend
-from passzero import crypto_utils
-from passzero.api_utils import json_error_v2, json_success_v2, requires_json_auth
-from passzero.models import ApiToken, User, db
+from passzero import backend, crypto_utils
 from passzero.api.jwt_auth import authorizations
+from passzero.api_utils import (json_error_v2, json_success_v2,
+                                requires_json_auth)
+from passzero.models import ApiToken, User, db
 
 
 class UserNotActiveException(Exception):
