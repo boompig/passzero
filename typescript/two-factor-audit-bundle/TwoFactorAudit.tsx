@@ -4,11 +4,8 @@ import { useState, useEffect, useContext } from 'react';
 import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { AccessTokenProvider } from '../components/AccessTokenProvider';
 import { AccessTokenContext } from '../providers/access-token-provider';
+import LogoutTimer from "../common-modules/logoutTimer";
 // import { clientSideLogout } from '../common-modules/client-side-utils';
-
-// instead of importing include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-// / <reference path="../common/logoutTimer.ts" />
 
 interface ITwoFactorMapEntry {
     service_has_2fa: boolean;
@@ -30,6 +27,11 @@ type TwoFactorMapResponse = {[key: string]: ITwoFactorMapEntry};
 
 const TwoFactorAuditMain = () => {
     const accessToken = useContext(AccessTokenContext);
+    if (!accessToken) {
+        throw new Error('failed to load access token from context');
+    }
+
+    const logoutTimer = new LogoutTimer();
     const [twoFactorMap, setTwoFactorMap] = useState({} as TwoFactorMapResponse);
 
     const rows = Object.entries(twoFactorMap).map(([account, entry]) => {
@@ -54,6 +56,9 @@ const TwoFactorAuditMain = () => {
 
     useEffect(() => {
         fetchTwoFactorMap();
+        if (!logoutTimer.isStarted) {
+            logoutTimer.startLogoutTimer();
+        }
     }, []);
 
     return <main>

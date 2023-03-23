@@ -6,10 +6,7 @@ import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { AccessTokenContext } from '../providers/access-token-provider';
 import { AccessTokenProvider } from '../components/AccessTokenProvider';
 import { clientSideLogout } from '../common-modules/client-side-utils';
-
-// instead of importing include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-/// <reference path="../common/logoutTimer.ts" />
+import LogoutTimer from "../common-modules/logoutTimer";
 
 interface IEntryScore {
     id: number;
@@ -32,6 +29,7 @@ const getRowClass = (score: number): string => {
 
 export const PasswordStrengthMain = () => {
     const { masterPassword } = useContext(MasterPasswordContext)
+
     if (!masterPassword) {
         throw new Error('master password failed to load from context');
     }
@@ -40,6 +38,7 @@ export const PasswordStrengthMain = () => {
         throw new Error('failed to fetch access token from context');
     }
 
+    const logoutTimer = new LogoutTimer();
     const [entryScores, setEntryScores] = useState([] as IEntryScore[]);
 
     const fetchEntryScores = async (accessToken: string, numAttempts: number) => {
@@ -67,6 +66,9 @@ export const PasswordStrengthMain = () => {
 
     useEffect(() => {
         fetchEntryScores(accessToken, 0);
+        if (!logoutTimer.isStarted) {
+            logoutTimer.startLogoutTimer();
+        }
     }, [accessToken]);
 
     const rows = entryScores.map((entry: IEntryScore) => {

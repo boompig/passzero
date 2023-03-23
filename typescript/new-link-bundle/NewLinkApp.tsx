@@ -1,10 +1,7 @@
 import { PureComponent } from "react";
 import * as React from "react";
 import PasszeroApiV3 from "../common-modules/passzero-api-v3";
-
-// instead of importing include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-/// <reference path="../common/logoutTimer.ts" />
+import LogoutTimer from "../common-modules/logoutTimer";
 
 interface INewLinkState {
     name: string;

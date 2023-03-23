@@ -13,10 +13,7 @@ import SearchForm from "./components/search-form";
 import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-api-v3";
 import { decryptEntryV5WithKeysDatabase } from "../common-modules/crypto-utils";
 import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/message";
-
-// instead of importing include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-/// <reference path="../common/logoutTimer.ts" />
+import LogoutTimer from "../common-modules/logoutTimer";
 
 interface IAppProps {}
 
@@ -85,6 +82,7 @@ class App extends Component<IAppProps, IAppState> {
         this.handleGetUser = this.handleGetUser.bind(this);
         this.handleWorkerMessage = this.handleWorkerMessage.bind(this);
         this.addServicesToEntries = this.addServicesToEntries.bind(this);
+        this.resetTimer = this.resetTimer.bind(this);
 
         // create worker thread
         this.worker = new window.Worker('/js/dist/web-worker.bundle.js');
@@ -134,6 +132,10 @@ class App extends Component<IAppProps, IAppState> {
             }).then((user: IUser) => {
                 this.handleGetUser(user);
             });
+    }
+
+    resetTimer() {
+        this.logoutTimer.resetLogoutTimer();
     }
 
     async handleWorkerMessage(event: MessageEvent) {
@@ -248,7 +250,7 @@ class App extends Component<IAppProps, IAppState> {
         }
 
         // reset the logout timer
-        this.logoutTimer.resetLogoutTimer();
+        this.resetTimer();
 
         const entry = this.state.entries[entryIndex];
         if (!entry.is_encrypted) {
@@ -345,7 +347,7 @@ class App extends Component<IAppProps, IAppState> {
             </div>);
         } else {
             return (
-                <div id="inner-root">
+                <div id="inner-root" onScroll={this.resetTimer}>
                     {/* this is just a placeholder for now */}
                     <nav></nav>
                     <main className="container">

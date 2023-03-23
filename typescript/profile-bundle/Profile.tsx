@@ -3,10 +3,7 @@ import { useState, useEffect } from "react";
 import Alert from "react-bootstrap/Alert";
 
 import PasszeroApiV3, { IUser } from "../common-modules/passzero-api-v3";
-
-// instead of importing, include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-/// <reference path="../common/logoutTimer.ts" />
+import LogoutTimer from "../common-modules/logoutTimer";
 
 const UserPrefs = ({ user, onUpdate }: { user: IUser, onUpdate(): void }) => {
     const pzApi = new PasszeroApiV3();

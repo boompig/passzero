@@ -1,10 +1,6 @@
 import * as React from "react";
 import PassZeroAPIv1 from "../common-modules/passzero-api-v1";
-
-// instead of importing include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-/// <reference path="../common/logoutTimer.ts" />
-
+import LogoutTimer from "../common-modules/logoutTimer";
 
 interface IViewDocumentAppState {
     documentId: number;

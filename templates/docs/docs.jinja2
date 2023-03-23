@@ -1,7 +1,6 @@
 {%- extends "layout-react.jinja2" -%}
 
 {% block js %}
-    <script src="{{ url_for("static", filename="js/dist/logoutTimer.min.js") + "?build=" + config['BUILD_ID'] }}"></script>
     {# custom JS - webpack bundle #}
     <script src="{{ url_for("static", filename="js/dist/docs.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}

@@ -1,34 +1,37 @@
-class LogoutTimer {
+export class LogoutTimer {
     restart: boolean;
     lastActive: Date | null;
     val: number;
     maxVal: number;
+    isStarted: boolean;
 
     constructor() {
         this.restart = true;
         this.lastActive = null;
         this.val = 0;
         this.maxVal = 4 * 60;
+        this.isStarted = false;
     }
 
     resetLogoutTimer() {
         this.restart = true;
         this.lastActive = new Date();
-        console.log("[LogoutTimer] reset");
+        console.debug("[LogoutTimer] reset");
     }
 
     startLogoutTimer() {
+        this.isStarted = true;
         if (this.lastActive === null) {
             this.lastActive = new Date();
         }
 
         // for debugging
         if (this.val % 10 === 0) {
-            console.log(this.val);
+            console.debug(`LogoutTimer: ${this.val}`);
         }
 
         if (this.restart) {
-            console.log("[LogoutTimer] restarting");
+            console.debug("[LogoutTimer] restarting");
             this.val = this.maxVal;
             this.restart = false;
         } else {
@@ -56,4 +59,4 @@ class LogoutTimer {
     }
 }
 
-//export { LogoutTimer };
+export default LogoutTimer;

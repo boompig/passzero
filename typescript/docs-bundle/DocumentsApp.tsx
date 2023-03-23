@@ -3,15 +3,23 @@ import * as React from "react";
 import EncryptedDocument from "./components/encrypted-document";
 import { IEncryptedDocument, IDocument } from "./interfaces";
 import PassZeroAPIv1 from "../common-modules/passzero-api-v1";
+import LogoutTimer from "../common-modules/logoutTimer";
 
 // import "bootstrap/dist/css/bootstrap.min.css";
 
-// instead of importing, include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-/// <reference path="../common/logoutTimer.ts" />
+const LoadingDocumentsApp = () => {
+    return <div>Loading documents...</div>;
+};
+
+const EmptyDocumentsApp = () => {
+    return (
+        <div>
+            You don't have any saved documents yet. Create some <a href="/docs/new">here</a>.
+        </div>
+    );
+};
 
 interface IProps {}
-
 
 interface IState {
     documents: IDocument[];
@@ -40,15 +48,14 @@ class DocumentApp extends Component<IProps, IState> {
         // javascript is terrible
         this.handleDecrypt = this.handleDecrypt.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
-        this.renderLoading = this.renderLoading.bind(this);
-        this.renderEmpty = this.renderEmpty.bind(this);
         this.renderDocuments = this.renderDocuments.bind(this);
+        this.resetTimer = this.resetTimer.bind(this);
     }
 
     componentDidMount() {
         this.logoutTimer.startLogoutTimer();
 
-        console.log("Fetching documents...");
+        console.debug("Fetching documents...");
         // fetch all the encrypted links
         this.pzAPI.getEncryptedDocuments()
             .then((response) => {
@@ -74,18 +81,6 @@ class DocumentApp extends Component<IProps, IState> {
                     console.log("different type of error: " + err.name);
                 }
             });
-    }
-
-    renderLoading() {
-        return <div>Loading documents...</div>;
-    }
-
-    renderEmpty() {
-        return (
-            <div>
-                You don't have any saved documents yet. Create some <a href="/docs/new">here</a>.
-            </div>
-        );
     }
 
     async handleDelete(index: number): Promise<void> {
@@ -116,6 +111,10 @@ class DocumentApp extends Component<IProps, IState> {
         window.location.assign(`/docs/${doc.id}/view`);
     }
 
+    resetTimer(): void {
+        this.logoutTimer.resetLogoutTimer();
+    }
+
     /**
      * This method is called when links are loaded and this.state.links is non-empty
      */
@@ -137,7 +136,7 @@ class DocumentApp extends Component<IProps, IState> {
         }
 
         return (
-            <div>
+            <div onScroll={this.resetTimer} onClick={this.resetTimer}>
                 <div className="docs-control-panel">
                     <a href="/docs/new" className="new-doc-btn control-panel-btn btn btn-lg btn-success">
                         Create New Document
@@ -152,9 +151,9 @@ class DocumentApp extends Component<IProps, IState> {
 
     render() {
         if (!this.state.isDocumentsLoaded) {
-            return this.renderLoading();
+            return <LoadingDocumentsApp />;
         } else if (this.state.isDocumentsLoaded && this.state.documents.length === 0) {
-            return this.renderEmpty();
+            return <EmptyDocumentsApp />;
         } else {
             return this.renderDocuments();
         }

@@ -1,17 +1,15 @@
 import { Component } from "react";
 import * as React from "react";
 import { chunk } from "lodash";
-import PasszeroApiV3, {IUser, IKeysDatabase} from "../common-modules/passzero-api-v3";
+
+import PasszeroApiV3, { IUser, IKeysDatabase } from "../common-modules/passzero-api-v3";
 import DecryptedLink from "./components/decrypted-link";
 import EncryptedLink from "./components/encrypted-link";
 import {IDecryptedLink, IEncryptedLink, ILink} from "../common-modules/links";
 import SearchForm from "../entries-bundle/components/search-form";
 import { decryptLinkWithKeysDB } from "../common-modules/crypto-utils";
 import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/message";
-
-// instead of importing, include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-/// <reference path="../common/logoutTimer.ts" />
+import LogoutTimer from "../common-modules/logoutTimer";
 
 interface IProps {}
 
@@ -79,6 +77,7 @@ class App extends Component<IProps, IState> {
         this.decryptList = this.decryptList.bind(this);
         this.handleGetUser = this.handleGetUser.bind(this);
         this.handleWorkerMessage = this.handleWorkerMessage.bind(this);
+        this.resetTimer = this.resetTimer.bind(this);
 
         // create worker thread
         this.worker = new window.Worker('/js/dist/web-worker.bundle.js');
@@ -124,6 +123,10 @@ class App extends Component<IProps, IState> {
             }).then((user: IUser) => {
                 this.handleGetUser(user);
             });
+    }
+
+    resetTimer() {
+        this.logoutTimer.resetLogoutTimer();
     }
 
     async handleWorkerMessage(event: MessageEvent) {
@@ -239,7 +242,7 @@ class App extends Component<IProps, IState> {
      */
     handleDecryptAll(): void {
         // reset the logout timer when button is pressed
-        this.logoutTimer.resetLogoutTimer();
+        this.resetTimer();
 
         this.setState({
             // don't allow the user to press the decrypt button while we're decrypting
@@ -344,7 +347,7 @@ class App extends Component<IProps, IState> {
      */
     handleDecryptAllOld(): void {
         // reset the logout timer when button is pressed
-        this.logoutTimer.resetLogoutTimer();
+        this.resetTimer();
 
         // step 1 - disable the button
         if (this.state.isDecrypting) {
@@ -465,7 +468,7 @@ class App extends Component<IProps, IState> {
         }
 
         return (
-            <div>
+            <div onScroll={this.resetTimer}>
                 <div className="links-control-panel">
                     <a href="/links/new" className="new-link-btn control-panel-btn btn btn-lg btn-success">
                         Create New Link

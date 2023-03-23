@@ -5,10 +5,7 @@ import { Settings } from "./components/settings";
 import PasszeroApiV3 from "../common-modules/passzero-api-v3";
 import { random } from "lodash";
 import classnames from "classnames";
-
-// instead of importing include it using a reference (since it's not a module)
-// similarly for LogoutTimer variable
-/// <reference path="../common/logoutTimer.ts" />
+import LogoutTimer from "../common-modules/logoutTimer";
 
 interface INewEntryState {
 	id: number;
