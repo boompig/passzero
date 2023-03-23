@@ -32,7 +32,7 @@ ts-compile: $(common_typescript_src) typescript/common/tsconfig.json
 
 minify-js: ts-compile $(js_dist_targets)
 
-static/js/dist/%.min.js: static/js/src/**/%.js
+static/js/dist/%.min.js: static/js/src/%.js
 	mkdir -p static/js/dist
 	$(uglifyjs) $< -o $@
 
