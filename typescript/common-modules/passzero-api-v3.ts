@@ -1,3 +1,4 @@
+import { saveAccessToken } from '../providers/access-token-provider';
 import { UnauthorizedError, ServerError, ApiError } from './errors';
 import { IDecryptedLink } from './links';
 
@@ -45,7 +46,12 @@ export interface IUser {
     }
 }
 
-const getJsonWithBearer = async (path: string, apiToken: string | null, queryParams: { [key: string]: string | number | boolean }) => {
+const getJsonWithBearer = async (path: string, apiToken: string | null, queryParams: { [key: string]: string | number | boolean },
+    rawResponse: boolean) => {
+        if (!rawResponse) {
+            throw new Error('for now raw response must be set');
+        }
+
     const url = new URL(window.location.href);
     url.pathname = path;
     url.hash = '';
@@ -61,6 +67,8 @@ const getJsonWithBearer = async (path: string, apiToken: string | null, queryPar
         headers: {
             "Content-Type": "application/json",
         },
+        // TODO: this is just temporary
+        credentials: 'same-origin',
     } as RequestInit;
     if (apiToken) {
         (options.headers as any).Authorization = `Bearer ${apiToken}`;
@@ -199,7 +207,28 @@ interface IUpdateEntryVersionsResponse {
     num_updated: number;
 }
 
+interface ITokenResponse {
+    token: string;
+}
+
 export const pzApiv3 = {
+    async getToken(): Promise<string> {
+        const path = '/api/v3/token';
+        const r = await getJsonWithBearer(path, null, null, true);
+        if (r.ok) {
+            const j = (await r.json()) as ITokenResponse;
+            const token = j.token;
+            return token;
+        } else {
+            if (r.headers.get('Content-Type') === 'application/json') {
+                const j = await r.json();
+                throw new ApiError(j.msg, r.status);
+            } else {
+                throw new ApiError('Unknown error when fetching token', r.status);
+            }
+        }
+	},
+
     /**
      * On success, return a parsed response
      * On error, throw ApiError
@@ -321,7 +350,7 @@ export const pzApiv3 = {
         const data = {
             token: token,
         };
-        return getJsonWithBearer(path, null, data);
+        return getJsonWithBearer(path, null, data, true);
     },
 
     /**
@@ -336,6 +365,17 @@ export const pzApiv3 = {
             accept_risks: acceptRisks,
         };
         return postJsonWithBearer(path, null, data, true);
+    },
+
+    getPasswordStrengthScores: async (accessToken: string, password: string): Promise<Response> => {
+        if (!password) {
+            throw new Error('password is required');
+        }
+        const path = '/api/v3/entries/password-strength';
+        const data = {
+            password: password,
+        };
+        return getJsonWithBearer(path, accessToken, data, true);
     },
 };
 
@@ -451,6 +491,11 @@ export default class PasszeroApiV3 {
             return this.apiKey.token;
         }
         const apiKey = await this.getToken();
+        if (apiKey && apiKey.token) {
+            // TODO
+            // also save it to localStorage
+            saveAccessToken(apiKey.token);
+        }
         this.apiKey = apiKey;
         return apiKey.token;
     }

@@ -95,18 +95,25 @@ def activate_account(db_session: Session, user: User):
     db_session.commit()
 
 
-def password_strength_scores(email: str, dec_entries: list) -> List[Dict[str, Any]]:
+class PasswordStrengthAuditEntry(TypedDict):
+    id: int
+    account: str
+    score: int
+    feedback: str
+
+
+def password_strength_scores(email: str, dec_entries: list) -> List[PasswordStrengthAuditEntry]:
     dec_entries_json = []
     for entry in dec_entries:
         results = audit.password_strength(entry["password"], user_inputs=[
             entry["account"], entry["username"], email
         ])
-        d = {
-            "id": entry["id"],
-            "account": entry["account"],
-            "score": results["score"],
-            "feedback": " ".join(results["feedback"]["suggestions"]),
-        }
+        d = PasswordStrengthAuditEntry(
+            id=entry["id"],
+            account=entry["account"],
+            score=results["score"],
+            feedback=" ".join(results["feedback"]["suggestions"]),
+        )
         if entry["password"] == "" or entry["password"] == "-":
             continue
         dec_entries_json.append(d)

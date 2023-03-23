@@ -90,6 +90,8 @@ class App extends Component<IAppProps, IAppState> {
         // start the logout timer
         this.logoutTimer.startLogoutTimer();
 
+        // try to read the access token from context.
+
         const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
         this.setState({
             masterPassword: masterPassword,

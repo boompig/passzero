@@ -4,17 +4,17 @@ import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 import Alert from 'react-bootstrap/Alert';
 
-import { LoggedInLayout } from '../components/LoggedInLayout';
 import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { MasterPasswordContext } from '../providers/master-password-provider';
 import { AccessTokenContext } from '../providers/access-token-provider';
 import { clientSideLogout } from '../common-modules/client-side-utils';
+import { AccessTokenProvider } from '../components/AccessTokenProvider';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
 // import './advanced.css';
 
 const NukePane = () => {
-    const { accessToken } = useContext(AccessTokenContext);
+    const accessToken = useContext(AccessTokenContext);
     if (!accessToken) {
         throw new Error('failed to load access token from context');
     }
@@ -71,7 +71,7 @@ const NukePane = () => {
 };
 
 const UpdateEntryVersionsPane = () => {
-    const { accessToken } = useContext(AccessTokenContext);
+    const accessToken = useContext(AccessTokenContext);
     if (!accessToken) {
         throw new Error('failed to load access token from context');
     }
@@ -157,9 +157,9 @@ export const AdvancedMain = () => {
 };
 
 export const Advanced = () => {
-    return <LoggedInLayout>
+    return <AccessTokenProvider>
         <AdvancedMain />
-    </LoggedInLayout>;
+    </AccessTokenProvider>;
 };
 
 export default Advanced;

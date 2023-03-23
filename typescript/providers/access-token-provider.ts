@@ -1,5 +1,9 @@
+// import * as React from 'react';
 import { createContext } from 'react';
 
+/**
+ * The token is stored as a text string
+ */
 export const readSavedAccessToken = () => {
     const token = window.localStorage.getItem('access_token');
     return token;
@@ -11,11 +15,9 @@ export const deleteSavedAccessToken = () => {
 
 // TODO - is this the right thing?
 export const saveAccessToken = (accessToken: string) => {
+    console.debug(`Setting new access token: ${accessToken}...`);
     window.localStorage.setItem('access_token', accessToken);
+    console.debug('new access token has been set');
 };
-                                                                                                                                                                                      const token = readSavedAccessToken();
-export const AccessTokenContext = createContext({
-    accessToken: token,
-    // eslint-disable-next-line
-    setAccessToken: (newToken: string | null) => {},
-});
+
+export const AccessTokenContext = createContext('');
