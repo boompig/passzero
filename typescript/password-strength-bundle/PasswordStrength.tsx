@@ -5,7 +5,7 @@ import { MasterPasswordContext } from '../providers/master-password-provider';
 import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { AccessTokenContext } from '../providers/access-token-provider';
 import { AccessTokenProvider } from '../components/AccessTokenProvider';
-// import { clientSideLogout } from '../common-modules/client-side-utils';
+import { clientSideLogout } from '../common-modules/client-side-utils';
 
 // instead of importing include it using a reference (since it's not a module)
 // similarly for LogoutTimer variable
@@ -54,16 +54,9 @@ export const PasswordStrengthMain = () => {
                 console.error(r.status);
                 const t = await r.text();
                 console.error(t);
-                // if (r.status === 401) {
-                //     console.error(`failed to fetch entry scores with current token. getting a new one. # prev attempts: ${numAttempts}`);
-                //     // likely the token has expired
-                //     // get a new version
-                //     const newToken = await pzApiv3.getToken();
-                //     setAccessToken(newToken);
-                //     console.debug(`Got new token: ${newToken}`);
-                //     await fetchEntryScores(newToken, numAttempts + 1);
-                //     // clientSideLogout();
-                // }
+                if (r.status === 401) {
+                    clientSideLogout();
+                }
             }
         } else if (numAttempts >= 2) {
             throw new Error('stopping after 2 failures');
