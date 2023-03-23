@@ -20,6 +20,12 @@ import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/
 
 interface IAppProps {}
 
+interface IService {
+    name: string;
+    link: string;
+    has_two_factor: boolean;
+}
+
 interface IAppState {
     entries: IEntry[];
     entriesLoaded: boolean;

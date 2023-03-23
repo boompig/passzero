@@ -377,6 +377,12 @@ export const pzApiv3 = {
         };
         return getJsonWithBearer(path, accessToken, data, true);
     },
+
+    getTwoFactorAudit: async (accessToken: string): Promise<Response> => {
+        const path = '/api/v3/entries/two-factor-audit';
+        const data = {};
+        return await getJsonWithBearer(path, accessToken, data, true);
+    },
 };
 
 

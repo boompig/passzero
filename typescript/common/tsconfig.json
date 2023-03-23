@@ -10,8 +10,7 @@
         "removeComments": true,
         // "rootDir": ".",
         "rootDirs": [
-            ".",
-            "common"
+            "."
         ],
         // "sourceMap": true,
         "target": "es5"

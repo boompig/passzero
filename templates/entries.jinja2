@@ -8,8 +8,8 @@
 {% endblock %}
 
 {% block css %}
-    {# NOTE: bootstrap 4 already included in layout template #}
-    {# NOTE: fontawesome solid glyphicons already included in layout template #}
+    {# NOTE: bootstrap 4 already included in layout-react template #}
+    {# NOTE: fontawesome solid glyphicons already included in layout-react template #}
     {# custom style #}
     <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/entries.min.css") + "?build=" + config['BUILD_ID'] }}">
 {% endblock %}
