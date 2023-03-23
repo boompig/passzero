@@ -18,15 +18,6 @@ program='scripts/api_doc_builder/create_api_docs.py'
 	#fi
 #done
 
-#dest='/tmp/api_v2'
-#rm -rf "$dest" || exit 1
-#mkdir "$dest" || exit 1
-#python "$program" passzero/api_v2.py api_v2 '/api/v2/' "$dest" || exit 1
-#for f in "$dest"/*.html;
-#do
-	#diff -q "$f" templates/api_v2_docs;
-#done
-
 
 dest='/tmp/api_v3/entry'
 rm -rf "$dest" || exit 1

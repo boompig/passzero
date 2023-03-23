@@ -536,44 +536,6 @@ def delete_document(app, doc_id: int, csrf_token: str,
     return r
 
 
-# --- v2 API starts here
-
-def get_entries_v2(app):
-    url = "/api/v2/entries"
-    r = json_get(app, url)
-    assert r.status_code == 200
-    _print_if_test(app, _get_response_data(app, r))
-    return _get_response_json(r)
-
-
-def get_entry_v2(app, entry_id: int, check_status: bool = True):
-    url = "/api/v2/entries/{}".format(entry_id)
-    r = json_get(app, url)
-    if check_status:
-        assert r.status_code == 200
-        _print_if_test(app, _get_response_data(app, r))
-        return _get_response_json(r)
-    else:
-        return r
-
-
-def login_v2(app, username_or_email: str, password: str, check_status: bool = True):
-    assert isinstance(username_or_email, six.text_type)
-    assert isinstance(password, six.text_type)
-    assert isinstance(check_status, bool)
-    data = {
-        "username_or_email": username_or_email,
-        "password": password
-    }
-    url = "/api/v2/login"
-    r = json_post(app, url, data)
-    _print_if_test(app, _get_response_data(app, r))
-    if check_status:
-        assert r.status_code == 200, "Failed to login with email '%s' and password '%s' (code %d)" % (
-            username_or_email, password, r.status_code)
-    return r
-
-
 # --- v3 (tokens) starts here
 
 

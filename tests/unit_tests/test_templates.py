@@ -55,7 +55,7 @@ def _create_active_account(client, email: str, password: str):
         # activate
         api.activate_account(client, token, check_status=True)
         # login
-        api.login_v2(client, email, password, check_status=True)
+        api.login(client, email, password, check_status=True)
 
 
 def _create_entry(client) -> int:

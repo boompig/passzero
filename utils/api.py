@@ -192,22 +192,6 @@ def json_get(session, relative_url: str, token: str = None):
     )
 
 
-def get_entries_v2(app):
-    r = get_json(app, BASE_URL + "/api/v2/entries")
-    assert r.status_code == 200
-    # print(r.text)
-    return json.loads(r.text)
-
-
-def get_entry_v2(app, entry_id, check_status=True):
-    r = get_json(app, BASE_URL + "/api/v2/entries/{}".format(entry_id))
-    if check_status:
-        # print(r.text)
-        assert r.status_code == 200
-        return json.loads(r.text)
-    else:
-        return r
-
 # token stuff
 
 

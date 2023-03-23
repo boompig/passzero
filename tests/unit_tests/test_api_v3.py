@@ -112,8 +112,8 @@ def test_login_with_email_then_get_token(app: Flask, active_user: User):
     """Test that we can get the token for an account where we have previously logged in."""
     assert isinstance(active_user, User)
     with app.test_client() as client:
-        api.login_v2(client,
-                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login(client,
+                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         assert isinstance(token, six.text_type)
 
@@ -122,8 +122,8 @@ def test_login_then_get_token_twice(app: Flask, active_user: User):
     """If you get the token twice, make sure it's the same token"""
     assert isinstance(active_user, User)
     with app.test_client() as client:
-        api.login_v2(client,
-                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login(client,
+                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         t2 = api.get_api_token_with_login(client, check_status=True)
         assert token == t2

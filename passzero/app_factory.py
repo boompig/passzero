@@ -17,7 +17,6 @@ from passzero import crypto_utils
 from passzero.api import api
 from passzero.api_utils import generate_csrf_token
 from passzero.api_v1 import api_v1
-from passzero.api_v2 import api_v2
 from passzero.config import DefaultConfig
 from passzero.main_routes import main_routes
 from passzero.models import ApiToken, db
@@ -111,7 +110,6 @@ def create_app(name: str, settings_override: dict = {}):
 
     # register blueprints
     app.register_blueprint(api_v1)
-    app.register_blueprint(api_v2, prefix="/api/v2")
     app.register_blueprint(main_routes)
 
     # create swagger docs automatically and show them at /doc
