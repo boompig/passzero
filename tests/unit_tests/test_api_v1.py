@@ -42,10 +42,6 @@ class PassZeroApiTester(unittest.TestCase):
     def tearDown(self):
         db.drop_all()
 
-    def test_status(self):
-        data = api.get_status_v1(self.app, check_status=True)
-        assert data["status"] == "ok"
-
     def test_delete_user_with_entries(self):
         email = DEFAULT_EMAIL
         password = DEFAULT_PASSWORD
@@ -110,26 +106,6 @@ class PassZeroApiTester(unittest.TestCase):
         # which would be impossible if account was deleted
         prefs = api.get_user_preferences_v1(self.app, check_status=True)
         assert prefs is not None
-
-    # TODO for some reason can't mock out send_confirmation_email so mocking this instead
-    @mock.patch("passzero.email.send_email", return_value=True)
-    def test_delete_user_with_recovery_token(self, m1):
-        email = DEFAULT_EMAIL
-        password = DEFAULT_PASSWORD
-        self._create_active_account(email, password)
-        api.login_v1(self.app, email, password)
-        recover_csrf_token = api.get_csrf_token(self.app)
-        api.recover_account_v1(self.app, email, recover_csrf_token)
-        recovery_token = self._extract_token_from_send_email_call(m1)
-        assert recovery_token != ""
-        delete_token = api.get_csrf_token(self.app)
-        api.delete_user_v1(self.app, password, delete_token, check_status=True)
-        # now we want to use that token to complete account recovery
-        confirm_csrf_token = api.get_csrf_token(self.app)
-        r = api.recover_account_confirm_v1(self.app, "new password", recovery_token, confirm_csrf_token,
-                                           check_status=False)
-        print(r.data)
-        assert r.status_code != 200
 
     def _extract_token_from_send_email_call(self, m1):
         token = m1.call_args[0][2].split("?")[1].replace("token=", "")
@@ -342,70 +318,3 @@ class PassZeroApiTester(unittest.TestCase):
         r = api.get_user_preferences_v1(self.app, check_status=False)
         # should not be able to get entries
         assert r.status_code == 401
-
-    @mock.patch("passzero.email.send_email")
-    def test_recover_account_valid_email(self, m1):
-        email = DEFAULT_EMAIL
-        old_password = u"a_password"
-        self._create_active_account(email, old_password)
-
-        # login and get user ID
-        r = api.login_v1(self.app, email, old_password)
-        out = r.json
-        assert "user_id" in out and isinstance(out["user_id"], int)
-        user_id = out["user_id"]
-
-        # create an entry
-        entry = {
-            "account": "fake",
-            "username": "entry_username",
-            "password": "entry_pass",
-            "extra": "entry_extra",
-            "has_2fa": False,
-        }
-        backend.insert_entry_for_user(
-            db_session=db.session,
-            dec_entry=entry,
-            user_id=user_id,
-            user_key=old_password,
-        )
-
-        # get all entries
-        enc_entries_out = backend.get_entries(db.session, user_id)
-        entries_out = backend.decrypt_entries(enc_entries_out, old_password)
-        assert len(entries_out) == 1
-
-        # recover the account
-        csrf_token = api.get_csrf_token(self.app)
-        recover_result = api.recover_account_v1(self.app, email, csrf_token)
-        assert recover_result.status_code == 200
-        recovery_token = m1.call_args[0][2].split("?")[1].replace("token=", "")
-        print("got recovery token from email: %s" % recovery_token)
-        csrf_token = api.get_csrf_token(self.app)
-        new_password = u"this is my new password"
-        r = api.recover_account_confirm_v1(
-            self.app,
-            recovery_token=recovery_token,
-            csrf_token=csrf_token,
-            password=new_password
-        )
-        assert r.status_code == 200
-
-        # check that you can't do anything here, and that no weird errors trigger
-        enc_entries_out = backend.get_entries(db.session, user_id)
-        entries_out = backend.decrypt_entries(enc_entries_out, new_password)
-        assert entries_out == []
-
-        # now test login
-        api.logout_v1(self.app)
-        # fail to login with old credentials
-        r = api.login_v1(self.app, email, old_password, check_status=False)
-        print(r.data)
-        assert r.status_code == 401
-        # login with new credentials
-        r = api.login_v1(self.app, email, new_password)
-        assert r.status_code == 200
-
-        enc_entries_out = backend.get_entries(db.session, user_id)
-        entries_out = backend.decrypt_entries(enc_entries_out, new_password)
-        assert entries_out == []

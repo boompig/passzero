@@ -49,36 +49,6 @@ def signup(app, email, password):
                     headers=json_header, allow_redirects=True)
 
 
-def recover_account(app, email, csrf_token):
-    url = BASE_URL + "/api/v1/user/recover"
-    data = {
-        "email": email,
-        "csrf_token": csrf_token
-    }
-    r = app.post(BASE_URL + url,
-                 data=json.dumps(data),
-                 headers=json_header, allow_redirects=True)
-    print(r.text)
-    assert r.status_code == 200
-    return r
-
-
-def recover_account_confirm(app, password, recovery_token, csrf_token):
-    url = BASE_URL + "/api/v1/user/recover/confirm"
-    data = {
-        "password": password,
-        "confirm_password": password,
-        "csrf_token": csrf_token,
-        "token": recovery_token
-    }
-    r = app.post(BASE_URL + url,
-                 data=json.dumps(data),
-                 headers=json_header, allow_redirects=True)
-    print(r.text)
-    assert r.status_code == 200
-    return r
-
-
 def activate_account(app, token):
     return app.post(BASE_URL + "/api/v1/user/activate",
                     data=json.dumps({"token": token}),

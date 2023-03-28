@@ -163,35 +163,6 @@ class PassZeroApiV1Tester(unittest.TestCase):
         with requests.Session() as s:
             self._signup(s, email, password)
 
-    def test_recover_account_invalid_email(self):
-        email = "sample@fake.com"
-        with requests.Session() as s:
-            token = self._get_csrf_token(s)
-            recover_result = api.recover(s, email, token)
-            # not actually printed unless there is failure
-            print(recover_result)
-            self.assertEqual(recover_result.status_code, 401)
-
-    def test_recover_account_valid_email(self):
-        email = "sample@fake.com"
-        password = "a_password"
-        user, db_session = create_active_account(email, password)
-        with requests.Session() as s:
-            token = self._get_csrf_token(s)
-            recover_result = api.recover(s, email, token)
-            # not actually printed unless there is failure
-            print(recover_result.text)
-            self.assertEqual(recover_result.status_code, 200)
-
-
-    def test_recover_account_valid_email_inactive(self):
-        email = "sample@fake.com"
-        password = "a_password"
-        with requests.Session() as s:
-            self._signup(s, email, password)
-            token = self._get_csrf_token(s)
-            recover_result = api.recover(s, email, token)
-            assert recover_result.status_code == 200
     """
 
     def test_no_docs(self):

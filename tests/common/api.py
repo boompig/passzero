@@ -307,34 +307,6 @@ def user_signup_v1(app, email: str, password: str, check_status: bool = False):
     return r
 
 
-def recover_account_v1(app, email: str, csrf_token: str):
-    url = "/api/v1/user/recover"
-    data = {
-        "email": email,
-        "csrf_token": csrf_token
-    }
-    r = json_post(app, url, data)
-    _print_if_test(app, _get_response_data(app, r))
-    assert r.status_code == 200
-    return r
-
-
-def recover_account_confirm_v1(app, password: str, recovery_token: str,
-                               csrf_token: str, check_status: bool = True):
-    url = "/api/v1/user/recover/confirm"
-    data = {
-        "password": password,
-        "confirm_password": password,
-        "csrf_token": csrf_token,
-        "token": recovery_token
-    }
-    r = json_post(app, url, data)
-    _print_if_test(app, _get_response_data(app, r))
-    if check_status:
-        assert r.status_code == 200
-    return r
-
-
 def activate_account_v1(app, token: six.text_type, check_status: bool = True):
     assert isinstance(token, six.text_type)
     assert isinstance(check_status, bool)

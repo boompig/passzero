@@ -607,28 +607,14 @@ def test_edit_entry_with_login(flask_client: FlaskClient, db, active_user: User)
         assert flask.request.path != flask.url_for("main_routes.login")
 
 
-def test_recover_account_confirm(flask_client: FlaskClient, active_user: User):
-    with mock.patch("passzero.email.send_email") as m1:
-        m1.return_value = True
-        with flask_client as c:
-            csrf_token = api.get_csrf_token(c)
-            api.recover_account_v1(c, active_user.email, csrf_token)
-            # NOTE for whatever reason cannot patch send_recovery_email...
-            recovery_token = m1.call_args[0][2].split("token=")[1]
-            response = c.get("/recover/confirm?token=%s" % recovery_token,
-                             follow_redirects=True)
-            assert response.status_code == 200
-            assert flask.request.path == flask.url_for("main_routes.recover_account_confirm")
-
-
 def test_signup_confirm(flask_client: FlaskClient):
     with mock.patch("passzero.email.send_email") as m1:
         m1.return_value = True
         with flask_client as c:
             api.user_signup_v1(c, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
             # NOTE for whatever reason cannot patch send_recovery_email...
-            recovery_token = m1.call_args[0][2].split("token=")[1]
-            response = c.get("/signup/confirm?token=%s" % recovery_token,
+            activation_token = m1.call_args[0][2].split("token=")[1]
+            response = c.get("/signup/confirm?token=%s" % activation_token,
                              follow_redirects=True)
             assert response.status_code == 200
 

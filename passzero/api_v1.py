@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timedelta
 from io import BytesIO
 
@@ -9,12 +8,11 @@ from passzero import backend, change_password
 from passzero.api_utils import (generate_csrf_token, json_error, json_internal_error,
                                 json_success, requires_csrf_check, requires_json_auth,
                                 requires_json_form_validation, write_json)
-from passzero.email import send_recovery_email
-from passzero.forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
+from passzero.forms import (ActivateAccountForm,
                             DeleteUserForm, LoginForm,
-                            NewDocumentForm, RecoverPasswordForm,
+                            NewDocumentForm,
                             SignupForm, UpdatePasswordForm, UpdatePreferencesForm)
-from passzero.models import ApiStats, AuthToken, EncryptedDocument, Entry, User, db
+from passzero.models import ApiStats, AuthToken, EncryptedDocument, User, db
 
 api_v1 = Blueprint("api_v1", __name__)
 
@@ -473,101 +471,6 @@ def api_v1_confirm_signup(request_data: ActivateAccountForm):
                 code, data = json_success("Account has been activated")
     except NoResultFound:
         code, data = json_error(401, "token is invalid")
-    return write_json(code, data)
-
-
-@api_v1.route("/api/v1/user/recover", methods=["POST"])
-@requires_csrf_check
-@requires_json_form_validation(RecoverPasswordForm)
-def api_v1_user_recover(request_data: RecoverPasswordForm):
-    """First step of account recovery for the specified user.
-    Send an account recovery token to the user's email address.
-
-    Arguments
-    ---------
-    - email: string (required)
-
-    Response
-    --------
-    Success or error message::
-
-        { "status": "success"|"error", "msg": string }
-
-    Status codes
-    ------------
-    - 200: success
-    - 400: failed to validated parameters
-    - 401: no account for this email
-    - 500: internal server error, or email failed to send
-    """
-    try:
-        user = db.session.query(User).filter_by(email=request_data['email']).one()
-        # send a reset token to the email
-        token = AuthToken()
-        token.user_id = user.id
-        token.random_token()
-        db.session.add(token)
-        db.session.commit()
-        if send_recovery_email(user.email, token.token):
-            code, data = json_success("Recovery email sent to your email address")
-        else:
-            logging.error("Failed to send email")
-            code, data = json_internal_error("Failed to send email")
-    except NoResultFound:
-        code, data = json_error(401, "no such email")
-    return write_json(code, data)
-
-
-@api_v1.route("/api/v1/user/recover/confirm", methods=["POST"])
-@requires_json_form_validation(ConfirmRecoverPasswordForm)
-def api_v1_recover_password_confirm(request_data: ConfirmRecoverPasswordForm):
-    """
-    Second and final step of account recovery for the specified user.
-    This API is meant to be hit when the user clicks the link in a recovery email.
-    Check the token is valid, then nuke all the entries and reset the password.
-
-    Arguments
-    ---------
-    - token: string (required)
-    - password: string (required)
-    - confirm_password: string (required)
-
-    Response
-    --------
-    Success or error message::
-
-        { "status": "success"|"error", "msg": string }
-
-    Status codes
-    ------------
-    - 200: success
-    - 400: token is invalid
-    """
-    try:
-        token = db.session.query(AuthToken).filter_by(token=request_data['token']).one()
-        if token.is_expired():
-            raise TokenExpiredException
-        user = db.session.query(User).filter_by(id=token.user_id).one()
-        # 1) change the user's password
-        user.change_password(request_data['password'])
-        # 2) activate user's account, if not already active
-        user.active = True
-        all_entries = db.session.query(Entry).filter_by(user_id=token.user_id).all()
-        # 2) delete all user's entries
-        for entry in all_entries:
-            db.session.delete(entry)
-        # 3) delete the token used to make this change
-        db.session.delete(token)
-        db.session.commit()
-        code, data = json_success("successfully changed password")
-    except NoResultFound:
-        code, data = json_error(400, "token is invalid")
-    except TokenExpiredException:
-        # delete old token
-        db.session.delete(token)
-        db.session.commit()
-        # return error via JSON
-        code, data = json_error(400, "token has expired")
     return write_json(code, data)
 
 

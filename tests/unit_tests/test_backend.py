@@ -29,7 +29,7 @@ DEFAULT_EMAIL = u"fake@fake.com"
 DEFAULT_PASSWORD = u"fake password"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def app(request) -> Flask:
     """Provide the fixture for the duration of the test, then tear it down"""
     # remove previous database if present
@@ -51,7 +51,7 @@ def app(request) -> Flask:
     return _app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def db(app: Flask, request) -> SQLAlchemy:
     if os.path.exists(DB_FILENAME):
         os.remove(DB_FILENAME)
