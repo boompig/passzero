@@ -201,17 +201,6 @@ def json_delete(session, relative_url: str, data: Optional[dict] = None, token: 
 # v1 API starts here
 
 
-def get_status_v1(app, check_status: bool = True):
-    assert isinstance(check_status, bool)
-    url = "/api/v1/status"
-    r = json_get(app, url)
-    if check_status:
-        assert r.status_code == 200
-        return _get_response_json(r)
-    else:
-        return r
-
-
 def login_v1(app, email: str, password: str, check_status: bool = True):
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
