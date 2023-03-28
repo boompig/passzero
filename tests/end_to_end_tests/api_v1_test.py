@@ -82,11 +82,6 @@ class PassZeroApiV1Tester(unittest.TestCase):
     def _logout(self, session: Session):
         api.logout_v1(session, check_status=True)
 
-    def _signup(self, session: Session, email: str, password: str):
-        auth_response = api.user_signup_v1(session, email, password, check_status=False)
-        assert auth_response.status_code == 200
-        return auth_response
-
     def _get_csrf_token(self, session: Session) -> str:
         """Return CSRF token"""
         token = api.get_csrf_token(session)
@@ -149,21 +144,11 @@ class PassZeroApiV1Tester(unittest.TestCase):
         create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         with requests.Session() as s:
             self._login(s, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-            api.get_user_preferences_v1(s, check_status=True)
+            response = api.get_documents(s, check_status=False)
+            assert response.status_code == 200
             self._logout(s)
-            response = api.get_user_preferences_v1(s, check_status=False)
+            response = api.get_documents(s, check_status=False)
             assert response.status_code == 401
-
-    """
-    These tests require sending emails
-
-    def test_signup(self):
-        email = "sample@fake.com"
-        password = "right_pass"
-        with requests.Session() as s:
-            self._signup(s, email, password)
-
-    """
 
     def test_no_docs(self):
         with requests.Session() as s:

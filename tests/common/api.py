@@ -236,107 +236,6 @@ def get_csrf_token(app):
     return token
 
 
-def get_user_preferences_v1(app, check_status: bool = True):
-    assert isinstance(check_status, bool)
-    url = "/api/v1/user/preferences"
-    r = json_get(app, url)
-    if check_status:
-        assert r.status_code == 200
-        return _get_response_json(r)
-    else:
-        return r
-
-
-def put_user_preferences(app, prefs: dict, csrf_token: str,
-                         check_status: bool = True):
-    assert isinstance(prefs, dict)
-    assert isinstance(csrf_token, six.text_type)
-    assert isinstance(check_status, bool)
-    url = "/api/v1/user/preferences"
-    data = copy.copy(prefs)
-    data["csrf_token"] = csrf_token
-    if _is_requests_session(app):
-        url = BASE_URL + url
-        r = app.put(url,
-                    data=json.dumps(data),
-                    headers=json_header,
-                    verify=False)
-    else:
-        r = app.put(url,
-                    data=json.dumps(data),
-                    headers=json_header,
-                    follow_redirects=True)
-    if check_status:
-        _print_if_test(app, _get_response_data(app, r))
-        assert r.status_code == 200
-    return r
-
-
-def delete_user_v1(app, password: str, csrf_token: str,
-                   check_status: bool = True):
-    assert isinstance(password, six.text_type)
-    assert isinstance(csrf_token, six.text_type)
-    assert isinstance(check_status, bool)
-    url = "/api/v1/user"
-    r = app.delete(url,
-                   data=json.dumps({
-                       "csrf_token": csrf_token,
-                       "password": password
-                   }),
-                   headers=json_header, follow_redirects=True)
-    _print_if_test(app, _get_response_data(app, r))
-    if check_status:
-        assert r.status_code == 200
-    return r
-
-
-def user_signup_v1(app, email: str, password: str, check_status: bool = False):
-    assert isinstance(email, six.text_type)
-    assert isinstance(password, six.text_type)
-    assert isinstance(check_status, bool)
-    url = "/api/v1/user/signup"
-    data = {
-        "email": email,
-        "password": password,
-        "confirm_password": password
-    }
-    r = json_post(app, url, data)
-    _print_if_test(app, _get_response_data(app, r))
-    if check_status:
-        assert r.status_code == 200
-    return r
-
-
-def activate_account_v1(app, token: six.text_type, check_status: bool = True):
-    assert isinstance(token, six.text_type)
-    assert isinstance(check_status, bool)
-    url = "/api/v1/user/activate"
-    data = {"token": token}
-    r = json_post(app, url, data)
-    _print_if_test(app, _get_response_data(app, r))
-    if check_status:
-        assert r.status_code == 200
-    return r
-
-
-def update_user_password_v1(app, old_password: str, new_password: str,
-                            csrf_token: str, check_status: bool = True):
-    url = "/api/v1/user/password"
-    data = {
-        "csrf_token": csrf_token,
-        "old_password": old_password,
-        "new_password": new_password,
-        "confirm_new_password": new_password
-    }
-    r = app.put(url,
-                data=json.dumps(data),
-                headers=json_header,
-                follow_redirects=True)
-    if check_status:
-        _print_if_test(app, _get_response_data(app, r))
-        assert r.status_code == 200
-    return r
-
 # documents
 
 
@@ -594,6 +493,28 @@ def edit_entry_with_token(session,
         url,
         {"entry": new_entry, "password": password},
         token=token
+    )
+    response_data = _get_response_data(session, r)
+    _print_if_test(session, response_data)
+    if check_status:
+        assert r.status_code == 200
+        return _get_response_json(r)
+    else:
+        return r
+
+
+def user_register_v3(session, email: str, password: str, check_status: bool = True):
+    url = "/api/v3/user/register"
+    data = {
+        "email": email,
+        "password": password,
+        "confirm_password": password,
+    }
+    r = json_post(
+        session,
+        url,
+        data,
+        token=None,
     )
     response_data = _get_response_data(session, r)
     _print_if_test(session, response_data)

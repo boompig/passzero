@@ -84,7 +84,7 @@ def flask_client(request, db, flask_client_perm: FlaskClient) -> FlaskClient:
 
 
 @pytest.fixture(scope="function")
-def active_user(db: SQLAlchemy) -> Generator:
+def active_user(flask_client: FlaskClient, db: SQLAlchemy) -> Generator:
     """Create a default active user with email=`DEFAULT_EMAIL` and password=`DEFAULT_PASSWORD`"""
     user = backend.create_inactive_user(
         db_session=db.session,
@@ -175,35 +175,35 @@ def test_post_confirm_signup_no_login(flask_client: FlaskClient):
 # ---- check redirect methods when pre-conditions not met -----
 
 
-def test_post_login_no_login(flask_client):
+def test_post_login_no_login(flask_client: FlaskClient):
     r = flask_client.get("/done_login", follow_redirects=True)
     # only print on error
     print(r.data)
     assert r.status_code == 401
 
 
-def test_post_delete_no_login(flask_client):
+def test_post_delete_no_login(flask_client: FlaskClient):
     r = flask_client.get("/entries/post_delete/foo", follow_redirects=True)
     # only print on error
     print(r.data)
     assert r.status_code == 401
 
 
-def test_post_update_no_login(flask_client):
+def test_post_update_no_login(flask_client: FlaskClient):
     r = flask_client.get("/entries/done_edit/foo", follow_redirects=True)
     # only print on error
     print(r.data)
     assert r.status_code == 401
 
 
-def test_post_create_no_login(flask_client):
+def test_post_create_no_login(flask_client: FlaskClient):
     r = flask_client.get("/entries/done_new/foo", follow_redirects=True)
     # only print on error
     print(r.data)
     assert r.status_code == 401
 
 
-def test_post_export_no_login(flask_client):
+def test_post_export_no_login(flask_client: FlaskClient):
     r = flask_client.get("/advanced/done_export", follow_redirects=True)
     # only print on error
     print(r.data)
@@ -607,11 +607,14 @@ def test_edit_entry_with_login(flask_client: FlaskClient, db, active_user: User)
         assert flask.request.path != flask.url_for("main_routes.login")
 
 
-def test_signup_confirm(flask_client: FlaskClient):
-    with mock.patch("passzero.email.send_email") as m1:
-        m1.return_value = True
+def test_signup_confirm(flask_client: FlaskClient, db: SQLAlchemy):
+    with mock.patch("passzero.email.send_email", return_value=True) as m1:
+        # m1.return_value = True
         with flask_client as c:
-            api.user_signup_v1(c, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+            # an entirely new account (note that it is inactive)
+            print("creating new account...")
+            api.user_register_v3(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+            m1.assert_called_once()
             # NOTE for whatever reason cannot patch send_recovery_email...
             activation_token = m1.call_args[0][2].split("token=")[1]
             response = c.get("/signup/confirm?token=%s" % activation_token,

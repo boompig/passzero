@@ -49,8 +49,11 @@ class EmailSendError(Exception):
     pass
 
 
-def create_new_account(db_session, email: str, password: str) -> User:
+def create_new_account(db_session: Session, email: str, password: str) -> Tuple[User, AuthToken]:
     """Create a new account. Perform all steps necessary including sending an email.
+    The newly created account will be inactive.
+    If a new account is created, return the newly created user.
+    In all other cases raise an error.
     :throws UserExistsError: make sure to read the error message
     :throws EmailSendError:
     """
@@ -66,6 +69,7 @@ def create_new_account(db_session, email: str, password: str) -> User:
                 "This account has already been created. Check your inbox for a confirmation email."
             )
     except NoResultFound:
+        logger.info("Creating account for user with email %s...", email)
         # this is the good case
         token = AuthToken()
         token.random_token()
@@ -83,7 +87,7 @@ def create_new_account(db_session, email: str, password: str) -> User:
             logger.info(
                 "Successfully created account with email %s", email
             )
-            return user
+            return (user, token)
         else:
             raise EmailSendError("failed to send email")
 
@@ -346,7 +350,7 @@ def recover_account_confirm(db_session: Session, user: User, new_master_password
     db_session.commit()
 
 
-def create_pinned_entry(session, user_id: int, master_password: str) -> None:
+def create_pinned_entry(session: Session, user_id: int, master_password: str) -> None:
     """NOTE: The pinned entry is added to the session, but the session is *not* committed here"""
     assert isinstance(user_id, int), f"Expected user_id to be of type int, was of type {type(user_id)}"
     assert isinstance(master_password, str)

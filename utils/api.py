@@ -10,7 +10,7 @@ BASE_URL = ""
 json_header = {"Content-Type": "application/json"}
 
 
-def login(app, email, password, check_status=True):
+def login_v1(app, email, password, check_status=True):
     data = {
         "email": email,
         "password": password
@@ -23,7 +23,7 @@ def login(app, email, password, check_status=True):
     return r
 
 
-def logout(app):
+def logout_v1(app):
     return app.post(BASE_URL + "/api/v1/logout",
                     headers=json_header, allow_redirects=True)
 
@@ -35,42 +35,6 @@ def get_csrf_token(app):
     token = json.loads(r.text)
     # print("[client] received csrf_token: %s" % token)
     return token
-
-
-def signup(app, email, password):
-    url = BASE_URL + "/api/v1/user/signup"
-    data = {
-        "email": email,
-        "password": password,
-        "confirm_password": password
-    }
-    return app.post(BASE_URL + url,
-                    data=json.dumps(data),
-                    headers=json_header, allow_redirects=True)
-
-
-def activate_account(app, token):
-    return app.post(BASE_URL + "/api/v1/user/activate",
-                    data=json.dumps({"token": token}),
-                    headers=json_header, allow_redirects=True)
-
-
-def update_user_password(app, old_password, new_password, csrf_token, check_status=True):
-    url = BASE_URL + "/api/v1/user/password"
-    data = {
-        "csrf_token": csrf_token,
-        "old_password": old_password,
-        "new_password": new_password,
-        "confirm_new_password": new_password
-    }
-    r = app.put(url,
-                data=json.dumps(data),
-                headers=json_header,
-                allow_redirects=True)
-    if check_status:
-        print(r.text)
-        assert r.status_code == 200
-    return r
 
 
 # v2 API starts here
