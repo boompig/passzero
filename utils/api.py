@@ -37,52 +37,6 @@ def get_csrf_token(app):
     return token
 
 
-def get_entries(app, check_status=True):
-    r = app.get(BASE_URL + "/api/v1/entries",
-                headers=json_header, allow_redirects=True)
-    if check_status:
-        assert r.status_code == 200
-        return json.loads(r.text)
-    else:
-        return r
-
-
-def create_entry(app, entry, token, check_status=True):
-    """
-    :return entry_id:       The entry ID of the newly created entry
-    """
-    data = entry
-    data["csrf_token"] = token
-    r = app.post(BASE_URL + "/api/v1/entries/new",
-                 data=json.dumps(data),
-                 headers=json_header, allow_redirects=True)
-    if check_status:
-        # print(r.text)
-        assert r.status_code == 200
-        return json.loads(r.text)["entry_id"]
-    else:
-        return r
-
-
-def delete_entry(app, entry_id, token):
-    url = BASE_URL + "/api/v1/entries/{}?csrf_token={}".format(
-        entry_id, token)
-    r = app.delete(url,
-                   headers=json_header, allow_redirects=True)
-    # print(r.text)
-    assert r.status_code == 200
-    return r
-
-
-def edit_entry(app, entry_id, entry, token):
-    url = BASE_URL + "/api/v1/entries/{}".format(entry_id)
-    data = entry
-    data["csrf_token"] = token
-    return app.post(BASE_URL + url,
-                    data=json.dumps(data),
-                    headers=json_header, allow_redirects=True)
-
-
 def signup(app, email, password):
     url = BASE_URL + "/api/v1/user/signup"
     data = {

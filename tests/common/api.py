@@ -201,7 +201,7 @@ def json_delete(session, relative_url: str, data: Optional[dict] = None, token: 
 # v1 API starts here
 
 
-def get_status(app, check_status: bool = True):
+def get_status_v1(app, check_status: bool = True):
     assert isinstance(check_status, bool)
     url = "/api/v1/status"
     r = json_get(app, url)
@@ -212,7 +212,7 @@ def get_status(app, check_status: bool = True):
         return r
 
 
-def login(app, email: str, password: str, check_status: bool = True):
+def login_v1(app, email: str, password: str, check_status: bool = True):
     assert isinstance(email, six.text_type)
     assert isinstance(password, six.text_type)
     assert isinstance(check_status, bool)
@@ -229,7 +229,7 @@ def login(app, email: str, password: str, check_status: bool = True):
     return r
 
 
-def logout(app, check_status: bool = False):
+def logout_v1(app, check_status: bool = False):
     url = "/api/v1/logout"
     r = json_post(app, url)
     if check_status:
@@ -247,17 +247,7 @@ def get_csrf_token(app):
     return token
 
 
-def get_entries(app, check_status: bool = True):
-    url = "/api/v1/entries"
-    r = json_get(app, url)
-    if check_status:
-        assert r.status_code == 200
-        return _get_response_json(r)
-    else:
-        return r
-
-
-def get_user_preferences(app, check_status: bool = True):
+def get_user_preferences_v1(app, check_status: bool = True):
     assert isinstance(check_status, bool)
     url = "/api/v1/user/preferences"
     r = json_get(app, url)
@@ -293,49 +283,8 @@ def put_user_preferences(app, prefs: dict, csrf_token: str,
     return r
 
 
-def create_entry(app, entry: dict, csrf_token: str, check_status: bool = True) -> int | requests.Response:
-    """
-    :return entry_id:       The entry ID of the newly created entry
-    """
-    data = copy.copy(entry)
-    data["csrf_token"] = csrf_token
-    url = "/api/v1/entries"
-    r = json_post(app, url, data)
-    if check_status:
-        _print_if_test(app, _get_response_data(app, r))
-        assert r.status_code == 200
-        return _get_response_json(r)["entry_id"]
-    else:
-        return r
-
-
-def delete_entry(app, entry_id: int, csrf_token: str, check_status: bool = True):
-    assert isinstance(entry_id, int)
-    assert isinstance(csrf_token, six.text_type)
-    assert isinstance(check_status, bool)
-    url = f"/api/v1/entries/{entry_id}?csrf_token={csrf_token}"
-    r = json_delete(app, url)
-    _print_if_test(app, _get_response_data(app, r))
-    if check_status:
-        assert r.status_code == 200
-    return r
-
-
-def delete_all_entries(app, password: str, csrf_token: str, check_status: bool = True):
-    assert isinstance(password, str)
-    assert isinstance(csrf_token, six.text_type)
-    assert isinstance(check_status, bool)
-    url = "/api/v1/entries/nuclear"
-    data = {"csrf_token": csrf_token, "password": password}
-    r = json_post(app, url, data)
-    _print_if_test(app, _get_response_data(app, r))
-    if check_status:
-        assert r.status_code == 200
-    return r
-
-
-def delete_user(app, password: str, csrf_token: str,
-                check_status: bool = True):
+def delete_user_v1(app, password: str, csrf_token: str,
+                   check_status: bool = True):
     assert isinstance(password, six.text_type)
     assert isinstance(csrf_token, six.text_type)
     assert isinstance(check_status, bool)
@@ -347,20 +296,6 @@ def delete_user(app, password: str, csrf_token: str,
                    }),
                    headers=json_header, follow_redirects=True)
     _print_if_test(app, _get_response_data(app, r))
-    if check_status:
-        assert r.status_code == 200
-    return r
-
-
-def edit_entry(app, entry_id: int, entry: dict, csrf_token: str,
-               check_status: bool = True):
-    assert isinstance(entry_id, int)
-    assert isinstance(csrf_token, six.text_type)
-    assert isinstance(check_status, bool)
-    url = f"/api/v1/entries/{entry_id}"
-    data = entry
-    data["csrf_token"] = csrf_token
-    r = json_put(app, url, data)
     if check_status:
         assert r.status_code == 200
     return r
@@ -383,7 +318,7 @@ def user_signup_v1(app, email: str, password: str, check_status: bool = False):
     return r
 
 
-def recover_account(app, email: str, csrf_token: str):
+def recover_account_v1(app, email: str, csrf_token: str):
     url = "/api/v1/user/recover"
     data = {
         "email": email,
@@ -395,8 +330,8 @@ def recover_account(app, email: str, csrf_token: str):
     return r
 
 
-def recover_account_confirm(app, password: str, recovery_token: str,
-                            csrf_token: str, check_status: bool = True):
+def recover_account_confirm_v1(app, password: str, recovery_token: str,
+                               csrf_token: str, check_status: bool = True):
     url = "/api/v1/user/recover/confirm"
     data = {
         "password": password,
@@ -411,7 +346,7 @@ def recover_account_confirm(app, password: str, recovery_token: str,
     return r
 
 
-def activate_account(app, token: six.text_type, check_status: bool = True):
+def activate_account_v1(app, token: six.text_type, check_status: bool = True):
     assert isinstance(token, six.text_type)
     assert isinstance(check_status, bool)
     url = "/api/v1/user/activate"
@@ -423,8 +358,8 @@ def activate_account(app, token: six.text_type, check_status: bool = True):
     return r
 
 
-def update_user_password(app, old_password: str, new_password: str,
-                         csrf_token: str, check_status: bool = True):
+def update_user_password_v1(app, old_password: str, new_password: str,
+                            csrf_token: str, check_status: bool = True):
     url = "/api/v1/user/password"
     data = {
         "csrf_token": csrf_token,

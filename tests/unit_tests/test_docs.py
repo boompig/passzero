@@ -48,7 +48,7 @@ class PassZeroDocTester(unittest.TestCase):
         token = m1.call_args[0][2].split("?")[1].replace("token=", "")
         # link = m1.call_args[0][2][m1.call_args[0][2].index("http://"):]
         # activate
-        r = api.activate_account(self.app, token)
+        r = api.activate_account_v1(self.app, token)
         print(r.data)
         assert r.status_code == 200
         # r = api.login(self.app, email, password)
@@ -57,7 +57,7 @@ class PassZeroDocTester(unittest.TestCase):
 
     def test_no_docs(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
 
@@ -110,7 +110,7 @@ class PassZeroDocTester(unittest.TestCase):
 
     def test_upload_and_get_doc_then_delete(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         document_id = self.__create_and_verify_text_doc()
         self.__verify_delete_doc(document_id)
         document_id = self.__create_and_verify_binary_doc()
@@ -118,7 +118,7 @@ class PassZeroDocTester(unittest.TestCase):
 
     def test_get_nonexistant_doc(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         docs_before = api.get_documents(self.app, check_status=True)
         assert docs_before == []
         r = api.get_document(self.app, 1, check_status=False)
@@ -127,20 +127,20 @@ class PassZeroDocTester(unittest.TestCase):
     def test_get_not_your_doc(self):
         # create document for user #1
         self._create_active_account("user1@fake.com", DEFAULT_PASSWORD)
-        api.login(self.app, "user1@fake.com", DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(self.app, "user1@fake.com", DEFAULT_PASSWORD, check_status=True)
         document_id = self.__create_and_verify_text_doc()
         r = api.get_document(self.app, document_id, check_status=False)
         assert r.status_code == 200
-        api.logout(self.app, check_status=True)
+        api.logout_v1(self.app, check_status=True)
 
         self._create_active_account("user2@fake.com", DEFAULT_PASSWORD)
-        api.login(self.app, "user2@fake.com", DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(self.app, "user2@fake.com", DEFAULT_PASSWORD, check_status=True)
         r = api.get_document(self.app, document_id, check_status=False)
         assert r.status_code == 400
 
     def test_delete_nonexistant_doc(self):
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_csrf_token(self.app)
         r = api.delete_document(self.app, 1, token, check_status=False)
         assert r.status_code == 400
@@ -148,20 +148,20 @@ class PassZeroDocTester(unittest.TestCase):
     def test_delete_not_your_doc(self):
         # create document for user #1
         self._create_active_account(DEFAULT_EMAIL, DEFAULT_PASSWORD)
-        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         document_id = self.__create_and_verify_text_doc()
-        api.logout(self.app, check_status=True)
+        api.logout_v1(self.app, check_status=True)
 
         # try to delete that document as user #2
         self._create_active_account("user2@fake.com", DEFAULT_PASSWORD)
-        api.login(self.app, "user2@fake.com", DEFAULT_PASSWORD)
+        api.login_v1(self.app, "user2@fake.com", DEFAULT_PASSWORD)
         token = api.get_csrf_token(self.app)
         r = api.delete_document(self.app, document_id, token, check_status=False)
         assert r.status_code == 400
-        api.logout(self.app)
+        api.logout_v1(self.app)
 
         # verify the document is still there
-        api.login(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(self.app, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         docs = api.get_documents(self.app, check_status=True)
         assert len(docs) == 1
         assert docs[0]["id"] == document_id

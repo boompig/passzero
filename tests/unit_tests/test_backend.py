@@ -3,6 +3,8 @@ import os
 from typing import Dict  # noqa: F401
 
 import pytest
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -18,9 +20,9 @@ from passzero.crypto_utils import PasswordHashAlgo
 from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
                              EncryptionKeys, Entry, Link, Service, User)
 from passzero.models import db as _db
-
 from tests.unit_tests.utils import (assert_decrypted_entries_equal,
-                                    assert_decrypted_links_equal, get_test_decrypted_entry)
+                                    assert_decrypted_links_equal,
+                                    get_test_decrypted_entry)
 
 DB_FILENAME = "passzero.db"
 DEFAULT_EMAIL = u"fake@fake.com"
@@ -28,7 +30,7 @@ DEFAULT_PASSWORD = u"fake password"
 
 
 @pytest.fixture(scope="session")
-def app(request):
+def app(request) -> Flask:
     """Provide the fixture for the duration of the test, then tear it down"""
     # remove previous database if present
     if os.path.exists(DB_FILENAME):
@@ -38,19 +40,19 @@ def app(request):
         "SQLALCHEMY_DATABASE_URI": "sqlite:///%s" % DB_FILENAME
     }
 
-    app = create_app(__name__, settings_override)
-    ctx = app.app_context()
+    _app = create_app(__name__, settings_override)
+    ctx = _app.app_context()
     ctx.push()
 
     def teardown():
         ctx.pop()
 
     request.addfinalizer(teardown)
-    return app
+    return _app
 
 
 @pytest.fixture(scope="session")
-def db(app, request):
+def db(app: Flask, request) -> SQLAlchemy:
     if os.path.exists(DB_FILENAME):
         os.remove(DB_FILENAME)
 
@@ -67,7 +69,8 @@ def db(app, request):
 
 
 @pytest.fixture(scope="function")
-def session(db, request):
+def session(db: SQLAlchemy, request):
+    """Returns a database scoped session"""
     connection = db.engine.connect()
     transaction = connection.begin()
 
@@ -97,7 +100,7 @@ def session(db, request):
     return session
 
 
-def test_create_inactive_user_sha512(session):
+def test_create_inactive_user_sha512(session) -> None:
     u1 = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD,
                                       password_hash_algo=PasswordHashAlgo.SHA512)
     assert u1.id is not None
@@ -105,7 +108,7 @@ def test_create_inactive_user_sha512(session):
     assert u1.id == u2.id
 
 
-def test_create_inactive_user_argon2(session):
+def test_create_inactive_user_argon2(session) -> None:
     u1 = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD,
                                       password_hash_algo=PasswordHashAlgo.Argon2)
     assert u1.id is not None
@@ -113,7 +116,7 @@ def test_create_inactive_user_argon2(session):
     assert u1.id == u2.id
 
 
-def test_create_inactive_user(session):
+def test_create_inactive_user(session) -> None:
     """This method makes sure that when we can create an inactive user, certain structures are created"""
     user = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
     # we should be creating a pinned entry
@@ -130,7 +133,7 @@ def test_create_inactive_user(session):
     keys_db["link_keys"] == {}
 
 
-def test_delete_account(session):
+def test_delete_account(session) -> None:
     email = u"fake@email.com"
     user_key = u"master"
     user = create_inactive_user(session, email, user_key)
@@ -499,7 +502,7 @@ def test_update_entry_versions_for_user(session):
         assert_decrypted_entries_equal(input_dec_entries[entry.id], actual)
 
 
-def test_update_entry_versions_for_user_only_latest(session):
+def test_update_entry_versions_for_user_only_latest(session) -> None:
     user = create_inactive_user(session, DEFAULT_PASSWORD, DEFAULT_PASSWORD)
     # should start with no entries
     entries = backend.get_entries(session, user.id)
@@ -514,7 +517,7 @@ def test_update_entry_versions_for_user_only_latest(session):
     assert len(entries) == 1
 
 
-def test_update_entry_versions_for_user_no_entries(session):
+def test_update_entry_versions_for_user_no_entries(session) -> None:
     user = create_inactive_user(session, DEFAULT_PASSWORD, DEFAULT_PASSWORD)
     # should start with no entries
     entries = backend.get_entries(session, user.id)
@@ -525,7 +528,7 @@ def test_update_entry_versions_for_user_no_entries(session):
     assert entries == []
 
 
-def test_get_account_with_email(session):
+def test_get_account_with_email(session) -> None:
     email = u"fake_email"
     password = u"fake password"
     created_user = create_inactive_user(session, email, password)
@@ -538,7 +541,7 @@ def test_get_account_with_email(session):
     assert True
 
 
-def test_change_password(session):
+def test_change_password(session) -> None:
     """
     Technically this function does not belong here since it doesn't really test the backend.
     We are testing the change_password method of change_password module

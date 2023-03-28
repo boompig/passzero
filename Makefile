@@ -50,7 +50,7 @@ python-test: $(SRC) $(UNIT_TEST_SRC) python-lint
 	# run until only first failure to not waste time
 	PYTHONPATH=$(CWD) pytest -x tests/unit_tests
 
-test-cov: $(SRC) $(UNIT_TEST_SRC) lint
+python-test-cov: $(SRC) $(UNIT_TEST_SRC) lint
 	# run until only first failure to not waste time
 	PYTHONPATH=$(CWD) pytest -x --cov=passzero --cov-report=html tests/unit_tests
 

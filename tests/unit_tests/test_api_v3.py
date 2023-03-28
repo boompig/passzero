@@ -88,7 +88,7 @@ def create_active_account(client, email: str, password: str, m1):
     # get the token from calls
     token = m1.call_args[0][2].split("?")[1].replace("token=", "")
     # activate
-    r = api.activate_account(client, token)
+    r = api.activate_account_v1(client, token)
     assert r.status_code == 200
 
 
@@ -112,8 +112,8 @@ def test_login_with_email_then_get_token(app: Flask, active_user: User):
     """Test that we can get the token for an account where we have previously logged in."""
     assert isinstance(active_user, User)
     with app.test_client() as client:
-        api.login(client,
-                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(client,
+                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         assert isinstance(token, six.text_type)
 
@@ -122,8 +122,8 @@ def test_login_then_get_token_twice(app: Flask, active_user: User):
     """If you get the token twice, make sure it's the same token"""
     assert isinstance(active_user, User)
     with app.test_client() as client:
-        api.login(client,
-                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(client,
+                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         t2 = api.get_api_token_with_login(client, check_status=True)
         assert token == t2
@@ -682,9 +682,9 @@ def test_delete_entry_incorrect_password(app: Flask, active_user: User):
         assert len(entries) == 1
         r = api.delete_entry_with_token(client, entry_id, "bad password", token, check_status=False)
         assert r.status_code == 401
-        entries_after = api.get_entries(client, check_status=True)
+        enc_entries_out = api.get_encrypted_entries_with_token(client, token, check_status=True)
         # number of entries should still be 1
-        assert len(entries_after) == 1
+        assert len(enc_entries_out) == 1
 
 
 def test_get_entries(app: Flask, active_user: User):

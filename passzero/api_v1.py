@@ -11,8 +11,8 @@ from passzero.api_utils import (generate_csrf_token, json_error, json_internal_e
                                 requires_json_form_validation, write_json)
 from passzero.email import send_recovery_email
 from passzero.forms import (ActivateAccountForm, ConfirmRecoverPasswordForm,
-                            DeleteAllEntriesForm, DeleteUserForm, LoginForm,
-                            NewDocumentForm, NewEntryForm, RecoverPasswordForm,
+                            DeleteUserForm, LoginForm,
+                            NewDocumentForm, RecoverPasswordForm,
                             SignupForm, UpdatePasswordForm, UpdatePreferencesForm)
 from passzero.models import ApiStats, AuthToken, EncryptedDocument, Entry, User, db
 
@@ -158,7 +158,11 @@ def api_v1_login(request_data):
             msg = "successfully logged in as {email}".format(
                 email=escape(session["email"])
             )
-            code, data = json_success(msg)
+            rval = {
+                "msg": msg,
+                "user_id": user.id,
+            }
+            return write_json(200, rval)
         else:
             code, data = json_error(401, "Either the email or password is incorrect")
     except NoResultFound:
@@ -386,207 +390,6 @@ def api_v1_delete_doc(doc_id: int):
 
 
 #  -------------- DOCUMENTS END
-#  -------------- ENTRIES BEGIN
-
-@api_v1.route("/api/entries", methods=["GET"])
-@api_v1.route("/api/v1/entries", methods=["GET"])
-@requires_json_auth
-def api_v1_get_entries():
-    """Retrieve all decrypted entries for the logged-in user
-
-    Arguments
-    ---------
-    none
-
-    Response
-    --------
-    on success::
-
-        [entry-1, entry-2, ... entry-n]
-
-    The entry details depend on which version entries the user has.
-    For details see passzero/models.py.
-
-    on error::
-
-        { "status": "error", "msg": string }
-
-    Status codes
-    ------------
-    - 200: success
-    - 401: user is not logged in
-    """
-    code = 200
-    entries = backend.get_entries(db.session, session["user_id"])
-    dec_entries = backend.decrypt_entries(entries, session['password'])
-    data = dec_entries
-    return write_json(code, data)
-
-
-@api_v1.route("/api/entries/<int:entry_id>", methods=["DELETE"])
-@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["DELETE"])
-@requires_json_auth
-@requires_csrf_check
-def api_v1_delete_entry(entry_id: int):
-    """Delete the entry with the given ID.
-
-    Arguments
-    ---------
-    none
-
-    Response
-    --------
-    Success or error message::
-
-        { "status": "success"|"error", "msg": string }
-
-    Status codes
-    ------------
-    - 200: success
-    - 400: entry does not exist or does not belong to logged-in user
-    - 401: not authenticated
-    - 403: CSRF check failed
-    """
-    try:
-        backend.delete_entry(db.session, entry_id, session["user_id"], session["password"])
-        code, data = json_success("successfully deleted entry with ID %d" % entry_id)
-    except NoResultFound:
-        code, data = json_error(400, "no such entry")
-    except AssertionError:
-        code, data = json_error(400, "the given entry does not belong to you")
-    return write_json(code, data)
-
-
-@api_v1.route("/api/v1/entries", methods=["POST"])
-@requires_json_auth
-@requires_csrf_check
-@requires_json_form_validation(NewEntryForm)
-def api_v1_new_entry(request_data: NewEntryForm):
-    """Create a new entry for the logged-in user.
-
-    Arguments
-    ---------
-    - account: string (required)
-    - username: string (required)
-    - password: string (required)
-    - extra: string (optional)
-    - has_2fa: boolean (required)
-
-    Response
-    --------
-    on success::
-
-        { "entry_id": number }
-
-    on error::
-
-        { "status": "error", "msg": string }
-
-    Status codes
-    ------------
-    - 200: success
-    - 400: various input validation errors
-    - 401: not authenticated
-    - 403: CSRF check failed
-    """
-    # token has been spent here
-    dec_entry = {
-        "account": request_data["account"],
-        "username": request_data["username"],
-        "password": request_data["password"],
-        "extra": (request_data["extra"] or ""),
-        "has_2fa": request_data["has_2fa"]
-    }
-    entry = backend.insert_entry_for_user(
-        db_session=db.session,
-        dec_entry=dec_entry,
-        user_id=session["user_id"],
-        user_key=session["password"]
-    )
-    code = 200
-    data = {"entry_id": entry.id}
-    return write_json(code, data)
-
-
-@api_v1.route("/api/v1/entries/<int:entry_id>", methods=["PATCH", "PUT"])
-@requires_json_auth
-@requires_csrf_check
-@requires_json_form_validation(NewEntryForm)
-def api_v1_update_entry(request_data: NewEntryForm, entry_id: int):
-    """Update the specified entry.
-
-    Arguments
-    ---------
-    - account: string (required)
-    - username: string (required)
-    - password: string (required)
-    - extra: string (optional)
-    - has_2fa: boolean (required)
-
-    Response
-    --------
-    Success or error message::
-
-        { "status": "success"|"error", "msg": string }
-
-    Status codes
-    ------------
-    - 200: success
-    - 400: various input validation errors
-    - 401: not authenticated
-    - 403: CSRF check failed
-    """
-    code = 200
-    data = {}  # type: dict
-    try:
-        backend.edit_entry(
-            db.session,
-            entry_id,
-            session["password"],
-            request_data,
-            session["user_id"]
-        )
-        code, data = json_success(
-            "successfully edited account %s" % escape(request_data["account"])
-        )
-    except NoResultFound:
-        code, data = json_error(400, "no such entry")
-    except AssertionError:
-        code, data = json_error(400, "the given entry does not belong to you")
-    return write_json(code, data)
-
-
-@api_v1.route("/api/v1/entries/nuclear", methods=["POST"])
-@api_v1.route("/api/v1/entries", methods=["DELETE"])
-@requires_json_auth
-@requires_csrf_check
-@requires_json_form_validation(DeleteAllEntriesForm)
-def api_v1_nuke_entries(request_data: DeleteAllEntriesForm):
-    """Delete <b>all</b> entries for the logged-in user.
-
-    Arguments
-    ---------
-    - password: string (required)
-
-    Response
-    --------
-    Success or error message::
-
-        { "status": "success"|"error", "msg": string }
-
-    Status codes
-    ------------
-    - 200: success
-    - 401: not authenticated
-    - 403: CSRF token validation failed
-    """
-    user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    backend.delete_all_entries(db.session, user, request_data["password"])
-    code, data = json_success("Deleted all entries")
-    return write_json(code, data)
-
-
-#  -------------- ENTRIES END
 
 
 @api_v1.route("/api/v1/user/signup", methods=["POST"])

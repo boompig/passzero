@@ -373,7 +373,7 @@ def create_pinned_entry(session, user_id: int, master_password: str) -> None:
 
 def create_inactive_user(db_session: Session, email: str, password: str,
                          password_hash_algo: PasswordHashAlgo = User.DEFAULT_PASSWORD_HASH_ALGO) -> User:
-    """Create an account which has not been activated.
+    """Create an account which has not been activated. Commit the user and all associated data structures.
     Return the user object (model)
     :param password_hash_algo:  This parameter exists for testing
         In all cases outside of testing, this should be set to User.DEFAULT_PASSWORD_HASH_ALGO
