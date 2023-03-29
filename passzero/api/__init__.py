@@ -5,6 +5,7 @@ https://flask-restx.readthedocs.io/en/latest/scaling.html
 
 from flask_restx import Api
 from passzero.api.api_token import ns as ApiTokenNamespace
+from passzero.api.document_list import ns as ApiDocumentListNamespace
 from passzero.api.entry import ns as ApiEntryNamespace
 from passzero.api.entry_list import ns as ApiEntryListNamespace
 from passzero.api.link import ns as ApiLinkNamespace
@@ -16,6 +17,8 @@ from passzero.api.user import ns as ApiUserNamespace
 
 api = Api(title="PassZero v3 API", version="3.0", doc="/doc/")
 
+api.add_namespace(ApiDocumentListNamespace,
+                  path="/api/v3/documents")
 api.add_namespace(ApiEntryListNamespace,
                   path="/api/v3/entries")
 api.add_namespace(ApiEntryNamespace,

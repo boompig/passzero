@@ -784,12 +784,12 @@ def get_document_by_id(db_session: Session, user_id: int, document_id: int) -> O
         return None
 
 
-def encrypt_document(session: Session, user_id: int, master_key: str,
+def encrypt_document(db_session: Session, user_id: int, master_key: str,
                      document_name: str, mimetype: str, document) -> EncryptedDocument:
     """
     Create an encrypted document, fill in the fields, and save in the database
-    :param session: database session, NOT flask session
-    :param document: contents of the document
+    :param db_session:  database session, NOT flask session
+    :param document:    contents of the document
     :rtype:             EncryptedDocument
     """
     assert isinstance(user_id, int)
@@ -798,7 +798,7 @@ def encrypt_document(session: Session, user_id: int, master_key: str,
     assert isinstance(mimetype, str) and mimetype is not None
     doc = DecryptedDocument(document_name, mimetype, document)
     assert doc.mimetype is not None
-    return insert_document_for_user(session, doc, user_id, master_key)
+    return insert_document_for_user(db_session, doc, user_id, master_key)
 
 
 def insert_document_for_user(session: Session, decrypted_document: DecryptedDocument,
