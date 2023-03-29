@@ -12,11 +12,9 @@ from passzero import email as pz_email
 from passzero.config import DEFAULT_ENTRY_VERSION, ENTRY_LIMITS, SALT_SIZE
 from passzero.crypto_utils import (PasswordHashAlgo, get_hashed_password,
                                    get_salt)
-from passzero.models import (ApiToken, AuthToken, DecryptedDocument,
-                             EncryptedDocument, EncryptionKeys,
+from passzero.models import (ApiToken, AuthToken, EncryptionKeys,
                              EncryptionKeysDB_V1, Entry, Entry_v2, Entry_v3,
                              Entry_v4, Entry_v5, Link, Service, User)
-from passzero.utils import base64_encode
 
 UPDATE_LIMIT = 60
 # we are using this form of logging here
@@ -289,7 +287,7 @@ def delete_all_entries(db_session: Session, user: User, user_key: str) -> None:
 def delete_account(db_session: Session, user: User) -> None:
     """Delete the given user from the database.
     Also delete all entries associated with that user
-    Also delete all documents associated with that user
+    Also delete all links associated with that user
     Delete all data for that user across all tables"""
     entries_q = db_session.query(Entry).filter_by(user_id=user.id)
     entries_q.delete()
@@ -297,8 +295,6 @@ def delete_account(db_session: Session, user: User) -> None:
     auth_tokens_q.delete()
     api_tokens_q = db_session.query(ApiToken).filter_by(user_id=user.id)
     api_tokens_q.delete()
-    docs_q = db_session.query(EncryptedDocument).filter_by(user_id=user.id)
-    docs_q.delete()
     links_q = db_session.query(Link).filter_by(user_id=user.id)
     links_q.delete()
     enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user.id).one_or_none()
@@ -311,14 +307,12 @@ def delete_account(db_session: Session, user: User) -> None:
 def recover_account_confirm(db_session: Session, user: User, new_master_password: str) -> None:
     assert isinstance(new_master_password, str), "Type of password is %s" % type(new_master_password)
 
-    # delete subordinate entities such as entries, API tokens, documents, links, and encryption keys
+    # delete subordinate entities such as entries, API tokens, links, and encryption keys
     entries_q = db_session.query(Entry).filter_by(user_id=user.id)
     entries_q.delete()
     # NOTE: we do not delete auth tokens here
     api_tokens_q = db_session.query(ApiToken).filter_by(user_id=user.id)
     api_tokens_q.delete()
-    docs_q = db_session.query(EncryptedDocument).filter_by(user_id=user.id)
-    docs_q.delete()
     links_q = db_session.query(Link).filter_by(user_id=user.id)
     links_q.delete()
     enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user.id).one_or_none()
@@ -769,95 +763,3 @@ def get_services_map(session: Session) -> Dict[str, Any]:
             "link": service.link
         }
     return d
-
-
-def get_document_by_id(db_session: Session, user_id: int, document_id: int) -> Optional[EncryptedDocument]:
-    """Return document with given ID.
-    If it doesn't belong to the user return None
-    If it doesn't exist also return None"""
-    try:
-        doc = db_session.query(EncryptedDocument).filter_by(id=document_id).one()
-        if doc.user_id != user_id:
-            return None
-        return doc
-    except NoResultFound:
-        return None
-
-
-def encrypt_document(db_session: Session, user_id: int, master_key: str,
-                     document_name: str, mimetype: str, document) -> EncryptedDocument:
-    """
-    Create an encrypted document, fill in the fields, and save in the database
-    :param db_session:  database session, NOT flask session
-    :param document:    contents of the document
-    :rtype:             EncryptedDocument
-    """
-    assert isinstance(user_id, int)
-    assert isinstance(master_key, str)
-    assert isinstance(document_name, str)
-    assert isinstance(mimetype, str) and mimetype is not None
-    doc = DecryptedDocument(document_name, mimetype, document)
-    assert doc.mimetype is not None
-    return insert_document_for_user(db_session, doc, user_id, master_key)
-
-
-def insert_document_for_user(session: Session, decrypted_document: DecryptedDocument,
-                             user_id: int, master_key: str) -> EncryptedDocument:
-    """
-    :param session: database session, NOT flask session
-    :param decrypted_document: DecryptedDocument
-    :param master_key: unicode
-    :param user_id: int
-    :rtype:                         EncryptedDocument
-    """
-    assert isinstance(decrypted_document, DecryptedDocument)
-    assert isinstance(user_id, int)
-    assert isinstance(master_key, str)
-    extended_key, extension_params = DecryptedDocument.extend_key(master_key)
-    assert isinstance(extended_key, bytes)
-    enc_doc = decrypted_document.encrypt(extended_key)
-    enc_doc.key_salt = base64_encode(extension_params["kdf_salt"]).decode("utf-8")
-    assert isinstance(enc_doc.key_salt, str)
-    enc_doc.user_id = user_id
-    assert isinstance(enc_doc.user_id, int)
-    session.add(enc_doc)
-    session.commit()
-    return enc_doc
-
-
-def edit_document(session: Session, document_id: int, master_key: str,
-                  form_data: dict, user_id: int) -> EncryptedDocument:
-    """
-    Try to edit the document with ID <document_id>. Commit changes to DB.
-    Check first if the document belongs to the current user.
-    :param session:         Database session
-    :param document_id:     ID of existing document to be edited
-    :param master_key:      Document decryption key
-    :param form_data:       Dictionary of changes to the document
-    :param user_id:         ID of the logged-in user
-    :return:                Newly edited document
-    :rtype:                 EncryptedDocument
-    """
-    assert isinstance(document_id, int)
-    assert isinstance(master_key, str)
-    assert isinstance(form_data, dict)
-    assert isinstance(user_id, int)
-    doc = session.query(EncryptedDocument).filter_by(id=document_id).one()  # type: EncryptedDocument
-    if doc.user_id != user_id:
-        raise UserNotAuthorizedError
-    dec_doc = doc.decrypt(master_key)
-    dec_doc.contents = form_data["contents"]
-    dec_doc.name = form_data["name"]
-    dec_doc.mimetype = form_data["mimetype"]
-    # create a second encrypted document, which we are *not* saving
-    extended_key, extension_params = DecryptedDocument.extend_key(master_key)
-    enc_doc2 = dec_doc.encrypt(extended_key)
-    # edit the existing encrypted document so ID will not change
-    doc.document = enc_doc2.document
-    doc.key_salt = base64_encode(extension_params["kdf_salt"]).decode("utf-8")
-    doc.name = enc_doc2.name
-    doc.mimetype = enc_doc2.mimetype
-    # make sure that the updated document maintains the same ID
-    assert doc.id == document_id
-    session.commit()
-    return doc

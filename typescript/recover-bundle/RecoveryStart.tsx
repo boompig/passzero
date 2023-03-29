@@ -43,7 +43,7 @@ export const RecoveryStart = () => {
     return <main id="recovery-start-main">
         <h2 className="title">Recover Password</h2>
 
-        <div className="alert alert-warning"><strong>Warning</strong> Once completed, the recovery process will delete all your saved passwords, documents, and links.
+        <div className="alert alert-warning"><strong>Warning</strong> Once completed, the recovery process will delete all your saved passwords, links, and user profile data.
         This is because your passwords are encrypted using your old password, so not even we can break this encryption.</div>
 
         <form role="form" onSubmit={handleSubmit} id="recover-form">

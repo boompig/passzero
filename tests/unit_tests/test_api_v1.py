@@ -81,7 +81,4 @@ class PassZeroApiTester(unittest.TestCase):
         self._create_active_account(email, password)
         api.login_v1(self.app, email, password)
         api.logout_v1(self.app)
-
-        r = api.get_documents(self.app, check_status=False)
-        # should not be able to get entries
-        assert r.status_code == 401
+        # TODO v1 API no longer has enough methods to properly test logout

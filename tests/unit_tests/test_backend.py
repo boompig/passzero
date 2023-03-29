@@ -12,12 +12,12 @@ from passzero import backend
 from passzero.app_factory import create_app
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               get_entries, get_services_map,
-                              insert_document_for_user, insert_link_for_user,
+                              insert_link_for_user,
                               password_strength_scores)
 from passzero.change_password import change_password
 from passzero.config import ENTRY_LIMITS
 from passzero.crypto_utils import PasswordHashAlgo
-from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
+from passzero.models import (AuthToken,
                              EncryptionKeys, Entry, Link, Service, User)
 from passzero.models import db as _db
 from tests.unit_tests.utils import (assert_decrypted_entries_equal,
@@ -89,7 +89,6 @@ def session(db: SQLAlchemy, request):
         session.query(Service).delete()
         session.query(AuthToken).delete()
         session.query(Link).delete()
-        session.query(EncryptedDocument).delete()
         session.query(EncryptionKeys).delete()
         session.commit()
 
@@ -147,13 +146,6 @@ def test_delete_account(session) -> None:
         "has_2fa": True
     }
     backend.insert_entry_for_user(session, dec_entry_in, user.id, user_key)
-    # add a document to that account
-    dec_doc = DecryptedDocument(
-        name="test doc",
-        contents="hello",
-        mimetype="text/plain"
-    )
-    insert_document_for_user(session, dec_doc, user.id, user_key)
     # add a link to that account
     dec_link = {
         "service_name": "link",
@@ -625,82 +617,3 @@ def test_get_services_map(session):
     service_map = get_services_map(session)
     assert len(service_map) == 1
     service_map.get("MyService", None) is not None
-
-
-def test_edit_document(session):
-    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-    doc = DecryptedDocument(name="first.txt", mimetype="text/plain", contents=b"hello world")
-    enc_doc = backend.encrypt_document(
-        session,
-        user.id,
-        DEFAULT_PASSWORD,
-        doc.name,
-        doc.mimetype,
-        doc.contents
-    )
-    assert enc_doc.id >= 1
-    dec_doc_2 = DecryptedDocument(
-        name="second.txt",
-        mimetype="text/plain",
-        contents=b"goodbye cruel world"
-    )
-    enc_doc_2 = backend.edit_document(
-        session,
-        document_id=enc_doc.id,
-        master_key=DEFAULT_PASSWORD,
-        form_data=dec_doc_2.__dict__,
-        user_id=user.id
-    )
-    assert enc_doc.id == enc_doc_2.id
-    out = enc_doc_2.decrypt(DEFAULT_PASSWORD)
-    assert out.name == dec_doc_2.name
-    assert out.mimetype == dec_doc_2.mimetype
-    assert out.contents == dec_doc_2.contents
-
-
-def test_edit_nonexistant_document(session):
-    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-    doc = backend.get_document_by_id(session, user.id, 1)
-    assert doc is None
-    try:
-        backend.edit_document(
-            session,
-            1,
-            DEFAULT_PASSWORD,
-            {
-                "name": "test",
-                "contents": b"hello world",
-                "mimetype": "text/plain"
-            },
-            user.id
-        )
-        assert False
-    except NoResultFound:
-        assert True, "great"
-
-
-def test_edit_not_your_document(session):
-    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-    dec_doc = DecryptedDocument(
-        name="test doc",
-        contents=b"hello",
-        mimetype="text/plain"
-    )
-    # deliberately users have the same password
-    enc_doc = insert_document_for_user(session, dec_doc, user.id, DEFAULT_PASSWORD)
-    user2 = create_inactive_user(session, "user2@fake.com", "fake password 2")
-    try:
-        backend.edit_document(
-            session,
-            enc_doc.id,
-            DEFAULT_PASSWORD,
-            {
-                "name": "test",
-                "contents": b"hello world",
-                "mimetype": "text/plain"
-            },
-            user2.id
-        )
-        assert False
-    except backend.UserNotAuthorizedError:
-        assert True, "great"

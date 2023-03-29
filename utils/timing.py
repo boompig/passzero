@@ -1,7 +1,7 @@
 """
-This file tests different versions of encrypt/decrypt algorithms for performance
+This module tests different versions of encrypt/decrypt algorithms for performance
 
-This file also tests the performance of the web server at servicing typical requests
+This module also tests the performance of the web server at servicing typical requests
 """
 
 import cProfile

@@ -4,11 +4,11 @@ import Nav from 'react-bootstrap/Nav';
 import Container from 'react-bootstrap/Container';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faList, faLink, faFileArchive, faPlus, faFileUpload, faUser, faWrench, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faList, faLink, faPlus, faUser, faWrench, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
 
-library.add(faList, faLink, faFileArchive, faPlus, faFileUpload, faUser, faWrench, faSignOutAlt);
+library.add(faList, faLink, faPlus, faUser, faWrench, faSignOutAlt);
 
 interface INavbarItem {
     /**
@@ -48,18 +48,6 @@ const navbarItems = [
         friendlyName: "Links",
         icon: <FontAwesomeIcon icon={["fas", "link"]} />,
     },
-    // {
-    //     path: "/docs",
-    //     key: "docs",
-    //     friendlyName: "Documents",
-    //     icon: <FontAwesomeIcon icon={["fas", "file-archive"]} />,
-    // },
-    // {
-    //     path: "/docs/new",
-    //     key: "new-doc",
-    //     friendlyName: "New Document",
-    //     icon: <FontAwesomeIcon icon={["fas", "file-upload"]} />,
-    // },
     {
         path: "/profile",
         key: "profile",

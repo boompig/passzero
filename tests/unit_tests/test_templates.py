@@ -1,10 +1,9 @@
 """
-This file will test whether the templates fetched can be rendered at all
+This module will test whether the templates fetched can be rendered at all
 """
 
 import logging
 import os
-from io import BytesIO
 from typing import Generator
 from unittest import mock
 
@@ -15,7 +14,7 @@ from flask_sqlalchemy import SQLAlchemy
 
 from passzero import backend
 from passzero.app_factory import create_app
-from passzero.models import (ApiToken, AuthToken, EncryptedDocument,
+from passzero.models import (ApiToken, AuthToken,
                              EncryptionKeys, Entry, Link, Service, User)
 from passzero.models import db as _db
 from tests.common import api
@@ -69,8 +68,6 @@ def flask_client(request, db, flask_client_perm: FlaskClient) -> FlaskClient:
         db.session.query(Link).delete()
         # delete auth token
         db.session.query(AuthToken).delete()
-        # delete documents
-        db.session.query(EncryptedDocument).delete()
         # delete user
         db.session.query(User).delete()
         # delete services
@@ -116,15 +113,6 @@ def _create_entry(_client: FlaskClient, _db: SQLAlchemy, _user: User) -> int:
     )
     return entry.id
 
-
-def _create_document(_client) -> int:
-    token = api.get_csrf_token(_client)
-    doc_params = {
-        "name": "test document",
-        "document": (BytesIO(b"hello world\n"), "hello_world.txt"),
-        "mimetype": "text/plain"
-    }
-    return api.post_document(_client, doc_params, token, check_status=True)
 
 # ----- check pages that don't require login
 
@@ -259,34 +247,6 @@ def test_new_link_no_login(flask_client: FlaskClient):
 def test_edit_link_no_login(flask_client: FlaskClient):
     with flask_client as c:
         response = c.get("/links/1", follow_redirects=True)
-        print(response.data)
-        assert flask.request.path == flask.url_for("main_routes.login")
-
-
-def test_view_docs_no_login(flask_client: FlaskClient):
-    with flask_client as c:
-        response = c.get("/docs", follow_redirects=True)
-        print(response.data)
-        assert flask.request.path == flask.url_for("main_routes.login")
-
-
-def test_new_doc_no_login(flask_client: FlaskClient):
-    with flask_client as c:
-        response = c.get("/docs/new", follow_redirects=True)
-        print(response.data)
-        assert flask.request.path == flask.url_for("main_routes.login")
-
-
-def test_edit_doc_no_login(flask_client: FlaskClient):
-    with flask_client as c:
-        response = c.get("/docs/1/edit", follow_redirects=True)
-        print(response.data)
-        assert flask.request.path == flask.url_for("main_routes.login")
-
-
-def test_view_decrypted_doc_no_login(flask_client: FlaskClient):
-    with flask_client as c:
-        response = c.get("/docs/1/view", follow_redirects=True)
         print(response.data)
         assert flask.request.path == flask.url_for("main_routes.login")
 
@@ -474,71 +434,6 @@ def test_edit_link_no_link_with_login(flask_client: FlaskClient, active_user: Us
         assert response.status_code == 200
         # redirect to view links
         assert flask.request.path == flask.url_for("main_routes.view_links")
-
-
-def test_view_docs_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/docs", follow_redirects=True)
-        assert response.status_code == 200
-        assert flask.request.path == flask.url_for("main_routes.view_docs")
-
-
-def test_new_doc_view_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/docs/new", follow_redirects=True)
-        assert response.status_code == 200
-        assert flask.request.path == flask.url_for("main_routes.new_doc_view")
-
-
-def test_view_decrypted_doc_no_doc_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/docs/1/view", follow_redirects=True)
-        assert response.status_code == 200
-        # redirect to view docs
-        assert flask.request.path == flask.url_for("main_routes.view_docs")
-
-
-def test_view_decrypted_doc_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        document_id = _create_document(c)
-        response = c.get(f"/docs/{document_id}/view", follow_redirects=True)
-        assert response.status_code == 200
-        assert flask.request.path == flask.url_for(
-            "main_routes.view_decrypted_doc",
-            document_id=document_id
-        )
-
-
-def test_edit_doc_no_doc_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/docs/1/edit", follow_redirects=True)
-        assert response.status_code == 200
-        # redirect to view docs
-        assert flask.request.path == flask.url_for("main_routes.view_docs")
-
-
-def test_edit_doc_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        document_id = _create_document(c)
-        response = c.get(f"/docs/{document_id}/edit", follow_redirects=True)
-        assert response.status_code == 200
-        # redirect to view docs
-        assert flask.request.path == flask.url_for(
-            "main_routes.edit_doc",
-            document_id=document_id
-        )
 
 
 def test_edit_entry_view_with_login_invalid_entry(flask_client: FlaskClient, active_user: User):

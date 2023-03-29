@@ -2,9 +2,7 @@
         [
             ("/entries", "entries", "Entries"),
             ("/links", "links", "Links"),
-            ("/docs", "docs", "Documents"),
             ("/entries/new", "new", "New Entry"),
-            ("/docs/new", "new-doc", "New Document"),
             ("/profile", "profile", "Profile"),
             ("/advanced", "advanced", "Advanced"),
             ("/logout", "logout", "Sign Out")
@@ -53,10 +51,6 @@
                                 <i class="fas fa-user"></i>
                             {%- elif id == "advanced" -%}
                                 <i class="fas fa-wrench"></i>
-                            {%- elif id == "new-doc" -%}
-                                <i class="fas fa-file-upload"></i>
-                            {%- elif id == "docs" -%}
-                                <i class="fas fa-file-archive"></i>
                             {%- endif -%}
                             <span class="nav-text">{{ caption|e }}</span>
                         </a>
