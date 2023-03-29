@@ -43,10 +43,6 @@ class PassZeroApiTester(unittest.TestCase):
         token = m1.call_args[0][2].split("?")[1].replace("token=", "")
         return token
 
-    def test_get_csrf_token(self):
-        token = api.get_csrf_token(self.app)
-        assert isinstance(token, six.binary_type) or isinstance(token, six.text_type)
-
     def test_login(self):
         """
         Make sure the login works.

@@ -10,6 +10,7 @@ import SearchForm from "../entries-bundle/components/search-form";
 import { decryptLinkWithKeysDB } from "../common-modules/crypto-utils";
 import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/message";
 import LogoutTimer from "../common-modules/logoutTimer";
+import { clientSideLogout } from "../common-modules/client-side-utils";
 
 interface IProps {}
 
@@ -114,7 +115,8 @@ class App extends Component<IProps, IState> {
                 console.error("Failed to get links");
                 console.error(err);
                 if (err.name === "UnauthorizedError") {
-                    window.location.assign("/login");
+                    // likely the token has expired
+                    clientSideLogout();
                 } else {
                     console.debug("different type of error: " + err.name);
                 }

@@ -81,14 +81,6 @@ class PassZeroApiV1Tester(unittest.TestCase):
     def _logout(self, session: Session):
         api.logout_v1(session, check_status=True)
 
-    def _get_csrf_token(self, session: Session) -> str:
-        """Return CSRF token"""
-        token = api.get_csrf_token(session)
-        assert token is not None
-        assert isinstance(token, six.text_type)
-        assert len(token) != 0
-        return token
-
     def test_login_no_users(self):
         with requests.Session() as session:
             response = api.login_v1(session, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=False)
@@ -127,10 +119,6 @@ class PassZeroApiV1Tester(unittest.TestCase):
         db_session = get_db_session()
         # only if test fails
         print(db_session)
-
-    def test_get_csrf_token(self):
-        with requests.Session() as s:
-            self._get_csrf_token(s)
 
     def test_logout(self):
         # TODO we no longer have enough v1 functions to test logout

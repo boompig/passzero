@@ -5,7 +5,7 @@ import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { AccessTokenProvider } from '../components/AccessTokenProvider';
 import { AccessTokenContext } from '../providers/access-token-provider';
 import LogoutTimer from "../common-modules/logoutTimer";
-// import { clientSideLogout } from '../common-modules/client-side-utils';
+import { clientSideLogout } from '../common-modules/client-side-utils';
 
 interface ITwoFactorMapEntry {
     service_has_2fa: boolean;
@@ -50,7 +50,12 @@ const TwoFactorAuditMain = () => {
             setTwoFactorMap(resp);
         } else {
             console.error('failed to fetch two factor map');
-            throw new Error('failed to fetch two factor map');
+            if (r.status === 401) {
+                // likely the token has expired
+                clientSideLogout();
+            } else {
+                throw new Error('failed to fetch two factor map');
+            }
         }
     };
 

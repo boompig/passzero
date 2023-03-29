@@ -52,9 +52,4 @@ export default class PassZeroAPIv1 {
 		const response = await window.fetch(url, options);
         return response.json();
     }
-
-    async getCSRFToken() {
-        const url = "/api/v1/csrf_token";
-        return this.getJSON(url);
-    }
 }

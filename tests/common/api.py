@@ -226,16 +226,6 @@ def logout_v1(app, check_status: bool = False):
     return r
 
 
-def get_csrf_token(app):
-    """Always verifies status"""
-    url = "/api/v1/csrf_token"
-    r = json_get(app, url)
-    assert r.status_code == 200
-    token = _get_response_json(r)
-    _print_if_test(app, "[client] received csrf_token: %s" % token)
-    return token
-
-
 # --- v3 (tokens) starts here
 
 

@@ -28,16 +28,7 @@ def logout_v1(app):
                     headers=json_header, allow_redirects=True)
 
 
-def get_csrf_token(app):
-    r = app.get(BASE_URL + "/api/v1/csrf_token",
-                headers=json_header, allow_redirects=True)
-    assert r.status_code == 200
-    token = json.loads(r.text)
-    # print("[client] received csrf_token: %s" % token)
-    return token
-
-
-# v2 API starts here
+# v3 API starts here
 
 
 def get_json(app, url):

@@ -4,7 +4,7 @@ from flask import Blueprint, escape, request, session
 from sqlalchemy.orm.exc import NoResultFound
 
 from passzero import backend
-from passzero.api_utils import (generate_csrf_token, json_error, json_success,
+from passzero.api_utils import (json_error, json_success,
                                 requires_json_form_validation, write_json)
 from passzero.forms import LoginForm
 from passzero.models import ApiStats, db
@@ -48,28 +48,6 @@ def log_api_stats(response):
     db.session.add(stats)
     db.session.commit()
     return response
-
-
-@api_v1.route("/api/csrf_token", methods=["GET"])
-@api_v1.route("/api/v1/csrf_token", methods=["GET"])
-def api_v1_get_csrf_token():
-    """Get CSRF token for current user's session.
-
-    Arguments
-    ---------
-    none
-
-    Response
-    --------
-    CSRF token as string
-
-    Status codes
-    ------------
-    - 200: success
-    """
-    # make sure there is a CSRF token
-    token = generate_csrf_token()
-    return write_json(200, token)
 
 
 def __logout():

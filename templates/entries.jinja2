@@ -16,7 +16,6 @@
 {% block body %}
     <div id="root"></div>
     <form class="hidden">
-        <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}">
 		<input type="hidden" name="master_password" id="master_password" value="{{ session['password'] }}">
     </form>
 {% endblock %}
