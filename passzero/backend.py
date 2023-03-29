@@ -60,7 +60,7 @@ def create_new_account(db_session: Session, email: str, password: str) -> Tuple[
         # this is the bad case
         if user.active:
             raise UserExistsError(
-                "an account with this email address already exists"
+                "An account with this email address already exists."
             )
         else:
             raise UserExistsError(

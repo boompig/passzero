@@ -1,6 +1,6 @@
 from functools import wraps
 
-from flask import (Blueprint, abort, current_app, escape, flash, make_response,
+from flask import (Blueprint, abort, current_app, make_response,
                    redirect, render_template, request, session, url_for)
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -47,13 +47,6 @@ def index():
         return render_template("landing.jinja2")
 
 
-@main_routes.route("/done_login", methods=["GET"])
-@auth_or_abort
-def post_login():
-    flash(f"Successfully logged in as {escape(session['email'])}")
-    return redirect(url_for("main_routes.view_entries"))
-
-
 @main_routes.route("/login", methods=["GET"])
 def login():
     return render_template(
@@ -73,25 +66,7 @@ def logout():
     return redirect(url_for("main_routes.login"))
 
 
-@main_routes.route("/post_account_delete", methods=["GET", "POST"])
-def post_account_delete():
-    flash("Account successfully deleted")
-    return redirect(url_for("main_routes.logout"))
-
-
-@main_routes.route("/done_signup/<email>", methods=["GET"])
-def post_signup(email: str):
-    flash("Successfully created account with email %s. A confirmation email was sent to this address." % escape(email))
-    return redirect(url_for("main_routes.login"))
-
-
 # --- BEGIN entries --- #
-@main_routes.route("/entries/post_delete/<account_name>", methods=["GET"])
-@auth_or_abort
-def post_delete(account_name: str):
-    flash(f"Successfully deleted account {escape(account_name)}")
-    return redirect(url_for("main_routes.view_entries"))
-
 
 @main_routes.route("/entries/new", methods=["GET"])
 @auth_or_redirect_login
@@ -108,20 +83,6 @@ def new_entry_view():
         user_prefs=user_prefs,
         error=None
     )
-
-
-@main_routes.route("/entries/done_edit/<account_name>")
-@auth_or_abort
-def post_edit(account_name):
-    flash(f"Successfully changed entry for account {escape(account_name)}")
-    return redirect(url_for("main_routes.view_entries"))
-
-
-@main_routes.route("/entries/done_new/<account_name>", methods=["GET"])
-@auth_or_abort
-def post_create(account_name):
-    flash(f"Successfully created entry for account {escape(account_name)}")
-    return redirect(url_for("main_routes.view_entries"))
 
 
 @main_routes.route("/entries", methods=["GET"])
@@ -161,7 +122,9 @@ def edit_link(link_id: int):
     user = db.session.query(User).filter_by(id=session["user_id"]).one()
     link = get_link_by_id(db.session, user.id, link_id)
     if link is None:
-        flash("Error: no link with ID %d" % link_id, "error")
+        current_app.logger.error(
+            "Error: user tried to access link with ID %d, which does not exist", link_id
+        )
         return redirect(url_for("main_routes.view_links"))
     dec_link = link.decrypt(session["password"])
     return render_template(
@@ -182,35 +145,34 @@ def signup():
     )
 
 
-@main_routes.route("/signup/post_confirm")
-def post_confirm_signup():
-    flash("Successfully signed up! Login with your newly created account")
-    return redirect(url_for("main_routes.login"))
-
-
-@main_routes.route("/signup/confirm")
+@main_routes.route("/signup/confirm", methods=["GET"])
 def confirm_signup():
+    """
+    This is the endpoint that a user will be directed to from their signup email.
+    It is expected that they will have a token as an argument.
+    """
     try:
         token = request.args["token"]
         token_obj = db.session.query(AuthToken).filter_by(token=token).one()
         if token_obj.is_expired():
-            flash("Token has expired", "error")
+            current_app.logger.error("Register token has expired")
             # delete old token from database
             db.session.delete(token_obj)
             db.session.commit()
-            return redirect(url_for("main_routes.signup"))
+            return redirect(url_for("main_routes.signup", error_code="err_register_token_expired"))
         else:
-            # token deleted when password changed
+            # delete the token so it cannot be used again
             db.session.delete(token_obj)
             user = db.session.query(User).filter_by(id=token_obj.user_id).one()
             activate_account(db.session, user)
-            return redirect(url_for("main_routes.post_confirm_signup"))
+            return redirect(url_for("main_routes.login", last_action="done_register"))
     except NoResultFound:
-        flash("Token is invalid", "error")
-        return redirect(url_for("main_routes.signup"))
+        current_app.logger.error("Register token is invalid")
+        return redirect(url_for("main_routes.signup", error_code="err_register_token_invalid"))
     except KeyError:
-        flash("Token is mandatory", "error")
-        return redirect(url_for("main_routes.signup"))
+        current_app.logger.error("Someone tried to hit the signup confirm API without a token")
+        # don't even bother showing a nice HTML page
+        return "Token is mandatory"
 
 
 @main_routes.route("/advanced/export", methods=["GET"])
@@ -228,13 +190,6 @@ def export_entries():
     return response
 
 
-@main_routes.route("/advanced/done_export")
-@auth_or_abort
-def done_export():
-    flash("database successfully dumped to file %s" % current_app.config['DUMP_FILE'])
-    return redirect("/advanced")
-
-
 @main_routes.route("/edit/<int:entry_id>", methods=["GET"])
 @main_routes.route("/entries/<int:entry_id>", methods=["GET"])
 @auth_or_redirect_login
@@ -243,7 +198,9 @@ def edit_entry(entry_id: int):
     entries = get_entries(db.session, session["user_id"])
     my_entries = [e for e in entries if e.id == entry_id]
     if len(my_entries) == 0:
-        flash("Error: no entry with ID %d" % entry_id, "error")
+        current_app.logger.error(
+            "Error: user tried to access entry with ID %d, which does not exist", entry_id
+        )
         return redirect(url_for("main_routes.view_entries"))
     else:
         fe = decrypt_entries(my_entries, session['password'])
@@ -261,7 +218,7 @@ def edit_entry(entry_id: int):
         )
 
 
-@main_routes.route("/entries/strength")
+@main_routes.route("/entries/strength", methods=["GET"])
 @auth_or_redirect_login
 def password_strength():
     return render_template(
@@ -270,7 +227,7 @@ def password_strength():
     )
 
 
-@main_routes.route("/entries/2fa")
+@main_routes.route("/entries/2fa", methods=["GET"])
 @auth_or_redirect_login
 def two_factor():
     return render_template(
@@ -279,7 +236,7 @@ def two_factor():
     )
 
 
-@main_routes.route("/advanced")
+@main_routes.route("/advanced", methods=["GET"])
 @auth_or_redirect_login
 def advanced():
     return render_template(
@@ -288,7 +245,7 @@ def advanced():
     )
 
 
-@main_routes.route("/profile")
+@main_routes.route("/profile", methods=["GET"])
 @auth_or_redirect_login
 def profile():
     return render_template(
@@ -297,7 +254,7 @@ def profile():
     )
 
 
-@main_routes.route("/recover")
+@main_routes.route("/recover", methods=["GET"])
 def recover_password():
     return render_template(
         "recover.jinja2",
@@ -305,7 +262,7 @@ def recover_password():
     )
 
 
-@main_routes.route("/recover/confirm")
+@main_routes.route("/recover/confirm", methods=["GET"])
 def recover_account_confirm():
     if "token" not in request.args:
         return "token is required"
@@ -315,7 +272,7 @@ def recover_account_confirm():
     )
 
 
-@main_routes.route("/about")
+@main_routes.route("/about", methods=["GET"])
 def about():
     return render_template(
         "about.jinja2",
@@ -323,6 +280,6 @@ def about():
     )
 
 
-@main_routes.route("/version")
+@main_routes.route("/version", methods=["GET"])
 def get_version():
     return current_app.config['BUILD_ID']

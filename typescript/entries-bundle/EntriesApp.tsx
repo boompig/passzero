@@ -31,6 +31,9 @@ interface IAppState {
     servicesLoaded: boolean;
     services: IService[];
     loadingErrorMsg: string | null;
+    // if redirected from another view can display one of several messages
+    // for security cannot display anything more elaborate
+    lastAction: string | null;
     /**
      * Details about the user
      */
@@ -44,6 +47,27 @@ interface IAppState {
     isKeysDBLoaded: boolean;
 }
 
+const getLastActionMessage = (lastAction: string): string => {
+    if (!lastAction) {
+        throw new Error('last action not specified');
+    }
+    switch (lastAction) {
+        case 'done_edit':
+            return "Successfully edited entry";
+        case 'done_new':
+            return "Successfully created entry";
+        default:
+            throw new Error(`invalid last action: ${lastAction}`);
+    }
+}
+
+const LastActionMessage = ({ lastAction }: { lastAction: string }) => {
+    const msg = getLastActionMessage(lastAction);
+    return <div className="alert alert-success" role="alert">
+        { msg }
+    </div>;
+};
+
 class App extends Component<IAppProps, IAppState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
@@ -51,6 +75,9 @@ class App extends Component<IAppProps, IAppState> {
 
     constructor(props: IAppProps) {
         super(props);
+
+        const url = new URL(window.location.href);
+        const lastAction = url.searchParams.get('last_action');
 
         this.logoutTimer = new LogoutTimer();
         this.pzApi = new PasszeroApiV3();
@@ -72,6 +99,9 @@ class App extends Component<IAppProps, IAppState> {
 
             // error msg if entries fail to load
             loadingErrorMsg: null,
+
+            // flash message from another view
+            lastAction: lastAction,
         };
 
         this.findEntryIndex = this.findEntryIndex.bind(this);
@@ -352,6 +382,9 @@ class App extends Component<IAppProps, IAppState> {
                     <nav></nav>
                     <main className="container">
                         <div className="inner-container">
+                            { this.state.lastAction ?
+                                <LastActionMessage lastAction={this.state.lastAction} />
+                            : null}
                             <NumEntries
                                 entriesLoaded={this.state.entriesLoaded}
                                 numEntries={this.state.entries.length} />

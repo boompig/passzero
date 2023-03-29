@@ -167,7 +167,7 @@ class NewEntryApp extends PureComponent<{}, INewEntryState> {
 
 		const r = await this.pzApi.updateEntry(this.state.id, entry, this.state.masterPassword);
 		if(r.status === 200) {
-			window.location.assign(`/entries/done_edit/${entry.account}`);
+			window.location.assign('/entries?last_action=done_edit');
 		} else {
 			console.error(r.status);
 			console.error(r);
@@ -197,7 +197,7 @@ class NewEntryApp extends PureComponent<{}, INewEntryState> {
 
 		const r = await this.pzApi.createEntry(entry, this.state.masterPassword);
 		if(r.status === 200) {
-			window.location.assign(`/entries/done_new/${entry.account}`);
+			window.location.assign('/entries?last_action=done_new');
 		} else {
 			console.error(r.status);
 			console.error(r);

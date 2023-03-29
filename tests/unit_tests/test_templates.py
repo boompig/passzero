@@ -151,52 +151,6 @@ def test_recover_template(flask_client: FlaskClient):
     assert r.status_code == 200
 
 
-def test_post_account_delete_no_login(flask_client: FlaskClient):
-    r = flask_client.get("/post_account_delete", follow_redirects=True)
-    assert r.status_code == 200
-
-
-def test_post_confirm_signup_no_login(flask_client: FlaskClient):
-    r = flask_client.get("/signup/post_confirm", follow_redirects=True)
-    assert r.status_code == 200
-
-# ---- check redirect methods when pre-conditions not met -----
-
-
-def test_post_login_no_login(flask_client: FlaskClient):
-    r = flask_client.get("/done_login", follow_redirects=True)
-    # only print on error
-    print(r.data)
-    assert r.status_code == 401
-
-
-def test_post_delete_no_login(flask_client: FlaskClient):
-    r = flask_client.get("/entries/post_delete/foo", follow_redirects=True)
-    # only print on error
-    print(r.data)
-    assert r.status_code == 401
-
-
-def test_post_update_no_login(flask_client: FlaskClient):
-    r = flask_client.get("/entries/done_edit/foo", follow_redirects=True)
-    # only print on error
-    print(r.data)
-    assert r.status_code == 401
-
-
-def test_post_create_no_login(flask_client: FlaskClient):
-    r = flask_client.get("/entries/done_new/foo", follow_redirects=True)
-    # only print on error
-    print(r.data)
-    assert r.status_code == 401
-
-
-def test_post_export_no_login(flask_client: FlaskClient):
-    r = flask_client.get("/advanced/done_export", follow_redirects=True)
-    # only print on error
-    print(r.data)
-    assert r.status_code == 401
-
 # ------ check API methods when conditions not met ------------
 
 
@@ -286,35 +240,6 @@ def test_logout_no_login(flask_client: FlaskClient):
         assert flask.request.path == flask.url_for("main_routes.login")
 
 
-def test_signup_no_signup(flask_client: FlaskClient):
-    # just make sure everything is OK
-    response = flask_client.get("/done_signup/foo", follow_redirects=True)
-    print(response.data)
-    assert response.status_code == 200
-
-
-def test_confirm_signup_no_token(flask_client: FlaskClient):
-    """
-    This method expects a token.
-    Check what happens if no token is supplied
-    Just make sure we don't error
-    """
-    response = flask_client.get("/signup/confirm", follow_redirects=True)
-    print(response.data)
-    assert response.status_code == 200
-
-
-def test_confirm_signup_invalid_token(flask_client: FlaskClient):
-    """
-    This method expects a token.
-    Check what happens if the wrong token is supplied
-    Just make sure we don't error
-    """
-    response = flask_client.get("/signup/confirm?token=foo", follow_redirects=True)
-    print(response.data)
-    assert response.status_code == 200
-
-
 def test_confirm_recover_no_token(flask_client: FlaskClient):
     """
     This method expects a token.
@@ -336,48 +261,6 @@ def test_confirm_recover_invalid_token(flask_client: FlaskClient):
     response = flask_client.get("/recover/confirm?token=foo", follow_redirects=True)
     print(response.data)
     assert response.status_code == 200
-
-# ---- test pages that do require login - (auth or abort) ------------
-
-
-def test_done_login_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/done_login", follow_redirects=True)
-        assert response.status_code == 200
-
-
-def test_done_edit_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/entries/done_edit/foo", follow_redirects=True)
-        assert response.status_code == 200
-
-
-def test_done_new_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/entries/done_new/foo", follow_redirects=True)
-        assert response.status_code == 200
-
-
-def test_done_login_post_delete(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/entries/post_delete/foo", follow_redirects=True)
-        assert response.status_code == 200
-
-
-def test_done_export_with_login(flask_client: FlaskClient, active_user: User):
-    with flask_client as c:
-        assert active_user is not None
-        api.login_v1(flask_client, DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
-        response = c.get("/advanced/done_export", follow_redirects=True)
-        assert response.status_code == 200
 
 
 # ----- test pages that do require login - ( auth_or_redirect_login ) -------
