@@ -281,12 +281,12 @@ class App extends Component<IProps, IState> {
 
             console.log(`Split the IDs into ${localIds.length} local links and ${remoteIds.length} remote links`);
 
-            // split the IDs into chunks of DECRYPTION_BATCH_SIZE
-            const chunks = chunk(remoteIds, DECRYPTION_BATCH_SIZE);
+            // split the IDs into chunks of DECRYPTION_BATCH_SIZE for remote decryption
+            const remoteChunks = chunk(remoteIds, DECRYPTION_BATCH_SIZE);
             // keep track of how many have been decrypted
             let numDecrypted = 0;
 
-            chunks.map(async (idsChunk: number[]) => {
+            remoteChunks.map(async (idsChunk: number[]) => {
                 // decrypt this chunk
                 const decLinks = await this.decryptList(idsChunk);
                 // make a copy - don't modify original
@@ -316,7 +316,7 @@ class App extends Component<IProps, IState> {
                 }
             });
 
-            localIds.map(async (linkId: number) => {
+            localIds.forEach(async (linkId: number) => {
                 // we know that this ID exists in the local keys DB
                 const idx = indexMap[linkId];
                 const link = this.state.links[idx] as IEncryptedLink;
@@ -327,6 +327,7 @@ class App extends Component<IProps, IState> {
                 const newLinks = this.state.links;
                 newLinks.splice(idx, 1, decLink);
 
+                // note that this setState function is called on EVERY ITERATION
                 this.setState({
                     links: newLinks,
                     isDecrypting: isDecrypting,
@@ -337,64 +338,6 @@ class App extends Component<IProps, IState> {
                         isAllDecrypted: true,
                     });
                 }
-            });
-        });
-    }
-
-    /**
-     * Decrypt all links by hitting the decryption API for each link one at a time.
-     * This method will only show the links (update the state) when *all* links have been decrypted
-     * This is also pretty hard for the server to handle as it creates many parallel requests,
-     * especially if the server is pre-HTTP-2
-     */
-    handleDecryptAllOld(): void {
-        // reset the logout timer when button is pressed
-        this.resetTimer();
-
-        // step 1 - disable the button
-        if (this.state.isDecrypting) {
-            // do nothing while there is a decryption operation already in progress
-            return;
-        }
-
-        this.setState({
-            isDecrypting: true,
-        }, async () => {
-            const start = new Date();
-            const newLinks = {};
-            const promises = [];
-
-            for (let i = 0; i < this.state.links.length; i++) {
-                const link = this.state.links[i];
-                if (link.is_encrypted) {
-                    // send out all requests to decrypt individual items, but do not wait on responses here
-                    promises.push(
-                        this.pzApi.decryptLink(link.id, this.state.masterPassword)
-                            .then((response) => {
-                                console.debug(`Got decrypted link from server: ${response.service_name}`);
-                                // console.debug(response);
-                                const decLink = response as IDecryptedLink;
-                                decLink.is_encrypted = false;
-                                newLinks[i] = decLink;
-                            })
-                    );
-                }
-            }
-            // wait for all asynchronous decryption requests to come back
-            await Promise.all(promises);
-            console.debug(`all ${promises.length} links decrypted`);
-
-            const newArr = this.state.links;
-            for (const linkIndex in newLinks) {
-                newArr.splice(Number.parseInt(linkIndex, 10), 1, newLinks[linkIndex]);
-            }
-
-            const end = new Date();
-            console.debug(`Operation took ${end.valueOf() - start.valueOf()} ms`);
-
-            this.setState({
-                links: newArr,
-                isDecrypting: false,
             });
         });
     }

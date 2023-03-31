@@ -14,6 +14,7 @@ import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-ap
 import { decryptEntryV5WithKeysDatabase } from "../common-modules/crypto-utils";
 import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/message";
 import LogoutTimer from "../common-modules/logoutTimer";
+import { Alert } from "react-bootstrap";
 
 interface IAppProps {}
 
@@ -68,7 +69,21 @@ const LastActionMessage = ({ lastAction }: { lastAction: string }) => {
     </div>;
 };
 
-class App extends Component<IAppProps, IAppState> {
+// TODO this is never used right now
+export const LoggedOutView = () => {
+    return <div >
+        <main className="container">
+            <div className="inner-container">
+                <Alert variant="error">
+                    <strong>Error!</strong>&nbsp;
+                    <span>You must be logged in for this view</span>
+                </Alert>
+            </div>
+        </main>
+    </div>;
+};
+
+class EntriesApp extends Component<IAppProps, IAppState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
     worker: Worker;
@@ -402,4 +417,4 @@ class App extends Component<IAppProps, IAppState> {
     }
 }
 
-export default App;
+export default EntriesApp;
