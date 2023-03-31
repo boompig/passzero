@@ -7,11 +7,29 @@ import { LoggedOutNavbar } from "../components/LoggedOutNavbar";
 // import "bootstrap/dist/css/bootstrap.min.css";
 // import "./login.css";
 
+const getMessageFromErrorCode = (errorCode: string): string => {
+    if (!errorCode) {
+        throw new Error('error code not specified');
+    }
+    switch (errorCode) {
+        case 'err_register_token_expired':
+            return "The token has expired.";
+        case 'err_register_token_invalid':
+            return "The provided token is invalid.";
+        default:
+            throw new Error(`invalid error code: ${errorCode}`);
+    }
+}
+
 const RegisterForm = () => {
+    const url = new URL(window.location.href);
+    // initial value
+    const serverErrorCode = url.searchParams.get('error_code');
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [serverErrorMsg, setServerErrorMsg] = useState('');
+    const [serverErrorMsg, setServerErrorMsg] = useState(serverErrorCode ? getMessageFromErrorCode(serverErrorCode) : '');
     const [serverSuccessMsg, setServerSuccessMsg] = useState('');
 
     const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,7 +73,8 @@ const RegisterForm = () => {
 
             { serverErrorMsg ?
                 <div className="alert alert-danger">
-                    <div id="error-msg">{ serverErrorMsg }</div>
+                    <strong>Error!</strong>&nbsp;
+                    <span className="error-text">{ serverErrorMsg }</span>
                 </div> :
                 null }
 
@@ -66,13 +85,11 @@ const RegisterForm = () => {
                 </div> :
                 null }
 
-            {/* <span className="form-error" id="form-error-email"></span> */}
             <input type="email" className="form-control" name="email" tabIndex={1}
                     placeholder="email" required={true}
                     autoComplete="email"
                     onChange={handleTextChange} />
 
-            {/* <span className="form-error" id="form-error-password"></span> */}
             <input type="password" className="form-control" name="password" tabIndex={2}
                     placeholder="password" required={true}
                     autoComplete="new-password"

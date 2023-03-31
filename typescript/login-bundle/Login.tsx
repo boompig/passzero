@@ -16,7 +16,29 @@ const EntriesRedirect = () => {
     </div>;
 };
 
+const getLastActionMessage = (lastAction: string): string => {
+    if (!lastAction) {
+        throw new Error('last action not specified');
+    }
+    switch (lastAction) {
+        case 'done_register':
+            return "Your account was successfully activated. Please login below.";
+        default:
+            throw new Error(`invalid last action: ${lastAction}`);
+    }
+}
+
+const LastActionMessage = ({ lastAction }: { lastAction: string }) => {
+    const msg = getLastActionMessage(lastAction);
+    return <div className="alert alert-success" role="alert">
+        { msg }
+    </div>;
+};
+
 const LoginForm = () => {
+    const url = new URL(window.location.href);
+    const lastAction = url.searchParams.get('last_action');
+
     const [usernameOrEmail, setUsernameOrEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isChecked, setChecked] = useState(false);
@@ -121,6 +143,10 @@ const LoginForm = () => {
                 Login to PassZero
             </h1>
 
+            { lastAction ?
+                <LastActionMessage lastAction={lastAction} /> :
+                null }
+
             { errorMsg ?
                 <div className="alert alert-danger" id="error-msg-container" role="alert">
                     <div id="error-msg">{ errorMsg }</div>
@@ -156,9 +182,6 @@ const LoginForm = () => {
                 <label htmlFor="remember" className="form-check-label">Remember me</label>
             </div>
 
-            {/* TODO */}
-            {/* <a id="forgot-password" href="{{ url_for("main_routes.recover_password") }}">Forgot Password</a> */}
-
             <a id="forgot-password" href="/recover">Forgot Password</a>
 
             <button id="submit-btn" type="submit" name="submit">Log In</button>
@@ -170,8 +193,6 @@ export const Login = () => {
     return <div id="existing-login">
         <div id="hero">
             <LoggedOutNavbar />
-            {/* TODO */}
-            {/* {% include "flash_messages.jinja2" %} */}
             <LoginForm />
         </div>
     </div>;

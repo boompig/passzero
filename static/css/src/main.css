@@ -14,10 +14,6 @@ h1.title, h2.title, h3.title {
     text-align: center;
 }
 
-.flashes {
-    margin-top: 2rem;
-}
-
 /***** customize navbar ***/
 nav .fas {
     margin-right: .4rem;

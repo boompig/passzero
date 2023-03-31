@@ -15,7 +15,7 @@ DEFAULT_PASSWORD = "right_pass"
 DB_FILENAME = "passzero.db"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def app(request):
     """Provide the fixture for the duration of the test, then tear it down"""
     # remove previous database if present
@@ -37,7 +37,7 @@ def app(request):
     return app
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def db(app, request):
     if os.path.exists(DB_FILENAME):
         os.remove(DB_FILENAME)

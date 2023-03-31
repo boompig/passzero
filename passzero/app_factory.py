@@ -15,7 +15,6 @@ from whitenoise import WhiteNoise
 
 from passzero import crypto_utils
 from passzero.api import api
-from passzero.api_utils import generate_csrf_token
 from passzero.api_v1 import api_v1
 from passzero.config import DefaultConfig
 from passzero.main_routes import main_routes
@@ -117,8 +116,7 @@ def create_app(name: str, settings_override: dict = {}):
     api.init_app(app)
     app.register_blueprint(blueprint)
 
-    # register CSRF generation function
-    app.jinja_env.globals["csrf_token"] = generate_csrf_token
+    # register functions for use in templates
     app.jinja_env.globals["to_base64"] = dict_to_base64
 
     # create SSL secret keys

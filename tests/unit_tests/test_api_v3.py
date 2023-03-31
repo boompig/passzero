@@ -1,9 +1,9 @@
 import logging
-from unittest import mock
 
 import pytest
 import six
 from flask import Flask, Response
+from flask_sqlalchemy import SQLAlchemy
 
 from passzero import app_factory, backend
 from passzero.api.link_list import MAX_NUM_DECRYPT
@@ -76,22 +76,6 @@ def app(request, db, my_app: Flask) -> Flask:
     return my_app
 
 
-@mock.patch("passzero.email.send_email")
-def create_active_account(client, email: str, password: str, m1):
-    assert isinstance(email, six.text_type)
-    assert isinstance(password, six.text_type)
-    # signup, etc etc
-    # TODO for some reason can't mock out send_confirmation_email so mocking this instead
-    m1.return_value = True
-    r = api.user_signup_v1(client, email, password)
-    assert r.status_code == 200
-    # get the token from calls
-    token = m1.call_args[0][2].split("?")[1].replace("token=", "")
-    # activate
-    r = api.activate_account(client, token)
-    assert r.status_code == 200
-
-
 @pytest.fixture(scope="function")
 def active_user(db):
     """Create a default active user with email=`DEFAULT_EMAIL` and password=`DEFAULT_PASSWORD`"""
@@ -108,12 +92,22 @@ def active_user(db):
     db.session.commit()
 
 
+def create_active_account(_db: SQLAlchemy, email: str, password: str):
+    """This method should be called to create additional users beyond the first"""
+    user = backend.create_inactive_user(
+        db_session=_db.session,
+        email=email,
+        password=password,
+    )
+    backend.activate_account(_db.session, user)
+
+
 def test_login_with_email_then_get_token(app: Flask, active_user: User):
     """Test that we can get the token for an account where we have previously logged in."""
     assert isinstance(active_user, User)
     with app.test_client() as client:
-        api.login(client,
-                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(client,
+                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         assert isinstance(token, six.text_type)
 
@@ -122,8 +116,8 @@ def test_login_then_get_token_twice(app: Flask, active_user: User):
     """If you get the token twice, make sure it's the same token"""
     assert isinstance(active_user, User)
     with app.test_client() as client:
-        api.login(client,
-                  DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
+        api.login_v1(client,
+                     DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         token = api.get_api_token_with_login(client, check_status=True)
         t2 = api.get_api_token_with_login(client, check_status=True)
         assert token == t2
@@ -272,10 +266,10 @@ def test_create_entry_no_login(app):
         assert rv.status_code == INVALID_TOKEN_CODE
 
 
-def test_delete_all_entries(app):
+def test_delete_all_entries(app: Flask, active_user: User):
     with app.test_client() as client:
+        assert active_user is not None
         password = DEFAULT_PASSWORD
-        create_active_account(client, DEFAULT_EMAIL, password)
         token = api.login_with_email_with_token(client,
                                                 DEFAULT_EMAIL, password, check_status=True)
         for i in range(20):
@@ -300,10 +294,10 @@ def test_delete_all_entries(app):
         assert len(entries) == 0
 
 
-def test_delete_invalid_entry(app):
+def test_delete_invalid_entry(app: Flask, active_user: User):
     """Verify we can't delete arbitrary entries"""
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         token = api.login_with_email_with_token(client,
                                                 DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         rv = api.delete_entry_with_token(client,
@@ -316,9 +310,9 @@ def test_delete_invalid_entry(app):
         assert rv.status_code != 200
 
 
-def test_get_entries_empty(app):
+def test_get_entries_empty(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         token = api.login_with_email_with_token(client,
                                                 DEFAULT_EMAIL, DEFAULT_PASSWORD, check_status=True)
         entries = api.get_encrypted_entries_with_token(client,
@@ -326,11 +320,11 @@ def test_get_entries_empty(app):
         assert entries == []
 
 
-def test_create_entry(app):
+def test_create_entry(app: Flask, active_user: User):
     with app.test_client() as client:
         email = DEFAULT_EMAIL
         password = DEFAULT_PASSWORD
-        create_active_account(client, email, password)
+        assert active_user is not None
         token = api.login_with_email_with_token(client, email, password,
                                                 check_status=True)
         dec_entry = get_test_decrypted_entry()
@@ -341,11 +335,11 @@ def test_create_entry(app):
         assert len(entries) == 1
 
 
-def test_create_entry_no_account(app):
+def test_create_entry_no_account(app: Flask, active_user: User):
     email = DEFAULT_EMAIL
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
-        create_active_account(client, email, password)
+        assert active_user is not None
         token = api.login_with_email_with_token(client, email, password)
         entry = {
             "username": "entry_username",
@@ -360,11 +354,11 @@ def test_create_entry_no_account(app):
         assert len(entries) == 0
 
 
-def test_create_entry_bad_token(app):
+def test_create_entry_bad_token(app: Flask, active_user: User):
     email = DEFAULT_EMAIL
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
-        create_active_account(client, email, password)
+        assert active_user is not None
         real_token = api.login_with_email_with_token(client, email, password)
         dec_entry = get_test_decrypted_entry()
         r = api.create_entry_with_token(client, dec_entry,
@@ -376,12 +370,11 @@ def test_create_entry_bad_token(app):
         assert len(entries) == 0
 
 
-def test_create_entry_bad_password(app):
+def test_create_entry_bad_password(app: Flask, active_user: User):
     email = DEFAULT_EMAIL
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
-        create_active_account(client,
-                              email, password)
+        assert active_user is not None
         token = api.login_with_email_with_token(client,
                                                 email, password, check_status=True)
         dec_entry = get_test_decrypted_entry()
@@ -399,11 +392,11 @@ def test_create_entry_bad_password(app):
         assert len(entries) == 0
 
 
-def test_create_and_delete_entry(app):
+def test_create_and_delete_entry(app: Flask, active_user: User):
     email = DEFAULT_EMAIL
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
-        create_active_account(client, email, password)
+        assert active_user is not None
         token = api.login_with_email_with_token(client, email, password, check_status=True)
         # make sure we start with 0 entries
         entries = api.get_encrypted_entries_with_token(client, token,
@@ -426,11 +419,11 @@ def test_create_and_delete_entry(app):
         assert len(entries) == 0
 
 
-def test_edit_non_existant_entry(app):
+def test_edit_non_existant_entry(app: Flask, active_user: User):
     email = DEFAULT_EMAIL
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
-        create_active_account(client, email, password)
+        assert active_user is not None
         token = api.login_with_email_with_token(client, email, password)
         old_entry = {
             "account": "fake",
@@ -460,13 +453,12 @@ def test_edit_non_existant_entry(app):
         assert r.status_code != 200
 
 
-def test_edit_entry(app):
+def test_edit_entry(app: Flask, active_user: User):
     email = DEFAULT_EMAIL
     password = DEFAULT_PASSWORD
     with app.test_client() as client:
         api_v3 = api.ApiV3(client)
-        create_active_account(client,
-                              email, password)
+        assert active_user is not None
         api_v3.login(email, password)
         old_entry = {
             "account": "fake",
@@ -547,13 +539,12 @@ def test_edit_entry_bad_password(app: Flask, active_user: User):
         _assert_entries_equal(old_entry, entry_prime)
 
 
-def test_edit_not_your_entry(app):
+def test_edit_not_your_entry(app: Flask, db):
     emails = ["email1@fake.com", "email2@fake.com"]
     passwords = [DEFAULT_PASSWORD, DEFAULT_PASSWORD + "2"]
     with app.test_client() as client:
         for email, password in zip(emails, passwords):
-            create_active_account(client,
-                                  email, password)
+            create_active_account(db, email, password)
         # create an entry for user[0]
         t1 = api.login_with_email_with_token(client,
                                              emails[0], passwords[0], check_status=True)
@@ -612,7 +603,7 @@ def test_decrypt_entry_bad_password(app: Flask, active_user: User):
         assert r.status_code != 200
 
 
-def test_decrypt_entry_not_your_entry(app):
+def test_decrypt_entry_not_your_entry(app: Flask, db: SQLAlchemy):
     """
     Try to decrypt someone else's entry
     """
@@ -620,8 +611,7 @@ def test_decrypt_entry_not_your_entry(app):
     passwords = [DEFAULT_PASSWORD, DEFAULT_PASSWORD + "2"]
     with app.test_client() as client:
         for email, password in zip(emails, passwords):
-            create_active_account(client,
-                                  email, password)
+            create_active_account(db, email, password)
         # create an entry for user[0]
         t1 = api.login_with_email_with_token(client,
                                              emails[0], passwords[0], check_status=True)
@@ -638,7 +628,7 @@ def test_decrypt_entry_not_your_entry(app):
         assert r.status_code != 200
 
 
-def test_delete_entry_not_your_entry(app: Flask):
+def test_delete_entry_not_your_entry(app: Flask, db):
     """
     Try to delete someone else's entry
     """
@@ -646,8 +636,7 @@ def test_delete_entry_not_your_entry(app: Flask):
     passwords = [DEFAULT_PASSWORD, DEFAULT_PASSWORD + "2"]
     with app.test_client() as client:
         for email, password in zip(emails, passwords):
-            create_active_account(client,
-                                  email, password)
+            create_active_account(db, email, password)
         # create an entry for user[0]
         t1 = api.login_with_email_with_token(client,
                                              emails[0], passwords[0], check_status=True)
@@ -682,9 +671,9 @@ def test_delete_entry_incorrect_password(app: Flask, active_user: User):
         assert len(entries) == 1
         r = api.delete_entry_with_token(client, entry_id, "bad password", token, check_status=False)
         assert r.status_code == 401
-        entries_after = api.get_entries(client, check_status=True)
+        enc_entries_out = api.get_encrypted_entries_with_token(client, token, check_status=True)
         # number of entries should still be 1
-        assert len(entries_after) == 1
+        assert len(enc_entries_out) == 1
 
 
 def test_get_entries(app: Flask, active_user: User):
@@ -712,7 +701,7 @@ def test_get_entries(app: Flask, active_user: User):
         assert "last_modified" in dec_entry_out
 
 
-def test_get_entries_not_your_entry(app):
+def test_get_entries_not_your_entry(app: Flask, db):
     with app.test_client() as client:
         emails = ["foo1@foo.com", "foo2@foo.com"]
         passwords = ["a_password1", "a_password2"]
@@ -724,8 +713,8 @@ def test_get_entries_not_your_entry(app):
             "has_2fa": False
         }
         # create two accounts
-        create_active_account(client, emails[0], passwords[0])
-        create_active_account(client, emails[1], passwords[1])
+        create_active_account(db, emails[0], passwords[0])
+        create_active_account(db, emails[1], passwords[1])
         token = api.login_with_email_with_token(client,
                                                 emails[0], passwords[0], check_status=True)
         # create entry for account #1
@@ -801,9 +790,9 @@ def test_create_link(app: Flask, active_user: User):
         assert links[0]["id"] == link_id
 
 
-def test_decrypt_link(app):
+def test_decrypt_link(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         api_v3 = api.ApiV3(client)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         input_link = {
@@ -816,9 +805,9 @@ def test_decrypt_link(app):
         _assert_links_equal(input_link, output_link)
 
 
-def test_delete_link(app):
+def test_delete_link(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         api_v3 = api.ApiV3(client)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         input_link = {
@@ -834,12 +823,12 @@ def test_delete_link(app):
         assert links_after_delete == []
 
 
-def test_delete_link_not_your_link(app):
+def test_delete_link_not_your_link(app: Flask, db):
     with app.test_client() as client:
         api_v3 = api.ApiV3(client)
 
         # create link as user #1
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        create_active_account(db, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         link_id = api_v3.create_link({
             "service_name": "hello",
@@ -848,7 +837,7 @@ def test_delete_link_not_your_link(app):
         api_v3.logout()
 
         # try to delete the link as user #2
-        create_active_account(client, "user2@fake.com", DEFAULT_PASSWORD)
+        create_active_account(db, "user2@fake.com", DEFAULT_PASSWORD)
         api_v3.login("user2@fake.com", DEFAULT_PASSWORD)
         try:
             api_v3.delete_link(link_id)
@@ -864,11 +853,11 @@ def test_delete_link_not_your_link(app):
         assert links[0]["id"] == link_id
 
 
-def test_delete_link_invalid_link(app):
+def test_delete_link_invalid_link(app: Flask, active_user: User):
     with app.test_client() as client:
         api_v3 = api.ApiV3(client)
         # create link as user #1
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         link_id = api_v3.create_link({
             "service_name": "hello",
@@ -884,9 +873,9 @@ def test_delete_link_invalid_link(app):
             assert e.status_code == 400
 
 
-def test_edit_link(app):
+def test_edit_link(app: Flask, active_user: User):
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         api_v3 = api.ApiV3(client)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         input_link = {
@@ -907,10 +896,10 @@ def test_edit_link(app):
         _assert_links_equal(edited_link, edited_link_out)
 
 
-def test_decrypt_links_no_links(app: Flask):
+def test_decrypt_links_no_links(app: Flask, active_user: User):
     """decrypt_links should fail gracefully when no IDs are provided"""
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         api_v3 = api.ApiV3(client)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         r = api_v3.decrypt_links([], check_status=False)
@@ -918,13 +907,13 @@ def test_decrypt_links_no_links(app: Flask):
         assert r.status_code == 400
 
 
-def test_decrypt_links_some_not_yours(app: Flask):
+def test_decrypt_links_some_not_yours(app: Flask, db):
     """decrypt_links should gracefully handle when some links are not yours"""
     with app.test_client() as client:
         api_v3 = api.ApiV3(client)
 
         # create 1 link with another account
-        create_active_account(client, "foo1@example.com", "foo1")
+        create_active_account(db, "foo1@example.com", "foo1")
         api_v3.login("foo1@example.com", "foo1")
         other_link_id = api_v3.create_link({
             "service_name": "hello - foo1",
@@ -933,7 +922,7 @@ def test_decrypt_links_some_not_yours(app: Flask):
         api_v3.logout()
 
         # create link with my own account
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        create_active_account(db, DEFAULT_EMAIL, DEFAULT_PASSWORD)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         dec_link_in_mine = {
             "service_name": "hello - mine",
@@ -947,14 +936,14 @@ def test_decrypt_links_some_not_yours(app: Flask):
         _assert_links_equal(dec_links_out[0], dec_link_in_mine)
 
 
-def test_decrypt_links_too_many(app: Flask):
+def test_decrypt_links_too_many(app: Flask, active_user: User):
     dec_links_in = [{
         "service_name": f"hello - {i}",
         "link": f"world - {i}"
     } for i in range(MAX_NUM_DECRYPT + 1)]
 
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         api_v3 = api.ApiV3(client)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         my_link_ids = []
@@ -966,10 +955,10 @@ def test_decrypt_links_too_many(app: Flask):
         assert r.status_code == 400
 
 
-def test_decrypt_links_bad_password(app: Flask):
+def test_decrypt_links_bad_password(app: Flask, active_user: User):
     """Try to decrypt links without the proper password"""
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         api_v3 = api.ApiV3(client)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         dec_link_in = {
@@ -982,14 +971,14 @@ def test_decrypt_links_bad_password(app: Flask):
         assert r.status_code == 401
 
 
-def test_decrypt_links_max(app: Flask):
+def test_decrypt_links_max(app: Flask, active_user: User):
     dec_links_in = [{
         "service_name": f"hello - {i}",
         "link": f"world - {i}"
     } for i in range(MAX_NUM_DECRYPT)]
 
     with app.test_client() as client:
-        create_active_account(client, DEFAULT_EMAIL, DEFAULT_PASSWORD)
+        assert active_user is not None
         api_v3 = api.ApiV3(client)
         api_v3.login(DEFAULT_EMAIL, DEFAULT_PASSWORD)
         my_link_ids = []
@@ -1034,13 +1023,13 @@ def test_get_current_user(app: Flask, active_user: User):
         assert user_out["username"] is None
 
 
-def test_update_current_user_username(app: Flask, active_user: User):
+def test_update_current_user_username(app: Flask, db: SQLAlchemy, active_user: User):
     # create primary user using test fixture
     assert active_user.username is None
 
     with app.test_client() as client:
         # create a secondary user in the usual way
-        create_active_account(client, "test@example.com", "second user")
+        create_active_account(db, "test@example.com", "second user")
 
         api_v3 = api.ApiV3(client)
 

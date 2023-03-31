@@ -3,6 +3,8 @@ import os
 from typing import Dict  # noqa: F401
 
 import pytest
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import and_
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -10,25 +12,25 @@ from passzero import backend
 from passzero.app_factory import create_app
 from passzero.backend import (create_inactive_user, decrypt_entries,
                               get_entries, get_services_map,
-                              insert_document_for_user, insert_link_for_user,
+                              insert_link_for_user,
                               password_strength_scores)
 from passzero.change_password import change_password
 from passzero.config import ENTRY_LIMITS
 from passzero.crypto_utils import PasswordHashAlgo
-from passzero.models import (AuthToken, DecryptedDocument, EncryptedDocument,
+from passzero.models import (AuthToken,
                              EncryptionKeys, Entry, Link, Service, User)
 from passzero.models import db as _db
-
 from tests.unit_tests.utils import (assert_decrypted_entries_equal,
-                                    assert_decrypted_links_equal, get_test_decrypted_entry)
+                                    assert_decrypted_links_equal,
+                                    get_test_decrypted_entry)
 
 DB_FILENAME = "passzero.db"
 DEFAULT_EMAIL = u"fake@fake.com"
 DEFAULT_PASSWORD = u"fake password"
 
 
-@pytest.fixture(scope="session")
-def app(request):
+@pytest.fixture(scope="module")
+def app(request) -> Flask:
     """Provide the fixture for the duration of the test, then tear it down"""
     # remove previous database if present
     if os.path.exists(DB_FILENAME):
@@ -38,19 +40,19 @@ def app(request):
         "SQLALCHEMY_DATABASE_URI": "sqlite:///%s" % DB_FILENAME
     }
 
-    app = create_app(__name__, settings_override)
-    ctx = app.app_context()
+    _app = create_app(__name__, settings_override)
+    ctx = _app.app_context()
     ctx.push()
 
     def teardown():
         ctx.pop()
 
     request.addfinalizer(teardown)
-    return app
+    return _app
 
 
-@pytest.fixture(scope="session")
-def db(app, request):
+@pytest.fixture(scope="module")
+def db(app: Flask, request) -> SQLAlchemy:
     if os.path.exists(DB_FILENAME):
         os.remove(DB_FILENAME)
 
@@ -67,7 +69,8 @@ def db(app, request):
 
 
 @pytest.fixture(scope="function")
-def session(db, request):
+def session(db: SQLAlchemy, request):
+    """Returns a database scoped session"""
     connection = db.engine.connect()
     transaction = connection.begin()
 
@@ -86,7 +89,6 @@ def session(db, request):
         session.query(Service).delete()
         session.query(AuthToken).delete()
         session.query(Link).delete()
-        session.query(EncryptedDocument).delete()
         session.query(EncryptionKeys).delete()
         session.commit()
 
@@ -97,7 +99,7 @@ def session(db, request):
     return session
 
 
-def test_create_inactive_user_sha512(session):
+def test_create_inactive_user_sha512(session) -> None:
     u1 = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD,
                                       password_hash_algo=PasswordHashAlgo.SHA512)
     assert u1.id is not None
@@ -105,7 +107,7 @@ def test_create_inactive_user_sha512(session):
     assert u1.id == u2.id
 
 
-def test_create_inactive_user_argon2(session):
+def test_create_inactive_user_argon2(session) -> None:
     u1 = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD,
                                       password_hash_algo=PasswordHashAlgo.Argon2)
     assert u1.id is not None
@@ -113,7 +115,7 @@ def test_create_inactive_user_argon2(session):
     assert u1.id == u2.id
 
 
-def test_create_inactive_user(session):
+def test_create_inactive_user(session) -> None:
     """This method makes sure that when we can create an inactive user, certain structures are created"""
     user = backend.create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
     # we should be creating a pinned entry
@@ -130,7 +132,7 @@ def test_create_inactive_user(session):
     keys_db["link_keys"] == {}
 
 
-def test_delete_account(session):
+def test_delete_account(session) -> None:
     email = u"fake@email.com"
     user_key = u"master"
     user = create_inactive_user(session, email, user_key)
@@ -144,13 +146,6 @@ def test_delete_account(session):
         "has_2fa": True
     }
     backend.insert_entry_for_user(session, dec_entry_in, user.id, user_key)
-    # add a document to that account
-    dec_doc = DecryptedDocument(
-        name="test doc",
-        contents="hello",
-        mimetype="text/plain"
-    )
-    insert_document_for_user(session, dec_doc, user.id, user_key)
     # add a link to that account
     dec_link = {
         "service_name": "link",
@@ -499,7 +494,7 @@ def test_update_entry_versions_for_user(session):
         assert_decrypted_entries_equal(input_dec_entries[entry.id], actual)
 
 
-def test_update_entry_versions_for_user_only_latest(session):
+def test_update_entry_versions_for_user_only_latest(session) -> None:
     user = create_inactive_user(session, DEFAULT_PASSWORD, DEFAULT_PASSWORD)
     # should start with no entries
     entries = backend.get_entries(session, user.id)
@@ -514,7 +509,7 @@ def test_update_entry_versions_for_user_only_latest(session):
     assert len(entries) == 1
 
 
-def test_update_entry_versions_for_user_no_entries(session):
+def test_update_entry_versions_for_user_no_entries(session) -> None:
     user = create_inactive_user(session, DEFAULT_PASSWORD, DEFAULT_PASSWORD)
     # should start with no entries
     entries = backend.get_entries(session, user.id)
@@ -525,7 +520,7 @@ def test_update_entry_versions_for_user_no_entries(session):
     assert entries == []
 
 
-def test_get_account_with_email(session):
+def test_get_account_with_email(session) -> None:
     email = u"fake_email"
     password = u"fake password"
     created_user = create_inactive_user(session, email, password)
@@ -538,7 +533,7 @@ def test_get_account_with_email(session):
     assert True
 
 
-def test_change_password(session):
+def test_change_password(session) -> None:
     """
     Technically this function does not belong here since it doesn't really test the backend.
     We are testing the change_password method of change_password module
@@ -622,82 +617,3 @@ def test_get_services_map(session):
     service_map = get_services_map(session)
     assert len(service_map) == 1
     service_map.get("MyService", None) is not None
-
-
-def test_edit_document(session):
-    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-    doc = DecryptedDocument(name="first.txt", mimetype="text/plain", contents=b"hello world")
-    enc_doc = backend.encrypt_document(
-        session,
-        user.id,
-        DEFAULT_PASSWORD,
-        doc.name,
-        doc.mimetype,
-        doc.contents
-    )
-    assert enc_doc.id >= 1
-    dec_doc_2 = DecryptedDocument(
-        name="second.txt",
-        mimetype="text/plain",
-        contents=b"goodbye cruel world"
-    )
-    enc_doc_2 = backend.edit_document(
-        session,
-        document_id=enc_doc.id,
-        master_key=DEFAULT_PASSWORD,
-        form_data=dec_doc_2.__dict__,
-        user_id=user.id
-    )
-    assert enc_doc.id == enc_doc_2.id
-    out = enc_doc_2.decrypt(DEFAULT_PASSWORD)
-    assert out.name == dec_doc_2.name
-    assert out.mimetype == dec_doc_2.mimetype
-    assert out.contents == dec_doc_2.contents
-
-
-def test_edit_nonexistant_document(session):
-    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-    doc = backend.get_document_by_id(session, user.id, 1)
-    assert doc is None
-    try:
-        backend.edit_document(
-            session,
-            1,
-            DEFAULT_PASSWORD,
-            {
-                "name": "test",
-                "contents": b"hello world",
-                "mimetype": "text/plain"
-            },
-            user.id
-        )
-        assert False
-    except NoResultFound:
-        assert True, "great"
-
-
-def test_edit_not_your_document(session):
-    user = create_inactive_user(session, DEFAULT_EMAIL, DEFAULT_PASSWORD)
-    dec_doc = DecryptedDocument(
-        name="test doc",
-        contents=b"hello",
-        mimetype="text/plain"
-    )
-    # deliberately users have the same password
-    enc_doc = insert_document_for_user(session, dec_doc, user.id, DEFAULT_PASSWORD)
-    user2 = create_inactive_user(session, "user2@fake.com", "fake password 2")
-    try:
-        backend.edit_document(
-            session,
-            enc_doc.id,
-            DEFAULT_PASSWORD,
-            {
-                "name": "test",
-                "contents": b"hello world",
-                "mimetype": "text/plain"
-            },
-            user2.id
-        )
-        assert False
-    except backend.UserNotAuthorizedError:
-        assert True, "great"

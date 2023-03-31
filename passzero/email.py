@@ -51,7 +51,7 @@ def send_email(email: str, subject: str, msg: str) -> bool:
     return send_email_sendgrid(email, subject, msg)
 
 
-def send_recovery_email(email: str, token: str):
+def send_recovery_email(email: str, token: str) -> bool:
     link = request.url_root + "recover/confirm?token=%s" % token
     return send_email(
         email,
@@ -60,7 +60,10 @@ def send_recovery_email(email: str, token: str):
     )
 
 
-def send_confirmation_email(email: str, token: str):
+def send_confirmation_email(email: str, token: str) -> bool:
+    """Send an email to the user with a link to confirm the activation of their account.
+    :param token: A random string that will be checked by the server. It has an expiry time.
+    """
     link = request.url_root + "signup/confirm?token=%s" % token
     return send_email(
         email,
