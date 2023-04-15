@@ -11,7 +11,7 @@ import { clientSideLogout } from '../common-modules/client-side-utils';
 import { AccessTokenProvider } from '../components/AccessTokenProvider';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
-// import './advanced.css';
+import './advanced.css';
 
 const NukePane = () => {
     const accessToken = useContext(AccessTokenContext);
