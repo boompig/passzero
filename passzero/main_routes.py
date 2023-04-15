@@ -2,13 +2,12 @@ from functools import wraps
 
 from flask import (Blueprint, abort, current_app, make_response,
                    redirect, render_template, request, session, url_for)
-from sqlalchemy.orm.exc import NoResultFound
 
 from passzero import export_utils
 from passzero.api_utils import check_auth
-from passzero.backend import (activate_account, decrypt_entries,
+from passzero.backend import (decrypt_entries,
                               get_entries, get_link_by_id)
-from passzero.models import AuthToken, User, db
+from passzero.models import User, db
 
 main_routes = Blueprint("main_routes", __name__)
 
@@ -138,41 +137,12 @@ def edit_link(link_id: int):
 
 
 @main_routes.route("/signup", methods=["GET"])
+@main_routes.route("/signup/confirm", methods=["GET"])
 def signup():
     return render_template(
         "login_new.jinja2",
         title="PassZero &middot; Register"
     )
-
-
-@main_routes.route("/signup/confirm", methods=["GET"])
-def confirm_signup():
-    """
-    This is the endpoint that a user will be directed to from their signup email.
-    It is expected that they will have a token as an argument.
-    """
-    try:
-        token = request.args["token"]
-        token_obj = db.session.query(AuthToken).filter_by(token=token).one()
-        if token_obj.is_expired():
-            current_app.logger.error("Register token has expired")
-            # delete old token from database
-            db.session.delete(token_obj)
-            db.session.commit()
-            return redirect(url_for("main_routes.signup", error_code="err_register_token_expired"))
-        else:
-            # delete the token so it cannot be used again
-            db.session.delete(token_obj)
-            user = db.session.query(User).filter_by(id=token_obj.user_id).one()
-            activate_account(db.session, user)
-            return redirect(url_for("main_routes.login", last_action="done_register"))
-    except NoResultFound:
-        current_app.logger.error("Register token is invalid")
-        return redirect(url_for("main_routes.signup", error_code="err_register_token_invalid"))
-    except KeyError:
-        current_app.logger.error("Someone tried to hit the signup confirm API without a token")
-        # don't even bother showing a nice HTML page
-        return "Token is mandatory"
 
 
 @main_routes.route("/advanced/export", methods=["GET"])

@@ -1,12 +1,13 @@
 from flask import current_app
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, ValidationError, reqparse
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, NoResultFound
 
 from passzero import backend, change_password
+from passzero.api import app_error_codes
 from passzero.api.jwt_auth import authorizations
 from passzero.api_utils import json_error_v2, json_success_v2
-from passzero.models import ApiToken, User, db
+from passzero.models import ApiToken, AuthToken, User, db
 
 ns = Namespace("User", authorizations=authorizations)
 
@@ -80,6 +81,55 @@ class ApiUser(Resource):
             return json_error_v2(str(err), 400)
         except backend.EmailSendError:
             return json_error_v2("failed to send email", 500)
+
+
+@ns.route("/register/confirm")
+class ApiUserConfirm(Resource):
+    def post(self):
+        """Confirm the creation of a new user. Behaves identially to main_routes.confirm_signup.
+
+        Arguments
+        ---------
+        - token: string (required)
+
+        Response
+        --------
+        On success or failure, return:
+
+            {
+                "status": status (as string),
+                "msg": message (as string),
+                "code": numerical code error message on failure
+            }
+
+        Status Codes
+        ------------
+        - 200: On success
+        - 400: Various kinds of form validation errors, or token is invalid or expired
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("token", type=str, required=True)
+        args = parser.parse_args()
+        try:
+            token_obj = db.session.query(AuthToken).filter_by(token=args.token).one()
+            if token_obj.is_expired():
+                current_app.logger.error("Register token has expired")
+                # delete old token from database
+                db.session.delete(token_obj)
+                db.session.commit()
+                return json_error_v2("This token has expired", 400,
+                                     app_error_code=app_error_codes.AUTH_TOKEN_EXPIRED)
+            else:
+                # delete the token so it cannot be used again
+                db.session.delete(token_obj)
+                user = db.session.query(User).filter_by(id=token_obj.user_id).one()
+                backend.activate_account(db.session, user)
+                current_app.logger.info("Account has been successfully activated using token.")
+                return json_success_v2("Account has been activated.")
+        except NoResultFound:
+            current_app.logger.error("Register token is invalid")
+            return json_error_v2("This token is invalid. It may have already been used.", 400,
+                                 app_error_code=app_error_codes.AUTH_TOKEN_INVALID)
 
 
 @ns.route("/me")

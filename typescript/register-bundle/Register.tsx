@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import * as React from 'react';
+import Alert from 'react-bootstrap/Alert';
 
 import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { LoggedOutNavbar } from '../components/LoggedOutNavbar';
@@ -8,29 +9,17 @@ import { LoggedOutNavbar } from '../components/LoggedOutNavbar';
 import '../common-css/landing.css';
 import '../common-css/login.css';
 
-const getMessageFromErrorCode = (errorCode: string): string => {
-    if (!errorCode) {
-        throw new Error('error code not specified');
-    }
-    switch (errorCode) {
-        case 'err_register_token_expired':
-            return 'The token has expired.';
-        case 'err_register_token_invalid':
-            return 'The provided token is invalid.';
-        default:
-            throw new Error(`invalid error code: ${errorCode}`);
-    }
-};
+/**
+ * The expected token size
+ * See config.py on the backend
+ */
+const EXPECTED_TOKEN_LENGTH = 32;
 
 const RegisterForm = () => {
-    const url = new URL(window.location.href);
-    // initial value
-    const serverErrorCode = url.searchParams.get('error_code');
-
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [serverErrorMsg, setServerErrorMsg] = useState(serverErrorCode ? getMessageFromErrorCode(serverErrorCode) : '');
+    const [serverErrorMsg, setServerErrorMsg] = useState('');
     const [serverSuccessMsg, setServerSuccessMsg] = useState('');
 
     const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,17 +62,17 @@ const RegisterForm = () => {
             </h1>
 
             { serverErrorMsg ?
-                <div className="alert alert-danger">
+                <Alert variant='danger'>
                     <strong>Error!</strong>&nbsp;
                     <span className="error-text">{ serverErrorMsg }</span>
-                </div> :
+                </Alert> :
                 null }
 
             { serverSuccessMsg ?
-                <div className="alert alert-success">
+                <Alert variant='success'>
                     <strong>Hooray!</strong>&nbsp;
                     <span>{ serverSuccessMsg }</span>
-                </div> :
+                </Alert> :
                 null }
 
             <input type="email" className="form-control" name="email" tabIndex={1}
@@ -106,11 +95,100 @@ const RegisterForm = () => {
     </div>;
 };
 
+const RegisterConfirmForm = () => {
+    const url = new URL(window.location.href);
+    const defaultToken = url.searchParams.get('token');
+    if (!defaultToken) {
+        console.error('token must be set');
+        window.location.assign('/signup');
+    }
+
+    const [token, setToken] = useState(defaultToken);
+    const [isWorking, setWorking] = useState(false);
+    const [serverErrorMsg, setServerErrorMsg] = useState('');
+    const [serverSuccessMsg, setServerSuccessMsg] = useState('');
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setToken(e.target.value);
+    };
+
+    const handleSubmit = async (e?: React.SyntheticEvent) => {
+        e?.preventDefault();
+
+        if (token.length !== EXPECTED_TOKEN_LENGTH) {
+            setServerErrorMsg(`The token must be exactly ${EXPECTED_TOKEN_LENGTH} characters long`);
+            return;
+        }
+
+        setServerErrorMsg('');
+        setServerSuccessMsg('');
+        setWorking(true);
+
+        try {
+            const resp = await pzApiv3.registerUserConfirm(token);
+            setServerSuccessMsg(resp.msg);
+            // also redirect
+            window.location.assign('/login?last_action=done_register');
+        } catch (err: any) {
+            console.error(err);
+            if (err._type === 'ApiError') {
+                setServerErrorMsg(err.message);
+            }
+        }
+
+        setWorking(false);
+    };
+
+    React.useEffect(() => {
+        /**
+         * Triggered when the token has changed and it is the right length
+         * Basically this is in response to a paste event
+         */
+        if (token && token.length === EXPECTED_TOKEN_LENGTH) {
+            // submit the form
+            handleSubmit();
+        }
+    }, [token]);
+
+    return <div id="form-container">
+        <form method="POST" onSubmit={handleSubmit} role='form' id='signup-confirm-form'>
+            <h4 className='title'>Confirm Your Registration</h4>
+
+            { serverErrorMsg ?
+                <Alert variant='danger'>
+                    <strong>Error!</strong>&nbsp;
+                    <span className="error-text">{ serverErrorMsg }</span>
+                </Alert> :
+                null }
+
+            { serverSuccessMsg ?
+                <Alert variant='success'>
+                    <strong>Hooray!</strong>&nbsp;
+                    <span>{ serverSuccessMsg }</span>
+                </Alert> :
+                null }
+
+            <input type="text" className='form-control' name='token' tabIndex={3}
+                placeholder='Paste your token from your email here'
+                required disabled={isWorking}
+                value={token}
+                minLength={EXPECTED_TOKEN_LENGTH}
+                maxLength={EXPECTED_TOKEN_LENGTH}
+                onChange={handleChange} />
+            <button type='submit' id='submit-btn' disabled={isWorking}>Confirm</button>
+        </form>
+    </div>;
+};
+
 export const Register = () => {
+    const path = window.location.pathname;
+
     return <div id="new-login">
         <div id="hero">
             <LoggedOutNavbar />
-            <RegisterForm />
+            { path === '/signup/confirm' ?
+                <RegisterConfirmForm /> :
+                <RegisterForm /> }
         </div>
     </div>;
 };

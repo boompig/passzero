@@ -181,11 +181,6 @@ interface ILoginResponse {
     token: string;
 }
 
-interface ILoginErrorResponse {
-    status: string;
-    msg: string;
-}
-
 interface IRegisterRequest {
     email: string;
     password: string;
@@ -227,7 +222,44 @@ interface ITokenResponse {
     token: string;
 }
 
+/**
+ * This is the standard format for basically any error that the API throws
+ */
+interface IStandardErrorResponse {
+    msg: string;
+    status: string;
+    /**
+     * This is not always set. Helps differentiate between different error scenarios.
+     * More reliable than parsing the error text.
+     */
+    code?: number;
+}
+
+async function parseApiError(r: Response, defaultMessage: string): Promise<ApiError> {
+    if (r.headers.get('Content-Type') === 'application/json') {
+        // we can read the body
+        const j = (await r.json()) as IStandardErrorResponse;
+        if (j.msg) {
+            return new ApiError(j.msg, r.status, j.code || undefined);
+        } else {
+            console.error('did not get msg field from API on error');
+            return new ApiError(defaultMessage, r.status);
+        }
+    } else {
+        console.error('got unexpected Content-Type from API on error');
+        return new ApiError(defaultMessage, r.status);
+    }
+}
+
+interface IRegisterConfirmResponse {
+    status: string;
+    msg: string;
+}
+
 export const pzApiv3 = {
+    /**
+     * Get the token using an existing session-cookie
+     */
     async getToken(): Promise<string> {
         const path = '/api/v3/token';
         const r = await getJsonWithBearer(path, null, null, true);
@@ -267,19 +299,15 @@ export const pzApiv3 = {
             const j = await r.json();
             return j as ILoginResponse;
         } else {
-            if (r.headers.get('Content-Type') === 'application/json') {
-                // we can read the body
-                const j = (await r.json()) as ILoginErrorResponse;
-                throw new ApiError(j.msg, r.status);
-            } else {
-                throw new ApiError('something went wrong', r.status);
-            }
+            const err = await parseApiError(r, 'Failed to login.');
+            throw err;
         }
     },
 
     /**
+     * Step 1 of the user registration flow
      * On success return IRegisterResponse
-     * On error throw ApiError with appropriate message
+     * @throws {ApiError} on failure
      */
     registerUser: async (email: string, password: string, confirmPassword: string): Promise<IRegisterResponse> => {
         const path = '/api/v3/user/register';
@@ -295,18 +323,34 @@ export const pzApiv3 = {
             const j = (await r.json()) as IRegisterResponse;
             return j;
         } else {
-            if (r.headers.get('Content-Type') === 'application/json') {
-                // we can read the body
-                const j = (await r.json()) as IRegisterResponse;
-                throw new ApiError(j.msg, r.status);
-            } else {
-                throw new ApiError('something went wrong', r.status);
-            }
+            const err = await parseApiError(r, 'Failed to register user.');
+            throw err;
         }
     },
 
     /**
-     * @throws an API error on failure
+     * Step 2 of the user registration flow
+     * @throws {ApiError} on failure
+     */
+    registerUserConfirm: async (token: string): Promise<IRegisterConfirmResponse> => {
+        const path = '/api/v3/user/register/confirm';
+
+        const data = {
+            token: token,
+        };
+
+        const r = await postJsonWithBearer(path, null, data, true);
+        if (r.ok) {
+            const j = (await r.json()) as IRegisterConfirmResponse;
+            return j;
+        } else {
+            const err = await parseApiError(r, 'Failed to confirm user registration.');
+            throw err;
+        }
+    },
+
+    /**
+     * @throws {ApiError} on failure
      */
     deleteAllEntries: async (accessToken: string, masterPassword: string): Promise<IDeleteAllEntriesResponse> => {
         const path = '/api/v3/entries';
@@ -319,16 +363,14 @@ export const pzApiv3 = {
             const j = await r.json();
             return j as IDeleteAllEntriesResponse;
         } else {
-            if (r.headers.get('Content-Type') === 'application/json') {
-                // we can read the body
-                const j = (await r.json()) as IDeleteAllEntriesResponse;
-                throw new ApiError(j.msg, r.status);
-            } else {
-                throw new ApiError('something went wrong', r.status);
-            }
+            const err = await parseApiError(r, 'Failed to delete all entries.');
+            throw err;
         }
     },
 
+    /**
+     * @throws {ApiError} on failure
+     */
     updateEntryVersions: async (accessToken: string, masterPassword: string): Promise<IUpdateEntryVersionsResponse> => {
         const path = '/api/v3/entries';
         const data = {
@@ -339,13 +381,8 @@ export const pzApiv3 = {
             const j = await r.json();
             return j as IUpdateEntryVersionsResponse;
         } else {
-            if (r.headers.get('Content-Type') === 'application/json') {
-                // we can read the body
-                const j = (await r.json()) as IDeleteAllEntriesResponse;
-                throw new ApiError(j.msg, r.status);
-            } else {
-                throw new ApiError('something went wrong', r.status);
-            }
+            const err = await parseApiError(r, 'Failed to update entry versions.');
+            throw err;
         }
     },
 
@@ -429,7 +466,7 @@ export default class PasszeroApiV3 {
             throw new UnauthorizedError(text);
         } else if (response.status === 500 && response.headers.get('Content-Type') === 'application/json') {
             const j = await response.json();
-            throw new ServerError(j.msg, response, j.app_error_code);
+            throw new ServerError(j.msg, response, j.app_error_code || undefined);
         } else {
             const text = await response.text();
             throw new UnauthorizedError(text);

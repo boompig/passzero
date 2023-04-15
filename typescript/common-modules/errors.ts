@@ -18,13 +18,18 @@ export class ApiError extends Error {
      */
     _type: string;
     /**
-     * Numerical status code
+     * Numerical HTTP status code
      */
     status: number;
+    /**
+     * Numberical app error code (see config.py)
+     */
+    appErrorCode: number;
 
-    constructor(message: string, status: number) {
+    constructor(message: string, status: number, appErrorCode?: number) {
         super(message);
         this.status = status;
         this._type = 'ApiError';
+        this.appErrorCode = appErrorCode || undefined;
     }
 }
