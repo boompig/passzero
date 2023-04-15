@@ -1,7 +1,7 @@
-import * as React from "react";
+import * as React from 'react';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
-// import "../common/logged-out-navbar.css";
+import './LoggedOutNavbar.css';
 
 export const LoggedOutNavbar = () => {
     const path = window.location.pathname;

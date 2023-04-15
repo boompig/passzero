@@ -1,12 +1,8 @@
-{% extends "layout-react.jinja2" -%}
+{% extends "layout-react-basic.jinja2" -%}
 
 {% block js %}
     <script src="{{ url_for("static", filename="js/dist/entries.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
     <script src="{{ url_for("static", filename="js/dist/web-worker.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
-{% endblock %}
-
-{% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/entries.min.css") + "?build=" + config['BUILD_ID'] }}">
 {% endblock %}
 
 {% block body %}

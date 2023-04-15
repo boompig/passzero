@@ -1,19 +1,15 @@
-.PHONY: all install lint test live-test-local build-name clean minify-js minify-css minify ts-compile
+.PHONY: all install lint test live-test-local build-name clean minify-js minify ts-compile
 
 SRC=server.py passzero/*.py passzero/api/*.py passzero/models/*.py
 UNIT_TEST_SRC=tests/unit_tests/*.py
 E2E_TEST_SRC=tests/end_to_end_tests/*.py
 CWD=$(shell pwd)
 
-css_src 		:= static/css/src/*.css
 common_typescript_src := typescript/common/*.ts
-css_targets 	:= $(patsubst static/css/src/%.css, static/css/dist/%.min.css, $(wildcard static/css/src/*.css))
 js_src_targets 	:= $(patsubst typescript/common/%.ts, static/js/src/common/%.js, $(wildcard typescript/common/*.ts))
 js_dist_targets := $(patsubst typescript/common/%.ts, static/js/dist/%.min.js, $(wildcard typescript/common/*.ts))
 
-csslint  := node_modules/csslint/dist/cli.js
 uglifyjs := node_modules/uglify-js/bin/uglifyjs
-cleancss := node_modules/clean-css-cli/bin/cleancss
 
 all: lint test build-name
 
@@ -23,7 +19,7 @@ install: package.json
 build-name: scripts/add_build_name.py config/config.json
 	python scripts/add_build_name.py config/config.json
 
-minify: minify-js minify-css
+minify: minify-js
 
 ts-compile: $(common_typescript_src) typescript/common/tsconfig.json
 	mkdir -p static/js/src
@@ -37,12 +33,6 @@ static/js/dist/%.min.js: static/js/src/%.js
 	$(uglifyjs) $< -o $@
 
 static/js/src/common/%.js: $(common_typescript_src) ts-compile
-
-minify-css: $(css_targets)
-
-static/css/dist/%.min.css: static/css/src/%.css
-	mkdir -p static/css/dist
-	$(cleancss) $< >$@
 
 test: python-test
 
@@ -67,16 +57,12 @@ python-lint: $(SRC)
 js-lint: $(common_typescript_src)
 	yarn lint
 
-css-lint: $(css_src)
-	$(csslint) --quiet $(css_src)
-
-lint: python-lint js-lint css-lint
+lint: python-lint js-lint
 
 clean:
 	find . -name '*.pyc' -delete
-	rm -f $(js_src_targets) $(js_dist_targets) $(css_targets)
+	rm -f $(js_src_targets) $(js_dist_targets)
 	# remove auto-generated minified code
 	rm -f static/js/dist/*
-	rm -f static/css/dist/*
 	# remove auto-generated typescript code
 	rm -rf static/js/src/*

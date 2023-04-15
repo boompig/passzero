@@ -2,10 +2,13 @@ import * as React from 'react';
 import { useState, useEffect, useContext } from 'react';
 
 import { pzApiv3 } from '../common-modules/passzero-api-v3';
-import { AccessTokenProvider } from '../components/AccessTokenProvider';
 import { AccessTokenContext } from '../providers/access-token-provider';
-import LogoutTimer from "../common-modules/logoutTimer";
+import LogoutTimer from '../common-modules/logoutTimer';
 import { clientSideLogout } from '../common-modules/client-side-utils';
+import { LoggedInLayout } from '../components/LoggedInLayout';
+
+// import "bootstrap/dist/css/bootstrap.min.css";
+import '../common-css/advanced.css';
 
 interface ITwoFactorMapEntry {
     service_has_2fa: boolean;
@@ -15,11 +18,11 @@ interface ITwoFactorMapEntry {
 
 const getRowClass = (entry: ITwoFactorMapEntry): string => {
     if (entry.service_has_2fa && entry.entry_has_2fa) {
-        return "table-success";
+        return 'table-success';
     } else if (entry.service_has_2fa && !entry.entry_has_2fa) {
-        return "table-danger";
+        return 'table-danger';
     } else {
-        return "";
+        return '';
     }
 };
 
@@ -37,10 +40,10 @@ const TwoFactorAuditMain = () => {
     const rows = Object.entries(twoFactorMap).map(([account, entry]) => {
         const rowClass = getRowClass(entry);
         return <tr className={rowClass} key={entry.entry_id}>
-            <td>{ account } <a href={"/edit/" + entry.entry_id}>edit</a></td>
-            <td>{ entry.service_has_2fa ? entry.service_has_2fa.toString() : "?" }</td>
-            <td>{ entry.entry_has_2fa ? entry.entry_has_2fa.toString() : "?" }</td>
-        </tr>
+            <td>{ account } <a href={'/edit/' + entry.entry_id}>edit</a></td>
+            <td>{ entry.service_has_2fa ? entry.service_has_2fa.toString() : '?' }</td>
+            <td>{ entry.entry_has_2fa ? entry.entry_has_2fa.toString() : '?' }</td>
+        </tr>;
     });
 
     const fetchTwoFactorMap = async () => {
@@ -86,9 +89,9 @@ const TwoFactorAuditMain = () => {
 };
 
 export const TwoFactorAudit = () => {
-    return <AccessTokenProvider>
+    return <LoggedInLayout>
         <TwoFactorAuditMain />
-    </AccessTokenProvider>;
+    </LoggedInLayout>;
 };
 
 export default TwoFactorAudit;

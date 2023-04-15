@@ -1,5 +1,5 @@
-import { deleteSavedAccessToken } from "../providers/access-token-provider";
-import { deleteSavedMasterPassword } from "../providers/master-password-provider";
+import { deleteSavedAccessToken } from '../providers/access-token-provider';
+import { deleteSavedMasterPassword } from '../providers/master-password-provider';
 
 export const clientSideLogout = () => {
     deleteSavedAccessToken();

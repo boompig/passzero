@@ -1,9 +1,4 @@
-{% extends "layout-react.jinja2" %}
-
-{% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}">
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/profile.min.css") + "?build=" + config['BUILD_ID'] }}">
-{% endblock %}
+{% extends "layout-react-basic.jinja2" %}
 
 {% block js %}
     {# custom JS - webpack bundle #}

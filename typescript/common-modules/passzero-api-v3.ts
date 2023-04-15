@@ -6,27 +6,37 @@ interface IApiKey {
     token: string;
 }
 
+/**
+ * Exactly mirrors entry model
+ */
 interface IEntry {
-	account: string;
-	username: string;
-	password: string;
-	extra: string;
-	has_2fa: boolean;
+    account: string;
+    username: string;
+    password: string;
+    extra: string;
+    // eslint-disable-next-line
+    has_2fa: boolean;
 }
 
 export interface IEncryptionKeys {
+    // eslint-disable-next-line
     enc_contents_b64: string;
+    // eslint-disable-next-line
     enc_kdf_salt_b64: string;
+    // eslint-disable-next-line
     enc_nonce_b64: string;
 }
 
 export interface IKeysDatabaseEntry {
     key: BinaryData;
+    // eslint-disable-next-line
     last_modified: number;
 }
 
 export interface IKeysDatabase {
+    // eslint-disable-next-line
     entry_keys: {[key: string]: IKeysDatabaseEntry};
+    // eslint-disable-next-line
     link_keys: {[key: string]: IKeysDatabaseEntry};
     version: number;
 }
@@ -35,22 +45,26 @@ export interface IUser {
     id: number;
     email: string;
     // ISO-encoded
+    // eslint-disable-next-line
     last_login: string;
     username: string | null;
+    // eslint-disable-next-line
     encryption_keys: IEncryptionKeys | null;
 
     // user preferences
     preferences: {
+        // eslint-disable-next-line
         default_random_password_length: number;
+        // eslint-disable-next-line
         default_random_passphrase_length: number;
     }
 }
 
 const getJsonWithBearer = async (path: string, apiToken: string | null, queryParams: { [key: string]: string | number | boolean },
     rawResponse: boolean) => {
-        if (!rawResponse) {
-            throw new Error('for now raw response must be set');
-        }
+    if (!rawResponse) {
+        throw new Error('for now raw response must be set');
+    }
 
     const url = new URL(window.location.href);
     url.pathname = path;
@@ -63,9 +77,9 @@ const getJsonWithBearer = async (path: string, apiToken: string | null, queryPar
     }
 
     const options = {
-        method: "GET",
+        method: 'GET',
         headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
         },
         // TODO: this is just temporary
         credentials: 'same-origin',
@@ -81,25 +95,25 @@ const getJsonWithBearer = async (path: string, apiToken: string | null, queryPar
  * If rawResponse is not defined, default to false
  */
 const postJsonWithBearer = async (url: string, apiToken: string | null, data: any, rawResponse?: boolean) => {
-    if(!rawResponse) {
+    if (!rawResponse) {
         rawResponse = false;
     }
 
     const headers = {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
     } as {[key: string]: string};
 
     if (apiToken) {
-        headers.Authorization = `Bearer ${apiToken}`
+        headers.Authorization = `Bearer ${apiToken}`;
     }
 
     const options = {
-        method: "POST",
+        method: 'POST',
         headers: headers,
         body: JSON.stringify(data),
     } as RequestInit;
     const response = await window.fetch(url, options);
-    if(rawResponse) {
+    if (rawResponse) {
         return response;
     } else {
         return response.json();
@@ -114,10 +128,10 @@ const deleteJsonWithBearer = async (path: string, apiToken: string, queryParams:
     url.hash = '';
 
     const options = {
-        method: "DELETE",
+        method: 'DELETE',
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiToken}`,
         },
         mode: 'cors',
         credentials: 'omit',
@@ -143,10 +157,10 @@ const patchJsonWithBearer = async (path: string, apiToken: string, data: any): P
     url.hash = '';
 
     const options = {
-        method: "PATCH",
+        method: 'PATCH',
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiToken}`
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiToken}`,
         },
         body: JSON.stringify(data),
         credentials: 'omit',
@@ -175,6 +189,7 @@ interface ILoginErrorResponse {
 interface IRegisterRequest {
     email: string;
     password: string;
+    // eslint-disable-next-line
     confirm_password: string;
 }
 
@@ -204,6 +219,7 @@ interface IDeleteAllEntriesResponse {
  */
 interface IUpdateEntryVersionsResponse {
     status: string;
+    // eslint-disable-next-line
     num_updated: number;
 }
 
@@ -227,7 +243,7 @@ export const pzApiv3 = {
                 throw new ApiError('Unknown error when fetching token', r.status);
             }
         }
-	},
+    },
 
     /**
      * On success, return a parsed response
@@ -238,7 +254,7 @@ export const pzApiv3 = {
         const data = {
             password: password,
         } as ILoginRequest;
-        if(usernameOrEmail.includes('@')) {
+        if (usernameOrEmail.includes('@')) {
             console.debug('logging in with email...');
             data.email = usernameOrEmail;
         } else {
@@ -293,7 +309,7 @@ export const pzApiv3 = {
      * @throws an API error on failure
      */
     deleteAllEntries: async (accessToken: string, masterPassword: string): Promise<IDeleteAllEntriesResponse> => {
-        const path = "/api/v3/entries";
+        const path = '/api/v3/entries';
         const data = {
             password: masterPassword,
         };
@@ -314,7 +330,7 @@ export const pzApiv3 = {
     },
 
     updateEntryVersions: async (accessToken: string, masterPassword: string): Promise<IUpdateEntryVersionsResponse> => {
-        const path = "/api/v3/entries";
+        const path = '/api/v3/entries';
         const data = {
             password: masterPassword,
         };
@@ -336,7 +352,7 @@ export const pzApiv3 = {
     /**
      * Step 1 of the account recovery flow
      */
-    recoverAccountStart: async(email: string, acceptRisks: boolean): Promise<Response> => {
+    recoverAccountStart: async (email: string, acceptRisks: boolean): Promise<Response> => {
         const path = '/api/v3/recover';
         const data = {
             email: email,
@@ -345,7 +361,7 @@ export const pzApiv3 = {
         return postJsonWithBearer(path, null, data, true);
     },
 
-    recoveryGetEmailWithToken: async(token: string): Promise<Response> => {
+    recoveryGetEmailWithToken: async (token: string): Promise<Response> => {
         const path = '/api/v3/recover/email';
         const data = {
             token: token,
@@ -356,7 +372,7 @@ export const pzApiv3 = {
     /**
      * Step 2 of the recovery flow
      */
-    recoverAccountConfirm: async(token: string, password: string, confirmPassword: string, acceptRisks: boolean): Promise<Response> => {
+    recoverAccountConfirm: async (token: string, password: string, confirmPassword: string, acceptRisks: boolean): Promise<Response> => {
         const path = '/api/v3/recover/confirm';
         const data = {
             token: token,
@@ -395,9 +411,9 @@ export default class PasszeroApiV3 {
 
     async getJsonWithBearer(url: string, apiToken?: string) {
         const options = {
-            method: "GET",
+            method: 'GET',
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
             },
         } as RequestInit;
         if (apiToken) {
@@ -411,7 +427,7 @@ export default class PasszeroApiV3 {
         } else if (response.status === 401) {
             const text = await response.text();
             throw new UnauthorizedError(text);
-        } else if(response.status === 500 && response.headers.get("Content-Type") === "application/json") {
+        } else if (response.status === 500 && response.headers.get('Content-Type') === 'application/json') {
             const j = await response.json();
             throw new ServerError(j.msg, response, j.app_error_code);
         } else {
@@ -420,58 +436,58 @@ export default class PasszeroApiV3 {
         }
     }
 
-	/**
-	 * If rawResponse is not defined, default to false
-	 */
-	async postJsonWithBearer(url: string, apiToken: string, data: any, rawResponse?: boolean) {
-		if(!rawResponse) {
-			rawResponse = false;
-		}
+    /**
+     * If rawResponse is not defined, default to false
+     */
+    async postJsonWithBearer(url: string, apiToken: string, data: any, rawResponse?: boolean) {
+        if (!rawResponse) {
+            rawResponse = false;
+        }
         const options = {
-            method: "POST",
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiToken}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`,
             },
             body: JSON.stringify(data),
         } as RequestInit;
-		const response = await window.fetch(url, options);
-		if(rawResponse) {
-			return response;
-		} else {
-			return response.json();
-		}
-	}
+        const response = await window.fetch(url, options);
+        if (rawResponse) {
+            return response;
+        } else {
+            return response.json();
+        }
+    }
 
-	/**
-	 * If rawResponse is not defined, default to false
-	 */
-	async patchJsonWithBearer(url: string, apiToken: string, data: any, rawResponse?: boolean) {
-		if(!rawResponse) {
-			rawResponse = false;
-		}
+    /**
+     * If rawResponse is not defined, default to false
+     */
+    async patchJsonWithBearer(url: string, apiToken: string, data: any, rawResponse?: boolean) {
+        if (!rawResponse) {
+            rawResponse = false;
+        }
         const options = {
-            method: "PATCH",
+            method: 'PATCH',
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiToken}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`,
             },
             body: JSON.stringify(data),
         } as RequestInit;
-		const response = await window.fetch(url, options);
-		if(rawResponse) {
-			return response;
-		} else {
-			return response.json();
-		}
+        const response = await window.fetch(url, options);
+        if (rawResponse) {
+            return response;
+        } else {
+            return response.json();
+        }
     }
 
     async deleteWithBearer(url: string, apiToken: string, data?: any) {
         const options = {
-            method: "DELETE",
+            method: 'DELETE',
             headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${apiToken}`
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiToken}`,
             },
         } as RequestInit;
         if (data) {
@@ -489,8 +505,8 @@ export default class PasszeroApiV3 {
 
     /**
      * If the token is not provided in the function, then (in order of precedence)
-     * 		1. if this.apiKey is set, set the token from that
-     * 		2. Make a requrest to getToken to get a new API key and set the token that way
+     * 1. if this.apiKey is set, set the token from that
+     * 2. Make a requrest to getToken to get a new API key and set the token that way
      */
     async fillToken() {
         if (this.apiKey) {
@@ -510,22 +526,22 @@ export default class PasszeroApiV3 {
      * If we have a 401 error response, throw UnauthorizedError
      */
     async getToken() {
-        const url = "/api/v3/token";
+        const url = '/api/v3/token';
         return this.getJsonWithBearer(url);
-	}
+    }
 
-	/* services */
+    /* services */
 
-	async getServices() {
-		const url = "/api/v3/services";
-		return this.getJsonWithBearer(url);
-	}
+    async getServices() {
+        const url = '/api/v3/services';
+        return this.getJsonWithBearer(url);
+    }
 
     /* entries */
 
     async getEncryptedEntries() {
         const apiToken = await this.fillToken();
-        const url = "/api/v3/entries";
+        const url = '/api/v3/entries';
         const response = await this.getJsonWithBearer(url, apiToken);
         return response;
     }
@@ -548,44 +564,44 @@ export default class PasszeroApiV3 {
         };
         const response = await this.postJsonWithBearer(url, apiToken, data);
         return response;
-	}
+    }
 
     /**
      * Return the raw response
      */
-	async createEntry(entry: IEntry, masterPassword: string): Promise<Response> {
-		const apiToken = await this.fillToken();
-		const url = "/api/v3/entries";
-		const data = {
-			entry: entry,
-			password: masterPassword
-		};
-		const response = await this.postJsonWithBearer(url, apiToken, data, true);
-		return response;
-	}
+    async createEntry(entry: IEntry, masterPassword: string): Promise<Response> {
+        const apiToken = await this.fillToken();
+        const url = '/api/v3/entries';
+        const data = {
+            entry: entry,
+            password: masterPassword,
+        };
+        const response = await this.postJsonWithBearer(url, apiToken, data, true);
+        return response;
+    }
 
-	async updateEntry(entryId: number, entry: IEntry, masterPassword: string) {
-		const apiToken = await this.fillToken();
-		const url = `/api/v3/entries/${entryId}`;
-		const data = {
-			entry: entry,
-			password: masterPassword
-		};
-		const response = await this.patchJsonWithBearer(url, apiToken, data, true);
-		return response;
-	}
+    async updateEntry(entryId: number, entry: IEntry, masterPassword: string) {
+        const apiToken = await this.fillToken();
+        const url = `/api/v3/entries/${entryId}`;
+        const data = {
+            entry: entry,
+            password: masterPassword,
+        };
+        const response = await this.patchJsonWithBearer(url, apiToken, data, true);
+        return response;
+    }
 
     /* links */
 
     async getEncryptedLinks() {
         const apiToken = await this.fillToken();
-        const url = "/api/v3/links";
+        const url = '/api/v3/links';
         return this.getJsonWithBearer(url, apiToken);
     }
 
     async saveLink(linkData: any) {
         const apiToken = await this.fillToken();
-        const url = "/api/v3/links";
+        const url = '/api/v3/links';
         return this.postJsonWithBearer(url, apiToken, linkData);
     }
 
@@ -598,7 +614,7 @@ export default class PasszeroApiV3 {
     async decryptLink(linkId: number, masterPassword: string): Promise<IDecryptedLink> {
         const apiToken = await this.fillToken();
         const url = `/api/v3/links/${linkId}`;
-        const data = { "password": masterPassword };
+        const data = { 'password': masterPassword };
         const decLink = (await this.postJsonWithBearer(url, apiToken, data)) as any;
         decLink.is_encrypted = false;
         return decLink;
@@ -608,8 +624,8 @@ export default class PasszeroApiV3 {
         const apiToken = await this.fillToken();
         const url = `/api/v3/links/decrypt`;
         const data = {
-            "password": masterPassword,
-            "link_ids": linkIds,
+            'password': masterPassword,
+            'link_ids': linkIds,
         };
         return this.postJsonWithBearer(url, apiToken, data);
     }
@@ -619,7 +635,7 @@ export default class PasszeroApiV3 {
         const url = `/api/v3/links/${linkId}`;
         const data = {
             password: masterPassword,
-        }
+        };
         return this.deleteWithBearer(url, apiToken, data);
     }
 
@@ -656,11 +672,11 @@ export default class PasszeroApiV3 {
 
     async changePassword(oldPassword: string, newPassword: string, confirmNewPassword: string): Promise<Response> {
         const apiToken = await this.fillToken();
-        const url = "/api/v3/user/password";
+        const url = '/api/v3/user/password';
         const data = {
-            "old_password": oldPassword,
-            "new_password": newPassword,
-            "confirm_new_password": confirmNewPassword,
+            'old_password': oldPassword,
+            'new_password': newPassword,
+            'confirm_new_password': confirmNewPassword,
         };
         const r = await this.postJsonWithBearer(url, apiToken, data, true) as Response;
         return r;
@@ -668,9 +684,9 @@ export default class PasszeroApiV3 {
 
     async deleteAccount(masterPassword: string): Promise<Response> {
         const apiToken = await this.fillToken();
-        const url = "/api/v3/user/delete";
+        const url = '/api/v3/user/delete';
         const data = {
-            "password": masterPassword,
+            'password': masterPassword,
         };
         const r = await this.postJsonWithBearer(url, apiToken, data, true) as Response;
         return r;

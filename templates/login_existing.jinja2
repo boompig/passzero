@@ -7,7 +7,3 @@
 {% block extra_js %}
     <script src="{{ url_for("static", filename="js/dist/login.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
-
-{% block extra_css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/login.min.css") + "?build=" + config['BUILD_ID'] }}">
-{% endblock %}

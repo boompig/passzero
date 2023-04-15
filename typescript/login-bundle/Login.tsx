@@ -1,18 +1,19 @@
-import { useState, useEffect } from "react";
-import * as React from "react";
+import { useState, useEffect } from 'react';
+import * as React from 'react';
 
-import { pzApiv3 } from "../common-modules/passzero-api-v3";
-import { LoggedOutNavbar } from "../components/LoggedOutNavbar";
-import { saveMasterPassword } from "../providers/master-password-provider";
-import { saveAccessToken } from "../providers/access-token-provider";
+import { pzApiv3 } from '../common-modules/passzero-api-v3';
+import { LoggedOutNavbar } from '../components/LoggedOutNavbar';
+import { saveMasterPassword } from '../providers/master-password-provider';
+import { saveAccessToken } from '../providers/access-token-provider';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
-// import "./login.css";
+import '../common-css/landing.css';
+import '../common-css/login.css';
 
 const EntriesRedirect = () => {
     return <div>
         <h1>You are logged in</h1>
-        <p>Redirecting to entries. <a href="/entries">Click here</a> if it's taking too long...</p>
+        <p>Redirecting to entries. <a href="/entries">Click here</a> if it&apos;s taking too long...</p>
     </div>;
 };
 
@@ -22,11 +23,11 @@ const getLastActionMessage = (lastAction: string): string => {
     }
     switch (lastAction) {
         case 'done_register':
-            return "Your account was successfully activated. Please login below.";
+            return 'Your account was successfully activated. Please login below.';
         default:
             throw new Error(`invalid last action: ${lastAction}`);
     }
-}
+};
 
 const LastActionMessage = ({ lastAction }: { lastAction: string }) => {
     const msg = getLastActionMessage(lastAction);
@@ -88,7 +89,7 @@ const LoginForm = () => {
         setErrorMsg('');
 
         // we have a slow warning...
-        console.debug('setting slow detection timeout...')
+        console.debug('setting slow detection timeout...');
         // window.setTimeout(triggerSlowWarning, 1000);
 
         try {
@@ -161,9 +162,9 @@ const LoginForm = () => {
 
             <div className="form-group">
                 <input type="text" className="form-control" name="username_or_email" tabIndex={1}
-                        placeholder="username or email" required={true} autoComplete="username"
-                        value={usernameOrEmail}
-                        onChange={handleTextChange} />
+                    placeholder="username or email" required={true} autoComplete="username"
+                    value={usernameOrEmail}
+                    onChange={handleTextChange} />
             </div>
 
             <div className="form-group">

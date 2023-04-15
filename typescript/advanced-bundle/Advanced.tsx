@@ -8,10 +8,10 @@ import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { MasterPasswordContext } from '../providers/master-password-provider';
 import { AccessTokenContext } from '../providers/access-token-provider';
 import { clientSideLogout } from '../common-modules/client-side-utils';
-import { AccessTokenProvider } from '../components/AccessTokenProvider';
+import { LoggedInLayout } from '../components/LoggedInLayout';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
-// import './advanced.css';
+import '../common-css/advanced.css';
 
 const NukePane = () => {
     const accessToken = useContext(AccessTokenContext);
@@ -157,9 +157,9 @@ export const AdvancedMain = () => {
 };
 
 export const Advanced = () => {
-    return <AccessTokenProvider>
+    return <LoggedInLayout>
         <AdvancedMain />
-    </AccessTokenProvider>;
+    </LoggedInLayout>;
 };
 
 export default Advanced;

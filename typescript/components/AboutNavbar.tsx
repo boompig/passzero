@@ -4,11 +4,14 @@ import Nav from 'react-bootstrap/Nav';
 import Container from 'react-bootstrap/Container';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
-import { faList, faLink, faPlus, faUser, faWrench, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
+import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons/faInfoCircle';
+import { faSignInAlt } from '@fortawesome/free-solid-svg-icons/faSignInAlt';
+import { faEdit } from '@fortawesome/free-solid-svg-icons/faEdit';
 
-// import "bootstrap/dist/css/bootstrap.min.css";
+import './AboutNavbar.css';
 
-library.add(faList, faLink, faPlus, faUser, faWrench, faSignOutAlt);
+library.add(faHome, faInfoCircle, faSignInAlt, faEdit);
 
 interface INavbarItem {
     /**
@@ -26,65 +29,55 @@ interface INavbarItem {
     /**
      * The associated icon
      */
-    icon?: React.ReactNode;
+    icon: React.ReactNode;
 };
 
 const navbarItems = [
     {
-        path: '/entries',
-        key: 'entries',
-        friendlyName: 'Entries',
-        icon: <FontAwesomeIcon icon={['fas', 'list']} />,
+        path: '/',
+        key: 'index',
+        friendlyName: 'Home',
+        icon: <FontAwesomeIcon icon={['fas', 'home']} />,
     },
     {
-        path: '/entries/new',
-        key: 'new-entry',
-        friendlyName: 'New Entry',
-        icon: <FontAwesomeIcon icon={['fas', 'plus']} />,
+        path: '/about',
+        key: 'about',
+        friendlyName: 'About',
+        icon: <FontAwesomeIcon icon={['fas', 'info-circle']} />,
     },
     {
-        path: '/links',
-        key: 'links',
-        friendlyName: 'Links',
-        icon: <FontAwesomeIcon icon={['fas', 'link']} />,
+        path: '/login',
+        key: 'login',
+        friendlyName: 'Sign In',
+        icon: <FontAwesomeIcon icon={['fas', 'sign-in-alt']} />,
     },
     {
-        path: '/profile',
-        key: 'profile',
-        friendlyName: 'Profile',
-        icon: <FontAwesomeIcon icon={['fas', 'user']} />,
-    },
-    {
-        path: '/advanced',
-        key: 'advanced',
-        friendlyName: 'Advanced',
-        icon: <FontAwesomeIcon icon={['fas', 'wrench']} />,
-    },
-    {
-        path: '/logout',
-        key: 'logout',
-        friendlyName: 'Sign Out',
-        icon: <FontAwesomeIcon icon={['fas', 'sign-out-alt']} />,
+        path: '/signup',
+        key: 'register',
+        friendlyName: 'Register',
+        icon: <FontAwesomeIcon icon={['fas', 'edit']} />,
     },
 ] as INavbarItem[];
 
-export const LoggedInNavbar = () => {
+/**
+ * This is a bootstrap navbar that is only active on the About page
+ */
+export const AboutNavbar = () => {
     const currentPath = window.location.pathname;
-
-    const navbarItemElems = navbarItems.map((item: INavbarItem) => {
+    const navbarItemElems = navbarItems.map((item) => {
         let classNames = 'navbar-item';
         if (currentPath === item.path) {
             classNames += ' active';
         }
         return <li className={classNames} key={item.key}>
             <a className="nav-link" href={item.path}>
-                { item.icon? item.icon : null }
+                { item.icon }
                 <span className="nav-text">{ item.friendlyName }</span>
             </a>
         </li>;
     });
 
-    return <Navbar className="navbar navbar-dark bg-primary fixed-top navbar-expand-lg" expand="md" id="logged-in-navbar">
+    return <Navbar className="navbar navbar-dark bg-primary fixed-top navbar-expand-lg" expand="md" id="about-navbar">
         <Container fluid>
             <Navbar.Brand className="navbar-brand" href="/">PassZero</Navbar.Brand>
             <Navbar.Toggle aria-controls="about-navbar-nav" />
@@ -98,4 +91,4 @@ export const LoggedInNavbar = () => {
     </Navbar>;
 };
 
-export default LoggedInNavbar;
+export default AboutNavbar;

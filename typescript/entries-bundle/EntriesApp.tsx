@@ -4,6 +4,7 @@
 
 import { Component } from 'react';
 import * as React from 'react';
+import { Alert } from 'react-bootstrap';
 
 import DecryptedEntry from './components/decrypted-entry';
 import EncryptedEntry from './components/encrypted-entry';
@@ -14,13 +15,19 @@ import PasszeroApiV3, { IKeysDatabase, IUser } from '../common-modules/passzero-
 import { decryptEntryV5WithKeysDatabase } from '../common-modules/crypto-utils';
 import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from '../common-modules/message';
 import LogoutTimer from '../common-modules/logoutTimer';
-import { Alert } from 'react-bootstrap';
+import { LoggedInLayout } from '../components/LoggedInLayout';
+
+import './entries.css';
 
 interface IAppProps {}
 
+/**
+ * This declaration exactly matches python model for Service
+ */
 interface IService {
     name: string;
     link: string;
+    // eslint-disable-next-line
     has_two_factor: boolean;
 }
 
@@ -83,7 +90,7 @@ export const LoggedOutView = () => {
     </div>;
 };
 
-class EntriesApp extends Component<IAppProps, IAppState> {
+class EntriesAppInner extends Component<IAppProps, IAppState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
     worker: Worker;
@@ -392,29 +399,29 @@ class EntriesApp extends Component<IAppProps, IAppState> {
             </div>);
         } else {
             return (
-                <div id="inner-root" onScroll={this.resetTimer}>
-                    {/* this is just a placeholder for now */}
-                    <nav></nav>
-                    <main className="container">
-                        <div className="inner-container">
-                            { this.state.lastAction ?
-                                <LastActionMessage lastAction={this.state.lastAction} /> :
-                                null}
-                            <NumEntries
-                                entriesLoaded={this.state.entriesLoaded}
-                                numEntries={this.state.entries.length} />
-                            {(this.state.entriesLoaded && this.state.entries.length > 0) ?
-                                <SearchForm onSearch={this.handleSearch} /> :
-                                null}
-                            <div id="entry-container">
-                                {entries}
-                            </div>
-                        </div>
-                    </main>
+                <div className="entriesApp" onScroll={this.resetTimer}>
+                    { this.state.lastAction ?
+                        <LastActionMessage lastAction={this.state.lastAction} /> :
+                        null}
+                    <NumEntries
+                        entriesLoaded={this.state.entriesLoaded}
+                        numEntries={this.state.entries.length} />
+                    {(this.state.entriesLoaded && this.state.entries.length > 0) ?
+                        <SearchForm onSearch={this.handleSearch} /> :
+                        null}
+                    <div id="entry-container">
+                        {entries}
+                    </div>
                 </div>
             );
         }
     }
 }
+
+const EntriesApp = () => {
+    return <LoggedInLayout>
+        <EntriesAppInner />
+    </LoggedInLayout>;
+};
 
 export default EntriesApp;

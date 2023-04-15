@@ -1,3 +1,10 @@
+/**
+ * This file is used on:
+ * - Landing
+ * - Login
+ * - Register
+ */
+
 html, body {
     margin: 0;
     padding: 0;

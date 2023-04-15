@@ -1,11 +1,12 @@
-import { useState } from "react";
-import * as React from "react";
+import { useState } from 'react';
+import * as React from 'react';
 
-import { pzApiv3 } from "../common-modules/passzero-api-v3";
-import { LoggedOutNavbar } from "../components/LoggedOutNavbar";
+import { pzApiv3 } from '../common-modules/passzero-api-v3';
+import { LoggedOutNavbar } from '../components/LoggedOutNavbar';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
-// import "./login.css";
+import '../common-css/landing.css';
+import '../common-css/login.css';
 
 const getMessageFromErrorCode = (errorCode: string): string => {
     if (!errorCode) {
@@ -13,13 +14,13 @@ const getMessageFromErrorCode = (errorCode: string): string => {
     }
     switch (errorCode) {
         case 'err_register_token_expired':
-            return "The token has expired.";
+            return 'The token has expired.';
         case 'err_register_token_invalid':
-            return "The provided token is invalid.";
+            return 'The provided token is invalid.';
         default:
             throw new Error(`invalid error code: ${errorCode}`);
     }
-}
+};
 
 const RegisterForm = () => {
     const url = new URL(window.location.href);
@@ -56,7 +57,7 @@ const RegisterForm = () => {
             const resp = await pzApiv3.registerUser(email, password, confirmPassword);
             setServerSuccessMsg(resp.msg);
         } catch (err: any) {
-            console.error(err)
+            console.error(err);
             if (err._type === 'ApiError' && (err.status === 401 || err.status === 400)) {
                 setServerErrorMsg(err.message);
             } else {
@@ -86,19 +87,19 @@ const RegisterForm = () => {
                 null }
 
             <input type="email" className="form-control" name="email" tabIndex={1}
-                    placeholder="email" required={true}
-                    autoComplete="email"
-                    onChange={handleTextChange} />
+                placeholder="email" required={true}
+                autoComplete="email"
+                onChange={handleTextChange} />
 
             <input type="password" className="form-control" name="password" tabIndex={2}
-                    placeholder="password" required={true}
-                    autoComplete="new-password"
-                    onChange={handleTextChange} />
+                placeholder="password" required={true}
+                autoComplete="new-password"
+                onChange={handleTextChange} />
 
             <input type="password" className="form-control" name="confirm_password" tabIndex={3}
-                    placeholder="confirm password" required={true}
-                    autoComplete="new-password"
-                    onChange={handleTextChange} />
+                placeholder="confirm password" required={true}
+                autoComplete="new-password"
+                onChange={handleTextChange} />
 
             <button id="submit-btn" type="submit">Sign Up</button>
         </form>

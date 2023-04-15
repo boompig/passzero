@@ -1,0 +1,40 @@
+{# this layout is the same as layout-react but without HTML scaffolding (incl navbar) and without main.css #}
+{# this layout should only be used on internal views #}
+<!DOCTYPE html>
+<html lang="en" >
+    <head>
+        <meta charset="utf-8">
+        {# for mobile #}
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        {# for IE - use latest engine #}
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+        <title>
+            {% if title %}
+                {{ title|safe }}
+            {%- else -%}
+                PassZero
+            {%- endif -%}
+        </title>
+
+        <link rel="manifest" href="/manifest.json">
+        <link rel="icon" type="image/png" href="/favicon.png">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+        {% if not config["OFFLINE"] %}
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/css/bootstrap.min.css"
+                integrity="sha512-P5MgMn1jBN01asBgU0z60Qk4QxiXo86+wlFahKrsQf37c9cro517WzVSPPV1tDKzhku2iJ2FVgL67wG03SGnNA=="
+                crossorigin="anonymous"
+                referrerpolicy="no-referrer" />
+        {% endif %}
+
+        {# NOTE: custom CSS included in typescript #}
+    </head>
+    <body>
+        {% block body%}
+        {% endblock %}
+
+        {% block js %}
+        {% endblock %}
+    </body>
+</html>

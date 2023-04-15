@@ -1,3 +1,13 @@
+main {
+    /* adjust for the size of the navbar */
+    padding-top: 4rem;
+}
+
+h2.title {
+    font-weight: 400;
+    text-align: center;
+}
+
 main#recovery-start-main,
 main#recovery-confirm-main {
     max-width: 700px;
