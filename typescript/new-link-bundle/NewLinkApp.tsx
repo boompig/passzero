@@ -1,7 +1,10 @@
 import { PureComponent } from 'react';
 import * as React from 'react';
+
 import PasszeroApiV3 from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
+
+import './new-link.css';
 
 interface INewLinkState {
     name: string;

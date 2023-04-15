@@ -1,9 +1,9 @@
-import * as React from "react";
+import * as React from 'react';
 
-import { LoggedOutNavbar } from "../components/LoggedOutNavbar";
+import { LoggedOutNavbar } from '../components/LoggedOutNavbar';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
-// import './landing.css';
+import '../common-css/landing.css';
 
 export const LandingMain = () => {
     return <div id="hero-text-container">

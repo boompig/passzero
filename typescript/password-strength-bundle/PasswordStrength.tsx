@@ -6,7 +6,10 @@ import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { AccessTokenContext } from '../providers/access-token-provider';
 import { AccessTokenProvider } from '../components/AccessTokenProvider';
 import { clientSideLogout } from '../common-modules/client-side-utils';
-import LogoutTimer from "../common-modules/logoutTimer";
+import LogoutTimer from '../common-modules/logoutTimer';
+
+// import "bootstrap/dist/css/bootstrap.min.css";
+import '../common-css/advanced.css';
 
 interface IEntryScore {
     id: number;
@@ -28,7 +31,7 @@ const getRowClass = (score: number): string => {
 };
 
 export const PasswordStrengthMain = () => {
-    const { masterPassword } = useContext(MasterPasswordContext)
+    const { masterPassword } = useContext(MasterPasswordContext);
 
     if (!masterPassword) {
         throw new Error('master password failed to load from context');

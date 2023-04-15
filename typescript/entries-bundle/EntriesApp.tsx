@@ -4,6 +4,7 @@
 
 import { Component } from 'react';
 import * as React from 'react';
+import { Alert } from 'react-bootstrap';
 
 import DecryptedEntry from './components/decrypted-entry';
 import EncryptedEntry from './components/encrypted-entry';
@@ -14,7 +15,8 @@ import PasszeroApiV3, { IKeysDatabase, IUser } from '../common-modules/passzero-
 import { decryptEntryV5WithKeysDatabase } from '../common-modules/crypto-utils';
 import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from '../common-modules/message';
 import LogoutTimer from '../common-modules/logoutTimer';
-import { Alert } from 'react-bootstrap';
+
+import './entries.css';
 
 interface IAppProps {}
 

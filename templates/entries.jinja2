@@ -5,10 +5,6 @@
     <script src="{{ url_for("static", filename="js/dist/web-worker.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}
 
-{% block css %}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/entries.min.css") + "?build=" + config['BUILD_ID'] }}">
-{% endblock %}
-
 {% block body %}
     <div id="root"></div>
     <form class="hidden">

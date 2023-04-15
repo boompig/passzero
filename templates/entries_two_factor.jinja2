@@ -1,10 +1,5 @@
 {% extends "layout-react.jinja2" %}
 
-{% block css %}
-    {# note that the advanced stylesheet is also used here #}
-    <link rel="stylesheet" href="{{ url_for("static", filename="css/dist/advanced.min.css") + "?build=" + config['BUILD_ID'] }}">
-{% endblock %}
-
 {% block js %}
     <script src="{{ url_for("static", filename="js/dist/two-factor-audit.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
 {% endblock %}

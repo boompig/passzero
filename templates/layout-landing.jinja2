@@ -24,9 +24,7 @@
             crossorigin="anonymous"
             referrerpolicy="no-referrer" />
 
-        {# custom CSS #}
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/landing.min.css") + "?build=" + config['BUILD_ID'] }}">
-        <link rel="stylesheet" href="{{ url_for("static", filename="/css/dist/navbar.min.css") + "?build=" + config['BUILD_ID'] }}">
+        {# NOTE: all custom CSS is loaded in typescript w/ webpack #}
 
         {% block extra_css %}
         {% endblock %}

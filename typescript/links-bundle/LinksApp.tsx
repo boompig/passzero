@@ -12,6 +12,8 @@ import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from '../common-modules/
 import LogoutTimer from '../common-modules/logoutTimer';
 import { clientSideLogout } from '../common-modules/client-side-utils';
 
+import './links.css';
+
 interface IProps {}
 
 interface IState {

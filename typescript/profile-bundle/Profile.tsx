@@ -1,9 +1,12 @@
-import * as React from "react";
-import { useState, useEffect } from "react";
-import Alert from "react-bootstrap/Alert";
+import * as React from 'react';
+import { useState, useEffect } from 'react';
+import Alert from 'react-bootstrap/Alert';
 
-import PasszeroApiV3, { IUser } from "../common-modules/passzero-api-v3";
-import LogoutTimer from "../common-modules/logoutTimer";
+import PasszeroApiV3, { IUser } from '../common-modules/passzero-api-v3';
+import LogoutTimer from '../common-modules/logoutTimer';
+
+import './profile.css';
+import '../common-css/advanced.css';
 
 const UserPrefs = ({ user, onUpdate }: { user: IUser, onUpdate(): void }) => {
     const pzApi = new PasszeroApiV3();
@@ -16,9 +19,9 @@ const UserPrefs = ({ user, onUpdate }: { user: IUser, onUpdate(): void }) => {
     const handleChangeNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
         const v = Number.parseInt(e.target.value);
         if (v) {
-            if (e.target.name === "default_random_password_length") {
+            if (e.target.name === 'default_random_password_length') {
                 setNumPasswordChars(v);
-            } else if (e.target.name === "default_random_passphrase_length") {
+            } else if (e.target.name === 'default_random_passphrase_length') {
                 setNumPassphraseChars(v);
             }
         }
@@ -32,11 +35,11 @@ const UserPrefs = ({ user, onUpdate }: { user: IUser, onUpdate(): void }) => {
             preferences: {
                 default_random_password_length: numPasswordChars,
                 default_random_passphrase_length: numPassphraseChars,
-            }
+            },
         });
         console.debug(resp);
         // setSuccessMsg(resp.msg);
-        setSuccessMsg("successfully updated user preferences");
+        setSuccessMsg('successfully updated user preferences');
         onUpdate();
     };
 
@@ -51,7 +54,7 @@ const UserPrefs = ({ user, onUpdate }: { user: IUser, onUpdate(): void }) => {
                 defaultValue={ user.preferences.default_random_password_length }
                 onChange={handleChangeNumber}
                 min={1} max={255} />
-                <label>Default number of words in random passphrase</label>
+            <label>Default number of words in random passphrase</label>
             <input type="number" name="default_random_passphrase_length"
                 className="form-control"
                 defaultValue={ user.preferences.default_random_passphrase_length }
@@ -148,9 +151,9 @@ const ChangePassword = ({ user, onUpdate }: { user: IUser, onUpdate(): void}) =>
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const name = e.target.name;
         const value = e.target.value;
-        if (name === "old_password") {
+        if (name === 'old_password') {
             setOldPassword(value);
-        } else if (name === "new_password") {
+        } else if (name === 'new_password') {
             setNewPassword(value);
         } else {
             setConfirmNewPassword(value);
@@ -159,15 +162,15 @@ const ChangePassword = ({ user, onUpdate }: { user: IUser, onUpdate(): void}) =>
 
     const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault();
-        setSuccessMsg("");
-        setErrorMsg("");
+        setSuccessMsg('');
+        setErrorMsg('');
 
         if (newPassword !== confirmNewPassword) {
-            setErrorMsg("Passwords do not match");
+            setErrorMsg('Passwords do not match');
             return;
         }
         if (oldPassword === newPassword) {
-            setErrorMsg("Old password and new password are the same");
+            setErrorMsg('Old password and new password are the same');
             return;
         }
 
@@ -178,7 +181,7 @@ const ChangePassword = ({ user, onUpdate }: { user: IUser, onUpdate(): void}) =>
             confirmNewPassword,
         );
         if (r.ok) {
-            setSuccessMsg("Successfully changed password");
+            setSuccessMsg('Successfully changed password');
             setWorking(false);
         } else {
             const j = await r.json();
@@ -257,8 +260,8 @@ const DeleteAccount = () => {
         const r = await pzApi.deleteAccount(password);
         setWorking(false);
         if (r.ok) {
-            setSuccessMsg("Successfully deleted the account");
-            window.location.assign("/logout");
+            setSuccessMsg('Successfully deleted the account');
+            window.location.assign('/logout');
         } else {
             const j = await r.json();
             console.error(j);
@@ -291,7 +294,7 @@ const Profile = () => {
     const api = new PasszeroApiV3();
 
     // state
-    const [ user, setUser ] = useState(null as IUser | null);
+    const [user, setUser] = useState(null as IUser | null);
 
     const resetTimer = () => {
         if (logoutTimer) {
