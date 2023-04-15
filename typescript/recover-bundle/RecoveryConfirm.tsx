@@ -33,7 +33,7 @@ export const RecoveryConfirm = () => {
             setSuccessMsg(j.msg);
         } else {
             console.error('account recovery failed');
-            if(r.headers.get("Content-Type") === "application/json") {
+            if (r.headers.get('Content-Type') === 'application/json') {
                 const j = await r.json();
                 setErrorMsg(j.msg);
             } else {
