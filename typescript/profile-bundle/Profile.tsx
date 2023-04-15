@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { useState, useEffect } from 'react';
 import Alert from 'react-bootstrap/Alert';
+import Tab from 'react-bootstrap/Tab';
+import Tabs from 'react-bootstrap/Tabs';
 
 import PasszeroApiV3, { IUser } from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
@@ -118,7 +120,7 @@ const ChangeUsernameForm = ({ onUpdate }: { onUpdate(): void }) => {
 const UserProfile = ({ user, onUpdate }: {user: IUser, onUpdate(): void }) => {
     const [isShowForm, setShowForm] = useState(false);
 
-    return <div>
+    return <div className='tab-text-container'>
         <h3 className="title">User Profile</h3>
         <table className="table table-sm table-borderless" id="readonly-user-details">
             <tbody>
@@ -193,8 +195,7 @@ const ChangePassword = ({ user, onUpdate }: { user: IUser, onUpdate(): void}) =>
     };
 
     return <>
-        <div className="progress-alert alert alert-info" role="alert"></div>
-        <div id="change-password-container">
+        <div id="change-password-container" className='tab-text-container'>
             <h3 className="title">Change Account Password</h3>
             <form role="form" id="change-password-form" onSubmit={handleSubmit}>
                 {successMsg ? <Alert variant="success">{successMsg}</Alert> : null}
@@ -271,11 +272,11 @@ const DeleteAccount = () => {
         }
     };
 
-    return <>
+    return <div className='tab-text-container'>
         <h3 className="title">Delete Account</h3>
-        <div className="alert alert-danger" role="alert">
+        <Alert variant='danger'>
             <strong>Warning!</strong> This action cannot be undone.
-        </div>
+        </Alert>
         <form role="form" id="delete-user-form" onSubmit={handleSubmit}>
             {successMsg ? <Alert variant="success">{successMsg}</Alert> : null}
             {errorMsg ? <Alert variant="danger">{errorMsg}</Alert> : null}
@@ -288,7 +289,7 @@ const DeleteAccount = () => {
             <button type="submit" className="btn btn-danger form-control"
                 disabled={isWorking}>Delete my account forever</button>
         </form>
-    </>;
+    </div>;
 };
 
 const ProfileInner = () => {
@@ -321,36 +322,25 @@ const ProfileInner = () => {
     return (<div id="profile-app" onClick={resetTimer} onScroll={resetTimer}>
         <h1 className="title">Profile</h1>
 
-        <div id="global-error-msg" className="alert alert-danger" role="alert">
-            <strong>Error</strong>
+        <Alert id="global-error-msg" variant='danger'>
+            <strong>Error!</strong>
             <span className="text"></span>
-        </div>
-        <div id="global-success-msg" className="alert alert-success" role="alert"></div>
+        </Alert>
+        <Alert id="global-success-msg" variant="success"></Alert>
 
         <div id="advanced-tabpanel" role="tabpanel">
-            <ul className="nav nav-tabs" role="tablist">
-                <li className="nav-item" role="presentation">
-                    <a className="nav-link active" href="#user-profile" aria-controls="user-profile" role="tab" data-toggle="tab" aria-selected="true">Profile</a>
-                </li>
-                <li className="nav-item" role="presentation">
-                    <a className="nav-link" href="#change-password" aria-controls="change-password" role="tab" data-toggle="tab" aria-selected="false">Change Account Password</a>
-                </li>
-                <li className="nav-item" role="presentation">
-                    <a className="nav-link" href="#delete-user" aria-controls="delete-user" role="tab" data-toggle="tab" aria-selected="false">Delete Account</a>
-                </li>
-            </ul>
-            <div className="tab-content" id="profile-tab-content">
-                <div id="user-profile" className="tab-pane active" role="tabpanel">
+            <Tabs id="advanced-tabpanel-inner" defaultActiveKey="profile">
+                <Tab id="user-profile" eventKey="profile" title="Profile">
                     { user ? <UserProfile user={user} onUpdate={fetchUser} /> : null }
                     { user ? <UserPrefs user={user} onUpdate={fetchUser} />: null }
-                </div>
-                <div id="delete-user" className="tab-pane" role="tabpanel">
-                    { user ? <DeleteAccount /> : null }
-                </div>
-                <div id="change-password" className="tab-pane" role="presentation">
+                </Tab>
+                <Tab id="change-password" eventKey="change_password" title="Change Account Password">
                     { user ? <ChangePassword user={user} onUpdate={fetchUser} /> : null }
-                </div>
-            </div>
+                </Tab>
+                <Tab id="delete-user" eventKey="delete_account" title="Delete Account">
+                    { user ? <DeleteAccount /> : null }
+                </Tab>
+            </Tabs>
         </div>
     </div>);
 };

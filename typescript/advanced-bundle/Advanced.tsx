@@ -128,7 +128,7 @@ export const AdvancedMain = () => {
         <h1 className="title">Advanced Options</h1>
 
         <div id="advanced-tabpanel">
-            <Tabs id="advanced-tabpanel" defaultActiveKey="export">
+            <Tabs id="advanced-tabpanel-inner" defaultActiveKey="export">
                 <Tab id="password-strength" className="password-strength-pane" eventKey="password-strength" title="Password Strength">
                     <div id="password-strength-container" className="tab-text-container">
                         <p><a href="/entries/strength">Click here</a> to see password strength for all your entries</p>
