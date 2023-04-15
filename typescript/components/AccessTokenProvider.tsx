@@ -5,8 +5,8 @@ import { AccessTokenContext, readSavedAccessToken, saveAccessToken } from '../pr
 
 export const AccessTokenProvider = ({ children }: { children: React.ReactNode }) => {
     console.debug('reading access token for the first time...');
-    // readSavedAccessToken is called once, at the beginning
-    const [accessToken, _] = useState(readSavedAccessToken);
+    // eslint-disable-next-line
+    const [accessToken, _] = useState(readSavedAccessToken());
     console.debug(`read ${accessToken}`);
 
     useEffect(() => {

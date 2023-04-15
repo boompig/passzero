@@ -34,7 +34,7 @@ const AboutMain = () => {
                         <div className="card-body">
                             <h4 className="card-title">Open Source</h4>
                             <div className="card-text">
-                                All the code for PassZero is available for anyone to view on <a href="https://github.com/boompig/passzero">GitHub</a>, so you can make sure we're as secure as we say we are.
+                                All the code for PassZero is available for anyone to view on <a href="https://github.com/boompig/passzero">GitHub</a>, so you can make sure we&apos;re as secure as we say we are.
                                 You can even see the code for this page! And if you want to make PassZero even better, make a pull request.
                             </div>
                         </div>
@@ -43,7 +43,7 @@ const AboutMain = () => {
                     <div className="card col-sm">
                         <div className="card-body">
                             <h4 className="card-title">Multi-platform</h4>
-                            <div className="card-text">Some password managers only work on some operating systems, or don't have mobile support. Not us! You can access PassZero from any (modern) browser, on any device. That means you can get all your passwords, whenever you need them.</div>
+                            <div className="card-text">Some password managers only work on some operating systems, or don&apos;t have mobile support. Not us! You can access PassZero from any (modern) browser, on any device. That means you can get all your passwords, whenever you need them.</div>
                         </div>
                     </div>
                 </div>
@@ -55,7 +55,7 @@ const AboutMain = () => {
                     <p>PassZero encrypts each individual entry using the modern <a href="https://nacl.cr.yp.to/">NaCl cryptographic library</a>.
                         Each entry is encrypted with the XSalsa20 stream cipher and authenticated using a <a href="https://en.wikipedia.org/wiki/Poly1305">Poly1305 MAC</a> (thank you Daniel Bernstein).
                         Each entry is encrypted with its own key, derived from the master key using the <a href="https://en.wikipedia.org/wiki/Argon2">Argon2id KDF</a>.
-                        Argon2id is a memory-hard key derivation function, which means it's both resistant to side-channel attacks and brute-force cost savings due to time-memory tradeoffs.
+                        Argon2id is a memory-hard key derivation function, which means it&apos;s both resistant to side-channel attacks and brute-force cost savings due to time-memory tradeoffs.
                         For more details see the <a href="https://datatracker.ietf.org/doc/draft-irtf-cfrg-argon2/13/">IETF Draft</a>.</p>
                 </div>
             </div>

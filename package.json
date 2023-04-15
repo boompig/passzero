@@ -8,7 +8,7 @@
     "license": "MIT",
     "private": true,
     "scripts": {
-        "lint": "yarn run lint:common & yarn run lint:links-bundle & yarn run lint:new-link-bundle & yarn run lint:entries-bundle",
+        "lint": "yarn run eslint typescript/**/*.ts typescript/**/*.tsx",
         "lint:common": "eslint typescript/common/*.ts",
         "lint:links-bundle": "eslint 'typescript/links-bundle/**/*.ts?(x)'",
         "lint:new-link-bundle": "eslint 'typescript/new-link-bundle/**/*.ts?(x)'",

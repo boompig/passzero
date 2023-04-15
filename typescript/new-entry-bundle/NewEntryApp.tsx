@@ -25,6 +25,7 @@ interface INewEntryState {
     username: string;
     password: string;
     extra: string;
+    // eslint-disable-next-line
     has_2fa: boolean;
     version: number;
 

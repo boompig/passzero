@@ -11,8 +11,11 @@ import { LoggedInLayout } from '../components/LoggedInLayout';
 import '../common-css/advanced.css';
 
 interface ITwoFactorMapEntry {
+    // eslint-disable-next-line
     service_has_2fa: boolean;
+    // eslint-disable-next-line
     entry_has_2fa: boolean;
+    // eslint-disable-next-line
     entry_id: number;
 }
 

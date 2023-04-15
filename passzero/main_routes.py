@@ -70,16 +70,9 @@ def logout():
 @main_routes.route("/entries/new", methods=["GET"])
 @auth_or_redirect_login
 def new_entry_view():
-    user = db.session.query(User).filter_by(id=session["user_id"]).one()
-    user_prefs = {
-        "default_random_password_length": user.default_random_password_length,
-        "default_random_passphrase_length": user.default_random_passphrase_length
-    }
-    # user_prefs are passed in this way to React
     return render_template(
         "new_entry.jinja2",
         title="PassZero &middot; New Entry",
-        user_prefs=user_prefs,
     )
 
 
@@ -163,7 +156,6 @@ def export_entries():
 @main_routes.route("/entries/<int:entry_id>", methods=["GET"])
 @auth_or_redirect_login
 def edit_entry(entry_id: int):
-    user = db.session.query(User).filter_by(id=session["user_id"]).one()
     entries = get_entries(db.session, session["user_id"])
     my_entries = [e for e in entries if e.id == entry_id]
     if len(my_entries) == 0:
@@ -173,17 +165,11 @@ def edit_entry(entry_id: int):
         return redirect(url_for("main_routes.view_entries"))
     else:
         fe = decrypt_entries(my_entries, session['password'])
-        user_prefs = {
-            "default_random_password_length": user.default_random_password_length,
-            "default_random_passphrase_length": user.default_random_passphrase_length
-        }
         return render_template(
             "new_entry.jinja2",
             title="PassZero &middot; Edit Entry",
-            user_prefs=user_prefs,
             e_id=entry_id,
             entry=fe[0],
-            error=None
         )
 
 
