@@ -106,7 +106,7 @@ const UpdateEntryVersionsPane = () => {
         }
     };
 
-    return <div id="update-entry-versions-container">
+    return <div id="update-entry-versions-container" className='tab-text-container'>
         <p>Update all your entries to the newest version to increase security and gain access to new features.</p>
 
         { successMsg ?
