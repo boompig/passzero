@@ -1,4 +1,5 @@
 import { saveAccessToken } from '../providers/access-token-provider';
+import { IDecryptedEntry } from './entries';
 import { UnauthorizedError, ServerError, ApiError } from './errors';
 import { IDecryptedLink } from './links';
 
@@ -446,6 +447,21 @@ export const pzApiv3 = {
             return j;
         } else {
             const err = await parseApiError(r, 'Failed to get current user details');
+            throw err;
+        }
+    },
+
+    decryptEntry: async (accessToken: string, entryId: number, masterPassword: string): Promise<IDecryptedEntry> => {
+        const path = `/api/v3/entries/${entryId}`;
+        const data = {
+            password: masterPassword,
+        };
+        const r = await postJsonWithBearer(path, accessToken, data, true);
+        if (r.ok) {
+            const j = await r.json() as IDecryptedEntry;
+            return j;
+        } else {
+            const err = await parseApiError(r, 'Failed to decrypt entry.');
             throw err;
         }
     },

@@ -10,10 +10,10 @@ import { saveAccessToken } from '../providers/access-token-provider';
 import '../common-css/landing.css';
 import '../common-css/login.css';
 
-const EntriesRedirect = () => {
+const EntriesRedirect = ({ nextPath }: { nextPath: string }) => {
     return <div>
         <h1>You are logged in</h1>
-        <p>Redirecting to entries. <a href="/entries">Click here</a> if it&apos;s taking too long...</p>
+        <p>Redirecting to entries. <a href={ nextPath }>Click here</a> if it&apos;s taking too long...</p>
     </div>;
 };
 
@@ -39,6 +39,11 @@ const LastActionMessage = ({ lastAction }: { lastAction: string }) => {
 const LoginForm = () => {
     const url = new URL(window.location.href);
     const lastAction = url.searchParams.get('last_action');
+    const nextPath = url.searchParams.get('next_path');
+    if (nextPath) {
+        // make sure that nextPath is an actual path otherwise there is something wrong
+        console.assert(nextPath[0] === '/');
+    }
 
     const [usernameOrEmail, setUsernameOrEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -106,9 +111,14 @@ const LoginForm = () => {
             saveAccessToken(resp.token);
 
             // redirect over to entries
-            console.debug(`redirecting to entries...`);
-            window.location.assign('/entries');
-            return <EntriesRedirect />;
+            if (nextPath) {
+                console.debug(`Redirecting to ${nextPath}...`);
+                window.location.assign(nextPath);
+            } else {
+                console.debug(`redirecting to entries...`);
+                window.location.assign('/entries');
+            }
+            return <EntriesRedirect nextPath={nextPath} />;
         } catch (err: any) {
             console.error(err);
             if (err._type === 'ApiError' && err.status === 401) {

@@ -148,11 +148,53 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
 
         this.fetchDictionaryWords = this.fetchDictionaryWords.bind(this);
         this.fetchUserDetails = this.fetchUserDetails.bind(this);
+        this.fetchEntryDetails = this.fetchEntryDetails.bind(this);
 
         this.charsets = {
             'special': this.genCharset(true),
             'alpha': this.genCharset(false),
         };
+    }
+
+    /**
+     * Only called if the entry already exists.
+     */
+    async fetchEntryDetails(entryId: number, masterPassword: string) {
+        const accessToken = readSavedAccessToken();
+        if (!accessToken) {
+            throw new Error('access token must be set in this view');
+        }
+        if (!entryId) {
+            throw new Error('entry ID must be set');
+        }
+        if (!masterPassword) {
+            throw new Error('master password is required');
+        }
+        console.debug('Loading entry details...');
+        try {
+            const _decEntry = await pzApiv3.decryptEntry(accessToken, entryId, masterPassword);
+            console.debug(_decEntry);
+
+            this.setState({
+                isEntryNew: false,
+                id: entryId,
+
+                account: _decEntry.account,
+                username: _decEntry.username,
+                password: _decEntry.password,
+                extra: _decEntry.extra || '',
+                has_2fa: _decEntry.has_2fa || false,
+                version: _decEntry.version,
+            }, () => {
+                console.debug('entry details loaded');
+            });
+        } catch (err: any) {
+            if (err._type === 'ApiError' && err.status === 401) {
+                console.debug('Token has expired. Logging out.');
+                // token has expired
+                clientSideLogout();
+            }
+        }
     }
 
     async fetchUserDetails() {
@@ -169,7 +211,7 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
                 passwordLength: _user.preferences.default_random_password_length,
                 numWords: _user.preferences.default_random_passphrase_length,
             }, () => {
-                console.log('user password generation preferences loaded');
+                console.debug('user password generation preferences loaded');
             });
         } catch (err: any) {
             if (err._type === 'ApiError' && err.status === 401) {
@@ -470,21 +512,8 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
                 isEntryNew: true,
             });
         } else {
-            // load the data stored in serialized entry
-            const serializedEntry = (document.getElementById('serialized-entry') as HTMLInputElement).value;
-            const entry = JSON.parse(atob(serializedEntry));
-
-            this.setState({
-                isEntryNew: false,
-                id: entryId,
-
-                account: entry.account,
-                username: entry.username,
-                password: entry.password,
-                extra: entry.extra || '',
-                has_2fa: entry.has_2fa || false,
-                version: entry.version,
-            });
+            // async
+            this.fetchEntryDetails(entryId, masterPassword);
         }
     }
 

@@ -5,8 +5,7 @@ from flask import (Blueprint, abort, current_app, make_response,
 
 from passzero import export_utils
 from passzero.api_utils import check_auth
-from passzero.backend import (decrypt_entries,
-                              get_entries, get_link_by_id)
+from passzero.backend import (get_entries, get_link_by_id)
 from passzero.models import User, db
 
 main_routes = Blueprint("main_routes", __name__)
@@ -164,12 +163,9 @@ def edit_entry(entry_id: int):
         )
         return redirect(url_for("main_routes.view_entries"))
     else:
-        fe = decrypt_entries(my_entries, session['password'])
         return render_template(
             "new_entry.jinja2",
             title="PassZero &middot; Edit Entry",
-            e_id=entry_id,
-            entry=fe[0],
         )
 
 

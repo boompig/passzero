@@ -35,6 +35,14 @@ export interface IDecryptedEntry extends IEntry {
 
     // eslint-disable-next-line
     service_link?: string;
+
+    // eslint-disable-next-line
+    has_2fa?: boolean;
+
+    /**
+     * Version of the entry
+     */
+    version: number;
 }
 
 export interface IEncryptedEntry extends IEntry {

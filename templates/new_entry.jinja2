@@ -6,11 +6,4 @@
 
 {% block body %}
     <div id="react-root"></div>
-    <form class="hidden">
-		{%- if entry -%}
-			<input type="hidden" name="serialized_entry" id="serialized-entry" value="{{ to_base64(entry) }}">
-		{%- else -%}
-			<input type="hidden" name="serialized_entry" id="serialized-entry" value="null">
-		{%- endif -%}
-    </form>
 {% endblock %}
