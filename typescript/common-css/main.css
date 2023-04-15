@@ -1,0 +1,38 @@
+/**
+ * NOTE: this file is included in virtually all views
+ * It has styling for the navbar as well
+ */
+
+html, body {
+    background-color: #ddd;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+h1.title, h2.title, h3.title {
+    text-align: center;
+    font-weight: normal;
+}
+
+/***** customize navbar ***/
+nav .fas {
+    margin-right: .4rem;
+}
+
+#logged-in-navbar .nav-text {
+    margin-left: 0.5rem;
+}
+
+main.container {
+    background-color: #fff;
+    min-height: 100%;
+    padding-top: 4rem;
+}
+
+nav #nav-logout-form {
+    margin: 0;
+    padding: 0;
+}
+/***************************/
+

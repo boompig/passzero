@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 import Navbar from 'react-bootstrap/Navbar';
 import Nav from 'react-bootstrap/Nav';
 import Container from 'react-bootstrap/Container';
@@ -31,40 +31,40 @@ interface INavbarItem {
 
 const navbarItems = [
     {
-        path: "/entries",
-        key: "entries",
-        friendlyName: "Entries",
-        icon: <FontAwesomeIcon icon={["fas", "list"]} />,
+        path: '/entries',
+        key: 'entries',
+        friendlyName: 'Entries',
+        icon: <FontAwesomeIcon icon={['fas', 'list']} />,
     },
     {
-        path: "/entries/new",
-        key: "new-entry",
-        friendlyName: "New Entry",
-		icon: <FontAwesomeIcon icon={["fas", "plus"]} />,
+        path: '/entries/new',
+        key: 'new-entry',
+        friendlyName: 'New Entry',
+        icon: <FontAwesomeIcon icon={['fas', 'plus']} />,
     },
     {
-        path: "/links",
-        key: "links",
-        friendlyName: "Links",
-        icon: <FontAwesomeIcon icon={["fas", "link"]} />,
+        path: '/links',
+        key: 'links',
+        friendlyName: 'Links',
+        icon: <FontAwesomeIcon icon={['fas', 'link']} />,
     },
     {
-        path: "/profile",
-        key: "profile",
-        friendlyName: "Profile",
-        icon: <FontAwesomeIcon icon={["fas", "user"]} />,
+        path: '/profile',
+        key: 'profile',
+        friendlyName: 'Profile',
+        icon: <FontAwesomeIcon icon={['fas', 'user']} />,
     },
     {
-        path: "/advanced",
-        key: "advanced",
-        friendlyName: "Advanced",
-        icon: <FontAwesomeIcon icon={["fas", "wrench"]} />,
+        path: '/advanced',
+        key: 'advanced',
+        friendlyName: 'Advanced',
+        icon: <FontAwesomeIcon icon={['fas', 'wrench']} />,
     },
     {
-        path: "/logout",
-        key: "logout",
-        friendlyName: "Sign Out",
-        icon: <FontAwesomeIcon icon={["fas", "sign-out-alt"]} />,
+        path: '/logout',
+        key: 'logout',
+        friendlyName: 'Sign Out',
+        icon: <FontAwesomeIcon icon={['fas', 'sign-out-alt']} />,
     },
 ] as INavbarItem[];
 
@@ -79,7 +79,7 @@ export const LoggedInNavbar = () => {
                 { item.icon? item.icon : null }
                 <span className="nav-text">{ item.friendlyName }</span>
             </a>
-        </li>
+        </li>;
     });
 
     return <Navbar className="navbar navbar-dark bg-primary fixed-top navbar-expand-lg" expand="md" id="logged-in-navbar">

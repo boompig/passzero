@@ -1,5 +1,6 @@
 const path = require('path');
 const webpack = require('webpack');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const mode = (process.env.NODE_ENV === 'dev' ? 'development' : 'production');
 
 // NOTE: uncomment to look at bundle sizes
@@ -27,6 +28,7 @@ module.exports = {
     output: {
         filename: '[name].bundle.js',
         path: __dirname + '/static/js/dist',
+        publicPath: '/js/dist',
     },
 
     // Enable sourcemaps for debugging webpack's output.
@@ -79,7 +81,11 @@ module.exports = {
 
             {
                 test: /\.css$/,
-                use: ['style-loader', 'css-modules-typescript-loader', 'css-loader'],
+                use: [
+                    // mode === 'development' ? 'style-loader' : MiniCssExtractPlugin.loader,
+                    'style-loader',
+                    'css-modules-typescript-loader', 'css-loader',
+                ],
             },
 
             {
@@ -106,6 +112,8 @@ module.exports = {
          * https://github.com/jmblog/how-to-optimize-momentjs-with-webpack
          */
         new webpack.ContextReplacementPlugin(/moment[/\\]locale$/, /en|de/),
+
+        // new MiniCssExtractPlugin(),
 
         // NOTE: uncomment to look at bundle sizes
         // new BundleAnalyzerPlugin(),
