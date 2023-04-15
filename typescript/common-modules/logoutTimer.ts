@@ -1,3 +1,5 @@
+import { clientSideLogout } from './client-side-utils';
+
 export class LogoutTimer {
     restart: boolean;
     lastActive: Date | null;
@@ -55,7 +57,7 @@ export class LogoutTimer {
     }
 
     logout() {
-        window.location.assign('/logout');
+        clientSideLogout();
     }
 }
 

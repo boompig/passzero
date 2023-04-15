@@ -4,6 +4,11 @@
 
 import { Component } from 'react';
 import * as React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faSearch } from '@fortawesome/free-solid-svg-icons';
+
+library.add(faSearch);
 
 interface ISearchFormProps {
     onSearch(searchString: string): void;
@@ -51,7 +56,7 @@ export default class SearchForm extends Component<ISearchFormProps, ISearchFormS
                         onChange={ this.handleChange } />
                     <div className="input-group-append">
                         <span className="input-group-text">
-                            <i className="fas fa-search"></i>
+                            <FontAwesomeIcon icon={['fas', 'search']} />
                         </span>
                     </div>
                 </div>

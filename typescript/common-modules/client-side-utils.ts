@@ -5,5 +5,6 @@ export const clientSideLogout = () => {
     deleteSavedAccessToken();
     deleteSavedMasterPassword();
     // TODO - have a back-reference to the current page
-    window.location.assign('/login');
+    // TODO for now redirect to the logout handler which also destroys the server-side session
+    window.location.assign('/logout');
 };

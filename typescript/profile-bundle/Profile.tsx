@@ -4,10 +4,11 @@ import Alert from 'react-bootstrap/Alert';
 
 import PasszeroApiV3, { IUser } from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
+import { LoggedInLayout } from '../components/LoggedInLayout';
+import { clientSideLogout } from '../common-modules/client-side-utils';
 
 import '../common-css/advanced.css';
 import './profile.css';
-import { LoggedInLayout } from '../components/LoggedInLayout';
 
 const UserPrefs = ({ user, onUpdate }: { user: IUser, onUpdate(): void }) => {
     const pzApi = new PasszeroApiV3();
@@ -262,7 +263,7 @@ const DeleteAccount = () => {
         setWorking(false);
         if (r.ok) {
             setSuccessMsg('Successfully deleted the account');
-            window.location.assign('/logout');
+            clientSideLogout();
         } else {
             const j = await r.json();
             console.error(j);

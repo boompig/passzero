@@ -50,8 +50,8 @@ main #settings-container {
 	margin-top: .5rem;
 }
 
-main #settings-container .toggle-special-chars-btn .fas {
-	margin-right: .5rem;
+main #settings-container .toggle-special-chars-btn span {
+	margin-left: .5rem;
 }
 
 main button[type="submit"] {

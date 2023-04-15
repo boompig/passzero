@@ -6,6 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faList, faLink, faPlus, faUser, faWrench, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 
+import { clientSideLogout } from '../common-modules/client-side-utils';
+
 // import "bootstrap/dist/css/bootstrap.min.css";
 
 library.add(faList, faLink, faPlus, faUser, faWrench, faSignOutAlt);
@@ -27,6 +29,11 @@ interface INavbarItem {
      * The associated icon
      */
     icon?: React.ReactNode;
+
+    /**
+     * Instead of an href, instead perform this javascript action
+     */
+    onClick?(): void;
 };
 
 const navbarItems = [
@@ -65,6 +72,10 @@ const navbarItems = [
         key: 'logout',
         friendlyName: 'Sign Out',
         icon: <FontAwesomeIcon icon={['fas', 'sign-out-alt']} />,
+        onClick: (e: React.SyntheticEvent) => {
+            e.preventDefault();
+            clientSideLogout();
+        },
     },
 ] as INavbarItem[];
 
@@ -77,7 +88,7 @@ export const LoggedInNavbar = () => {
             classNames += ' active';
         }
         return <li className={classNames} key={item.key}>
-            <a className="nav-link" href={item.path}>
+            <a className="nav-link" href={item.path} onClick={item.onClick}>
                 { item.icon? item.icon : null }
                 <span className="nav-text">{ item.friendlyName }</span>
             </a>

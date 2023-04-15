@@ -3,6 +3,9 @@ import * as React from 'react';
 import ReactTooltip from 'react-tooltip';
 import { random } from 'lodash';
 import classnames from 'classnames';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faCog } from '@fortawesome/free-solid-svg-icons';
 
 import { Settings } from './components/settings';
 import PasszeroApiV3 from '../common-modules/passzero-api-v3';
@@ -12,6 +15,8 @@ import { readSavedMasterPassword } from '../providers/master-password-provider';
 import { clientSideLogout } from '../common-modules/client-side-utils';
 
 import './NewEntry.css';
+
+library.add(faCog);
 
 interface INewEntryState {
     id: number;
@@ -557,7 +562,7 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
                     <button type="button"
                         className="btn btn-settings"
                         onClick={ this.showHideSettings }>
-                        <i className="fas fa-cog"></i> Settings
+                        <FontAwesomeIcon icon={['fas', 'cog']} /> Settings
                     </button>
                 </div>
 
