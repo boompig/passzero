@@ -5,8 +5,9 @@ import Alert from 'react-bootstrap/Alert';
 import PasszeroApiV3, { IUser } from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
 
-import './profile.css';
 import '../common-css/advanced.css';
+import './profile.css';
+import { LoggedInLayout } from '../components/LoggedInLayout';
 
 const UserPrefs = ({ user, onUpdate }: { user: IUser, onUpdate(): void }) => {
     const pzApi = new PasszeroApiV3();
@@ -289,7 +290,7 @@ const DeleteAccount = () => {
     </>;
 };
 
-const Profile = () => {
+const ProfileInner = () => {
     let logoutTimer = null as LogoutTimer | null;
     const api = new PasszeroApiV3();
 
@@ -351,6 +352,12 @@ const Profile = () => {
             </div>
         </div>
     </div>);
+};
+
+const Profile = () => {
+    return <LoggedInLayout>
+        <ProfileInner />
+    </LoggedInLayout>;
 };
 
 export default Profile;

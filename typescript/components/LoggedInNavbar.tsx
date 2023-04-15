@@ -69,9 +69,11 @@ const navbarItems = [
 ] as INavbarItem[];
 
 export const LoggedInNavbar = () => {
+    const currentPath = window.location.pathname;
+
     const navbarItemElems = navbarItems.map((item: INavbarItem) => {
         let classNames = 'navbar-item';
-        if (item.key === 'about') {
+        if (currentPath === item.path) {
             classNames += ' active';
         }
         return <li className={classNames} key={item.key}>

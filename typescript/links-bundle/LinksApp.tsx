@@ -11,6 +11,7 @@ import { decryptLinkWithKeysDB } from '../common-modules/crypto-utils';
 import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from '../common-modules/message';
 import LogoutTimer from '../common-modules/logoutTimer';
 import { clientSideLogout } from '../common-modules/client-side-utils';
+import { LoggedInLayout } from '../components/LoggedInLayout';
 
 import './links.css';
 
@@ -46,7 +47,7 @@ interface IState {
  */
 const DECRYPTION_BATCH_SIZE = 10;
 
-class App extends Component<IProps, IState> {
+class LinksAppInner extends Component<IProps, IState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
     worker: Worker;
@@ -448,4 +449,10 @@ class App extends Component<IProps, IState> {
     }
 }
 
-export default App;
+const LinksApp = () => {
+    return <LoggedInLayout>
+        <LinksAppInner />
+    </LoggedInLayout>;
+};
+
+export default LinksApp;

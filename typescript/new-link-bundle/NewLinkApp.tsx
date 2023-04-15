@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import PasszeroApiV3 from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
+import { LoggedInLayout } from '../components/LoggedInLayout';
 
 import './new-link.css';
 
@@ -17,7 +18,7 @@ interface INewLinkState {
 /**
  * Represents editing a new or existing link
  */
-class NewLinkApp extends PureComponent<{}, INewLinkState> {
+class NewLinkAppInner extends PureComponent<{}, INewLinkState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
 
@@ -155,5 +156,11 @@ class NewLinkApp extends PureComponent<{}, INewLinkState> {
         );
     }
 }
+
+const NewLinkApp = () => {
+    return <LoggedInLayout>
+        <NewLinkAppInner />
+    </LoggedInLayout>;
+};
 
 export default NewLinkApp;

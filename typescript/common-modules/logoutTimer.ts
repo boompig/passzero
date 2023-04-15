@@ -16,7 +16,7 @@ export class LogoutTimer {
     resetLogoutTimer() {
         this.restart = true;
         this.lastActive = new Date();
-        console.debug("[LogoutTimer] reset");
+        console.debug('[LogoutTimer] reset');
     }
 
     startLogoutTimer() {
@@ -31,7 +31,7 @@ export class LogoutTimer {
         }
 
         if (this.restart) {
-            console.debug("[LogoutTimer] restarting");
+            console.debug('[LogoutTimer] restarting');
             this.val = this.maxVal;
             this.restart = false;
         } else {
@@ -55,7 +55,7 @@ export class LogoutTimer {
     }
 
     logout() {
-        window.location.assign("/logout");
+        window.location.assign('/logout');
     }
 }
 

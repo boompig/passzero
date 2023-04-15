@@ -17,9 +17,9 @@ export default class PassZeroAPIv1 {
 
     async getJSON(url: string) {
         const options = {
-            method: "GET",
+            method: 'GET',
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
             },
         } as RequestInit;
         const response = await window.fetch(url, options);
@@ -33,23 +33,23 @@ export default class PassZeroAPIv1 {
 
     async deleteJSON(url: string): Promise<Response> {
         const options = {
-            method: "DELETE",
+            method: 'DELETE',
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
             },
         } as RequestInit;
         return window.fetch(url, options);
     }
 
-	async postJSON(url: string, data: any) {
+    async postJSON(url: string, data: any) {
         const options = {
-            method: "POST",
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json",
+                'Content-Type': 'application/json',
             },
             body: JSON.stringify(data),
         } as RequestInit;
-		const response = await window.fetch(url, options);
+        const response = await window.fetch(url, options);
         return response.json();
     }
 }

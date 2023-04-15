@@ -7,6 +7,7 @@ import classnames from 'classnames';
 import { Settings } from './components/settings';
 import PasszeroApiV3 from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
+import { LoggedInLayout } from '../components/LoggedInLayout';
 
 import './NewEntry.css';
 
@@ -51,7 +52,7 @@ const ENTRY_LIMITS = {
     extra: 4096,
 };
 
-class NewEntryApp extends PureComponent<{}, INewEntryState> {
+class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
     logoutTimer: LogoutTimer;
     pzApi: PasszeroApiV3;
 
@@ -582,5 +583,11 @@ class NewEntryApp extends PureComponent<{}, INewEntryState> {
         );
     }
 }
+
+const NewEntryApp = () => {
+    return <LoggedInLayout>
+        <NewEntryAppInner />
+    </LoggedInLayout>;
+};
 
 export default NewEntryApp;

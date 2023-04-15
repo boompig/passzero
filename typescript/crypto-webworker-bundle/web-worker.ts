@@ -51,11 +51,11 @@ const handleCryptoWorkerMessage = (message: CryptoWorkerRcvMessage) => {
 /**
  * This is the main dispatcher of the web crypto worker
  */
-onmessage = function (event: MessageEvent) {
+onmessage = function(event: MessageEvent) {
     if (event.data.source && ALLOWED_MSG_SOURCES.includes(event.data.source) && event.data.method) {
         handleCryptoWorkerMessage(event.data as CryptoWorkerRcvMessage);
     } else {
         console.debug('Received message from a different thread');
         console.debug(event.data);
     }
-}
+};

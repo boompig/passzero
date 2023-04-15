@@ -1,4 +1,4 @@
-{% extends "layout-react.jinja2" %}
+{% extends "layout-react-basic.jinja2" %}
 
 {% block js %}
     <script src="{{ url_for("static", filename="js/dist/two-factor-audit.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>

@@ -4,9 +4,9 @@ import { useState, useEffect, useContext } from 'react';
 import { MasterPasswordContext } from '../providers/master-password-provider';
 import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { AccessTokenContext } from '../providers/access-token-provider';
-import { AccessTokenProvider } from '../components/AccessTokenProvider';
 import { clientSideLogout } from '../common-modules/client-side-utils';
 import LogoutTimer from '../common-modules/logoutTimer';
+import { LoggedInLayout } from '../components/LoggedInLayout';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
 import '../common-css/advanced.css';
@@ -105,9 +105,9 @@ export const PasswordStrengthMain = () => {
 };
 
 export const PasswordStrength = () => {
-    return <AccessTokenProvider>
+    return <LoggedInLayout>
         <PasswordStrengthMain />
-    </AccessTokenProvider>;
+    </LoggedInLayout>;
 };
 
 export default PasswordStrength;

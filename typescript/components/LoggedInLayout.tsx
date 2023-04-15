@@ -2,8 +2,8 @@
  * Based on layout-react.jinja2
  */
 import * as React from 'react';
-import { AccessTokenProvider } from './AccessTokenProvider';
 
+import { AccessTokenProvider } from './AccessTokenProvider';
 import { LoggedInNavbar } from './LoggedInNavbar';
 
 import '../common-css/main.css';
