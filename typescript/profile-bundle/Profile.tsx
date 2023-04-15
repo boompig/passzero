@@ -136,7 +136,7 @@ const UserProfile = ({ user, onUpdate }: {user: IUser, onUpdate(): void }) => {
             </tbody>
         </table>
 
-        { isShowForm ? null : <button className="btn btn-info"
+        { isShowForm ? null : <button className="btn btn-primary"
             onClick={() => setShowForm(true)}>change username</button>}
 
         { isShowForm ? <ChangeUsernameForm onUpdate={onUpdate} /> : null }

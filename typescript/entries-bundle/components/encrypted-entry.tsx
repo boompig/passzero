@@ -46,7 +46,7 @@ export default class EncryptedEntry extends Component<IEncryptedEntryProps, IEnc
                 { accountElem }
                 <div className="entry-panel">
                     <button type="button" className="btn btn-warning edit-btn" onClick={ this.handleEdit }>Edit</button>
-                    <button type="button" className="btn btn-info decrypt-btn" onClick={ this.handleDecrypt }>Decrypt</button>
+                    <button type="button" className="btn btn-primary decrypt-btn" onClick={ this.handleDecrypt }>Decrypt</button>
                     <button type="button" className="btn btn-danger" onClick={ this.handleDelete }>Delete</button>
                 </div>
             </div>

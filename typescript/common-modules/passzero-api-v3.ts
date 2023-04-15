@@ -436,6 +436,19 @@ export const pzApiv3 = {
         const data = {};
         return await getJsonWithBearer(path, accessToken, data, true);
     },
+
+    getCurrentUser: async (accessToken: string): Promise<IUser> => {
+        const path = '/api/v3/user/me';
+        const params = {};
+        const r = await getJsonWithBearer(path, accessToken, params, true);
+        if (r.ok) {
+            const j = await r.json() as IUser;
+            return j;
+        } else {
+            const err = await parseApiError(r, 'Failed to get current user details');
+            throw err;
+        }
+    },
 };
 
 

@@ -39,7 +39,7 @@ export default class EncryptedLink extends React.Component<IEncryptedLinkProps, 
             <div className="link">
                 <div className="link-id">Link #{ this.props.link.id }</div>
                 <div className="button-panel">
-                    <button type="button" className="btn btn-info"
+                    <button type="button" className="btn btn-primary"
                         disabled={ this.props.isDecrypting }
                         onClick={ this.handleDecrypt }>Decrypt</button>
                     <button type="button" className="btn btn-warning"

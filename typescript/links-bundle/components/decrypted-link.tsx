@@ -27,7 +27,7 @@ export const DecryptedLink = (props: IDecryptedLinkProps) => {
             {/* NOTE: the noreferrer and noopener attributes are very important for privacy */}
             {/* see: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#security_and_privacy */}
             <a href={props.link.link} className="link-service-name" target="_blank" rel="noreferrer noopener">
-                {props.link.service_name}
+                <span className="link-title">{props.link.service_name}</span>
                 <FontAwesomeIcon icon={['fas', 'external-link-alt']} className='ml-1' />
             </a>
             <div className="button-panel">

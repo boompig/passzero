@@ -66,11 +66,13 @@ export const AboutNavbar = () => {
     const currentPath = window.location.pathname;
     const navbarItemElems = navbarItems.map((item) => {
         let classNames = 'navbar-item';
+        let innerClassNames = 'nav-link';
         if (currentPath === item.path) {
             classNames += ' active';
+            innerClassNames += ' active';
         }
         return <li className={classNames} key={item.key}>
-            <a className="nav-link" href={item.path}>
+            <a className={innerClassNames} href={item.path}>
                 { item.icon }
                 <span className="nav-text">{ item.friendlyName }</span>
             </a>

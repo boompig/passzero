@@ -8,13 +8,14 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
 
 import { Settings } from './components/settings';
-import PasszeroApiV3 from '../common-modules/passzero-api-v3';
+import PasszeroApiV3, { pzApiv3, IUser } from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
 import { LoggedInLayout } from '../components/LoggedInLayout';
 import { readSavedMasterPassword } from '../providers/master-password-provider';
 import { clientSideLogout } from '../common-modules/client-side-utils';
 
 import './NewEntry.css';
+import { readSavedAccessToken } from '../providers/access-token-provider';
 
 library.add(faCog);
 
@@ -44,11 +45,8 @@ interface INewEntryState {
     isSettingsVisible: boolean;
     isTooltipHidden: boolean;
     tooltipLastShown: Date | null;
-}
 
-interface IUserPrefs {
-    default_random_passphrase_length: number;
-    default_random_password_length: number;
+    user: IUser | null;
 }
 
 // see ENTRY_LIMITS in config.py
@@ -101,6 +99,9 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
 
             masterPassword: '',
 
+            // current user details
+            user: null,
+
             // settings for password generation
             useSpecialChars: true,
             numWords: 5,
@@ -144,10 +145,38 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
 
         this.genCharset = this.genCharset.bind(this);
 
+        this.fetchDictionaryWords = this.fetchDictionaryWords.bind(this);
+        this.fetchUserDetails = this.fetchUserDetails.bind(this);
+
         this.charsets = {
             'special': this.genCharset(true),
             'alpha': this.genCharset(false),
         };
+    }
+
+    async fetchUserDetails() {
+        const accessToken = readSavedAccessToken();
+        if (!accessToken) {
+            throw new Error('access token must be set in this view');
+        }
+        console.debug('Loading user details...');
+        try {
+            const _user = await pzApiv3.getCurrentUser(accessToken);
+            console.debug(_user);
+            this.setState({
+                user: _user,
+                passwordLength: _user.preferences.default_random_password_length,
+                numWords: _user.preferences.default_random_passphrase_length,
+            }, () => {
+                console.log('user password generation preferences loaded');
+            });
+        } catch (err: any) {
+            if (err._type === 'ApiError' && err.status === 401) {
+                console.debug('Token has expired. Logging out.');
+                // token has expired
+                clientSideLogout();
+            }
+        }
     }
 
     showHidePassword() {
@@ -416,6 +445,7 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
     componentDidMount() {
         // async
         this.fetchDictionaryWords();
+        this.fetchUserDetails();
 
         // load master password
         const masterPassword = readSavedMasterPassword();
@@ -425,16 +455,10 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
         }
 
         // load user preferences
-        const userPrefsEncoded = (document.getElementById('user-prefs') as HTMLInputElement).value;
-        const userPrefs = JSON.parse(atob(userPrefsEncoded)) as IUserPrefs;
-
         this.setState({
             masterPassword: masterPassword,
-            passwordLength: userPrefs.default_random_password_length,
-            numWords: userPrefs.default_random_passphrase_length,
         }, () => {
             console.log('master password loaded');
-            console.log('user password generation preferences loaded');
         });
 
         // determine if this is a new entry and the entryID if not
@@ -468,7 +492,7 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
         if (this.state.password) {
             showHidePasswordBtn = (
                 <button type="button"
-                    className="btn btn-info"
+                    className="btn btn-info show-hide-btn"
                     onClick={this.showHidePassword}>
                     {this.state.isPasswordVisible ? 'Hide Password' : 'Show Password'}
                 </button>

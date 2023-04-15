@@ -54,11 +54,9 @@ export default class SearchForm extends Component<ISearchFormProps, ISearchFormS
                         placeholder="search"
                         autoFocus={ true }
                         onChange={ this.handleChange } />
-                    <div className="input-group-append">
-                        <span className="input-group-text">
-                            <FontAwesomeIcon icon={['fas', 'search']} />
-                        </span>
-                    </div>
+                    <span className="input-group-text">
+                        <FontAwesomeIcon icon={['fas', 'search']} />
+                    </span>
                 </div>
             </form>
         );

@@ -84,11 +84,13 @@ export const LoggedInNavbar = () => {
 
     const navbarItemElems = navbarItems.map((item: INavbarItem) => {
         let classNames = 'navbar-item';
+        let innerClassNames = 'nav-link';
         if (currentPath === item.path) {
             classNames += ' active';
+            innerClassNames += ' active';
         }
         return <li className={classNames} key={item.key}>
-            <a className="nav-link" href={item.path} onClick={item.onClick}>
+            <a className={innerClassNames} href={item.path} onClick={item.onClick}>
                 { item.icon? item.icon : null }
                 <span className="nav-text">{ item.friendlyName }</span>
             </a>

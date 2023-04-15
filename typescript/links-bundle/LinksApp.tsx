@@ -428,7 +428,7 @@ class LinksAppInner extends Component<IProps, IState> {
                         Create New Link
                     </a>
                     { this.state.isAllDecrypted ? null : <button type="button"
-                        className="decrypt-all-btn control-panel-btn btn btn-lg btn-info"
+                        className="decrypt-all-btn control-panel-btn btn btn-lg btn-primary"
                         disabled={ this.state.isDecrypting || !this.state.isKeysDBLoaded }
                         onClick={ this.handleDecryptAll }>
                         Decrypt All
