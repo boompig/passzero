@@ -18,9 +18,13 @@ import { Alert } from 'react-bootstrap';
 
 interface IAppProps {}
 
+/**
+ * This declaration exactly matches python model for Service
+ */
 interface IService {
     name: string;
     link: string;
+    // eslint-disable-next-line
     has_two_factor: boolean;
 }
 

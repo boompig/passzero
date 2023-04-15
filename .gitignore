@@ -76,3 +76,6 @@ IDEA.md
 utils/download_entries.py
 utils/breach_detection.py
 config/schema.sql
+
+# ignore auto-generated .d.ts files for CSS
+typescript/**/*.css.d.ts

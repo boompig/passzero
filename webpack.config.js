@@ -34,7 +34,7 @@ module.exports = {
 
     resolve: {
         // Add '.ts' and '.tsx' as resolvable extensions.
-        extensions: ['.ts', '.tsx', '.js'],
+        extensions: ['.ts', '.tsx', '.js', '.css'],
         fallback: {
             // needed for argon2
             fs: false,
@@ -79,7 +79,7 @@ module.exports = {
 
             {
                 test: /\.css$/,
-                use: ['style-loader', 'css-loader'],
+                use: ['style-loader', 'css-modules-typescript-loader', 'css-loader'],
             },
 
             {

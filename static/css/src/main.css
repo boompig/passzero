@@ -1,3 +1,8 @@
+/**
+ * NOTE: this file is included in virtually all views
+ * It has styling for the navbar as well
+ */
+
 html, body {
     background-color: #ddd;
     height: 100%;
@@ -8,10 +13,6 @@ html, body {
 h1.title, h2.title, h3.title {
     text-align: center;
     font-weight: normal;
-}
-
-#logged-in-text {
-    text-align: center;
 }
 
 /***** customize navbar ***/
