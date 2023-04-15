@@ -1,5 +1,11 @@
 import * as React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+
 import { IDecryptedLink } from '../../common-modules/links';
+
+library.add(faExternalLinkAlt);
 
 interface IDecryptedLinkProps {
     link: IDecryptedLink;
@@ -22,7 +28,7 @@ export const DecryptedLink = (props: IDecryptedLinkProps) => {
             {/* see: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/a#security_and_privacy */}
             <a href={props.link.link} className="link-service-name" target="_blank" rel="noreferrer noopener">
                 {props.link.service_name}
-                <span className="fas fa-external-link-alt"></span>
+                <FontAwesomeIcon icon={['fas', 'external-link-alt']} className='ml-1' />
             </a>
             <div className="button-panel">
                 <button type="button" className="btn btn-warning"

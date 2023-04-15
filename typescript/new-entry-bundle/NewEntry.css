@@ -81,10 +81,6 @@ main .btn-settings {
     background-color: #fff;
 }
 
-main .btn-settings .fas {
-    margin-right: 0.4rem;
-}
-
 main .has-2fa-checkbox {
 	margin-right: .5rem;
 }

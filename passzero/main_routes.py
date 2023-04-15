@@ -80,7 +80,6 @@ def new_entry_view():
         "new_entry.jinja2",
         title="PassZero &middot; New Entry",
         user_prefs=user_prefs,
-        error=None
     )
 
 
