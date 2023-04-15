@@ -12,6 +12,7 @@ import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from '../common-modules/
 import LogoutTimer from '../common-modules/logoutTimer';
 import { clientSideLogout } from '../common-modules/client-side-utils';
 import { LoggedInLayout } from '../components/LoggedInLayout';
+import { readSavedMasterPassword } from '../providers/master-password-provider';
 
 import './links.css';
 
@@ -92,7 +93,12 @@ class LinksAppInner extends Component<IProps, IState> {
     componentDidMount() {
         this.logoutTimer.startLogoutTimer();
 
-        const masterPassword = (document.getElementById('master_password') as HTMLInputElement).value;
+        const masterPassword = readSavedMasterPassword();
+        if (!masterPassword) {
+            clientSideLogout();
+            throw new Error('failed to load master password from storage');
+        }
+
         this.setState({
             masterPassword: masterPassword,
         });

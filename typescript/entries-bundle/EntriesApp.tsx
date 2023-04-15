@@ -16,6 +16,8 @@ import { decryptEntryV5WithKeysDatabase } from '../common-modules/crypto-utils';
 import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from '../common-modules/message';
 import LogoutTimer from '../common-modules/logoutTimer';
 import { LoggedInLayout } from '../components/LoggedInLayout';
+import { readSavedMasterPassword } from '../providers/master-password-provider';
+import { clientSideLogout } from '../common-modules/client-side-utils';
 
 import './entries.css';
 
@@ -148,7 +150,12 @@ class EntriesAppInner extends Component<IAppProps, IAppState> {
 
         // try to read the access token from context.
 
-        const masterPassword = (document.getElementById('master_password') as HTMLInputElement).value;
+        const masterPassword = readSavedMasterPassword();
+        if (!masterPassword) {
+            clientSideLogout();
+            throw new Error('Failed to load master password from storage');
+        }
+
         this.setState({
             masterPassword: masterPassword,
         });

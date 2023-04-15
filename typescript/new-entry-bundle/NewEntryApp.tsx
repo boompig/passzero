@@ -8,6 +8,8 @@ import { Settings } from './components/settings';
 import PasszeroApiV3 from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
 import { LoggedInLayout } from '../components/LoggedInLayout';
+import { readSavedMasterPassword } from '../providers/master-password-provider';
+import { clientSideLogout } from '../common-modules/client-side-utils';
 
 import './NewEntry.css';
 
@@ -411,7 +413,11 @@ class NewEntryAppInner extends PureComponent<{}, INewEntryState> {
         this.fetchDictionaryWords();
 
         // load master password
-        const masterPassword = (document.getElementById('master-password') as HTMLInputElement).value;
+        const masterPassword = readSavedMasterPassword();
+        if (!masterPassword) {
+            clientSideLogout();
+            throw new Error('failed to load master password from storage');
+        }
 
         // load user preferences
         const userPrefsEncoded = (document.getElementById('user-prefs') as HTMLInputElement).value;

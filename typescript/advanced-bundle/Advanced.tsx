@@ -20,6 +20,7 @@ const NukePane = () => {
     }
     const { masterPassword } = useContext(MasterPasswordContext);
     if (!masterPassword) {
+        clientSideLogout();
         throw new Error('failed to load master password from context');
     }
 
@@ -77,6 +78,7 @@ const UpdateEntryVersionsPane = () => {
     }
     const { masterPassword } = useContext(MasterPasswordContext);
     if (!masterPassword) {
+        clientSideLogout();
         throw new Error('failed to load master password from context');
     }
 

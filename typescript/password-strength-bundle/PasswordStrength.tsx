@@ -34,6 +34,7 @@ export const PasswordStrengthMain = () => {
     const { masterPassword } = useContext(MasterPasswordContext);
 
     if (!masterPassword) {
+        clientSideLogout();
         throw new Error('master password failed to load from context');
     }
     const accessToken = useContext(AccessTokenContext);

@@ -4,6 +4,8 @@ import * as React from 'react';
 import PasszeroApiV3 from '../common-modules/passzero-api-v3';
 import LogoutTimer from '../common-modules/logoutTimer';
 import { LoggedInLayout } from '../components/LoggedInLayout';
+import { clientSideLogout } from '../common-modules/client-side-utils';
+import { readSavedMasterPassword } from '../providers/master-password-provider';
 
 import './new-link.css';
 
@@ -45,8 +47,11 @@ class NewLinkAppInner extends PureComponent<{}, INewLinkState> {
         // start logout timer
         this.logoutTimer.startLogoutTimer();
 
-        // load master password
-        const masterPassword = (document.getElementById('master_password') as HTMLInputElement).value;
+        const masterPassword = readSavedMasterPassword();
+        if (!masterPassword) {
+            clientSideLogout();
+            throw new Error('failed to load master password from storage');
+        }
 
         // load link ID
         const linkId = Number.parseInt((document.getElementById('link_id') as HTMLInputElement).value, 10);
