@@ -26,7 +26,7 @@ module.exports = {
     },
     output: {
         filename: '[name].bundle.js',
-        path: __dirname + '/static/js/dist'
+        path: __dirname + '/static/js/dist',
     },
 
     // Enable sourcemaps for debugging webpack's output.
@@ -41,7 +41,7 @@ module.exports = {
             path: false,
             Buffer: false,
             process: false,
-        }
+        },
     },
 
     module: {
@@ -73,14 +73,13 @@ module.exports = {
                     path.resolve(__dirname, 'typescript/providers'),
                 ],
                 exclude: [
-                    path.resolve(__dirname, 'typescript/standalone'),
-                    path.resolve(__dirname, 'static')
-                ]
+                    path.resolve(__dirname, 'static'),
+                ],
             },
 
             {
                 test: /\.css$/,
-                use: ["style-loader", "css-loader"],
+                use: ['style-loader', 'css-loader'],
             },
 
             {
@@ -90,8 +89,8 @@ module.exports = {
             },
 
             // All output '.js' files will have any sourcemaps re-processed by 'source-map-loader'.
-            { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' }
-        ]
+            { enforce: 'pre', test: /\.js$/, loader: 'source-map-loader' },
+        ],
     },
 
     plugins: [
@@ -114,5 +113,5 @@ module.exports = {
     experiments: {
         // needed for argon2
         asyncWebAssembly: true,
-    }
+    },
 };

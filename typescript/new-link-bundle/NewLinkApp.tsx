@@ -1,7 +1,7 @@
-import { PureComponent } from "react";
-import * as React from "react";
-import PasszeroApiV3 from "../common-modules/passzero-api-v3";
-import LogoutTimer from "../common-modules/logoutTimer";
+import { PureComponent } from 'react';
+import * as React from 'react';
+import PasszeroApiV3 from '../common-modules/passzero-api-v3';
+import LogoutTimer from '../common-modules/logoutTimer';
 
 interface INewLinkState {
     name: string;
@@ -22,9 +22,9 @@ class NewLinkApp extends PureComponent<{}, INewLinkState> {
         super(props);
 
         this.state = {
-            name: "",
-            link: "",
-            masterPassword: "",
+            name: '',
+            link: '',
+            masterPassword: '',
             linkId: -1,
             isNewLink: true,
         };
@@ -42,18 +42,18 @@ class NewLinkApp extends PureComponent<{}, INewLinkState> {
         this.logoutTimer.startLogoutTimer();
 
         // load master password
-        const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
+        const masterPassword = (document.getElementById('master_password') as HTMLInputElement).value;
 
         // load link ID
-        const linkId = Number.parseInt((document.getElementById("link_id") as HTMLInputElement).value, 10);
+        const linkId = Number.parseInt((document.getElementById('link_id') as HTMLInputElement).value, 10);
         console.log(`Got linkID ${linkId}`);
         let isNewLink = true;
         let serviceName = this.state.name;
         let linkValue = this.state.link;
         if (linkId > 0) {
             isNewLink = false;
-            serviceName = (document.getElementById("service_name") as HTMLInputElement).value;
-            linkValue = (document.getElementById("link_value") as HTMLInputElement).value;
+            serviceName = (document.getElementById('service_name') as HTMLInputElement).value;
+            linkValue = (document.getElementById('link_value') as HTMLInputElement).value;
         }
 
         this.setState({
@@ -81,17 +81,17 @@ class NewLinkApp extends PureComponent<{}, INewLinkState> {
         const linkData = {
             link: {
                 service_name: this.state.name,
-                link: this.state.link
+                link: this.state.link,
             },
-            password: this.state.masterPassword
+            password: this.state.masterPassword,
         };
         this.pzApi.saveLink(linkData)
             .then(() => {
-                console.log("Link saved");
-                window.location.assign("/links");
+                console.log('Link saved');
+                window.location.assign('/links');
             })
             .catch((err) => {
-                console.error("Failed to save link");
+                console.error('Failed to save link');
                 console.error(err);
             });
     }
@@ -100,17 +100,17 @@ class NewLinkApp extends PureComponent<{}, INewLinkState> {
         const linkData = {
             link: {
                 service_name: this.state.name,
-                link: this.state.link
+                link: this.state.link,
             },
-            password: this.state.masterPassword
+            password: this.state.masterPassword,
         };
         this.pzApi.editLink(this.state.linkId, linkData)
             .then(() => {
-                console.log("Link saved");
-                window.location.assign("/links");
+                console.log('Link saved');
+                window.location.assign('/links');
             })
             .catch((err) => {
-                console.error("Failed to save link");
+                console.error('Failed to save link');
                 console.error(err);
             });
     }
@@ -124,11 +124,11 @@ class NewLinkApp extends PureComponent<{}, INewLinkState> {
     }
 
     render() {
-        let title = "New Link";
-        let buttonText = "Save";
+        let title = 'New Link';
+        let buttonText = 'Save';
         if (!this.state.isNewLink) {
-            title = "Edit Link";
-            buttonText = "Update";
+            title = 'Edit Link';
+            buttonText = 'Update';
         }
         return (
             <div className="container">

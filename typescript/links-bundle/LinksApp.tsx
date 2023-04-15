@@ -1,16 +1,16 @@
-import { Component } from "react";
-import * as React from "react";
-import { chunk } from "lodash";
+import { Component } from 'react';
+import * as React from 'react';
+import { chunk } from 'lodash';
 
-import PasszeroApiV3, { IUser, IKeysDatabase } from "../common-modules/passzero-api-v3";
-import DecryptedLink from "./components/decrypted-link";
-import EncryptedLink from "./components/encrypted-link";
-import {IDecryptedLink, IEncryptedLink, ILink} from "../common-modules/links";
-import SearchForm from "../entries-bundle/components/search-form";
-import { decryptLinkWithKeysDB } from "../common-modules/crypto-utils";
-import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/message";
-import LogoutTimer from "../common-modules/logoutTimer";
-import { clientSideLogout } from "../common-modules/client-side-utils";
+import PasszeroApiV3, { IUser, IKeysDatabase } from '../common-modules/passzero-api-v3';
+import DecryptedLink from './components/decrypted-link';
+import EncryptedLink from './components/encrypted-link';
+import { IDecryptedLink, IEncryptedLink, ILink } from '../common-modules/links';
+import SearchForm from '../entries-bundle/components/search-form';
+import { decryptLinkWithKeysDB } from '../common-modules/crypto-utils';
+import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from '../common-modules/message';
+import LogoutTimer from '../common-modules/logoutTimer';
+import { clientSideLogout } from '../common-modules/client-side-utils';
 
 interface IProps {}
 
@@ -54,7 +54,7 @@ class App extends Component<IProps, IState> {
 
         this.state = {
             links: [],
-            searchString: "",
+            searchString: '',
             linksLoaded: false,
             masterPassword: null,
             isDecrypting: false,
@@ -89,16 +89,16 @@ class App extends Component<IProps, IState> {
     componentDidMount() {
         this.logoutTimer.startLogoutTimer();
 
-        const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
+        const masterPassword = (document.getElementById('master_password') as HTMLInputElement).value;
         this.setState({
             masterPassword: masterPassword,
         });
 
-        console.debug("Fetching links...");
+        console.debug('Fetching links...');
         // fetch all the encrypted links
         this.pzApi.getEncryptedLinks()
             .then((response) => {
-                console.debug("links:");
+                console.debug('links:');
                 console.debug(response);
 
                 // alter each link to set encrypted = true
@@ -112,13 +112,13 @@ class App extends Component<IProps, IState> {
                 });
             })
             .catch((err) => {
-                console.error("Failed to get links");
+                console.error('Failed to get links');
                 console.error(err);
-                if (err.name === "UnauthorizedError") {
+                if (err.name === 'UnauthorizedError') {
                     // likely the token has expired
                     clientSideLogout();
                 } else {
-                    console.debug("different type of error: " + err.name);
+                    console.debug('different type of error: ' + err.name);
                 }
             }).then(() => {
                 return this.pzApi.getCurrentUser();
@@ -166,7 +166,7 @@ class App extends Component<IProps, IState> {
                 data: {
                     encryption_keys: user.encryption_keys,
                     master_password: this.state.masterPassword,
-                }
+                },
             } as CryptoWorkerRcvMessage);
         }
         this.setState({
@@ -182,7 +182,7 @@ class App extends Component<IProps, IState> {
     renderEmpty() {
         return (
             <div>
-                You don't have any saved links yet. Create some <a href="/links/new">here</a>.
+                You don&apos;t have any saved links yet. Create some <a href="/links/new">here</a>.
             </div>
         );
     }
@@ -200,7 +200,7 @@ class App extends Component<IProps, IState> {
             console.debug(`Deleting link with ID ${link.id}...`);
             this.pzApi.deleteLink(link.id, this.state.masterPassword)
                 .then((response) => {
-                    console.debug("Got decrypted link from server");
+                    console.debug('Got decrypted link from server');
                     const newLinks = this.state.links;
                     newLinks.splice(linkIndex, 1);
                     // force state reload
@@ -219,11 +219,11 @@ class App extends Component<IProps, IState> {
 
         const decLinks = await this.pzApi.decryptLinks(
             linkIds,
-            this.state.masterPassword
+            this.state.masterPassword,
         ) as IDecryptedLink[];
 
         // massage data format
-        decLinks.forEach(link => {
+        decLinks.forEach((link) => {
             link.is_encrypted = false;
         });
 
@@ -254,11 +254,11 @@ class App extends Component<IProps, IState> {
             // this is just used for metrics collection
             const startTime = (new Date()).valueOf();
             const encLinkIds = this.state.links
-                .filter(link => link.is_encrypted)
-                .map(link => link.id);
+                .filter((link) => link.is_encrypted)
+                .map((link) => link.id);
 
             // map from link ID to its index
-            const indexMap = {}
+            const indexMap = {};
             for (let i = 0; i < this.state.links.length; i++) {
                 indexMap[this.state.links[i].id] = i;
             }
@@ -348,12 +348,12 @@ class App extends Component<IProps, IState> {
             return;
         }
         this.setState({
-            isDecrypting: true
+            isDecrypting: true,
         }, async () => {
             const link = this.state.links[linkIndex];
             let decLink = null;
             if (this.state.keysDB && link.id.toString() in this.state.keysDB.link_keys) {
-                console.debug(`Locally decrypting link with ID ${link.id}...`)
+                console.debug(`Locally decrypting link with ID ${link.id}...`);
                 decLink = await decryptLinkWithKeysDB(link as IEncryptedLink, this.state.keysDB);
                 console.debug('Successfully decrypted link locally');
             } else {
@@ -393,7 +393,7 @@ class App extends Component<IProps, IState> {
                     onDelete={ this.handleDelete } />;
             } else {
                 let isFiltered = false;
-                if (this.state.isAllDecrypted && this.state.searchString !== "") {
+                if (this.state.isAllDecrypted && this.state.searchString !== '') {
                     const name = (link as IDecryptedLink).service_name.toLowerCase();
                     const href = (link as IDecryptedLink).link.toLowerCase();
                     if (!name.includes(ss) && !href.includes(ss)) {

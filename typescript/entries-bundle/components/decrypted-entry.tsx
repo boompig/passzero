@@ -1,8 +1,8 @@
-import * as moment from "moment";
-import {Component} from "react";
-import * as React from "react";
-import ReactTooltip from "react-tooltip";
-import {IDecryptedEntry} from "../../common-modules/entries";
+import * as moment from 'moment';
+import { Component } from 'react';
+import * as React from 'react';
+import ReactTooltip from 'react-tooltip';
+import { IDecryptedEntry } from '../../common-modules/entries';
 
 interface IDecryptedEntryProps {
     entry: IDecryptedEntry;
@@ -70,7 +70,7 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
         // this.passwordFieldRef.current.select();
         this.passwordFieldRef.current.setSelectionRange(0, 9999);
         // finally copy the text
-        document.execCommand("copy");
+        document.execCommand('copy');
 
         ReactTooltip.show(this.copyTooltipRef.current);
         this.setState({
@@ -94,7 +94,7 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
     toggleHidePassword(): void {
         const isPasswordHidden = !this.state.isPasswordHidden;
         this.setState({
-            isPasswordHidden: isPasswordHidden
+            isPasswordHidden: isPasswordHidden,
         });
     }
 
@@ -137,13 +137,13 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
         if (this.props.entry.last_modified) {
             const lastModified = moment(this.props.entry.last_modified * 1000);
             const s = lastModified.fromNow();
-            let cls = "badge-success";
-            if (lastModified <= moment().subtract(5, "years")) {
-                cls = "badge-danger";
-            } else if (lastModified <= moment().subtract(1, "years")) {
-                cls = "badge-warning";
+            let cls = 'badge-success';
+            if (lastModified <= moment().subtract(5, 'years')) {
+                cls = 'badge-danger';
+            } else if (lastModified <= moment().subtract(1, 'years')) {
+                cls = 'badge-warning';
             }
-            lastModifiedElem = <div className={"badge last-modified " + cls}>
+            lastModifiedElem = <div className={'badge last-modified ' + cls}>
                 Last modified {s}
             </div>;
         }
@@ -173,7 +173,7 @@ export default class DecryptedEntry extends Component<IDecryptedEntryProps, IDec
                     </button>
                     <button type="button" className="btn btn-warning edit-btn" onClick={ this.handleEdit }>Edit</button>
                     <button type="button" className="btn btn-info show-hide-btn" onClick={ this.toggleHidePassword }>
-                        { this.state.isPasswordHidden ? "Show" : "Hide" }
+                        { this.state.isPasswordHidden ? 'Show' : 'Hide' }
                     </button>
                     <button type="button" className="btn btn-danger" onClick={ this.handleDelete }>Delete</button>
                 </div>

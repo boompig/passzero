@@ -2,8 +2,8 @@
  * This component displays the number of entries that this user has
  */
 
-import {Component} from "react";
-import * as React from "react";
+import { Component } from 'react';
+import * as React from 'react';
 
 interface INumEntriesProps {
     entriesLoaded: boolean;
@@ -20,14 +20,14 @@ export default class NumEntries extends Component<INumEntriesProps, INumEntriesS
         let innerTitle = null;
         if (this.props.entriesLoaded) {
             if (this.props.numEntries === 1) {
-                innerTitle = "You have 1 entry";
+                innerTitle = 'You have 1 entry';
             } else if (this.props.numEntries === 0) {
                 // filled in later below
             } else {
                 innerTitle = `You have ${this.props.numEntries} entries`;
             }
         } else {
-            innerTitle = "Loading entries...";
+            innerTitle = 'Loading entries...';
         }
 
         if (this.props.entriesLoaded && this.props.numEntries === 0) {

@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faHome } from '@fortawesome/free-solid-svg-icons/faHome';
@@ -32,29 +32,29 @@ interface INavbarItem {
 
 const navbarItems = [
     {
-        path: "/",
-        key: "index",
-        friendlyName: "Home",
-        icon: <FontAwesomeIcon icon={["fas", "home"]} />,
+        path: '/',
+        key: 'index',
+        friendlyName: 'Home',
+        icon: <FontAwesomeIcon icon={['fas', 'home']} />,
     },
     {
-        path: "/about",
-        key: "about",
-        friendlyName: "About",
-        icon: <FontAwesomeIcon icon={["fas", "info-circle"]} />,
+        path: '/about',
+        key: 'about',
+        friendlyName: 'About',
+        icon: <FontAwesomeIcon icon={['fas', 'info-circle']} />,
     },
     {
-        path: "/login",
-        key: "login",
-        friendlyName: "Sign In",
-        icon: <FontAwesomeIcon icon={["fas", "sign-in-alt"]} />,
+        path: '/login',
+        key: 'login',
+        friendlyName: 'Sign In',
+        icon: <FontAwesomeIcon icon={['fas', 'sign-in-alt']} />,
     },
     {
-        path: "/signup",
-        key: "register",
-        friendlyName: "Register",
-        icon: <FontAwesomeIcon icon={["fas", "edit"]} />,
-    }
+        path: '/signup',
+        key: 'register',
+        friendlyName: 'Register',
+        icon: <FontAwesomeIcon icon={['fas', 'edit']} />,
+    },
 ] as INavbarItem[];
 
 /**
@@ -71,7 +71,7 @@ const AboutNavbar = () => {
                 { item.icon }
                 <span className="nav-text">{ item.friendlyName }</span>
             </a>
-        </li>
+        </li>;
     });
 
     return <Navbar className="navbar navbar-dark bg-primary fixed-top navbar-expand-lg" expand="md">
@@ -96,9 +96,13 @@ const About = () => {
                 <div id="main-about-content" className="container">
                     <h2>About PassZero</h2>
 
-                    <p>Remembering passwords is hard. That's why most people either use the same password for every site, or tend to use extremely insecure password. And how often do you forget your password? For me, it was all the time. That's why I wrote PassZero.</p>
+                    <p>Remembering passwords is hard.
+                        That&apos;s why most people either use the same password for every site, or tend to use extremely insecure password.
+                        And how often do you forget your password? For me, it was all the time.
+                        That&apos;s why I wrote PassZero.</p>
 
-                    <p>PassZero is a password manager: you can save the passwords for all your accounts on PassZero, and only need to remember one password. The passwords are securely encrypted with <b>your master password</b> so that they are completely secure, even if someone were to break into the PassZero servers.</p>
+                    <p>PassZero is a password manager: you can save the passwords for all your accounts on PassZero, and only need to remember one password.
+                        The passwords are securely encrypted with <b>your master password</b> so that they are completely secure, even if someone were to break into the PassZero servers.</p>
 
                     <div id="panel-container" className="row">
                         <div className="card col-sm">
@@ -116,7 +120,8 @@ const About = () => {
                             <div className="card-body">
                                 <h4 className="card-title">Open Source</h4>
                                 <div className="card-text">
-                                    All the code for PassZero is available for anyone to view on <a href="https://github.com/boompig/passzero">GitHub</a>, so you can make sure we're as secure as we say we are. You can even see the code for this page! And if you want to make PassZero even better, make a pull request.
+                                    All the code for PassZero is available for anyone to view on <a href="https://github.com/boompig/passzero">GitHub</a>, so you can make sure we're as secure as we say we are.
+                                    You can even see the code for this page! And if you want to make PassZero even better, make a pull request.
                                 </div>
                             </div>
                         </div>
@@ -136,7 +141,8 @@ const About = () => {
                         <p>PassZero encrypts each individual entry using the modern <a href="https://nacl.cr.yp.to/">NaCl cryptographic library</a>.
                             Each entry is encrypted with the XSalsa20 stream cipher and authenticated using a <a href="https://en.wikipedia.org/wiki/Poly1305">Poly1305 MAC</a> (thank you Daniel Bernstein).
                             Each entry is encrypted with its own key, derived from the master key using the <a href="https://en.wikipedia.org/wiki/Argon2">Argon2id KDF</a>.
-                            Argon2id is a memory-hard key derivation function, which means it's both resistant to side-channel attacks and brute-force cost savings due to time-memory tradeoffs. For more details see the <a href="https://datatracker.ietf.org/doc/draft-irtf-cfrg-argon2/13/">IETF Draft</a>.</p>
+                            Argon2id is a memory-hard key derivation function, which means it's both resistant to side-channel attacks and brute-force cost savings due to time-memory tradeoffs.
+                            For more details see the <a href="https://datatracker.ietf.org/doc/draft-irtf-cfrg-argon2/13/">IETF Draft</a>.</p>
                     </div>
                 </div>
             </div>

@@ -31,9 +31,9 @@ const NukePane = () => {
         setSuccessMsg('');
         setErrorMsg('');
 
-        if (confirm("Are you sure you want to delete all your entries?")) {
+        if (confirm('Are you sure you want to delete all your entries?')) {
             try {
-                const resp = await pzApiv3.deleteAllEntries(accessToken, masterPassword)
+                const resp = await pzApiv3.deleteAllEntries(accessToken, masterPassword);
                 console.debug('all entries have been deleted');
                 // note that if we have not thrown an error then it's a success
                 setSuccessMsg(resp.msg);

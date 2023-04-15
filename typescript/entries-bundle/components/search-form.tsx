@@ -2,8 +2,8 @@
  * This component manages the search functionality
  */
 
-import {Component} from "react";
-import * as React from "react";
+import { Component } from 'react';
+import * as React from 'react';
 
 interface ISearchFormProps {
     onSearch(searchString: string): void;
@@ -13,12 +13,15 @@ interface ISearchFormState {
     searchText: string;
 }
 
+/**
+ * The search component for looking through entries.
+ */
 export default class SearchForm extends Component<ISearchFormProps, ISearchFormState> {
     constructor(props: ISearchFormProps) {
         super(props);
 
         this.state = {
-            searchText: "",
+            searchText: '',
         };
 
         this.handleChange = this.handleChange.bind(this);

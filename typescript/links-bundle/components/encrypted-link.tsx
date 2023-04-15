@@ -1,5 +1,5 @@
-import * as React from "react";
-import { IEncryptedLink } from "../../common-modules/links";
+import * as React from 'react';
+import { IEncryptedLink } from '../../common-modules/links';
 
 interface IEncryptedLinkProps {
     link: IEncryptedLink;

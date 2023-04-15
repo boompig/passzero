@@ -2,19 +2,19 @@
  * This is the top-level component for the PassZero application
  */
 
-import { Component } from "react";
-import * as React from "react";
+import { Component } from 'react';
+import * as React from 'react';
 
-import DecryptedEntry from "./components/decrypted-entry";
-import EncryptedEntry from "./components/encrypted-entry";
-import {IDecryptedEntry, IEncryptedEntry, IEntry} from "../common-modules/entries";
-import NumEntries from "./components/num-entries";
-import SearchForm from "./components/search-form";
-import PasszeroApiV3, {IKeysDatabase, IUser} from "../common-modules/passzero-api-v3";
-import { decryptEntryV5WithKeysDatabase } from "../common-modules/crypto-utils";
-import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from "../common-modules/message";
-import LogoutTimer from "../common-modules/logoutTimer";
-import { Alert } from "react-bootstrap";
+import DecryptedEntry from './components/decrypted-entry';
+import EncryptedEntry from './components/encrypted-entry';
+import { IDecryptedEntry, IEncryptedEntry, IEntry } from '../common-modules/entries';
+import NumEntries from './components/num-entries';
+import SearchForm from './components/search-form';
+import PasszeroApiV3, { IKeysDatabase, IUser } from '../common-modules/passzero-api-v3';
+import { decryptEntryV5WithKeysDatabase } from '../common-modules/crypto-utils';
+import { CryptoWorkerRcvMessage, WEBWORKER_MSG_SOURCE } from '../common-modules/message';
+import LogoutTimer from '../common-modules/logoutTimer';
+import { Alert } from 'react-bootstrap';
 
 interface IAppProps {}
 
@@ -54,13 +54,13 @@ const getLastActionMessage = (lastAction: string): string => {
     }
     switch (lastAction) {
         case 'done_edit':
-            return "Successfully edited entry";
+            return 'Successfully edited entry';
         case 'done_new':
-            return "Successfully created entry";
+            return 'Successfully created entry';
         default:
             throw new Error(`invalid last action: ${lastAction}`);
     }
-}
+};
 
 const LastActionMessage = ({ lastAction }: { lastAction: string }) => {
     const msg = getLastActionMessage(lastAction);
@@ -103,9 +103,9 @@ class EntriesApp extends Component<IAppProps, IAppState> {
             // whether the entries have been loaded from the server
             entriesLoaded: false,
             // search string entered by the user
-            searchString: "",
+            searchString: '',
             // filled in componentDidMount
-            masterPassword: "",
+            masterPassword: '',
             services: [],
             servicesLoaded: false,
             user: null,
@@ -141,36 +141,36 @@ class EntriesApp extends Component<IAppProps, IAppState> {
 
         // try to read the access token from context.
 
-        const masterPassword = (document.getElementById("master_password") as HTMLInputElement).value;
+        const masterPassword = (document.getElementById('master_password') as HTMLInputElement).value;
         this.setState({
             masterPassword: masterPassword,
         });
 
         this.pzApi.getServices()
             .then((response) => {
-                console.log("services:");
+                console.log('services:');
                 console.log(response);
                 this.setState({
                     services: response.services,
                     servicesLoaded: true,
                 }, this.addServicesToEntries);
             }).catch((err) => {
-                console.error("Failed to load services from server");
+                console.error('Failed to load services from server');
                 console.error(err);
             });
 
         this.pzApi.getEncryptedEntries()
             .then((entries: IEncryptedEntry[]) => {
-                console.log("entries loaded from server");
+                console.log('entries loaded from server');
                 this.setState({
                     entries: entries,
                     entriesLoaded: true,
                 }, this.addServicesToEntries);
             }).catch((err: Error) => {
-                console.error("Failed to load entries from server");
+                console.error('Failed to load entries from server');
                 console.error(err);
                 this.setState({
-                    loadingErrorMsg: err.message
+                    loadingErrorMsg: err.message,
                 });
             }).then(() => {
                 return this.pzApi.getCurrentUser();
@@ -216,7 +216,7 @@ class EntriesApp extends Component<IAppProps, IAppState> {
                 data: {
                     encryption_keys: user.encryption_keys,
                     master_password: this.state.masterPassword,
-                }
+                },
             } as CryptoWorkerRcvMessage);
         }
         // NOTE: some users may have a null keysDB
@@ -251,10 +251,10 @@ class EntriesApp extends Component<IAppProps, IAppState> {
             this.setState({
                 entries: this.state.entries,
             }, () => {
-                console.log("service links added to entries");
+                console.log('service links added to entries');
             });
         } else {
-            console.log("no service links added to entries");
+            console.log('no service links added to entries');
         }
     }
 
@@ -277,7 +277,7 @@ class EntriesApp extends Component<IAppProps, IAppState> {
             return;
         }
 
-        console.log("Deleting entry...");
+        console.log('Deleting entry...');
         this.pzApi.deleteEntry(entryId, this.state.masterPassword)
             .then(() => {
                 window.location.reload();
@@ -328,13 +328,13 @@ class EntriesApp extends Component<IAppProps, IAppState> {
         newEntries.splice(entryIndex, 1, decryptedEntry);
         // force state reload
         this.setState({
-            entries: newEntries
+            entries: newEntries,
         });
     }
 
     handleSearch(searchString: string): void {
         this.setState({
-            searchString: searchString
+            searchString: searchString,
         });
     }
 
@@ -345,7 +345,7 @@ class EntriesApp extends Component<IAppProps, IAppState> {
      * @returns {boolean}
      */
     searchFilterEntries(entry: IEntry): boolean {
-        if (this.state.searchString === null || this.state.searchString === "") {
+        if (this.state.searchString === null || this.state.searchString === '') {
             // all entries are fine under an empty search string
             return true;
         }
@@ -398,8 +398,8 @@ class EntriesApp extends Component<IAppProps, IAppState> {
                     <main className="container">
                         <div className="inner-container">
                             { this.state.lastAction ?
-                                <LastActionMessage lastAction={this.state.lastAction} />
-                            : null}
+                                <LastActionMessage lastAction={this.state.lastAction} /> :
+                                null}
                             <NumEntries
                                 entriesLoaded={this.state.entriesLoaded}
                                 numEntries={this.state.entries.length} />

@@ -1,9 +1,9 @@
 {% extends "layout-landing.jinja2" %}
 
-{% block body %}
-    <div id="react-root"></div>
-{% endblock %}
-
 {% block extra_js %}
     <script src="{{ url_for("static", filename="js/dist/landing.bundle.js") + "?build=" + config['BUILD_ID'] }}"></script>
+{% endblock %}
+
+{% block body %}
+    <div id="react-root"></div>
 {% endblock %}
