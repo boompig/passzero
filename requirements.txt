@@ -1,5 +1,5 @@
 aniso8601==8.0.0
-apipkg==1.4
+apipkg==3.0.1
 appdirs==1.4.3
 appnope==0.1.0
 asn1crypto==0.24.0
@@ -32,7 +32,7 @@ jsonschema==3.2.0
 lazy-object-proxy==1.4.3
 more-itertools==8.2.0
 msgpack==1.0.2
-packaging==20.3
+packaging==23.1
 pluggy==0.13.1
 psycopg2==2.9.5
 pycparser==2.18
@@ -51,13 +51,13 @@ six==1.15.0
 soupsieve==2.0
 SQLAlchemy==1.4.27
 toml==0.10.2
+types-requests==2.27.11
+types-six==1.16.11
+types-urllib3==1.26.10
 urllib3==1.26.6
 wcwidth==0.1.8
 Werkzeug==2.2.3
+whitenoise==6.0.0
 wrapt==1.11.2
 WTForms==2.2.1
 zxcvbn==4.4.28
-whitenoise==6.0.0
-types-six==1.16.11
-types-requests==2.27.11
-types-urllib3==1.26.10

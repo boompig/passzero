@@ -110,7 +110,7 @@ class ApiEntry(Resource):
         if user.authenticate(args.password):
             try:
                 backend.edit_entry(
-                    session=db.session,
+                    db_session=db.session,
                     entry_id=entry_id,
                     user_key=args.password,
                     edited_entry=args.entry,

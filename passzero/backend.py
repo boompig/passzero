@@ -344,18 +344,18 @@ def recover_account_confirm(db_session: Session, user: User, new_master_password
     db_session.commit()
 
 
-def create_pinned_entry(session: Session, user_id: int, master_password: str) -> None:
+def create_pinned_entry(db_session: Session, user_id: int, master_password: str) -> None:
     """NOTE: The pinned entry is added to the session, but the session is *not* committed here"""
     assert isinstance(user_id, int), f"Expected user_id to be of type int, was of type {type(user_id)}"
     assert isinstance(master_password, str)
     # is there already a pinned entry?
-    pinned_entry = session.query(Entry).filter(and_(
+    pinned_entry = db_session.query(Entry).filter(and_(
         Entry.user_id == user_id,
         Entry.pinned == True  # noqa
     )).one_or_none()
     if pinned_entry:
         # delete the old pinned entry before we create a new one
-        session.delete(pinned_entry)
+        db_session.delete(pinned_entry)
 
     dec_entry = {
         "account": "sanity",
@@ -366,7 +366,7 @@ def create_pinned_entry(session: Session, user_id: int, master_password: str) ->
     }
     new_entry, _ = encrypt_entry(master_password, dec_entry)
     new_entry.pinned = True
-    insert_new_entry(session, new_entry, user_id)
+    insert_new_entry(db_session, new_entry, user_id)
 
 
 def create_inactive_user(db_session: Session, email: str, password: str,
@@ -596,17 +596,17 @@ def encrypt_link(user_key: str, dec_link: dict) -> Tuple[Link, bytes]:
     return link, link_key
 
 
-def insert_new_link(session: Session, link: Link, user_id: int) -> None:
+def insert_new_link(db_session: Session, link: Link, user_id: int) -> None:
     # NOTE: session is not committed here
     link.user_id = user_id
-    session.add(link)
+    db_session.add(link)
 
 
-def insert_new_entry(session: Session, entry: Entry, user_id: int) -> None:
+def insert_new_entry(db_session: Session, entry: Entry, user_id: int) -> None:
     """Set the entry's user_id appropriately and add it to the session
     NOTE: DB session is not committed here"""
     entry.user_id = user_id
-    session.add(entry)
+    db_session.add(entry)
 
 
 def encrypt_entry(user_key: str, dec_entry: dict,
@@ -684,11 +684,11 @@ def update_entry_versions_for_user(db_session: Session, user_id: int, master_key
     return n
 
 
-def edit_link(session: Session, link_id: int, user_key: str, edited_link: dict, user_id: int) -> Link:
+def edit_link(db_session: Session, link_id: int, user_key: str, edited_link: dict, user_id: int) -> Link:
     """
     Try to edit the link with ID <link_id>. Commit changes to DB.
     Check first if the link belongs to the current user
-    :param session:        Database session
+    :param db_session:     Database session
     :param link_id:        ID of an existing link to be edited
     :param user_key:       Password of the logged-in user
     :param edited_link:    Dictionary of changes to the link
@@ -696,7 +696,7 @@ def edit_link(session: Session, link_id: int, user_key: str, edited_link: dict, 
     :return:               Newly edited link
     :rtype:                Link
     """
-    link = session.query(Link).filter_by(id=link_id).one()
+    link = db_session.query(Link).filter_by(id=link_id).one()
     assert link.user_id == user_id, "The given link does not belong to the provided user ID"
     dec_link = {
         "service_name": edited_link["service_name"],
@@ -704,19 +704,19 @@ def edit_link(session: Session, link_id: int, user_key: str, edited_link: dict, 
     }
     # this method should replace the correct fields
     new_link_key = link.encrypt(user_key, dec_link)
-    session.commit()
+    db_session.commit()
     assert link.id == link_id, "The link's ID has changed unexpectedly during editing"
-    _update_encryption_key(session, user_id, user_key, link_id, new_link_key, elem_type="link")
-    session.commit()
+    _update_encryption_key(db_session, user_id, user_key, link_id, new_link_key, elem_type="link")
+    db_session.commit()
     return link
 
 
-def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dict, user_id: int) -> Entry:
+def edit_entry(db_session: Session, entry_id: int, user_key: str, edited_entry: dict, user_id: int) -> Entry:
     """
     Try to edit the entry with ID <entry_id>. Commit changes to DB.
     Check first if the entry belongs to the current user
     DO NOT bump the entry's version
-    :param session:         Database session
+    :param db_session:      Database session
     :param entry_id:        ID of an existing entry to be edited
     :param user_key:        Password of the logged-in user
     :param edited_entry:    Dictionary of changes to the entry
@@ -728,7 +728,7 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
     """
     validate_user_supplied_entry(edited_entry)
     try:
-        entry = session.query(Entry).filter_by(id=entry_id).one()
+        entry = db_session.query(Entry).filter_by(id=entry_id).one()
         assert entry.user_id == user_id
         assert not entry.pinned, "Cannot edit a pinned entry using this method"
         dec_entry = {
@@ -741,11 +741,11 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
         # this method should replace the correct fields
         new_entry_key = entry.encrypt(user_key, dec_entry)
         # commit the entry back to the database
-        session.commit()
+        db_session.commit()
         # entry ID should remain the same
         assert entry.id == entry_id
-        _update_encryption_key(session, user_id, user_key, entry_id, new_entry_key, elem_type="entry")
-        session.commit()
+        _update_encryption_key(db_session, user_id, user_key, entry_id, new_entry_key, elem_type="entry")
+        db_session.commit()
         return entry
     except NoResultFound as e:
         # catch the error to log something here
@@ -753,8 +753,8 @@ def edit_entry(session: Session, entry_id: int, user_key: str, edited_entry: dic
         raise e
 
 
-def get_services_map(session: Session) -> Dict[str, Any]:
-    services = session.query(Service).all()
+def get_services_map(db_session: Session) -> Dict[str, Any]:
+    services = db_session.query(Service).all()
     d = {}
     for service in services:
         d[service.name.lower()] = {

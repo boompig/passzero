@@ -100,7 +100,7 @@ class ApiLink(Resource):
         if user.authenticate(args.password):
             try:
                 backend.edit_link(
-                    session=db.session,
+                    db_session=db.session,
                     link_id=link_id,
                     user_key=args.password,
                     edited_link=args.link,
