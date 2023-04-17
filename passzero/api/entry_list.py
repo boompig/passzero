@@ -1,15 +1,15 @@
 import time
-from flask_jwt_extended import get_jwt_identity, jwt_required
 from typing import List
 
-from flask import current_app
+from flask import current_app, make_response
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, reqparse
 
-from passzero import backend
+from passzero import backend, export_utils
+from passzero.api import app_error_codes
+from passzero.api.jwt_auth import authorizations
 from passzero.api_utils import json_error_v2, json_success_v2
 from passzero.models import Entry, User, db
-from passzero.api.jwt_auth import authorizations
-from passzero.api import app_error_codes
 
 
 def jsonify_entries(enc_entries: List[Entry]):
@@ -219,6 +219,64 @@ class ApiEntryList(Resource):
             }
         else:
             return json_error_v2("Password is not correct", 401)
+
+
+@ns.route("/export")
+class Export(Resource):
+    @ns.doc(security="apikey")
+    @jwt_required()
+    def post(self):
+        """
+        Export the entry list into a CSV file.
+
+        Authentication
+        --------------
+        JWT
+
+        Arguments
+        ---------
+        - password: string (required)
+
+        Response
+        --------
+        on success::
+
+            a CSV file
+
+        exactly what information is returned depends on the entry version
+
+        on error::
+
+            { "status": "error", "msg": string, "code": int }
+
+        Status codes
+        ------------
+        - 200: success
+        - 401: incorrect master password
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("password", type=str, required=True)
+        args = parser.parse_args()
+
+        user_id = get_jwt_identity()["user_id"]
+        user = db.session.query(User).filter_by(id=user_id).one()  # type: User
+        if user.authenticate(args.password):
+            start = time.time()
+            export_contents = export_utils.export_decrypted_entries(
+                db.session,
+                user_id=user_id,
+                master_password=args.password,
+            )
+            response = make_response(export_contents)
+            response.headers["Content-Disposition"] = (
+                "attachment; filename=%s" % current_app.config['DUMP_FILE']
+            )
+            end = time.time()
+            current_app.logger.info("Took %.3f seconds to complete password score evaluation", end - start)
+
+            return response
+        else:
+            return json_error_v2("Failed to authenticate with provided password", 401)
 
 
 @ns.route("/password-strength")
