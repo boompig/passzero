@@ -151,15 +151,6 @@ def test_recover_template(flask_client: FlaskClient):
     assert r.status_code == 200
 
 
-# ------ check API methods when conditions not met ------------
-
-
-def test_export_no_login(flask_client: FlaskClient):
-    r = flask_client.get("/advanced/export", follow_redirects=True)
-    # only print on error
-    print(r.data)
-    assert r.status_code == 401
-
 # ------- check pages that require login to make sure they always redirect back to login page
 
 

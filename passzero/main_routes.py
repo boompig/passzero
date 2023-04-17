@@ -1,11 +1,10 @@
 from functools import wraps
 
-from flask import (Blueprint, abort, current_app, make_response,
-                   redirect, render_template, request, session, url_for)
+from flask import (Blueprint, abort, current_app, redirect, render_template,
+                   request, session, url_for)
 
-from passzero import export_utils
 from passzero.api_utils import check_auth
-from passzero.backend import (get_entries, get_link_by_id)
+from passzero.backend import get_entries, get_link_by_id
 from passzero.models import User, db
 
 main_routes = Blueprint("main_routes", __name__)
@@ -134,21 +133,6 @@ def signup():
         "login_new.jinja2",
         title="PassZero &middot; Register"
     )
-
-
-@main_routes.route("/advanced/export", methods=["GET"])
-@auth_or_abort
-def export_entries():
-    export_contents = export_utils.export_decrypted_entries(
-        db.session,
-        session["user_id"],
-        session["password"]
-    )
-    response = make_response(export_contents)
-    response.headers["Content-Disposition"] = (
-        "attachment; filename=%s" % current_app.config['DUMP_FILE']
-    )
-    return response
 
 
 @main_routes.route("/edit/<int:entry_id>", methods=["GET"])

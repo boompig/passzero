@@ -257,6 +257,10 @@ interface IRegisterConfirmResponse {
     msg: string;
 }
 
+interface IExportTokenResponse {
+    token: string;
+}
+
 export const pzApiv3 = {
     /**
      * Get the token using an existing session-cookie
@@ -462,6 +466,21 @@ export const pzApiv3 = {
             return j;
         } else {
             const err = await parseApiError(r, 'Failed to decrypt entry.');
+            throw err;
+        }
+    },
+
+    getExportToken: async (accessToken: string, masterPassword: string): Promise<IExportTokenResponse> => {
+        const path = `/api/v3/entries/export`;
+        const data = {
+            password: masterPassword,
+        };
+        const r = await postJsonWithBearer(path, accessToken, data, true);
+        if (r.ok) {
+            const j = await r.json() as IExportTokenResponse;
+            return j;
+        } else {
+            const err = await parseApiError(r, 'Failed to get token for entries export.');
             throw err;
         }
     },

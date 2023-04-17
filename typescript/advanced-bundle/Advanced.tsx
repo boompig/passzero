@@ -123,6 +123,53 @@ const UpdateEntryVersionsPane = () => {
     </div>;
 };
 
+export const ExportPane = () => {
+    const accessToken = useContext(AccessTokenContext);
+    if (!accessToken) {
+        throw new Error('failed to load access token from context');
+    }
+    const { masterPassword } = useContext(MasterPasswordContext);
+    if (!masterPassword) {
+        clientSideLogout();
+        throw new Error('failed to load master password from context');
+    }
+
+    const [isClicked, setClicked] = useState(false);
+
+    const handleExport = async () => {
+        try {
+            // step 1 - get the token for export
+            const { token } = await pzApiv3.getExportToken(accessToken, masterPassword);
+            console.debug(token);
+            setClicked(true);
+
+            // once we have the token, can redirect
+            const url = new URL(window.location.href);
+            url.pathname = '/api/v3/entries/export';
+            url.searchParams.set('token', token);
+            window.location.assign(url.toString());
+        } catch (err: any) {
+            if (err._type === 'ApiError' && err.status === 401) {
+                // token has expired
+                clientSideLogout();
+            }
+        }
+    };
+
+    if (isClicked) {
+        return <div id="export-container" className='tab-text-container'>
+            <p>Working...</p>
+        </div>;
+    } else {
+        return <div id="export-container" className="tab-text-container">
+            <p>Generate a CSV file of all your entries, still encrypted. Read about how your data is encrypted so you can decrypt it locally.</p>
+
+            <button id="export-btn" className="btn btn-success" type='button'
+                onClick={handleExport}>Export Entries</button>
+        </div>;
+    }
+};
+
 export const AdvancedMain = () => {
     return <div id="advanced-main">
         <h1 className="title">Advanced Options</h1>
@@ -140,12 +187,7 @@ export const AdvancedMain = () => {
                     </div>
                 </Tab>
                 <Tab id="export" className="export-pane" eventKey="export" title="Export">
-                    <div id="export-container" className="tab-text-container">
-                        <p>Generate a CSV file of all your entries, still encrypted. Read about how your data is encrypted so you can decrypt it locally.</p>
-
-                        <a id="export-btn" className="btn btn-success"
-                            href="/advanced/export">Export Entries</a>
-                    </div>
+                    <ExportPane />
                 </Tab>
                 <Tab id="nuke" className="nuke-pane" eventKey="nuke" title="Nuke">
                     <NukePane />

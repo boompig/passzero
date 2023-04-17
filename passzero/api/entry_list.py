@@ -1,9 +1,12 @@
 import time
+from datetime import datetime, timedelta
 from typing import List
 
-from flask import current_app, make_response
+from flask import current_app, make_response, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_restx import Namespace, Resource, reqparse
+from jose import jwt
+from jose.exceptions import JWTError
 
 from passzero import backend, export_utils
 from passzero.api import app_error_codes
@@ -226,8 +229,7 @@ class Export(Resource):
     @ns.doc(security="apikey")
     @jwt_required()
     def post(self):
-        """
-        Export the entry list into a CSV file.
+        """Step 1 of exporting entries
 
         Authentication
         --------------
@@ -241,18 +243,17 @@ class Export(Resource):
         --------
         on success::
 
-            a CSV file
-
-        exactly what information is returned depends on the entry version
+            JWT token that is specific to the export function
 
         on error::
 
-            { "status": "error", "msg": string, "code": int }
+            { "status": "error", "msg": string }
 
         Status codes
         ------------
         - 200: success
-        - 401: incorrect master password
+        - 400: form validation error
+        - 401: incorrect password
         """
         parser = reqparse.RequestParser()
         parser.add_argument("password", type=str, required=True)
@@ -261,22 +262,79 @@ class Export(Resource):
         user_id = get_jwt_identity()["user_id"]
         user = db.session.query(User).filter_by(id=user_id).one()  # type: User
         if user.authenticate(args.password):
-            start = time.time()
-            export_contents = export_utils.export_decrypted_entries(
-                db.session,
-                user_id=user_id,
-                master_password=args.password,
-            )
-            response = make_response(export_contents)
-            response.headers["Content-Disposition"] = (
-                "attachment; filename=%s" % current_app.config['DUMP_FILE']
-            )
-            end = time.time()
-            current_app.logger.info("Took %.3f seconds to complete password score evaluation", end - start)
-
-            return response
+            expires_at = datetime.utcnow() + timedelta(minutes=5)
+            token = jwt.encode({
+                "user_id": user_id,
+                "master_password": args.password,
+                "action": "export",
+                "exp": int(expires_at.timestamp()),
+            }, current_app.secret_key, algorithm="HS256")
+            return jsonify({
+                "token": token,
+            })
         else:
             return json_error_v2("Failed to authenticate with provided password", 401)
+
+    def get(self):
+        """
+        NOTE: this method does *not* require a JWT
+        Instead, it requires the token generated in the GET method above.
+        Export the entry list into a CSV file.
+
+        Authentication
+        --------------
+        none
+
+        Arguments
+        ---------
+        - token: string (required)
+
+        Response
+        --------
+        on success::
+
+            a CSV file
+
+        on error::
+
+            print the error
+
+        Status codes
+        ------------
+        - 200: success
+        - 401: token invalid for whatever reason
+        """
+        parser = reqparse.RequestParser()
+        parser.add_argument("token", type=str, required=True)
+        args = parser.parse_args()
+
+        try:
+            # validate the token
+            payload = jwt.decode(args.token, current_app.secret_key, algorithms=["HS256"])
+            if payload["action"] != "export":
+                return "token action must be 'export'", 401
+            # check if it is not expired
+            now = datetime.utcnow().timestamp()
+            if now > payload["exp"]:
+                return "token is expired", 401
+            else:
+                # we know all the info in the token is valid
+                start = time.time()
+                export_contents = export_utils.export_decrypted_entries(
+                    db.session,
+                    user_id=payload["user_id"],
+                    master_password=payload["master_password"],
+                )
+                response = make_response(export_contents)
+                response.headers["Content-Disposition"] = (
+                    "attachment; filename=%s" % current_app.config['DUMP_FILE']
+                )
+                end = time.time()
+                current_app.logger.info("Took %.3f seconds to complete password score evaluation", end - start)
+                return response
+        except JWTError as err:
+            current_app.logger.exception("Encountered error when trying to export entries", err)
+            return "token is invalid", 401
 
 
 @ns.route("/password-strength")
