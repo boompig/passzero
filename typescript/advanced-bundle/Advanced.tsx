@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import Tab from 'react-bootstrap/Tab';
 import Tabs from 'react-bootstrap/Tabs';
 import Alert from 'react-bootstrap/Alert';
@@ -12,6 +12,7 @@ import { LoggedInLayout } from '../components/LoggedInLayout';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
 import '../common-css/advanced.css';
+import { IEncryptedEntry } from '../common-modules/entries';
 
 const NukePane = () => {
     const accessToken = useContext(AccessTokenContext);
@@ -84,11 +85,33 @@ const UpdateEntryVersionsPane = () => {
 
     const [successMsg, setSuccessMsg] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
+    const [encEntries, setEncEntries] = useState<IEncryptedEntry[]>([]);
+    const [latestVersion, setLatestVersion] = useState(-1);
 
-    const handleSubmit = async (e: React.SyntheticEvent) => {
+    useEffect(() => {
+        pzApiv3.getEncryptedEntries(accessToken).then((resp) => {
+            setEncEntries(resp.entries);
+            setLatestVersion(resp.latest_version);
+        }).catch((err: any) => {
+            if (err._type === 'ApiError' && err.status === 401) {
+                // token has likely expired
+                clientSideLogout();
+            }
+        });
+    }, []);
+
+    const handleUpdateEntries = async (e: React.SyntheticEvent) => {
         e.preventDefault();
         setSuccessMsg('');
         setErrorMsg('');
+
+        // figure out what the latest version
+        const entriesToUpdate = encEntries.filter((entry) => {
+            entry.version < latestVersion;
+        });
+        console.debug('Entries to update:');
+        console.debug(entriesToUpdate);
+
         try {
             console.debug('Updating entry versions...');
             const resp = await pzApiv3.updateEntryVersions(accessToken, masterPassword);
@@ -117,8 +140,9 @@ const UpdateEntryVersionsPane = () => {
             <Alert variant="danger">{ errorMsg }</Alert>:
             null }
 
-        <form role="form" onSubmit={handleSubmit}>
-            <button className="btn btn-success" type='submit'>Update Entry Versions</button>
+        <form role="form" onSubmit={handleUpdateEntries}>
+            <button className="btn btn-success" type='submit'
+                disabled={encEntries.length === 0}>Update Entry Versions</button>
         </form>
     </div>;
 };

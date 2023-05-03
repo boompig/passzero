@@ -141,7 +141,10 @@ class ApiEntryList(Resource):
         --------
         on success::
 
-            [ entry-1, entry-2, ..., entry-n ]
+            {
+                "entries": [ entry-1, entry-2, ..., entry-n ],
+                "latest_version": int
+            }
 
         exactly what information is returned depends on the entry version
 
@@ -165,11 +168,14 @@ class ApiEntryList(Resource):
                                  http_status_code=500,
                                  app_error_code=app_error_codes.ENTRIES_TOO_OLD)
         start = time.time()
-        rval = jsonify_entries(enc_entries)
+        enc_entries_json = jsonify_entries(enc_entries)
         end = time.time()
         current_app.logger.info("Took %.3f seconds to JSON-ify %d encrypted entries",
                                 end - start, len(enc_entries))
-        return rval
+        return {
+            "entries": enc_entries_json,
+            "latest_version": backend.LATEST_ENTRY_VERSION,
+        }
 
     @ns.doc(security="apikey")
     @jwt_required()
@@ -191,7 +197,7 @@ class ApiEntryList(Resource):
         --------
         on success::
 
-            { "status": "success", "num_updated": int }
+            { "status": "success", "num_updated": int, "version": int }
 
         on error::
 
@@ -218,7 +224,9 @@ class ApiEntryList(Resource):
                 limit=(args.limit if args.limit else None)
             )
             return {
-                "num_updated": num_updated
+                "status": "success",
+                "num_updated": num_updated,
+                "version": backend.LATEST_ENTRY_VERSION,
             }
         else:
             return json_error_v2("Password is not correct", 401)

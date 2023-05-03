@@ -331,7 +331,7 @@ def get_encrypted_entries_with_token(session, token: str, check_status: bool = T
     _print_if_test(session, response_data)
     if check_status:
         assert r.status_code == 200
-        return _get_response_json(r)
+        return _get_response_json(r)["entries"]
     else:
         return r
 

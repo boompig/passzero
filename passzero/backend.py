@@ -17,6 +17,8 @@ from passzero.models import (ApiToken, AuthToken, EncryptionKeys,
                              Entry_v4, Entry_v5, Link, Service, User)
 
 UPDATE_LIMIT = 60
+# used to update entries to the latest version
+LATEST_ENTRY_VERSION = 5
 # we are using this form of logging here
 # because we might not be in a flask context when calling functions in this file
 logger = logging.getLogger(__name__)
@@ -652,13 +654,12 @@ def update_entry_versions_for_user(db_session: Session, user_id: int, master_key
     Return the number of entries updated
     """
     n = 0
-    latest_version = 5
     if limit is None or limit > UPDATE_LIMIT:
         limit = UPDATE_LIMIT
     entries = db_session.query(Entry).filter(and_(
         Entry.user_id == user_id,
         Entry.pinned == False,  # noqa
-        Entry.version < latest_version
+        Entry.version < LATEST_ENTRY_VERSION
     )).all()
     enc_keys_db = db_session.query(EncryptionKeys).filter_by(user_id=user_id).one()
     keys_db = enc_keys_db.decrypt(master_key)

@@ -106,7 +106,7 @@ class LinksAppInner extends Component<IProps, IState> {
         console.debug('Fetching links...');
         // fetch all the encrypted links
         this.pzApi.getEncryptedLinks()
-            .then((response) => {
+            .then((response: IEncryptedLink[]) => {
                 console.debug('links:');
                 console.debug(response);
 

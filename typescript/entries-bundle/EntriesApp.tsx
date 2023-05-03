@@ -174,10 +174,10 @@ class EntriesAppInner extends Component<IAppProps, IAppState> {
             });
 
         this.pzApi.getEncryptedEntries()
-            .then((entries: IEncryptedEntry[]) => {
-                console.log('entries loaded from server');
+            .then((resp) => {
+                console.debug('entries loaded from server');
                 this.setState({
-                    entries: entries,
+                    entries: resp.entries,
                     entriesLoaded: true,
                 }, this.addServicesToEntries);
             }).catch((err: Error) => {

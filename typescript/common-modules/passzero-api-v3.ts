@@ -1,7 +1,7 @@
 import { saveAccessToken } from '../providers/access-token-provider';
-import { IDecryptedEntry } from './entries';
+import { IDecryptedEntry, IEncryptedEntry } from './entries';
 import { UnauthorizedError, ServerError, ApiError } from './errors';
-import { IDecryptedLink } from './links';
+import { IDecryptedLink, IEncryptedLink } from './links';
 
 interface IApiKey {
     token: string;
@@ -217,10 +217,27 @@ interface IUpdateEntryVersionsResponse {
     status: string;
     // eslint-disable-next-line
     num_updated: number;
+    version: number;
 }
 
 interface ITokenResponse {
     token: string;
+}
+
+interface IService {
+    name: string;
+    link: string;
+    has_two_factor: boolean;
+}
+
+interface IServicesResponse {
+    services: IService[];
+}
+
+interface IEncryptedEntriesResponse {
+    entries: IEncryptedEntry[];
+    // eslint-disable-next-line
+    latest_version: number;
 }
 
 /**
@@ -455,6 +472,20 @@ export const pzApiv3 = {
         }
     },
 
+    getEncryptedEntries: async (accessToken: string): Promise<IEncryptedEntriesResponse> => {
+        const path = '/api/v3/entries';
+        const params = {};
+        console.debug('Getting encrypted entries...');
+        const r = await getJsonWithBearer(path, accessToken, params, true);
+        if (r.ok) {
+            const j = await r.json() as IEncryptedEntriesResponse;
+            return j;
+        } else {
+            const err = await parseApiError(r, 'Failed to get encrypted entries');
+            throw err;
+        }
+    },
+
     decryptEntry: async (accessToken: string, entryId: number, masterPassword: string): Promise<IDecryptedEntry> => {
         const path = `/api/v3/entries/${entryId}`;
         const data = {
@@ -494,7 +525,7 @@ export default class PasszeroApiV3 {
         this.apiKey = null;
     }
 
-    async getJsonWithBearer(url: string, apiToken?: string) {
+    async getJsonWithBearer<T>(url: string, apiToken?: string): Promise<T> {
         const options = {
             method: 'GET',
             headers: {
@@ -612,14 +643,14 @@ export default class PasszeroApiV3 {
      */
     async getToken() {
         const url = '/api/v3/token';
-        return this.getJsonWithBearer(url);
+        return this.getJsonWithBearer<ITokenResponse>(url);
     }
 
     /* services */
 
     async getServices() {
         const url = '/api/v3/services';
-        return this.getJsonWithBearer(url);
+        return this.getJsonWithBearer<IServicesResponse>(url);
     }
 
     /* entries */
@@ -627,7 +658,7 @@ export default class PasszeroApiV3 {
     async getEncryptedEntries() {
         const apiToken = await this.fillToken();
         const url = '/api/v3/entries';
-        const response = await this.getJsonWithBearer(url, apiToken);
+        const response = await this.getJsonWithBearer<IEncryptedEntriesResponse>(url, apiToken);
         return response;
     }
 
@@ -681,7 +712,7 @@ export default class PasszeroApiV3 {
     async getEncryptedLinks() {
         const apiToken = await this.fillToken();
         const url = '/api/v3/links';
-        return this.getJsonWithBearer(url, apiToken);
+        return this.getJsonWithBearer<IEncryptedLink[]>(url, apiToken);
     }
 
     async saveLink(linkData: any) {
@@ -727,9 +758,9 @@ export default class PasszeroApiV3 {
     async getCurrentUser(): Promise<IUser> {
         const apiToken = await this.fillToken();
         const url = '/api/v3/user/me';
-        const user = await this.getJsonWithBearer(url, apiToken);
+        return this.getJsonWithBearer<IUser>(url, apiToken);
         // user.last_login = new Date(user.last_login)
-        return user as IUser;
+        // return user as IUser;
     }
 
     /**
