@@ -21,7 +21,9 @@
         <link rel="icon" type="image/png" href="/favicon.png">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-        {% if not config["OFFLINE"] %}
+        {% if config["OFFLINE"] %}
+            <link rel="stylesheet" href="/lib/bootstrap.min.css" />
+        {% else %}
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.3/css/bootstrap.min.css"
                 integrity="sha512-SbiR/eusphKoMVVXysTKG/7VseWii+Y3FdHrt0EpKgpToZeemhqHeZeLWLhJutz/2ut2Vw1uQEj2MbRF+TVBUA=="
                 crossorigin="anonymous" referrerpolicy="no-referrer" />

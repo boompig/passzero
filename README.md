@@ -78,6 +78,8 @@ There is limited support for running the server without an internet connection. 
 
 If you want to run without HTTPS you can set the environment variable `NO_SSL=1`
 
+If you want to develop offline, specify `OFFLINE=1`.
+
 ### Building React Components
 
 Most of the client-side components are written using React. You need to re-compile the react bundle for each page after modifying. Run this command:
