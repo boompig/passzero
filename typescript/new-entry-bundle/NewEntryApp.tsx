@@ -2,7 +2,7 @@ import { PureComponent } from 'react';
 import * as React from 'react';
 import ReactTooltip from 'react-tooltip';
 import { random } from 'lodash';
-import classnames from 'classnames';
+import * as classnames from 'classnames';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { faCog } from '@fortawesome/free-solid-svg-icons';

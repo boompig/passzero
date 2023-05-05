@@ -1,13 +1,19 @@
 """
 This utility script is used for manual testing
 """
+import logging
+import os
+import sys
 from argparse import ArgumentParser
-from passzero.backend import get_account_with_email, insert_entry_for_user
-from passzero.my_env import DATABASE_URL
+
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import sys
-import logging
+
+from passzero.backend import get_account_with_email, insert_entry_for_user
+
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 
 def get_db_session():

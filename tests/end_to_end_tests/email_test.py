@@ -5,9 +5,14 @@ It *really* sends the email, so the test is live
 """
 import os
 
+from dotenv import load_dotenv
+
 from passzero import email as pz_email
 from passzero.config import DefaultConfig
-from passzero.my_env import REAL_EMAIL, SENDGRID_API_KEY
+
+load_dotenv()
+REAL_EMAIL = os.environ["REAL_EMAIL"]
+SENDGRID_API_KEY = os.environ["SENDGRID_API_KEY"]
 
 
 def test_send_email() -> None:

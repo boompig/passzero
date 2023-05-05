@@ -6,8 +6,9 @@
 __pycache__
 
 # ignore the dump file for database
-dump.sql
-latest.dump
+config/dump*.sql
+config/schema*.sql
+latest.dump*
 
 # virtualenv and pyenv
 venv*
@@ -27,7 +28,7 @@ server.key*
 *.pem
 
 # environment setup
-my_env.py
+.env
 
 # ctags
 tags

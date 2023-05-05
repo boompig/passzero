@@ -27,7 +27,7 @@ server.key*
 *.pem
 
 # environment setup
-passzero/my_env.py
+.env
 
 # ctags
 tags

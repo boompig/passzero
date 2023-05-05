@@ -4,6 +4,7 @@ from typing import Tuple
 
 import requests
 import six
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import NoResultFound
@@ -11,9 +12,10 @@ from sqlalchemy.orm.session import Session
 
 from passzero import backend as pz_backend
 from passzero.models.user import User
-from passzero.my_env import DATABASE_URL
 from tests.common import api
 
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
 DEFAULT_EMAIL = u"sample@fake.com"
 DEFAULT_PASSWORD = u"right_pass"
 

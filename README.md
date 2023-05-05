@@ -46,7 +46,8 @@ docker compose up
     - `DATABASE_URL`
         - `postgres://<username>:<password>@<host>:<port>/<database>`
     - `SENDGRID_API_KEY`
-    - alternatively create file `passzero/my_env.py` with method `setup_env` which sets above environment variables
+    - `REAL_EMAIL` (testing only)
+    - alternatively create file `.env` with environment variable values from above. This file will be loaded using the dotenv package
 * `heroku local web`
 
 ## Development
@@ -56,29 +57,11 @@ All instructions in "running locally", as well as:
 - install nodejs and npm
 - `make install`
 
-Your secret environment file (`passzero/my_env.py`) should look like this:
-
-```
-import os
-
-
-DATABASE_URL = "<your database URL here>"
-REAL_EMAIL = "<your real email here>
-SENDGRID_API_KEY = "<your real SendGrid API key here>"
-
-
-def setup_env():
-    os.environ["DATABASE_URL"] = DATABASE_URL
-    os.environ["REAL_EMAIL"] = REAL_EMAIL
-    os.environ["SENDGRID_API_KEY"] = SENDGRID_API_KEY
-
-```
-
-There is limited support for running the server without an internet connection. Some parts of the site may not work, but if you set OFFLINE=1 as an environment variable then portions of the site take that into account and try to work anyway.
+There is limited support for running the server without an internet connection. Some parts of the site may not work, but if you set `OFFLINE=1` as an environment variable then portions of the site take that into account and try to work anyway.
 
 If you want to run without HTTPS you can set the environment variable `NO_SSL=1`
 
-If you want to develop offline, specify `OFFLINE=1`.
+The default flask server will always create database tables. If you want the gunicorn instantiation to create the tables, specify `GUNICORN_CREATE_TABLES=1`.
 
 ### Building React Components
 

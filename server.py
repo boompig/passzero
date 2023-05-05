@@ -12,7 +12,7 @@ if __name__ == "__main__":
     if app.config["DEBUG"]:
         app.debug = True
         app.logger.setLevel(logging.INFO)
-        if "NO_SSL" in os.environ:
+        if os.environ.get("NO_SSL") == "1":
             # used for testing service workers
             app.run(port=app.config["PORT"])
         else:
@@ -23,6 +23,8 @@ if __name__ == "__main__":
         app.debug = False
         app.run(host="0.0.0.0", port=app.config["PORT"])
 else:
+    if os.environ.get("GUNICORN_CREATE_TABLES") == "1":
+        db.create_all()
     # combine gunicorn logging with flask logging
     # see https://trstringer.com/logging-flask-gunicorn-the-manageable-way/
     gunicorn_logger = logging.getLogger("gunicorn.error")

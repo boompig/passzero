@@ -1,0 +1,39 @@
+# NOTE: this will *NOT* be run on fly.io
+# therefore this is entirely for development
+
+version: "3.9"
+services:
+  passzero:
+    build: .
+    image: 'passzero:latest'
+    container_name: passzero
+    environment:
+      # this is for accessing the postgres DB on the *host*
+      - DATABASE_URL=postgresql://postgres:postgres@host.docker.internal/passzero
+      # NOTE: this is fake (obviously)
+      - SENDGRID_API_KEY=x
+      # overwrite the value in Dockerfile
+      - FLASK_ENV=development
+      - GUNICORN_CREATE_TABLES=1
+      # if we're running in dev then we don't want SSL to be on
+      - NO_SSL=1
+    ports:
+      - "8000:8000"
+    volumes:
+      # host-mounted logs so easier to debug
+      - /var/log/passzero:/var/log/passzero
+#     depends_on:
+#       - db
+#   db:
+#     image: postgres:14.1-alpine
+#     restart: always
+#     volumes:
+#       - db:/var/lib/postgresql/data
+#     ports:
+#       - '5432:5432'
+#     environment:
+#       - POSTGRES_USER=postgres
+#       - POSTGRES_PASSWORD=postgres
+# volumes:
+#   db:
+#     driver: local

@@ -62,7 +62,7 @@ export interface IUser {
 }
 
 const getJsonWithBearer = async (path: string, apiToken: string | null, queryParams: { [key: string]: string | number | boolean },
-    rawResponse: boolean) => {
+    rawResponse: boolean): Promise<Response> => {
     if (!rawResponse) {
         throw new Error('for now raw response must be set');
     }
@@ -95,7 +95,7 @@ const getJsonWithBearer = async (path: string, apiToken: string | null, queryPar
 /**
  * If rawResponse is not defined, default to false
  */
-const postJsonWithBearer = async (url: string, apiToken: string | null, data: any, rawResponse?: boolean) => {
+const postJsonWithBearer = async (url: string, apiToken: string | null, data: any, rawResponse?: boolean): Promise<Response> => {
     if (!rawResponse) {
         rawResponse = false;
     }
@@ -227,6 +227,7 @@ interface ITokenResponse {
 interface IService {
     name: string;
     link: string;
+    // eslint-disable-next-line
     has_two_factor: boolean;
 }
 

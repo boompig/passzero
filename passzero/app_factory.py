@@ -3,6 +3,7 @@ import json
 import os
 from datetime import timedelta
 
+from dotenv import load_dotenv
 from flask import Blueprint, Flask, session
 from flask_compress import Compress
 from flask_cors import CORS
@@ -53,9 +54,7 @@ def create_app(name: str, settings_override: dict = {}):
     app.wsgi_app = ProxyFix(app.wsgi_app)  # type: ignore
 
     # setup environment
-    if os.path.exists("passzero/my_env.py"):
-        from passzero.my_env import setup_env
-        setup_env()
+    load_dotenv()
 
     # app config
     app.config.from_object(DefaultConfig)
@@ -66,9 +65,6 @@ def create_app(name: str, settings_override: dict = {}):
     if "PORT" in os.environ:
         # overwrite default port with environment variable
         app.config["PORT"] = os.environ["PORT"]
-    # app.config["DISABLE_LOGOUT_TIMER"] = os.environ.get("DISABLE_LOGOUT_TIMER", "0") == "1"
-    # if app.config["DISABLE_LOGOUT_TIMER"]:
-    #     print("logout timer disabled")
     app.config["DUMP_FILE"] = "passzero_dump.csv"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["WTF_CSRF_ENABLED"] = False

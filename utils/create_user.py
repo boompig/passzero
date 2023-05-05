@@ -2,13 +2,18 @@
 This utility script is used for manual testing
 """
 import getpass
+import os
 from argparse import ArgumentParser
 
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from passzero.backend import activate_account, create_inactive_user
-from passzero.my_env import DATABASE_URL
+
+
+load_dotenv()
+DATABASE_URL = os.environ["DATABASE_URL"]
 
 
 def get_db_session() -> Session:
