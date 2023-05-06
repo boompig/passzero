@@ -1,13 +1,13 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from flask import Blueprint, escape, request, session
+from flask import Blueprint, escape, session
 from sqlalchemy.orm.exc import NoResultFound
 
 from passzero import backend
 from passzero.api_utils import (json_error, json_success,
                                 requires_json_form_validation, write_json)
 from passzero.forms import LoginForm
-from passzero.models import ApiStats, db
+from passzero.models import db
 
 api_v1 = Blueprint("api_v1", __name__)
 
@@ -18,36 +18,6 @@ class UserNotActiveException(Exception):
 
 class TokenExpiredException(Exception):
     pass
-
-
-@api_v1.after_app_request
-def log_api_stats(response):
-    now = datetime.now()
-    day = now.isoformat().split("T")[0]
-    path = request.path
-    week_of_year = now.isocalendar().week
-    # find the first antecedent Monday (note that Monday is weekday == 0)
-    t = now
-    day_of_week = t.weekday()
-    while day_of_week > 0:
-        t -= timedelta(days=1)
-        day_of_week = t.weekday()
-    day = t.isoformat().split("T")[0]
-
-    stats = db.session.query(ApiStats).filter_by(
-        path=path, day=day).one_or_none()
-    if stats is None:
-        stats = ApiStats(
-            path=path,
-            day=day,
-            count=1,
-            week_of_year=week_of_year,
-        )
-    else:
-        stats.count += 1
-    db.session.add(stats)
-    db.session.commit()
-    return response
 
 
 def __logout():
