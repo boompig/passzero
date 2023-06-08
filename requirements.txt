@@ -47,7 +47,7 @@ python-jose==3.3.0
 pytz==2019.3
 redis==4.4.4
 regex==2020.2.20
-requests==2.25.1
+requests==2.31.0
 sendgrid==6.9.6
 six==1.15.0
 soupsieve==2.0
