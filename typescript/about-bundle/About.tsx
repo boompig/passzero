@@ -1,10 +1,13 @@
 import * as React from 'react';
 
 import AboutNavbar from '../components/AboutNavbar';
+import redirectFromHerokuToFly from '../common-modules/heroku-fly-migration';
 
 import './about.css';
 
 const AboutMain = () => {
+    redirectFromHerokuToFly();
+
     return <main className="container">
         <div className="inner-container">
             <div id="main-about-content" className="container">

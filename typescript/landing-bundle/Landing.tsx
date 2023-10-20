@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { LoggedOutNavbar } from '../components/LoggedOutNavbar';
+import redirectFromHerokuToFly from '../common-modules/heroku-fly-migration';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
 import '../common-css/landing.css';
@@ -26,6 +27,8 @@ export const LandingMain = () => {
 };
 
 export const Landing = () => {
+    redirectFromHerokuToFly();
+
     return <div id="existing-login">
         <div id="hero">
             <LoggedOutNavbar />

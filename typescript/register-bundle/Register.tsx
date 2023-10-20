@@ -4,6 +4,7 @@ import Alert from 'react-bootstrap/Alert';
 
 import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { LoggedOutNavbar } from '../components/LoggedOutNavbar';
+import redirectFromHerokuToFly from '../common-modules/heroku-fly-migration';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
 import '../common-css/landing.css';
@@ -182,6 +183,7 @@ const RegisterConfirmForm = () => {
 
 export const Register = () => {
     const path = window.location.pathname;
+    redirectFromHerokuToFly();
 
     return <div id="new-login">
         <div id="hero">

@@ -5,6 +5,7 @@ import { pzApiv3 } from '../common-modules/passzero-api-v3';
 import { LoggedOutNavbar } from '../components/LoggedOutNavbar';
 import { saveMasterPassword } from '../providers/master-password-provider';
 import { saveAccessToken } from '../providers/access-token-provider';
+import redirectFromHerokuToFly from '../common-modules/heroku-fly-migration';
 
 // import "bootstrap/dist/css/bootstrap.min.css";
 import '../common-css/landing.css';
@@ -201,6 +202,8 @@ const LoginForm = () => {
 };
 
 export const Login = () => {
+    redirectFromHerokuToFly();
+
     return <div id="existing-login">
         <div id="hero">
             <LoggedOutNavbar />
