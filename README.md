@@ -90,6 +90,12 @@ make minify-css
     - can also just run `make build-name`
 * deploy to server
 
+### Deploying to fly.io
+
+```
+fly deploy
+```
+
 ## License
 
 * GPLv3

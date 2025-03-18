@@ -1,12 +1,17 @@
-FROM python:3.11-buster
+FROM python:3.13-slim-bullseye
 
 # just for build - make sure packages aren't trying to do interactive installs
 ARG DEBIAN_FRONTEND=noninteractive
 
 # first need to install nodejs and yarn
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+RUN apt-get update -y && apt-get install -y curl
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x -o nodesource_setup.sh && \
+    bash nodesource_setup.sh && \
     apt-get install -y nodejs
 RUN npm install -y --global yarn
+# Note that build tools like make and gcc are required to build some of the python packages
+# libpq-dev is required for psycopg2
+RUN apt-get install -y libpq-dev make gcc libffi-dev libsodium-dev
 
 WORKDIR /work
 
