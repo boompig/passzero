@@ -1,7 +1,6 @@
 # NOTE: this will *NOT* be run on fly.io
 # therefore this is entirely for development
 
-version: "3.9"
 services:
   passzero:
     build: .

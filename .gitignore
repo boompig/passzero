@@ -9,6 +9,7 @@ __pycache__
 config/dump*.sql
 config/schema*.sql
 latest.dump*
+*.db-journal
 
 # virtualenv and pyenv
 venv*
@@ -80,3 +81,6 @@ config/schema.sql
 
 # ignore auto-generated .d.ts files for CSS
 typescript/**/*.css.d.ts
+
+# memory profiling
+memray-*

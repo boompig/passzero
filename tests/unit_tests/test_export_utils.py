@@ -117,11 +117,12 @@ def test_export_decrypted_entries(session):
     )
     backend.activate_account(session, user)
     for dec_entry in entries_in:
+        assert isinstance(dec_entry, dict)
         backend.insert_entry_for_user(
-            session,
-            dec_entry,
-            user.id,
-            DEFAULT_PASSWORD
+            db_session=session,
+            dec_entry=dec_entry,
+            user_id=user.id,
+            user_key=DEFAULT_PASSWORD
         )
     service = Service(
         name="apple",

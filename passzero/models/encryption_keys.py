@@ -1,5 +1,5 @@
 import binascii
-from typing import Dict, Optional, TypedDict
+from typing import Optional, TypedDict
 
 import msgpack
 import nacl.pwhash
@@ -21,10 +21,10 @@ class EncryptionKeysDB_V1(TypedDict):
     """This is the decrypted form of `EncryptionKeys`"""
     # this is a map from str(entry_ids) to encryption keys
     # using string keys because msgpack/JSON doesn't support other key types
-    entry_keys: Dict[str, EncryptionKeyEntry_V1]
+    entry_keys: dict[str, EncryptionKeyEntry_V1]
     # this is a map from str(link_ids) to encryption keys
     # using string keys because msgpack/JSON doesn't support other key types
-    link_keys: Dict[str, EncryptionKeyEntry_V1]
+    link_keys: dict[str, EncryptionKeyEntry_V1]
     # set if this is stored in the DB
     id: Optional[int]
     # set if this is stored in the DB

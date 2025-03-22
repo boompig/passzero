@@ -12,6 +12,7 @@ import six
 json_header = {"Content-Type": "application/json"}
 file_upload_headers = {"Content-Type": "multipart/form-data"}
 BASE_URL = os.environ.get("LIVE_TEST_HOST", "https://localhost:5050")
+assert BASE_URL is not None, "BASE_URL cannot be undefined here"
 
 
 logger = logging.getLogger(__name__)
@@ -433,7 +434,7 @@ class ApiV3:
         if base_url:
             global BASE_URL
             BASE_URL = base_url
-        logger.debug("Using BASE_URL %s", BASE_URL)
+        logger.debug("Using BASE_URL %s", BASE_URL)  # type: ignore
 
     def get_status(self):
         return self.json_get("/api/v3/status", check_status=True, use_token=False)

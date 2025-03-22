@@ -4,6 +4,7 @@ Test the encryption keys database at the model level
 
 import time
 from passzero.models import EncryptionKeys, EncryptionKeysDB_V1
+from passzero.models.encryption_keys import EncryptionKeyEntry_V1
 
 
 MASTER_PASSWORD = "master password 123"
@@ -32,14 +33,14 @@ def test_encryption_key_db_empty():
 def test_encryption_key_db_nonempty():
     """Encrypt and decrypt an empty (new) database"""
     entry_keys_in = {
-        "10": {
+        "10": EncryptionKeyEntry_V1({
             "key": b"hello world",
             "last_modified": 3,
-        },
-        "205": {
+        }),
+        "205": EncryptionKeyEntry_V1({
             "key": b"foo",
             "last_modified": int(time.time()),
-        }
+        }),
     }
     keys_db_in = EncryptionKeysDB_V1(
         entry_keys=entry_keys_in,

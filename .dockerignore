@@ -1,5 +1,6 @@
 # ignore sqlite3 database
 *.db
+*.db-journal
 
 # Python binaries are boring
 *.pyc
@@ -7,12 +8,14 @@ __pycache__
 
 # ignore the dump files for database
 dump.sql
-latest.dump
+latest.dump*
 
 # virtualenv and pyenv
 venv*
 env
 env311
+env312
+env313
 .python-version
 
 # code coverage
@@ -76,3 +79,9 @@ IDEA.md
 utils/download_entries.py
 utils/breach_detection.py
 config/schema.sql
+
+# memory profiling
+memray-*
+
+# git
+.git
